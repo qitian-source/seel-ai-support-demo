@@ -1040,6 +1040,24 @@ I appreciate your patience and I'll make sure your case gets attention today.
 
 Best,
 DJI USA Customer Support`,
+      suggestedReplyZh: `你好 David，
+
+感谢您的耐心等待——我理解等待3周确实太久了。
+
+我已查询您的维修案例 **RMA #R-40291**：
+
+- **状态：** 维修中——技术评估阶段
+- **收到日期：** 2026年4月8日
+- **当前阶段：** 零件采购与维修（标准工期10-15个工作日的第15天）
+
+您的案例已处于标准维修周期的上限。我已将其标记为优先处理，并请维修团队提供最新进展。您将在 **1个工作日** 内收到详细的状态邮件。
+
+维修完成后，您的云台将通过 UPS 两日达免费寄回。
+
+感谢您的耐心，我将确保您的案例今天得到关注。
+
+此致，
+DJI USA 客户支持`,
     },
     messages: [
       {
@@ -1172,6 +1190,24 @@ Is there anything else you'd like to know before deciding?
 
 Best,
 DJI USA Customer Support`,
+      suggestedReplyZh: `你好 Robert，
+
+关于 **DJI Avata 2** 的官方抗风等级规格如下：
+
+| 规格 | 数值 |
+|------|-------|
+| 最大抗风等级 | 5级（10.7 m/s / 24 mph）|
+| 最大飞行速度（运动模式）| 27 m/s（60 mph）|
+| 悬停精度（垂直）| ±0.1 m（视觉定位）|
+
+**实际使用：** Avata 2 在5级风中休闲飞行表现良好，但若用于FPV电影拍摄，大多数飞手建议在3级风以下（5.4 m/s）以获得稳定画面。
+
+如果您经常在较大风力环境中飞行，**DJI FPV Combo** 凭借其更高的推重比可能更适合您。
+
+还有什么需要了解的，欢迎继续提问！
+
+此致，
+DJI USA 客户支持`,
     },
     messages: [
       {
@@ -1229,6 +1265,23 @@ Again, I'm truly sorry for this experience. Is there anything else I can do for 
 
 Warmly,
 DJI USA Customer Support`,
+      suggestedReplyZh: `亲爱的 Amanda，
+
+对于此次失误，我深感抱歉——收到错误商品完全不可接受，我理解您的沮丧心情。
+
+我已核实您的订单 **#DJI-88891**，确认这是我方的履单错误。
+
+**我们将立即采取以下措施：**
+1. ✅ **加急补发** — 您的 DJI Mini 4 Pro 畅飞套装将通过 **UPS 两日达** 免费重新发货，您将在24小时内收到快递单号。
+2. ✅ **预付退货标签** — 错误商品（RC 2 遥控器）的 UPS 退货标签将发送至您的邮箱，请在14天内寄回，不用着急。
+3. ✅ **$50 商城积分** — 为表歉意，我们将向您的 DJI 账户补偿 $50 积分。
+
+您今天无需做任何操作，我将立即为您处理补发事宜。
+
+再次为此次不愉快的体验深表歉意，请问还有什么我可以为您做的？
+
+真诚地，
+DJI USA 客户支持`,
     },
     messages: [
       {
