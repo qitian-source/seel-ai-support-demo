@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   emailThreads, type EmailThread, type EmailStatus, type EmailType,
-  type FlagRule, type OperationMode,
+  type OperationMode,
 } from "@/lib/data";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -18,9 +18,9 @@ import {
   AlertTriangle, Sparkles, Copy, RotateCcw,
   Inbox, User, Zap, Shield, X, ChevronDown,
   Mail, Check, Eye, EyeOff, Languages,
-  GraduationCap, Bolt, Tag, Users, Flag,
+  GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
-  ArrowRight, Settings,
+  ArrowRight, Settings, Paperclip, FileText, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,22 +63,6 @@ function confidenceBand(c: number) {
   if (c >= 0.9) return { label: "High", cls: "text-green-700" };
   if (c >= 0.75) return { label: "Medium", cls: "text-amber-600" };
   return { label: "Low", cls: "text-red-600" };
-}
-
-function evaluateThread(thread: EmailThread, rules: FlagRule[]): { flagged: boolean; reason: string } {
-  const { aiCard } = thread;
-  const active = (id: string) => rules.find((r) => r.id === id)?.enabled ?? false;
-  if (active("sentiment_frustrated") && (aiCard.sentiment === "frustrated" || aiCard.sentiment === "negative"))
-    return { flagged: true, reason: "Frustrated customer — human empathy required" };
-  if (active("low_confidence") && aiCard.confidence < 0.90)
-    return { flagged: true, reason: `Low confidence (${Math.round(aiCard.confidence * 100)}%) — manual review needed` };
-  if (active("complaint_intent") && aiCard.intent === "Complaint")
-    return { flagged: true, reason: "Complaint intent — policy requires human review" };
-  if (active("warranty_intent") && (aiCard.intent === "Warranty Coverage" || aiCard.intent === "Repair Status"))
-    return { flagged: true, reason: "Warranty / repair case — needs specialist review" };
-  if (active("no_order") && !aiCard.orderNumber)
-    return { flagged: true, reason: "No order number identified" };
-  return { flagged: false, reason: "" };
 }
 
 // Sort key: parse "Today HH:MM" / "Yesterday HH:MM" to a numeric value (smaller = older = higher priority)
@@ -202,12 +186,11 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
   { value: "non-user", label: "Non-user" },
 ];
 
-function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpenSettings, width, onResizeStart }: {
+function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart }: {
   threads: EmailThread[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   globalMode: OperationMode;
-  flagRules: FlagRule[];
   onOpenSettings: () => void;
   width: number;
   onResizeStart: (e: React.MouseEvent) => void;
@@ -273,14 +256,12 @@ function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpe
           {sorted.map((thread) => {
             const isSelected = thread.id === selectedId;
             const threadMode = thread.threadMode ?? globalMode;
-            const { flagged } = threadMode === "production" ? evaluateThread(thread, flagRules) : { flagged: false };
             const info = statusInfo(thread.status);
             return (
               <button key={thread.id} onClick={() => onSelect(thread.id)}
                 className={cn(
                   "w-full text-left px-3 py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
                   isSelected ? "bg-[#6c47ff]/5 border-l-2 border-l-[#6c47ff]" : "border-l-2 border-l-transparent",
-                  flagged && !isSelected && "border-l-red-400"
                 )}>
                 {/* Subject */}
                 <div className={cn("text-[12px] truncate mb-1.5 leading-tight",
@@ -295,7 +276,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpe
                     {info.label}
                   </span>
                   <ModeBadge mode={threadMode} />
-                  {flagged && <Flag size={9} className="fill-red-500 text-red-500 shrink-0" />}
                   <span className="ml-auto text-[10px] text-gray-400 shrink-0">{thread.updatedAt.replace("Today ", "").replace("Yesterday ", "Yest ")}</span>
                 </div>
               </button>
@@ -319,10 +299,11 @@ function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpe
 
 // ── Formatting toolbar ──────────────────────────────────────────
 
-function FormatToolbar({ textareaRef, value, onChange }: {
+function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   value: string;
   onChange: (v: string) => void;
+  onAttach: () => void;
 }) {
   const [showColors, setShowColors] = useState(false);
   const colors = ["#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed"];
@@ -378,24 +359,30 @@ function FormatToolbar({ textareaRef, value, onChange }: {
           </div>
         )}
       </div>
+      <div className="w-px h-4 bg-border mx-0.5" />
+      <button onClick={onAttach} title="Attach file"
+        className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 transition-colors">
+        <Paperclip size={12} />
+      </button>
     </div>
   );
 }
 
 // ── Thread View ────────────────────────────────────────────────
 
-function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flagRules }: {
+function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
   thread: EmailThread;
   onSend: (text: string) => void;
   onStatusChange: (s: EmailStatus) => void;
   onGoNext: () => void;
   globalMode: OperationMode;
-  flagRules: FlagRule[];
 }) {
   const [draft, setDraft] = useState("");
   const [aiInserted, setAiInserted] = useState(false);
   const [translatedMsgIds, setTranslatedMsgIds] = useState<Set<string>>(new Set());
   const [showAiReplyZh, setShowAiReplyZh] = useState(false);
+  const [attachments, setAttachments] = useState<{ name: string; size: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -403,11 +390,17 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
     setTranslatedMsgIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const mode = thread.threadMode ?? globalMode;
-  const { flagged, reason: flagReason } = mode === "production"
-    ? evaluateThread(thread, flagRules) : { flagged: false, reason: "" };
-  const autoHandled = mode === "production" && !flagged;
 
-  useEffect(() => { setDraft(""); setAiInserted(false); setTranslatedMsgIds(new Set()); setShowAiReplyZh(false); }, [thread.id]);
+  const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    setAttachments(prev => [...prev, ...files.map(f => ({
+      name: f.name,
+      size: f.size > 1024 * 1024 ? `${(f.size / 1024 / 1024).toFixed(1)} MB` : `${Math.round(f.size / 1024)} KB`,
+    }))]);
+    e.target.value = "";
+  };
+
+  useEffect(() => { setDraft(""); setAiInserted(false); setTranslatedMsgIds(new Set()); setShowAiReplyZh(false); setAttachments([]); }, [thread.id]);
   useEffect(() => {
     const el = textareaRef.current; if (!el) return;
     el.style.height = "auto";
@@ -465,23 +458,18 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
       </div>
 
       {/* Mode banner */}
-      {mode === "production" && flagged && (
-        <div className="px-4 py-2 bg-red-50 border-b border-red-200 flex items-center gap-2 shrink-0">
-          <Flag size={12} className="text-red-500 fill-red-500 shrink-0" />
-          <span className="text-[12px] font-medium text-red-700">Flagged — {flagReason}</span>
-        </div>
-      )}
-      {mode === "production" && autoHandled && (
-        <div className="px-4 py-1.5 bg-green-50 border-b border-green-200 flex items-center gap-2 shrink-0">
-          <Bolt size={11} className="text-green-600 shrink-0" />
-          <span className="text-[11px] text-green-700 font-medium">AI auto-replied</span>
-          <span className="text-[11px] text-green-600">— confidence {Math.round(thread.aiCard.confidence * 100)}%</span>
+      {mode === "production" && (
+        <div className="px-4 py-1.5 bg-blue-50 border-b border-blue-100 flex items-center gap-2 shrink-0">
+          <Bolt size={11} className="text-blue-600 shrink-0" />
+          <span className="text-[11px] text-blue-700 font-medium">Production Mode</span>
+          <span className="text-[11px] text-blue-500">— AI replies sent automatically · confidence {Math.round(thread.aiCard.confidence * 100)}%</span>
         </div>
       )}
       {mode === "training" && (
         <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2 shrink-0">
           <Shield size={11} className="text-amber-600 shrink-0" />
-          <span className="text-[11px] text-amber-700">Training Mode — review AI draft before sending</span>
+          <span className="text-[11px] text-amber-700 font-medium">Training Mode</span>
+          <span className="text-[11px] text-amber-600">— review AI draft before sending</span>
         </div>
       )}
 
@@ -534,13 +522,11 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
             <div className="w-6 h-6 rounded-full bg-[#6c47ff] text-white flex items-center justify-center text-[10px] font-bold shrink-0">AI</div>
             <span className="text-[12px] font-semibold text-gray-700">AI Draft</span>
             {mode === "training" ? (
-              <span className="text-[10px] text-amber-600 bg-amber-100 rounded px-1.5 py-0.5 font-medium">Review before sending</span>
-            ) : autoHandled ? (
-              <span className="text-[10px] text-[#6c47ff] bg-[#6c47ff]/10 rounded px-1.5 py-0.5 flex items-center gap-0.5 font-medium">
+              <span className="text-[10px] text-amber-600 bg-amber-100 rounded-md px-1.5 py-0.5 font-medium">Review before sending</span>
+            ) : (
+              <span className="text-[10px] text-blue-600 bg-blue-50 rounded-md px-1.5 py-0.5 flex items-center gap-0.5 font-medium">
                 <Bolt size={9} />Auto-sent
               </span>
-            ) : (
-              <span className="text-[10px] text-red-600 bg-red-50 rounded px-1.5 py-0.5 font-medium">Needs human review</span>
             )}
             <div className="ml-auto flex items-center gap-1.5">
               {thread.aiCard.suggestedReplyZh && (
@@ -588,41 +574,57 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
           <div className="w-5 h-5 rounded-full bg-[#6c47ff]/20 text-[#6c47ff] flex items-center justify-center text-[9px] font-bold shrink-0">SC</div>
           <span className="text-[11px] text-gray-500">Replying as <span className="font-medium text-gray-700">{CURRENT_USER}</span></span>
         </div>
-        <FormatToolbar textareaRef={textareaRef} value={draft} onChange={setDraft} />
-        <div className="p-3 space-y-2">
+        <FormatToolbar textareaRef={textareaRef} value={draft} onChange={setDraft} onAttach={() => fileInputRef.current?.click()} />
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
+        <div className="px-3 pt-3 pb-1 space-y-2">
           <textarea ref={textareaRef} value={draft} onChange={e => setDraft(e.target.value)}
             placeholder="Write your reply, or insert the AI draft above…"
-            style={{ minHeight: "80px", maxHeight: "280px" }}
+            style={{ minHeight: "80px", maxHeight: "240px" }}
             className="w-full px-3 py-2 rounded-lg border border-border bg-white text-[13px] leading-relaxed resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30 focus:border-[#6c47ff] placeholder:text-gray-400" />
           {aiInserted && (
-            <button className="text-[11px] text-gray-400 hover:text-gray-600 flex items-center gap-1"
+            <button className="text-[11px] text-gray-400 hover:text-gray-600 flex items-center gap-1 rounded-md"
               onClick={() => { setDraft(""); setAiInserted(false); }}>
               <RotateCcw size={11} />Clear draft
             </button>
           )}
         </div>
 
-        {/* Zendesk-style bottom action bar */}
+        {/* Attachments list */}
+        {attachments.length > 0 && (
+          <div className="px-3 pb-2 flex flex-wrap gap-1.5">
+            {attachments.map((att, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-100 rounded-lg px-2 py-1 border border-border">
+                <FileText size={11} className="text-gray-400 shrink-0" />
+                <span className="max-w-[140px] truncate">{att.name}</span>
+                <span className="text-[10px] text-gray-400 shrink-0">{att.size}</span>
+                <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                  className="text-gray-400 hover:text-red-500 transition-colors shrink-0 ml-0.5">
+                  <XCircle size={11} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom action bar */}
         <div className="flex items-center justify-end gap-2 px-3 py-2.5 border-t border-border bg-gray-50">
           {/* Stay / Next dropdown */}
           <div ref={stayMenuRef} className="relative">
             <button onClick={() => setShowStayMenu(v => !v)}
-              className="flex items-center gap-1.5 text-[12px] font-medium text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-700 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
               {stayOnTicket ? "Stay on ticket" : "Go to next ticket"}
-              <ChevronDown size={13} />
+              <ChevronDown size={12} />
             </button>
             {showStayMenu && (
               <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
                 <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
-                  {stayOnTicket && <Check size={11} className="text-[#6c47ff]" />}
-                  {!stayOnTicket && <span className="w-[11px]" />}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 rounded-none">
+                  {stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
                   Stay on ticket
                 </button>
                 <button onClick={() => { setStayOnTicket(false); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
-                  {!stayOnTicket && <Check size={11} className="text-[#6c47ff]" />}
-                  {stayOnTicket && <span className="w-[11px]" />}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 rounded-none">
+                  {!stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
                   Go to next ticket
                 </button>
               </div>
@@ -630,23 +632,18 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
           </div>
 
           {/* Submit as [Status] split button */}
-          <div ref={submitMenuRef} className="relative flex items-center">
+          <div ref={submitMenuRef} className="relative flex items-center rounded-lg overflow-hidden">
             <button
-              disabled={!draft.trim()}
+              disabled={!draft.trim() && attachments.length === 0}
               onClick={handleSubmit}
-              className={cn(
-                "flex items-center gap-1.5 text-[12px] font-semibold px-4 py-1.5 rounded-l-lg text-white transition-colors disabled:opacity-40",
-                flagged && mode === "production" ? "bg-red-600 hover:bg-red-700" : "bg-gray-800 hover:bg-gray-900"
-              )}>
+              className="flex items-center gap-1.5 h-8 px-4 text-[12px] font-semibold text-white bg-gray-800 hover:bg-gray-900 transition-colors disabled:opacity-40">
               Submit as {statusInfo(submitStatus).label}
             </button>
+            <div className="w-px h-full bg-white/20 shrink-0" />
             <button
               onClick={() => setShowSubmitMenu(v => !v)}
-              className={cn(
-                "flex items-center justify-center px-2 py-1.5 rounded-r-lg text-white border-l border-white/20 transition-colors",
-                flagged && mode === "production" ? "bg-red-600 hover:bg-red-700" : "bg-gray-800 hover:bg-gray-900"
-              )}>
-              <ChevronDown size={13} />
+              className="flex items-center justify-center h-8 w-8 text-white bg-gray-800 hover:bg-gray-900 transition-colors">
+              <ChevronDown size={12} />
             </button>
             {showSubmitMenu && (
               <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[130px]">
@@ -669,12 +666,10 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flag
 
 // ── Ticket Info Panel ──────────────────────────────────────────
 
-function TicketInfoPanel({ thread, globalMode, flagRules }: {
-  thread: EmailThread; globalMode: OperationMode; flagRules: FlagRule[];
+function TicketInfoPanel({ thread, globalMode }: {
+  thread: EmailThread; globalMode: OperationMode;
 }) {
   const { aiCard } = thread;
-  const mode = thread.threadMode ?? globalMode;
-  const { flagged, reason } = mode === "production" ? evaluateThread(thread, flagRules) : { flagged: false, reason: "" };
   const [showSummaryZh, setShowSummaryZh] = useState(false);
 
   useEffect(() => { setShowSummaryZh(false); }, [thread.id]);
@@ -685,15 +680,6 @@ function TicketInfoPanel({ thread, globalMode, flagRules }: {
         <Bot size={13} className="text-[#6c47ff]" />
         <span className="text-[13px] font-semibold text-gray-900">Ticket Info</span>
       </div>
-
-      {mode === "production" && (
-        <div className={cn("mx-3 mt-3 mb-1 px-3 py-2 rounded-lg flex items-center gap-2 text-[11px] font-medium",
-          flagged ? "bg-red-50 border border-red-200 text-red-700" : "bg-green-50 border border-green-200 text-green-700")}>
-          {flagged
-            ? <><Flag size={10} className="fill-red-500 text-red-500 shrink-0" />{reason}</>
-            : <><Bolt size={10} className="shrink-0" />Auto-handled — no human action needed</>}
-        </div>
-      )}
 
       <div className="px-4 py-3 border-b border-border space-y-2">
         <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Customer Info</div>
@@ -863,7 +849,7 @@ function EmailSyncModal({ onClose }: { onClose: () => void }) {
 // ── Main Page ──────────────────────────────────────────────────
 
 export default function EmailPage() {
-  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode, emailFlagRules: flagRules } = useApp();
+  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode } = useApp();
   const [threads, setThreads] = useState<EmailThread[]>(emailThreads);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
@@ -944,7 +930,6 @@ export default function EmailPage() {
             selectedId={selectedId}
             onSelect={handleSelect}
             globalMode={mode}
-            flagRules={flagRules}
             onOpenSettings={() => setShowSyncSettings(true)}
             width={listWidth}
             onResizeStart={handleResizeStart}
@@ -957,12 +942,10 @@ export default function EmailPage() {
                 onStatusChange={s => handleStatusChange(selectedThread.id, s)}
                 onGoNext={handleGoNext}
                 globalMode={mode}
-                flagRules={flagRules}
               />
               <TicketInfoPanel
                 thread={selectedThread}
                 globalMode={mode}
-                flagRules={flagRules}
               />
             </>
           ) : (
