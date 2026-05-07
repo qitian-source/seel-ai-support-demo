@@ -811,7 +811,7 @@ export const conversationLogs: ConversationLog[] = [
 // EMAIL ASSISTANT
 // ============================================================
 
-export type EmailStatus = "open" | "pending" | "solved";
+export type EmailStatus = "new" | "open" | "pending" | "solved";
 export type EmailSentiment = "positive" | "neutral" | "negative" | "frustrated";
 export type EmailIntent =
   | "Order Status"
@@ -825,6 +825,22 @@ export type EmailIntent =
   | "Other";
 
 export type EmailType = "user" | "non-user";
+export type OperationMode = "training" | "production";
+
+export interface FlagRule {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+}
+
+export const DEFAULT_FLAG_RULES: FlagRule[] = [
+  { id: "sentiment_frustrated", label: "Frustrated / negative sentiment", description: "Flag emails where AI detects angry or frustrated tone", enabled: true },
+  { id: "low_confidence",       label: "AI confidence < 90%",             description: "Flag when AI is not confident enough to auto-reply",  enabled: true },
+  { id: "complaint_intent",     label: "Complaint intent",                 description: "Flag all emails classified as complaints",            enabled: true },
+  { id: "warranty_intent",      label: "Warranty / repair claims",         description: "Flag warranty and repair-related inquiries",         enabled: false },
+  { id: "no_order",             label: "No order number found",            description: "Flag emails with no identifiable order reference",   enabled: false },
+];
 
 export interface EmailMessage {
   id: string;
@@ -861,6 +877,7 @@ export interface EmailThread {
   priority: "normal" | "high" | "urgent";
   isRead: boolean;
   receivedAt: string;
+  updatedAt: string;
   inboxSummary: string;
   lockedBy?: string;
   aiCard: AIEmailCard;
@@ -878,6 +895,7 @@ export const emailThreads: EmailThread[] = [
     priority: "normal",
     isRead: false,
     receivedAt: "Today 10:23 AM",
+    updatedAt: "Today 11:44 AM",
     inboxSummary: "Customer asking about order #DJI-88412 shipped 5 days ago with no update",
     aiCard: {
       intent: "Order Status",
@@ -939,10 +957,11 @@ DJI美国客服团队`,
     customer: "Sarah Okonkwo",
     customerEmail: "s.okonkwo@outlook.com",
     subject: "DJI Mini 4 Pro crashed after 2 weeks — warranty claim",
-    status: "open",
+    status: "new",
     priority: "high",
     isRead: false,
     receivedAt: "Today 9:47 AM",
+    updatedAt: "Today 9:47 AM",
     inboxSummary: "Drone crashed due to signal loss in open field, requesting warranty replacement, 14 days old",
     aiCard: {
       intent: "Warranty Coverage",
@@ -1012,6 +1031,7 @@ DJI美国客服团队`,
     priority: "normal",
     isRead: true,
     receivedAt: "Today 8:15 AM",
+    updatedAt: "Today 9:10 AM",
     inboxSummary: "Customer asking for update on RS 3 Pro gimbal repair, sent 3 weeks ago, RMA #R-40291",
     aiCard: {
       intent: "Repair Status",
@@ -1093,10 +1113,11 @@ DJI USA 客户支持`,
     customer: "Jennifer Liu",
     customerEmail: "jliu@protonmail.com",
     subject: "Return request — DJI FPV Combo, unopened",
-    status: "open",
+    status: "new",
     priority: "normal",
     isRead: false,
     receivedAt: "Yesterday 4:38 PM",
+    updatedAt: "Yesterday 4:38 PM",
     inboxSummary: "Unopened FPV Combo purchased 12 days ago, customer wants return for refund, order #DJI-86990",
     aiCard: {
       intent: "Return Request",
@@ -1164,6 +1185,7 @@ DJI美国客服团队`,
     priority: "normal",
     isRead: true,
     receivedAt: "Yesterday 2:11 PM",
+    updatedAt: "Yesterday 2:18 PM",
     inboxSummary: "Pre-sale question about Avata 2 wind resistance and flight performance in windy conditions",
     aiCard: {
       intent: "Product Inquiry",
@@ -1234,10 +1256,11 @@ DJI USA 客户支持`,
     customer: "Amanda Torres",
     customerEmail: "amandatorres@icloud.com",
     subject: "Very disappointed — wrong item sent",
-    status: "open",
+    status: "new",
     priority: "urgent",
     isRead: false,
     receivedAt: "Today 11:05 AM",
+    updatedAt: "Today 11:05 AM",
     inboxSummary: "Customer received DJI RC 2 controller instead of Mini 4 Pro — very frustrated, second contact",
     aiCard: {
       intent: "Complaint",
@@ -1305,6 +1328,7 @@ DJI USA 客户支持`,
     priority: "normal",
     isRead: false,
     receivedAt: "Today 9:00 AM",
+    updatedAt: "Today 9:00 AM",
     inboxSummary: "Corporate reseller requesting bulk pricing for 20+ DJI Mavic 3 Enterprise units, Q2 procurement",
     aiCard: {
       intent: "Product Inquiry",
@@ -1370,6 +1394,7 @@ DJI美国客服团队`,
     priority: "high",
     isRead: false,
     receivedAt: "Today 7:30 AM",
+    updatedAt: "Today 7:30 AM",
     inboxSummary: "YouTube creator with 500K subs requesting review unit of Mini 4 Pro, offering dedicated review video + social coverage",
     aiCard: {
       intent: "Other",

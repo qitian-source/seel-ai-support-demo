@@ -17,7 +17,10 @@ import {
   Globe, Bot, Shield, ExternalLink, Mail,
   MessageSquare, Smartphone, Tag, Users, UserCheck,
   Info, ChevronDown, HelpCircle, Eye, EyeOff, Plus,
+  GraduationCap, Bolt, Sliders,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { FlagRule } from "@/lib/data";
 
 /* ================================================================
    TOOLTIP — lightweight hover tooltip
@@ -312,6 +315,8 @@ function ConfigureAgentSection() {
     handoff, setHandoff,
     discloseAI, setDiscloseAI,
     emailSignoff, setEmailSignoff,
+    emailMode, setEmailMode,
+    emailFlagRules, setEmailFlagRules,
     agentsData,
     setMainTab,
     setShowSettings,
@@ -591,6 +596,69 @@ function ConfigureAgentSection() {
                     placeholder="Best regards,\nThe Support Team"
                   />
                 </div>
+
+                <div className="border-t border-gray-100" />
+
+                {/* ── AI Operation Mode ── */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sliders className="w-3.5 h-3.5 text-gray-500" />
+                    <p className="text-xs font-semibold text-gray-700">AI Operation Mode</p>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">Control how the AI handles incoming email tickets.</p>
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden w-fit">
+                    <button
+                      onClick={() => { setEmailMode("training"); toast.success("Switched to Training Mode"); }}
+                      className={cn("flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium transition-colors",
+                        emailMode === "training" ? "bg-amber-500 text-white" : "text-gray-500 hover:bg-gray-50 bg-white")}
+                    >
+                      <GraduationCap size={13} />Training
+                    </button>
+                    <button
+                      onClick={() => { setEmailMode("production"); toast.success("Switched to Production Mode"); }}
+                      className={cn("flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium transition-colors border-l border-gray-200",
+                        emailMode === "production" ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-50 bg-white")}
+                    >
+                      <Bolt size={13} />Production
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    {emailMode === "training"
+                      ? "AI drafts replies for human review. No emails sent automatically."
+                      : "AI auto-sends eligible emails. Flagged tickets require human review."}
+                  </p>
+                </div>
+
+                {/* ── Flag Rules (Production only) ── */}
+                {emailMode === "production" && (
+                  <div>
+                    <div className="border-t border-gray-100 my-3" />
+                    <div className="flex items-center gap-2 mb-1">
+                      <Shield className="w-3.5 h-3.5 text-gray-500" />
+                      <p className="text-xs font-semibold text-gray-700">Flag Rules</p>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-3">Emails matching any enabled rule are held for human review.</p>
+                    <div className="space-y-2">
+                      {emailFlagRules.map((rule: FlagRule) => (
+                        <div key={rule.id} className={cn("rounded-lg border p-3 transition-colors",
+                          rule.enabled ? "border-indigo-200 bg-indigo-50/50" : "border-gray-200 bg-white")}>
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              <div className="text-[12px] font-semibold text-gray-800">{rule.label}</div>
+                              <div className="text-[11px] text-gray-500 mt-0.5">{rule.description}</div>
+                            </div>
+                            <button
+                              onClick={() => setEmailFlagRules(emailFlagRules.map((r: FlagRule) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r))}
+                              className={cn("shrink-0 w-9 rounded-full relative transition-colors mt-0.5", rule.enabled ? "bg-indigo-600" : "bg-gray-200")}
+                              style={{ height: "20px" }}>
+                              <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform", rule.enabled ? "translate-x-4" : "translate-x-0.5")} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="border-t border-gray-100" />
 

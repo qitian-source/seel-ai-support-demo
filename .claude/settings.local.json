@@ -33,7 +33,15 @@
       "Bash(git push *)",
       "Bash(git commit *)",
       "Bash(npx vercel *)",
-      "Bash(pnpm build *)"
+      "Bash(pnpm build *)",
+      "Read(//Users/tammy/.local/share/com.vercel.cli/**)",
+      "Read(//Users/tammy/.config/vercel/**)",
+      "Read(//Users/tammy/**)",
+      "Bash(sed -i '' 's/    receivedAt: \"Today 10:23 AM\",$/    receivedAt: \"Today 10:23 AM\",\\\\n    updatedAt: \"Today 11:44 AM\",/' /Users/tammy/Downloads/seel-ai-support-v2-main/client/src/lib/data.ts)",
+      "Bash(sed -i '' 's/    receivedAt: \"Today 9:47 AM\",$/    receivedAt: \"Today 9:47 AM\",\\\\n    updatedAt: \"Today 9:47 AM\",/' /Users/tammy/Downloads/seel-ai-support-v2-main/client/src/lib/data.ts)",
+      "Bash(sed -i '' 's/    receivedAt: \"Today 8:15 AM\",$/    receivedAt: \"Today 8:15 AM\",\\\\n    updatedAt: \"Today 9:10 AM\",/' /Users/tammy/Downloads/seel-ai-support-v2-main/client/src/lib/data.ts)",
+      "Bash(sed -i '' 's/    receivedAt: \"Yesterday 4:38 PM\",$/    receivedAt: \"Yesterday 4:38 PM\",\\\\n    updatedAt: \"Yesterday 4:38 PM\",/' /Users/tammy/Downloads/seel-ai-support-v2-main/client/src/lib/data.ts)",
+      "Bash(sed -i '' 's/    receivedAt: \"Yesterday 2:11 PM\",$/    receivedAt: \"Yesterday 2:11 PM\",\\\\n    updatedAt: \"Yesterday 2:18 PM\",/' /Users/tammy/Downloads/seel-ai-support-v2-main/client/src/lib/data.ts)"
     ]
   }
 }

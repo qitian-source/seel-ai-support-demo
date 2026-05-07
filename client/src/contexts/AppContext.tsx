@@ -6,11 +6,14 @@ import {
   documents as defaultDocs,
   defaultReadActions,
   defaultWriteActions,
+  DEFAULT_FLAG_RULES,
   type Agent,
   type Rule,
   type Topic,
   type Document,
   type ActionPermission,
+  type OperationMode,
+  type FlagRule,
 } from "@/lib/data";
 
 /* ── Navigation ── */
@@ -113,6 +116,12 @@ interface AppState {
   setShowSettings: (v: boolean) => void;
   settingsSection: string | null;
   setSettingsSection: (s: string | null) => void;
+
+  /* Email mode & flag rules (configured in Settings > Channels) */
+  emailMode: OperationMode;
+  setEmailMode: (m: OperationMode) => void;
+  emailFlagRules: FlagRule[];
+  setEmailFlagRules: (r: FlagRule[]) => void;
 
   /* Email sync modal trigger */
   openEmailSyncModal: boolean;
@@ -225,6 +234,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | null>(null);
 
+  /* Email mode & flag rules */
+  const [emailMode, setEmailMode] = useState<OperationMode>("training");
+  const [emailFlagRules, setEmailFlagRules] = useState<FlagRule[]>(DEFAULT_FLAG_RULES);
+
   /* Email sync modal trigger */
   const [openEmailSyncModal, setOpenEmailSyncModal] = useState(false);
 
@@ -335,6 +348,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         emailSignoff, setEmailSignoff,
         showSettings, setShowSettings,
         settingsSection, setSettingsSection,
+        emailMode, setEmailMode,
+        emailFlagRules, setEmailFlagRules,
         openEmailSyncModal, setOpenEmailSyncModal,
         selectedAgentId, setSelectedAgentId,
         playbookDeepLink, setPlaybookDeepLink,
