@@ -611,19 +611,19 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
           {/* Stay / Next dropdown */}
           <div ref={stayMenuRef} className="relative">
             <button onClick={() => setShowStayMenu(v => !v)}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-700 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-600 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
               {stayOnTicket ? "Stay on ticket" : "Go to next ticket"}
               <ChevronDown size={12} />
             </button>
             {showStayMenu && (
               <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
                 <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 rounded-none">
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
                   {stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
                   Stay on ticket
                 </button>
                 <button onClick={() => { setStayOnTicket(false); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 rounded-none">
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
                   {!stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
                   Go to next ticket
                 </button>
@@ -632,24 +632,26 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
           </div>
 
           {/* Submit as [Status] split button */}
-          <div ref={submitMenuRef} className="relative flex items-center rounded-lg overflow-hidden">
+          <div ref={submitMenuRef} className="relative flex items-center rounded-lg overflow-hidden border border-[#6c47ff]">
             <button
               disabled={!draft.trim() && attachments.length === 0}
               onClick={handleSubmit}
-              className="flex items-center gap-1.5 h-8 px-4 text-[12px] font-semibold text-white bg-gray-800 hover:bg-gray-900 transition-colors disabled:opacity-40">
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors disabled:opacity-40">
+              <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
               Submit as {statusInfo(submitStatus).label}
             </button>
-            <div className="w-px h-full bg-white/20 shrink-0" />
+            <div className="w-px h-4 bg-white/30 shrink-0" />
             <button
               onClick={() => setShowSubmitMenu(v => !v)}
-              className="flex items-center justify-center h-8 w-8 text-white bg-gray-800 hover:bg-gray-900 transition-colors">
+              className="flex items-center justify-center h-8 w-8 text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors">
               <ChevronDown size={12} />
             </button>
             {showSubmitMenu && (
-              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[130px]">
+              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[145px]">
                 {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
                   <button key={opt.value} onClick={() => { setSubmitStatus(opt.value); setShowSubmitMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
+                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
+                      opt.value === submitStatus && "bg-[#6c47ff]/5")}>
                     <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
                     {opt.label}
                     {opt.value === submitStatus && <Check size={10} className="ml-auto text-[#6c47ff]" />}
@@ -923,7 +925,6 @@ export default function EmailPage() {
       {showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
 
       <div className="flex flex-col h-full overflow-hidden">
-        <StatsBar threads={threads} />
         <div className="flex flex-1 overflow-hidden min-h-0 select-none">
           <EmailList
             threads={threads}
