@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   emailThreads, type EmailThread, type EmailStatus, type EmailType,
-  type OperationMode,
+  type OperationMode, type FlagRule,
 } from "@/lib/data";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -63,6 +63,17 @@ function confidenceBand(c: number) {
   if (c >= 0.9) return { label: "High", cls: "text-green-700" };
   if (c >= 0.75) return { label: "Medium", cls: "text-amber-600" };
   return { label: "Low", cls: "text-red-600" };
+}
+
+function evaluateThread(thread: EmailThread, rules: FlagRule[]): boolean {
+  const { aiCard } = thread;
+  const on = (id: string) => rules.find(r => r.id === id)?.enabled ?? false;
+  if (on("sentiment_frustrated") && (aiCard.sentiment === "frustrated" || aiCard.sentiment === "negative")) return true;
+  if (on("low_confidence") && aiCard.confidence < 0.90) return true;
+  if (on("complaint_intent") && aiCard.intent === "Complaint") return true;
+  if (on("warranty_intent") && (aiCard.intent === "Warranty Coverage" || aiCard.intent === "Repair Status")) return true;
+  if (on("no_order") && !aiCard.orderNumber) return true;
+  return false;
 }
 
 // Sort key: parse "Today HH:MM" / "Yesterday HH:MM" to a numeric value (smaller = older = higher priority)
@@ -186,22 +197,32 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
   { value: "non-user", label: "Non-user" },
 ];
 
-function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart }: {
+function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpenSettings, width, onResizeStart }: {
   threads: EmailThread[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   globalMode: OperationMode;
+  flagRules: FlagRule[];
   onOpenSettings: () => void;
   width: number;
   onResizeStart: (e: React.MouseEvent) => void;
 }) {
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
+  const [needsReviewFilter, setNeedsReviewFilter] = useState(false);
+
+  // Count production threads that need human review (for badge)
+  const needsReviewCount = threads.filter(t => {
+    const m = t.threadMode ?? globalMode;
+    return m === "production" && evaluateThread(t, flagRules);
+  }).length;
 
   const filtered = threads.filter((t) => {
     const typeOk = typeFilter === "all" || t.emailType === typeFilter;
     const statusOk = statusFilter.size === 0 || statusFilter.has(t.status);
-    return typeOk && statusOk;
+    const m = t.threadMode ?? globalMode;
+    const reviewOk = !needsReviewFilter || (m === "production" && evaluateThread(t, flagRules));
+    return typeOk && statusOk && reviewOk;
   });
 
   // Sort by updatedAt ascending (oldest first = most urgent)
@@ -245,10 +266,27 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
           ))}
         </div>
 
-        {/* Status filter */}
-        <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
+        {/* Status filter + Needs review toggle */}
+        <div className="px-3 py-2 border-b border-border flex items-center gap-1.5 flex-wrap">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} />
-          <span className="text-[10px] text-gray-400">{sorted.length} tickets</span>
+          <button
+            onClick={() => setNeedsReviewFilter(v => !v)}
+            className={cn(
+              "flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border transition-colors shrink-0",
+              needsReviewFilter
+                ? "bg-orange-500 text-white border-orange-500"
+                : "bg-white text-gray-600 border-border hover:bg-gray-50"
+            )}>
+            <AlertTriangle size={10} className={needsReviewFilter ? "text-white" : "text-orange-400"} />
+            Needs review
+            {needsReviewCount > 0 && (
+              <span className={cn("text-[9px] font-bold rounded-full px-1 leading-tight ml-0.5",
+                needsReviewFilter ? "bg-white/30 text-white" : "bg-orange-100 text-orange-600")}>
+                {needsReviewCount}
+              </span>
+            )}
+          </button>
+          <span className="text-[10px] text-gray-400 ml-auto">{sorted.length} tickets</span>
         </div>
 
         {/* List */}
@@ -854,7 +892,7 @@ function EmailSyncModal({ onClose }: { onClose: () => void }) {
 // ── Main Page ──────────────────────────────────────────────────
 
 export default function EmailPage() {
-  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode } = useApp();
+  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode, emailFlagRules: flagRules } = useApp();
   const [threads, setThreads] = useState<EmailThread[]>(emailThreads);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
@@ -935,6 +973,7 @@ export default function EmailPage() {
             selectedId={selectedId}
             onSelect={handleSelect}
             globalMode={mode}
+            flagRules={flagRules}
             onOpenSettings={() => setShowSyncSettings(true)}
             width={listWidth}
             onResizeStart={handleResizeStart}
