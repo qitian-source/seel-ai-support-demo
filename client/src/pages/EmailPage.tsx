@@ -425,10 +425,10 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
   }, []);
 
   const handleSubmit = () => {
-    if (!draft.trim()) return;
-    onSend(draft.trim());
+    if (draft.trim()) onSend(draft.trim());
     onStatusChange(submitStatus);
-    setDraft(""); setAiInserted(false);
+    setDraft(""); setAiInserted(false); setAttachments([]);
+    toast.success(`Ticket → ${statusInfo(submitStatus).label}`);
     if (!stayOnTicket) onGoNext();
   };
 
@@ -452,7 +452,6 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
             <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide", modeCfg.tagCls)}>
               <ModeIcon size={9} />{modeCfg.label}
             </span>
-            <StatusDropdown status={thread.status} onChange={onStatusChange} />
           </div>
         </div>
       </div>
@@ -481,14 +480,18 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
           const showTr = translatedMsgIds.has(msg.id);
           return (
             <div key={msg.id} className={cn("rounded-xl border p-3.5 text-[13px] leading-relaxed",
-              isCustomer ? "bg-white border-border" : "bg-[#6c47ff]/5 border-[#6c47ff]/15")}>
+              isCustomer
+                ? "bg-white border-border"
+                : mode === "production"
+                  ? "bg-blue-50/70 border-blue-100"
+                  : "bg-amber-50/70 border-amber-100")}>
               <div className="flex items-center gap-2 mb-2">
                 <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                  isCustomer ? "bg-gray-200 text-gray-600" : "bg-[#6c47ff] text-white")}>
+                  isCustomer ? "bg-gray-200 text-gray-600" : mode === "production" ? "bg-blue-500 text-white" : "bg-amber-400 text-white")}>
                   {isCustomer ? <User size={11} /> : "AI"}
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">{msg.authorName}</span>
-                {!isCustomer && <span className="text-[11px] text-[#6c47ff]">via {INBOX_EMAIL}</span>}
+                {!isCustomer && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
                 <span className="ml-auto text-[11px] text-gray-400">{msg.timestamp}</span>
                 <button onClick={() => { navigator.clipboard.writeText(msg.content); toast.success("Copied"); }}
                   className="text-gray-300 hover:text-gray-500 transition-colors shrink-0">
@@ -519,7 +522,8 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
         {/* Inline AI Draft */}
         <div className={cn("rounded-xl border p-3.5 text-[13px] leading-relaxed", modeCfg.replyCls)}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-[#6c47ff] text-white flex items-center justify-center text-[10px] font-bold shrink-0">AI</div>
+            <div className={cn("w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] font-bold shrink-0",
+              mode === "production" ? "bg-blue-500" : "bg-amber-400")}>AI</div>
             <span className="text-[12px] font-semibold text-gray-700">AI Draft</span>
             {mode === "training" ? (
               <span className="text-[10px] text-amber-600 bg-amber-100 rounded-md px-1.5 py-0.5 font-medium">Review before sending</span>
@@ -634,9 +638,8 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
           {/* Submit as [Status] split button */}
           <div ref={submitMenuRef} className="relative flex items-center rounded-lg overflow-hidden border border-[#6c47ff]">
             <button
-              disabled={!draft.trim() && attachments.length === 0}
               onClick={handleSubmit}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors disabled:opacity-40">
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors">
               <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
               Submit as {statusInfo(submitStatus).label}
             </button>
@@ -925,6 +928,7 @@ export default function EmailPage() {
       {showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
 
       <div className="flex flex-col h-full overflow-hidden">
+        <StatsBar threads={threads} />
         <div className="flex flex-1 overflow-hidden min-h-0 select-none">
           <EmailList
             threads={threads}
