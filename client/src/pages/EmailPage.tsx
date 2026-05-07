@@ -218,35 +218,30 @@ function ModeBadge({ mode }: { mode: OperationMode }) {
 
 // ── Escalation Rules Popover ───────────────────────────────────
 
-function EscalationRulesPopover({ onClose }: { onClose: () => void }) {
+const ESCALATION_RULE_IDS = ["sentiment_frustrated", "low_confidence", "complaint_intent"];
+
+function EscalationRulesPanel() {
   const { emailFlagRules, setEmailFlagRules } = useApp();
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [onClose]);
   const toggle = (id: string) =>
     setEmailFlagRules(emailFlagRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+  const rules = emailFlagRules.filter(r => ESCALATION_RULE_IDS.includes(r.id));
   return (
-    <div ref={ref} className="absolute right-0 top-[calc(100%+4px)] z-[100] bg-white rounded-xl border border-border shadow-xl w-[268px]">
-      <div className="px-3 py-2.5 border-b border-border flex items-center gap-2">
-        <SlidersHorizontal size={12} className="text-[#6c47ff] shrink-0" />
-        <span className="text-[12px] font-semibold text-gray-800">Escalation Rules</span>
-        <span className="ml-auto text-[10px] text-gray-400">Production mode</span>
+    <div className="border-b border-border bg-gray-50/80">
+      <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
+        <SlidersHorizontal size={10} className="text-[#6c47ff] shrink-0" />
+        <span className="text-[11px] font-semibold text-gray-700">Escalation Rules</span>
+        <span className="text-[10px] text-gray-400 ml-1">· production mode</span>
       </div>
-      <div className="px-3 py-2.5 space-y-1">
-        <p className="text-[10px] text-gray-400 mb-2.5 leading-snug">Tickets matching enabled rules will be escalated to a human agent.</p>
-        {emailFlagRules.map(rule => (
+      <div className="px-3 pb-2.5 space-y-0.5">
+        {rules.map(rule => (
           <button key={rule.id} onClick={() => toggle(rule.id)}
-            className="w-full flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-gray-50 text-left transition-colors">
-            <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 text-left transition-colors">
+            <div className={cn("w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
               rule.enabled ? "bg-[#6c47ff] border-[#6c47ff]" : "border-gray-300 bg-white")}>
-              {rule.enabled && <Check size={9} className="text-white" />}
+              {rule.enabled && <Check size={8} className="text-white" />}
             </div>
-            <div className="min-w-0">
-              <div className="text-[11.5px] font-medium text-gray-700 leading-tight">{rule.label}</div>
-              <div className="text-[10px] text-gray-400 leading-snug mt-0.5">{rule.description}</div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-medium text-gray-700">{rule.label}</span>
             </div>
           </button>
         ))}
@@ -317,20 +312,18 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
           ))}
         </div>
 
-        {/* Status filter + Escalation rules */}
+        {/* Status filter + Escalation rules toggle */}
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
           <span className="text-[10px] text-gray-400">{sorted.length} tickets</span>
-          <div className="relative ml-auto">
-            <button onClick={() => setShowRules(v => !v)}
-              title="Escalation rules"
-              className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
-                showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
-              <SlidersHorizontal size={11} />
-            </button>
-            {showRules && <EscalationRulesPopover onClose={() => setShowRules(false)} />}
-          </div>
+          <button onClick={() => setShowRules(v => !v)}
+            title="Escalation rules"
+            className={cn("ml-auto flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
+              showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
+            <SlidersHorizontal size={11} />
+          </button>
         </div>
+        {showRules && <EscalationRulesPanel />}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
@@ -717,29 +710,34 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
             )}
           </div>
 
-          {/* Submit as [Status] split button */}
-          <div ref={submitMenuRef} className="relative flex items-center">
-            <button
-              onClick={handleSubmit}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-l-lg border border-[#6c47ff]">
-              <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
-              Submit as {statusInfo(submitStatus).label}
-            </button>
-            <div className="w-px h-4 bg-white/30 shrink-0 bg-[#6c47ff]" />
+          {/* Submit — click to open picker, choose status to submit */}
+          <div ref={submitMenuRef} className="relative">
             <button
               onClick={() => setShowSubmitMenu(v => !v)}
-              className="flex items-center justify-center h-8 w-8 text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-r-lg border border-l-0 border-[#6c47ff]">
-              <ChevronDown size={12} />
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-lg">
+              <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
+              Submit as {statusInfo(submitStatus).label}
+              <ChevronDown size={12} className="ml-0.5" />
             </button>
             {showSubmitMenu && (
-              <div className="absolute right-0 bottom-full mb-1 z-[200] bg-white rounded-lg border border-border shadow-lg py-1 min-w-[145px]">
+              <div className="absolute right-0 bottom-full mb-1.5 z-[200] bg-white rounded-xl border border-border shadow-xl py-1 min-w-[160px]">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-b border-border mb-1">Submit as</div>
                 {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
-                  <button key={opt.value} onClick={() => { setSubmitStatus(opt.value); setShowSubmitMenu(false); }}
-                    className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
+                  <button key={opt.value}
+                    onClick={() => {
+                      setShowSubmitMenu(false);
+                      if (draft.trim()) onSend(draft.trim());
+                      onStatusChange(opt.value);
+                      setSubmitStatus(opt.value);
+                      setDraft(""); setAiInserted(false); setAttachments([]);
+                      toast.success(`Submitted as ${opt.label}`);
+                      if (!stayOnTicket) onGoNext();
+                    }}
+                    className={cn("w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
                       opt.value === submitStatus && "bg-[#6c47ff]/5")}>
                     <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
-                    {opt.label}
-                    {opt.value === submitStatus && <Check size={10} className="ml-auto text-[#6c47ff]" />}
+                    <span className="flex-1 text-left">{opt.label}</span>
+                    {opt.value === submitStatus && <Check size={10} className="text-[#6c47ff]" />}
                   </button>
                 ))}
               </div>
