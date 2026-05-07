@@ -229,7 +229,7 @@ function EscalationRulesPopover({ onClose }: { onClose: () => void }) {
   const toggle = (id: string) =>
     setEmailFlagRules(emailFlagRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   return (
-    <div ref={ref} className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl border border-border shadow-xl w-[268px]">
+    <div ref={ref} className="absolute right-0 top-[calc(100%+4px)] z-[100] bg-white rounded-xl border border-border shadow-xl w-[268px]">
       <div className="px-3 py-2.5 border-b border-border flex items-center gap-2">
         <SlidersHorizontal size={12} className="text-[#6c47ff] shrink-0" />
         <span className="text-[12px] font-semibold text-gray-800">Escalation Rules</span>
@@ -300,7 +300,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
 
   return (
     <div className="flex shrink-0 h-full" style={{ width }}>
-      <div className="flex-1 flex flex-col border-r border-border bg-white h-full min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col border-r border-border bg-white h-full min-w-0 relative">
 
         {/* Type tabs */}
         <div className="flex border-b border-border">
