@@ -702,12 +702,6 @@ function TicketInfoPanel({ thread, globalMode, flagRules }: {
         <InfoRow label="Order"    value={aiCard.orderNumber ?? <span className="text-gray-400">—</span>} />
         <InfoRow label="Status"   value={aiCard.orderStatus ?? <span className="text-gray-400">—</span>} />
         {aiCard.estimatedDelivery && <InfoRow label="ETA"  value={aiCard.estimatedDelivery} />}
-        {aiCard.relatedPolicy && (
-          <div className="mt-2 p-2.5 rounded-lg bg-blue-50 border border-blue-100">
-            <div className="text-[9px] font-semibold text-blue-600 mb-1 flex items-center gap-1"><Shield size={9} />Policy</div>
-            <div className="text-[11px] text-blue-800 leading-snug">{aiCard.relatedPolicy}</div>
-          </div>
-        )}
       </div>
 
       <div className="px-4 py-3 flex-1">

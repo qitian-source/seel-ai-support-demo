@@ -870,6 +870,7 @@ export interface AIEmailCard {
 export interface EmailThread {
   id: string;
   emailType: EmailType;
+  threadMode?: OperationMode;  // per-thread mode override; if absent, uses global mode
   customer: string;
   customerEmail: string;
   subject: string;
@@ -888,6 +889,7 @@ export const emailThreads: EmailThread[] = [
   {
     id: "em-001",
     emailType: "user",
+    threadMode: "production",
     customer: "Michael Zhang",
     customerEmail: "michael.zhang@gmail.com",
     subject: "Where is my Mavic 3 Pro order?",
@@ -954,6 +956,7 @@ DJI美国客服团队`,
   {
     id: "em-002",
     emailType: "user",
+    threadMode: "production",
     customer: "Sarah Okonkwo",
     customerEmail: "s.okonkwo@outlook.com",
     subject: "DJI Mini 4 Pro crashed after 2 weeks — warranty claim",
@@ -1110,6 +1113,7 @@ DJI USA 客户支持`,
   {
     id: "em-004",
     emailType: "non-user",
+    threadMode: "production",
     customer: "Jennifer Liu",
     customerEmail: "jliu@protonmail.com",
     subject: "Return request — DJI FPV Combo, unopened",
@@ -1178,6 +1182,7 @@ DJI美国客服团队`,
   {
     id: "em-005",
     emailType: "non-user",
+    threadMode: "production",
     customer: "Robert Kim",
     customerEmail: "rkim@gmail.com",
     subject: "Avata 2 max wind resistance specs?",
@@ -1253,6 +1258,7 @@ DJI USA 客户支持`,
   {
     id: "em-006",
     emailType: "user",
+    threadMode: "production",
     customer: "Amanda Torres",
     customerEmail: "amandatorres@icloud.com",
     subject: "Very disappointed — wrong item sent",
@@ -1321,6 +1327,7 @@ DJI USA 客户支持`,
   {
     id: "em-007",
     emailType: "non-user",
+    threadMode: "production",
     customer: "TechHub B2B",
     customerEmail: "purchasing@techhub.com",
     subject: "Q2 bulk pricing request — DJI enterprise drones",
