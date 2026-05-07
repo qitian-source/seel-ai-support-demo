@@ -513,12 +513,16 @@ function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
 
 // ── Thread View ────────────────────────────────────────────────
 
-function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
+function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, showList, showInfo, onToggleList, onToggleInfo }: {
   thread: EmailThread;
   onSend: (text: string) => void;
   onStatusChange: (s: EmailStatus) => void;
   onGoNext: () => void;
   globalMode: OperationMode;
+  showList: boolean;
+  showInfo: boolean;
+  onToggleList: () => void;
+  onToggleInfo: () => void;
 }) {
   const [draft, setDraft] = useState("");
   const [aiInserted, setAiInserted] = useState(false);
@@ -581,9 +585,14 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white h-full">
       {/* Thread header */}
-      <div className="px-4 py-3 border-b border-border shrink-0 bg-white">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+      <div className="px-3 py-3 border-b border-border shrink-0 bg-white">
+        <div className="flex items-start justify-between gap-2">
+          {/* Left collapse toggle */}
+          <button onClick={onToggleList} title={showList ? "Hide list" : "Show list"}
+            className="shrink-0 mt-0.5 w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+            {showList ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+          </button>
+          <div className="min-w-0 flex-1">
             <h2 className="text-[14px] font-semibold text-gray-900 truncate">{thread.subject}</h2>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className="text-[12px] text-gray-700 font-medium">{thread.customer}</span>
@@ -600,6 +609,11 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
               <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", statusInfo(thread.status).dot)} />
               {statusInfo(thread.status).label}
             </span>
+            {/* Right collapse toggle */}
+            <button onClick={onToggleInfo} title={showInfo ? "Hide info" : "Show info"}
+              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+              {showInfo ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
           </div>
         </div>
       </div>
@@ -1019,6 +1033,8 @@ export default function EmailPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
   const [listWidth, setListWidth] = useState(260);
+  const [showList, setShowList] = useState(true);
+  const [showInfo, setShowInfo] = useState(true);
   const isDragging = useRef(false);
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(0);
@@ -1089,15 +1105,17 @@ export default function EmailPage() {
 
       <div className="flex flex-col h-full overflow-hidden">
         <div className="flex flex-1 overflow-hidden min-h-0 select-none">
-          <EmailList
-            threads={threads}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            globalMode={mode}
-            onOpenSettings={() => setShowSyncSettings(true)}
-            width={listWidth}
-            onResizeStart={handleResizeStart}
-          />
+          {showList && (
+            <EmailList
+              threads={threads}
+              selectedId={selectedId}
+              onSelect={handleSelect}
+              globalMode={mode}
+              onOpenSettings={() => setShowSyncSettings(true)}
+              width={listWidth}
+              onResizeStart={handleResizeStart}
+            />
+          )}
           {selectedThread ? (
             <>
               <ThreadView
@@ -1106,11 +1124,17 @@ export default function EmailPage() {
                 onStatusChange={s => handleStatusChange(selectedThread.id, s)}
                 onGoNext={handleGoNext}
                 globalMode={mode}
+                showList={showList}
+                showInfo={showInfo}
+                onToggleList={() => setShowList(v => !v)}
+                onToggleInfo={() => setShowInfo(v => !v)}
               />
-              <TicketInfoPanel
-                thread={selectedThread}
-                globalMode={mode}
-              />
+              {showInfo && (
+                <TicketInfoPanel
+                  thread={selectedThread}
+                  globalMode={mode}
+                />
+              )}
             </>
           ) : (
             <EmptyState />
