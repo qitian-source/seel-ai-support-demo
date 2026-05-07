@@ -76,6 +76,30 @@ function evaluateThread(thread: EmailThread, rules: FlagRule[]): boolean {
   return false;
 }
 
+// Date display helpers (today = 2026-05-07)
+function parseTo24(raw: string): string {
+  const parts = raw.trim().split(" ");
+  const [hStr, mStr] = (parts[0] ?? "0:0").split(":");
+  let h = parseInt(hStr ?? "0");
+  const m = parseInt(mStr ?? "0");
+  const ap = (parts[1] ?? "").toUpperCase();
+  if (ap === "PM" && h !== 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function shortDate(t: string): string {
+  if (!t) return "";
+  if (t.startsWith("Today "))     return `05/07 ${parseTo24(t.slice(6))}`;
+  if (t.startsWith("Yesterday ")) return `05/06 ${parseTo24(t.slice(10))}`;
+  return `05/07 ${parseTo24(t)}`;
+}
+function fullDate(t: string): string {
+  if (!t) return "";
+  if (t.startsWith("Today "))     return `2026/05/07 ${parseTo24(t.slice(6))}`;
+  if (t.startsWith("Yesterday ")) return `2026/05/06 ${parseTo24(t.slice(10))}`;
+  return `2026/05/07 ${parseTo24(t)}`;
+}
+
 // Sort key: parse "Today HH:MM" / "Yesterday HH:MM" to a numeric value (smaller = older = higher priority)
 function timeToSortKey(t: string): number {
   const [period, time] = t.split(" ");
@@ -333,7 +357,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
                     {info.label}
                   </span>
                   <ModeBadge mode={threadMode} />
-                  <span className="ml-auto text-[10px] text-gray-400 shrink-0">{thread.updatedAt.replace("Today ", "").replace("Yesterday ", "Yest ")}</span>
+                  <span className="ml-auto text-[10px] text-gray-400 shrink-0">{shortDate(thread.updatedAt)}</span>
                 </div>
               </button>
             );
@@ -509,6 +533,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
             <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide", modeCfg.tagCls)}>
               <ModeIcon size={9} />{modeCfg.label}
             </span>
+            <StatusDropdown status={thread.status} onChange={onStatusChange} />
           </div>
         </div>
       </div>
@@ -549,7 +574,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">{msg.authorName}</span>
                 {!isCustomer && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
-                <span className="ml-auto text-[11px] text-gray-400">{msg.timestamp}</span>
+                <span className="ml-auto text-[11px] text-gray-400">{fullDate(msg.timestamp)}</span>
                 <button onClick={() => { navigator.clipboard.writeText(msg.content); toast.success("Copied"); }}
                   className="text-gray-300 hover:text-gray-500 transition-colors shrink-0">
                   <Copy size={11} />
