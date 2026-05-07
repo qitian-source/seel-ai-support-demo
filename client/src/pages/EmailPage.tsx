@@ -36,9 +36,11 @@ const STATUS_OPTIONS: { value: EmailStatus; label: string; cls: string; dot: str
   { value: "solved",  label: "Solved",  cls: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500" },
 ];
 
-const MODE_CONFIG: Record<OperationMode, { label: string; cls: string; bannerCls: string; replyCls: string; icon: React.FC<{ size?: number }> }> = {
-  training:   { label: "Training",   cls: "bg-amber-100 text-amber-700 border-amber-200",   bannerCls: "bg-amber-50 border-amber-200 text-amber-700", replyCls: "bg-amber-50 border-amber-200",    icon: GraduationCap },
-  production: { label: "Production", cls: "bg-[#6c47ff]/10 text-[#6c47ff] border-[#6c47ff]/30", bannerCls: "bg-[#6c47ff]/5 border-[#6c47ff]/20 text-[#6c47ff]",  replyCls: "bg-[#6c47ff]/5 border-[#6c47ff]/20", icon: Bolt },
+const MODE_CONFIG: Record<OperationMode, {
+  label: string; tagCls: string; bannerCls: string; replyCls: string; msgsBg: string; icon: React.FC<{ size?: number }>;
+}> = {
+  training:   { label: "Training",   tagCls: "bg-amber-400 text-white",         bannerCls: "bg-amber-50 border-amber-200 text-amber-700",    replyCls: "bg-amber-50 border-amber-200",    msgsBg: "bg-amber-50/40", icon: GraduationCap },
+  production: { label: "Production", tagCls: "bg-blue-600 text-white",           bannerCls: "bg-blue-50 border-blue-200 text-blue-700",       replyCls: "bg-blue-50 border-blue-200",      msgsBg: "bg-blue-50/30",  icon: Bolt },
 };
 
 const EMAIL_TYPE_CONFIG: Record<EmailType, { label: string; cls: string; icon: React.ReactNode }> = {
@@ -186,7 +188,7 @@ function ModeBadge({ mode }: { mode: OperationMode }) {
   const cfg = MODE_CONFIG[mode];
   const Icon = cfg.icon;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1 py-0.5 shrink-0", cfg.cls)}>
+    <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 shrink-0 uppercase tracking-wide", cfg.tagCls)}>
       <Icon size={9} />{cfg.label}
     </span>
   );
@@ -411,14 +413,29 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
   }, [draft]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [thread.messages.length]);
 
-  const handleSend = () => {
+  const [submitStatus, setSubmitStatus] = useState<EmailStatus>("open");
+  const [stayOnTicket, setStayOnTicket] = useState(true);
+  const [showSubmitMenu, setShowSubmitMenu] = useState(false);
+  const [showStayMenu, setShowStayMenu] = useState(false);
+  const submitMenuRef = useRef<HTMLDivElement>(null);
+  const stayMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (submitMenuRef.current && !submitMenuRef.current.contains(e.target as Node)) setShowSubmitMenu(false);
+      if (stayMenuRef.current && !stayMenuRef.current.contains(e.target as Node)) setShowStayMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const handleSubmit = () => {
     if (!draft.trim()) return;
     onSend(draft.trim());
+    onStatusChange(submitStatus);
     setDraft(""); setAiInserted(false);
+    if (!stayOnTicket) onGoNext();
   };
-
-  const handleSolveAndStay = () => { onStatusChange("solved"); toast.success("Marked as Solved"); };
-  const handleSolveAndNext = () => { onStatusChange("solved"); onGoNext(); toast.success("Marked as Solved — moved to next"); };
 
   const modeCfg = MODE_CONFIG[mode];
   const ModeIcon = modeCfg.icon;
@@ -437,7 +454,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={cn("inline-flex items-center gap-1 text-[10px] font-semibold border rounded px-1.5 py-0.5", modeCfg.cls)}>
+            <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide", modeCfg.tagCls)}>
               <ModeIcon size={9} />{modeCfg.label}
             </span>
             <StatusDropdown status={thread.status} onChange={onStatusChange} />
@@ -467,7 +484,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#fafafa] min-h-0">
+      <div className={cn("flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0", modeCfg.msgsBg)}>
         {thread.messages.map((msg) => {
           const isCustomer = msg.from === "customer";
           const hasTranslation = isCustomer && !!msg.contentZh;
@@ -581,24 +598,66 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
               <RotateCcw size={11} />Clear draft
             </button>
           )}
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={handleSolveAndStay}
-              className="flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition-colors font-medium">
-              <CheckCircle2 size={12} />Solve & Stay
+        </div>
+
+        {/* Zendesk-style bottom action bar */}
+        <div className="flex items-center justify-between px-3 py-2.5 border-t border-border bg-gray-50">
+          {/* Left: Stay / Next dropdown */}
+          <div ref={stayMenuRef} className="relative">
+            <button onClick={() => setShowStayMenu(v => !v)}
+              className="flex items-center gap-1.5 text-[12px] font-medium text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+              {stayOnTicket ? "Stay on ticket" : "Go to next ticket"}
+              <ChevronDown size={13} />
             </button>
-            <button onClick={handleSolveAndNext}
-              className="flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition-colors font-medium">
-              <CheckCircle2 size={12} />Solve & Next<ArrowRight size={11} />
+            {showStayMenu && (
+              <div className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
+                <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
+                  {stayOnTicket && <Check size={11} className="text-[#6c47ff]" />}
+                  {!stayOnTicket && <span className="w-[11px]" />}
+                  Stay on ticket
+                </button>
+                <button onClick={() => { setStayOnTicket(false); setShowStayMenu(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
+                  {!stayOnTicket && <Check size={11} className="text-[#6c47ff]" />}
+                  {stayOnTicket && <span className="w-[11px]" />}
+                  Go to next ticket
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Submit as [Status] split button */}
+          <div ref={submitMenuRef} className="relative flex items-center">
+            <button
+              disabled={!draft.trim()}
+              onClick={handleSubmit}
+              className={cn(
+                "flex items-center gap-1.5 text-[12px] font-semibold px-4 py-1.5 rounded-l-lg text-white transition-colors disabled:opacity-40",
+                flagged && mode === "production" ? "bg-red-600 hover:bg-red-700" : "bg-gray-800 hover:bg-gray-900"
+              )}>
+              Submit as {statusInfo(submitStatus).label}
             </button>
-            <StatusDropdown status={thread.status} onChange={onStatusChange} />
-            <div className="flex-1" />
-            <Button size="sm" disabled={!draft.trim()}
-              className={cn("gap-1.5 text-[12px] text-white h-8", flagged && mode === "production" ? "bg-red-500 hover:bg-red-600" : "bg-[#6c47ff] hover:bg-[#5a3ad9]")}
-              onClick={handleSend}>
-              <Send size={12} />
-              {mode === "production" && flagged ? "Send (Override)" : "Send Reply"}
-            </Button>
+            <button
+              onClick={() => setShowSubmitMenu(v => !v)}
+              className={cn(
+                "flex items-center justify-center px-2 py-1.5 rounded-r-lg text-white border-l border-white/20 transition-colors",
+                flagged && mode === "production" ? "bg-red-600 hover:bg-red-700" : "bg-gray-800 hover:bg-gray-900"
+              )}>
+              <ChevronDown size={13} />
+            </button>
+            {showSubmitMenu && (
+              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[130px]">
+                {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
+                  <button key={opt.value} onClick={() => { setSubmitStatus(opt.value); setShowSubmitMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
+                    {opt.label}
+                    {opt.value === submitStatus && <Check size={10} className="ml-auto text-[#6c47ff]" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -641,9 +700,9 @@ function TicketInfoPanel({ thread, mode, flagRules }: {
         <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Customer Info</div>
         <InfoRow label="Intent"    value={aiCard.intent} />
         <InfoRow label="Sentiment" value={<span className={cn("text-[11px] font-medium px-1.5 py-0.5 rounded", sentimentColor(aiCard.sentiment))}>{sentimentLabel(aiCard.sentiment)}</span>} />
-        {aiCard.orderNumber   && <InfoRow label="Order"    value={aiCard.orderNumber} />}
-        {aiCard.orderStatus   && <InfoRow label="Status"   value={aiCard.orderStatus} />}
-        {aiCard.tracking      && <InfoRow label="Tracking" value={<span className="font-mono text-[10px]">{aiCard.tracking}</span>} />}
+        <InfoRow label="Order"    value={aiCard.orderNumber ?? <span className="text-gray-400">—</span>} />
+        <InfoRow label="Status"   value={aiCard.orderStatus ?? <span className="text-gray-400">—</span>} />
+        <InfoRow label="Tracking" value={aiCard.tracking ? <span className="font-mono text-[10px]">{aiCard.tracking}</span> : <span className="text-gray-400">—</span>} />
         {aiCard.estimatedDelivery && <InfoRow label="ETA"  value={aiCard.estimatedDelivery} />}
         {aiCard.relatedPolicy && (
           <div className="mt-2 p-2.5 rounded-lg bg-blue-50 border border-blue-100">
@@ -656,16 +715,15 @@ function TicketInfoPanel({ thread, mode, flagRules }: {
       <div className="px-4 py-3 flex-1">
         <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">AI Summary</div>
         <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[9px] font-semibold text-gray-500">Summary</span>
-            {aiCard.summaryZh && (
+          {aiCard.summaryZh && (
+            <div className="flex justify-end mb-1.5">
               <button onClick={() => setShowSummaryZh(v => !v)}
                 className={cn("flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
                   showSummaryZh ? "bg-blue-500 text-white border-blue-500" : "text-blue-500 border-blue-200 hover:bg-blue-50")}>
                 <Languages size={8} />{showSummaryZh ? "收起" : "翻译"}
               </button>
-            )}
-          </div>
+            </div>
+          )}
           <div className="text-[11.5px] text-gray-700 leading-snug">{aiCard.summary}</div>
           {showSummaryZh && aiCard.summaryZh && (
             <div className="mt-2 pt-2 border-t border-dashed border-blue-100">
