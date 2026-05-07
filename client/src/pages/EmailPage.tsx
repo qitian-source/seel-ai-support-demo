@@ -21,6 +21,7 @@ import {
   GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
   ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
+  Underline, List, ListOrdered, Link,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -220,29 +221,50 @@ function ModeBadge({ mode }: { mode: OperationMode }) {
 
 const ESCALATION_RULE_IDS = ["sentiment_frustrated", "low_confidence", "complaint_intent"];
 
-function EscalationRulesPanel() {
+function EscalationRulesPopover({ anchorRef, onClose }: {
+  anchorRef: React.RefObject<HTMLButtonElement>;
+  onClose: () => void;
+}) {
   const { emailFlagRules, setEmailFlagRules } = useApp();
   const toggle = (id: string) =>
     setEmailFlagRules(emailFlagRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   const rules = emailFlagRules.filter(r => ESCALATION_RULE_IDS.includes(r.id));
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    const rect = anchorRef.current?.getBoundingClientRect();
+    if (rect) setPos({ top: rect.bottom + 6, left: rect.right - 220 });
+  }, [anchorRef]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (
+        panelRef.current && !panelRef.current.contains(e.target as Node) &&
+        anchorRef.current && !anchorRef.current.contains(e.target as Node)
+      ) onClose();
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [onClose, anchorRef]);
+
   return (
-    <div className="border-b border-border bg-gray-50/80">
-      <div className="px-3 pt-2.5 pb-1 flex items-center gap-1.5">
+    <div ref={panelRef} style={{ position: "fixed", top: pos.top, left: pos.left, width: 220, zIndex: 9999 }}
+      className="bg-white rounded-xl border border-border shadow-xl overflow-hidden">
+      <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-1.5 border-b border-border bg-gray-50">
         <SlidersHorizontal size={10} className="text-[#6c47ff] shrink-0" />
         <span className="text-[11px] font-semibold text-gray-700">Escalation Rules</span>
-        <span className="text-[10px] text-gray-400 ml-1">· production mode</span>
+        <span className="text-[10px] text-gray-400 ml-1">· production</span>
       </div>
-      <div className="px-3 pb-2.5 space-y-0.5">
+      <div className="px-2 py-1.5 space-y-0.5">
         {rules.map(rule => (
           <button key={rule.id} onClick={() => toggle(rule.id)}
-            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-100 text-left transition-colors">
+            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
             <div className={cn("w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
               rule.enabled ? "bg-[#6c47ff] border-[#6c47ff]" : "border-gray-300 bg-white")}>
               {rule.enabled && <Check size={8} className="text-white" />}
             </div>
-            <div className="min-w-0 flex-1">
-              <span className="text-[11px] font-medium text-gray-700">{rule.label}</span>
-            </div>
+            <span className="text-[11px] font-medium text-gray-700">{rule.label}</span>
           </button>
         ))}
       </div>
@@ -270,6 +292,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
   const [showRules, setShowRules] = useState(false);
+  const rulesAnchorRef = useRef<HTMLButtonElement>(null);
 
   const statusCounts: Record<EmailStatus, number> = {
     new:     threads.filter(t => t.status === "new").length,
@@ -316,14 +339,14 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
           <span className="text-[10px] text-gray-400">{sorted.length} tickets</span>
-          <button onClick={() => setShowRules(v => !v)}
+          <button ref={rulesAnchorRef} onClick={() => setShowRules(v => !v)}
             title="Escalation rules"
             className={cn("ml-auto flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
               showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
             <SlidersHorizontal size={11} />
           </button>
         </div>
-        {showRules && <EscalationRulesPanel />}
+        {showRules && <EscalationRulesPopover anchorRef={rulesAnchorRef} onClose={() => setShowRules(false)} />}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
@@ -403,24 +426,70 @@ function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
     setTimeout(() => { el.focus(); el.setSelectionRange(pos + text.length, pos + text.length); }, 0);
   };
 
+  const [showLink, setShowLink] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+
+  const insertLink = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart, end = el.selectionEnd;
+    const selected = value.slice(start, end) || "link text";
+    const url = linkUrl || "https://";
+    const md = `[${selected}](${url})`;
+    onChange(value.slice(0, start) + md + value.slice(end));
+    setTimeout(() => { el.focus(); el.setSelectionRange(start + md.length, start + md.length); }, 0);
+    setShowLink(false); setLinkUrl("");
+  };
+
+  const btnCls = "w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 transition-colors";
+  const divider = <div className="w-px h-4 bg-border mx-0.5" />;
+
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border bg-gray-50/80">
-      <button onClick={() => wrapSelection("**")} title="Bold"
-        className="w-6 h-6 flex items-center justify-center rounded text-[12px] font-bold text-gray-600 hover:bg-gray-200 transition-colors">
-        B
+    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border bg-gray-50/80 flex-wrap">
+      {/* Text style */}
+      <button onClick={() => wrapSelection("**")} title="Bold" className={btnCls}>
+        <span className="text-[12px] font-bold">B</span>
       </button>
-      <button onClick={() => wrapSelection("_")} title="Italic"
-        className="w-6 h-6 flex items-center justify-center rounded text-[12px] italic text-gray-600 hover:bg-gray-200 transition-colors">
-        I
+      <button onClick={() => wrapSelection("_")} title="Italic" className={btnCls}>
+        <span className="text-[12px] italic">I</span>
       </button>
-      <div className="w-px h-4 bg-border mx-0.5" />
-      <button onClick={() => insertAtCursor("\n[Image: paste URL here]\n")} title="Insert image"
-        className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 transition-colors">
+      <button onClick={() => wrapSelection("<u>", "</u>")} title="Underline" className={btnCls}>
+        <Underline size={12} />
+      </button>
+      {divider}
+      {/* Lists */}
+      <button onClick={() => insertAtCursor("\n- ")} title="Bullet list" className={btnCls}>
+        <List size={12} />
+      </button>
+      <button onClick={() => insertAtCursor("\n1. ")} title="Numbered list" className={btnCls}>
+        <ListOrdered size={12} />
+      </button>
+      {divider}
+      {/* Link */}
+      <div className="relative">
+        <button onClick={() => setShowLink(v => !v)} title="Insert link" className={btnCls}>
+          <Link size={12} />
+        </button>
+        {showLink && (
+          <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg border border-border shadow-lg p-2 flex gap-1.5 items-center min-w-[220px]">
+            <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+              placeholder="https://"
+              onKeyDown={e => e.key === "Enter" && insertLink()}
+              className="flex-1 text-[11px] px-2 py-1 border border-border rounded focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40" />
+            <button onClick={insertLink}
+              className="text-[11px] px-2 py-1 bg-[#6c47ff] text-white rounded hover:bg-[#5a3ad9] transition-colors">
+              OK
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Image */}
+      <button onClick={() => insertAtCursor("\n[Image: paste URL here]\n")} title="Insert image" className={btnCls}>
         <Image size={12} />
       </button>
+      {/* Color */}
       <div className="relative">
-        <button onClick={() => setShowColors(v => !v)} title="Text color"
-          className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 transition-colors">
+        <button onClick={() => setShowColors(v => !v)} title="Text color" className={btnCls}>
           <Palette size={12} />
         </button>
         {showColors && (
@@ -433,9 +502,9 @@ function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
           </div>
         )}
       </div>
-      <div className="w-px h-4 bg-border mx-0.5" />
-      <button onClick={onAttach} title="Attach file"
-        className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 transition-colors">
+      {divider}
+      {/* Attach */}
+      <button onClick={onAttach} title="Attach file" className={btnCls}>
         <Paperclip size={12} />
       </button>
     </div>
@@ -526,7 +595,11 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
             <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide pointer-events-none select-none", modeCfg.tagCls)}>
               <ModeIcon size={9} />{modeCfg.label}
             </span>
-            <StatusDropdown status={thread.status} onChange={onStatusChange} />
+            {/* Read-only status badge */}
+            <span className={cn("inline-flex items-center gap-1 text-[11px] font-medium border rounded-full px-2.5 py-1 pointer-events-none select-none", statusInfo(thread.status).cls)}>
+              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", statusInfo(thread.status).dot)} />
+              {statusInfo(thread.status).label}
+            </span>
           </div>
         </div>
       </div>
@@ -551,7 +624,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
       <div className={cn("flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0", modeCfg.msgsBg)}>
         {thread.messages.map((msg) => {
           const isCustomer = msg.from === "customer";
-          const hasTranslation = isCustomer && !!msg.contentZh;
+          const hasTranslation = !!msg.contentZh;
           const showTr = translatedMsgIds.has(msg.id);
           return (
             <div key={msg.id} className={cn("rounded-xl border p-3.5 text-[13px] leading-relaxed",
@@ -567,18 +640,24 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">{msg.authorName}</span>
                 {!isCustomer && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
-                <span className="ml-auto text-[11px] text-gray-400">{fullDate(msg.timestamp)}</span>
-                <button onClick={() => { navigator.clipboard.writeText(msg.content); toast.success("Copied"); }}
-                  className="text-gray-300 hover:text-gray-500 transition-colors shrink-0">
-                  <Copy size={11} />
-                </button>
-                {hasTranslation && (
-                  <button onClick={() => toggleMsgTranslation(msg.id)}
-                    className={cn("flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-all shrink-0",
-                      showTr ? "bg-blue-500 text-white border-blue-500" : "text-blue-500 border-blue-200 hover:bg-blue-50")}>
-                    <Languages size={9} />{showTr ? "收起" : "翻译"}
+                {/* Right cluster: time + copy + translate (always shown) */}
+                <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                  <span className="text-[11px] text-gray-400">{fullDate(msg.timestamp)}</span>
+                  <button onClick={() => { navigator.clipboard.writeText(msg.content); toast.success("Copied"); }}
+                    className="text-gray-300 hover:text-gray-500 transition-colors">
+                    <Copy size={11} />
                   </button>
-                )}
+                  <button
+                    onClick={() => hasTranslation ? toggleMsgTranslation(msg.id) : toast("No translation available")}
+                    className={cn("flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
+                      showTr && hasTranslation
+                        ? "bg-blue-500 text-white border-blue-500"
+                        : hasTranslation
+                          ? "text-blue-500 border-blue-200 hover:bg-blue-50"
+                          : "text-gray-300 border-gray-200 cursor-default")}>
+                    <Languages size={9} />{showTr && hasTranslation ? "收起" : "翻译"}
+                  </button>
+                </div>
               </div>
               <div className="whitespace-pre-wrap text-gray-700 text-[12.5px]">{msg.content}</div>
               {showTr && msg.contentZh && (
@@ -607,24 +686,29 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
                 <Bolt size={9} />Auto-sent
               </span>
             )}
-            <div className="ml-auto flex items-center gap-1.5">
-              {thread.aiCard.suggestedReplyZh && (
-                <button onClick={() => setShowAiReplyZh(v => !v)}
-                  className={cn("flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
-                    showAiReplyZh ? "bg-blue-500 text-white border-blue-500" : "text-blue-500 border-blue-200 hover:bg-blue-50")}>
-                  <Languages size={9} />{showAiReplyZh ? "收起" : "翻译"}
-                </button>
-              )}
-              <button onClick={() => { navigator.clipboard.writeText(thread.aiCard.suggestedReply); toast.success("Copied"); }}
-                className="text-gray-400 hover:text-gray-600 flex items-center gap-1 text-[10px] transition-colors">
-                <Copy size={10} />Copy
+            {mode === "training" && (
+              <button onClick={() => { setDraft(thread.aiCard.suggestedReply); setAiInserted(true); toast.success("Inserted into reply box"); }}
+                className="flex items-center gap-1 text-[10px] font-medium text-[#6c47ff] hover:underline transition-colors">
+                <Sparkles size={9} />Insert
               </button>
-              {mode === "training" && (
-                <button onClick={() => { setDraft(thread.aiCard.suggestedReply); setAiInserted(true); toast.success("Inserted into reply box"); }}
-                  className="flex items-center gap-1 text-[10px] font-medium text-[#6c47ff] hover:underline transition-colors">
-                  <Sparkles size={9} />Insert
-                </button>
-              )}
+            )}
+            {/* Right cluster: time + copy + translate */}
+            <div className="ml-auto flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] text-gray-400">{fullDate(thread.updatedAt)}</span>
+              <button onClick={() => { navigator.clipboard.writeText(thread.aiCard.suggestedReply); toast.success("Copied"); }}
+                className="text-gray-300 hover:text-gray-500 transition-colors">
+                <Copy size={11} />
+              </button>
+              <button
+                onClick={() => thread.aiCard.suggestedReplyZh ? setShowAiReplyZh(v => !v) : toast("No translation available")}
+                className={cn("flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
+                  showAiReplyZh && thread.aiCard.suggestedReplyZh
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : thread.aiCard.suggestedReplyZh
+                      ? "text-blue-500 border-blue-200 hover:bg-blue-50"
+                      : "text-gray-300 border-gray-200 cursor-default")}>
+                <Languages size={9} />{showAiReplyZh && thread.aiCard.suggestedReplyZh ? "收起" : "翻译"}
+              </button>
             </div>
           </div>
           <div className="whitespace-pre-wrap text-[12.5px] text-gray-700">{thread.aiCard.suggestedReply}</div>
@@ -649,10 +733,6 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
 
       {/* Compose area */}
       <div className="border-t border-border bg-white shrink-0">
-        <div className="px-3 py-1 border-b border-border flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-full bg-[#6c47ff]/20 text-[#6c47ff] flex items-center justify-center text-[9px] font-bold shrink-0">SC</div>
-          <span className="text-[11px] text-gray-500">Replying as <span className="font-medium text-gray-700">{CURRENT_USER}</span></span>
-        </div>
         <FormatToolbar textareaRef={textareaRef} value={draft} onChange={setDraft} onAttach={() => fileInputRef.current?.click()} />
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
         <div className="px-3 pt-3 pb-1 space-y-2">
@@ -776,17 +856,17 @@ function TicketInfoPanel({ thread, globalMode }: {
       </div>
 
       <div className="px-4 py-3 flex-1">
-        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">AI Summary</div>
-        <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">AI Summary</span>
           {aiCard.summaryZh && (
-            <div className="flex justify-end mb-1.5">
-              <button onClick={() => setShowSummaryZh(v => !v)}
-                className={cn("flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
-                  showSummaryZh ? "bg-blue-500 text-white border-blue-500" : "text-blue-500 border-blue-200 hover:bg-blue-50")}>
-                <Languages size={8} />{showSummaryZh ? "收起" : "翻译"}
-              </button>
-            </div>
+            <button onClick={() => setShowSummaryZh(v => !v)}
+              className={cn("flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full border transition-all",
+                showSummaryZh ? "bg-blue-500 text-white border-blue-500" : "text-blue-500 border-blue-200 hover:bg-blue-50")}>
+              <Languages size={8} />{showSummaryZh ? "收起" : "翻译"}
+            </button>
           )}
+        </div>
+        <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
           <div className="text-[11.5px] text-gray-700 leading-snug">{aiCard.summary}</div>
           {showSummaryZh && aiCard.summaryZh && (
             <div className="mt-2 pt-2 border-t border-dashed border-blue-100">
