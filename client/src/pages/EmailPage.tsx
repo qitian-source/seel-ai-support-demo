@@ -20,7 +20,7 @@ import {
   Mail, Check, Eye, EyeOff, Languages,
   GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
-  ArrowRight, Settings, Paperclip, FileText, XCircle,
+  ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -122,8 +122,10 @@ function StatusDropdown({ status, onChange, compact = false }: {
   );
 }
 
-function StatusFilterDropdown({ selected, onChange }: {
-  selected: Set<EmailStatus>; onChange: (s: Set<EmailStatus>) => void;
+function StatusFilterDropdown({ selected, onChange, counts }: {
+  selected: Set<EmailStatus>;
+  onChange: (s: Set<EmailStatus>) => void;
+  counts: Record<EmailStatus, number>;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -142,26 +144,27 @@ function StatusFilterDropdown({ selected, onChange }: {
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1 text-[11px] px-2 py-1 rounded border border-border text-gray-600 hover:bg-gray-50 transition-colors bg-white">
+        className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-border text-gray-600 hover:bg-gray-50 transition-colors bg-white">
         <span className="truncate max-w-[110px]">{label}</span>
         <ChevronDown size={10} className="shrink-0" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[140px]">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[160px]">
           <button onClick={() => onChange(new Set())}
-            className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 text-gray-500">
-            Clear all
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 text-gray-400">
+            Clear filter
           </button>
           <div className="border-t border-border my-1" />
           {STATUS_OPTIONS.map((opt) => (
             <button key={opt.value} onClick={() => toggle(opt.value)}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50">
-              <span className={cn("w-3 h-3 rounded border flex items-center justify-center",
+              <span className={cn("w-3 h-3 rounded border flex items-center justify-center shrink-0",
                 selected.has(opt.value) ? "bg-[#6c47ff] border-[#6c47ff]" : "border-gray-300")}>
                 {selected.has(opt.value) && <Check size={8} className="text-white" />}
               </span>
               <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
-              <span className="text-gray-700">{opt.label}</span>
+              <span className="flex-1 text-left text-gray-700">{opt.label}</span>
+              <span className="text-[10px] text-gray-400 shrink-0">{counts[opt.value]}</span>
             </button>
           ))}
         </div>
@@ -189,6 +192,45 @@ function ModeBadge({ mode }: { mode: OperationMode }) {
   );
 }
 
+// ── Escalation Rules Popover ───────────────────────────────────
+
+function EscalationRulesPopover({ onClose }: { onClose: () => void }) {
+  const { emailFlagRules, setEmailFlagRules } = useApp();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [onClose]);
+  const toggle = (id: string) =>
+    setEmailFlagRules(emailFlagRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+  return (
+    <div ref={ref} className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl border border-border shadow-xl w-[268px]">
+      <div className="px-3 py-2.5 border-b border-border flex items-center gap-2">
+        <SlidersHorizontal size={12} className="text-[#6c47ff] shrink-0" />
+        <span className="text-[12px] font-semibold text-gray-800">Escalation Rules</span>
+        <span className="ml-auto text-[10px] text-gray-400">Production mode</span>
+      </div>
+      <div className="px-3 py-2.5 space-y-1">
+        <p className="text-[10px] text-gray-400 mb-2.5 leading-snug">Tickets matching enabled rules will be escalated to a human agent.</p>
+        {emailFlagRules.map(rule => (
+          <button key={rule.id} onClick={() => toggle(rule.id)}
+            className="w-full flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-gray-50 text-left transition-colors">
+            <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+              rule.enabled ? "bg-[#6c47ff] border-[#6c47ff]" : "border-gray-300 bg-white")}>
+              {rule.enabled && <Check size={9} className="text-white" />}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11.5px] font-medium text-gray-700 leading-tight">{rule.label}</div>
+              <div className="text-[10px] text-gray-400 leading-snug mt-0.5">{rule.description}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Email List ─────────────────────────────────────────────────
 
 const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
@@ -208,6 +250,14 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
 }) {
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
+  const [showRules, setShowRules] = useState(false);
+
+  const statusCounts: Record<EmailStatus, number> = {
+    new:     threads.filter(t => t.status === "new").length,
+    open:    threads.filter(t => t.status === "open").length,
+    pending: threads.filter(t => t.status === "pending").length,
+    solved:  threads.filter(t => t.status === "solved").length,
+  };
 
   const filtered = threads.filter((t) => {
     const typeOk = typeFilter === "all" || t.emailType === typeFilter;
@@ -227,19 +277,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   return (
     <div className="flex shrink-0 h-full" style={{ width }}>
       <div className="flex-1 flex flex-col border-r border-border bg-white h-full min-w-0 overflow-hidden">
-        {/* Header */}
-        <div className="px-3 py-2.5 border-b border-border flex items-center gap-2">
-          <Inbox size={14} className="text-[#6c47ff] shrink-0" />
-          <span className="text-[13px] font-semibold text-gray-900 truncate flex-1">Email Inbox</span>
-          {threads.filter(t => !t.isRead).length > 0 && (
-            <span className="text-[10px] text-white bg-[#6c47ff] rounded-full px-1.5 py-0.5 font-bold shrink-0 leading-none">
-              {threads.filter(t => !t.isRead).length}
-            </span>
-          )}
-          <button onClick={onOpenSettings} className="text-gray-400 hover:text-[#6c47ff] p-1 rounded hover:bg-gray-100 transition-colors shrink-0" title="Email settings">
-            <Settings size={12} />
-          </button>
-        </div>
 
         {/* Type tabs */}
         <div className="flex border-b border-border">
@@ -256,10 +293,19 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
           ))}
         </div>
 
-        {/* Status filter */}
+        {/* Status filter + Escalation rules */}
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
-          <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} />
-          <span className="text-[10px] text-gray-400 ml-auto">{sorted.length} tickets</span>
+          <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
+          <span className="text-[10px] text-gray-400">{sorted.length} tickets</span>
+          <div className="relative ml-auto">
+            <button onClick={() => setShowRules(v => !v)}
+              title="Escalation rules"
+              className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
+                showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
+              <SlidersHorizontal size={11} />
+            </button>
+            {showRules && <EscalationRulesPopover onClose={() => setShowRules(false)} />}
+          </div>
         </div>
 
         {/* List */}
@@ -939,7 +985,6 @@ export default function EmailPage() {
       {showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
 
       <div className="flex flex-col h-full overflow-hidden">
-        <StatsBar threads={threads} />
         <div className="flex flex-1 overflow-hidden min-h-0 select-none">
           <EmailList
             threads={threads}
