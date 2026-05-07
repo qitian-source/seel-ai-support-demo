@@ -202,11 +202,11 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
   { value: "non-user", label: "Non-user" },
 ];
 
-function EmailList({ threads, selectedId, onSelect, mode, flagRules, onOpenSettings, width, onResizeStart }: {
+function EmailList({ threads, selectedId, onSelect, globalMode, flagRules, onOpenSettings, width, onResizeStart }: {
   threads: EmailThread[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  mode: OperationMode;
+  globalMode: OperationMode;
   flagRules: FlagRule[];
   onOpenSettings: () => void;
   width: number;
@@ -272,7 +272,8 @@ function EmailList({ threads, selectedId, onSelect, mode, flagRules, onOpenSetti
         <div className="flex-1 overflow-y-auto">
           {sorted.map((thread) => {
             const isSelected = thread.id === selectedId;
-            const { flagged } = mode === "production" ? evaluateThread(thread, flagRules) : { flagged: false };
+            const threadMode = thread.threadMode ?? globalMode;
+            const { flagged } = threadMode === "production" ? evaluateThread(thread, flagRules) : { flagged: false };
             const info = statusInfo(thread.status);
             return (
               <button key={thread.id} onClick={() => onSelect(thread.id)}
@@ -293,7 +294,7 @@ function EmailList({ threads, selectedId, onSelect, mode, flagRules, onOpenSetti
                     <span className={cn("w-1.5 h-1.5 rounded-full", info.dot)} />
                     {info.label}
                   </span>
-                  <ModeBadge mode={mode} />
+                  <ModeBadge mode={threadMode} />
                   {flagged && <Flag size={9} className="fill-red-500 text-red-500 shrink-0" />}
                   <span className="ml-auto text-[10px] text-gray-400 shrink-0">{thread.updatedAt.replace("Today ", "").replace("Yesterday ", "Yest ")}</span>
                 </div>
@@ -383,12 +384,12 @@ function FormatToolbar({ textareaRef, value, onChange }: {
 
 // ── Thread View ────────────────────────────────────────────────
 
-function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules }: {
+function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, flagRules }: {
   thread: EmailThread;
   onSend: (text: string) => void;
   onStatusChange: (s: EmailStatus) => void;
   onGoNext: () => void;
-  mode: OperationMode;
+  globalMode: OperationMode;
   flagRules: FlagRule[];
 }) {
   const [draft, setDraft] = useState("");
@@ -401,6 +402,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
   const toggleMsgTranslation = (id: string) =>
     setTranslatedMsgIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const mode = thread.threadMode ?? globalMode;
   const { flagged, reason: flagReason } = mode === "production"
     ? evaluateThread(thread, flagRules) : { flagged: false, reason: "" };
   const autoHandled = mode === "production" && !flagged;
@@ -601,8 +603,8 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
         </div>
 
         {/* Zendesk-style bottom action bar */}
-        <div className="flex items-center justify-between px-3 py-2.5 border-t border-border bg-gray-50">
-          {/* Left: Stay / Next dropdown */}
+        <div className="flex items-center justify-end gap-2 px-3 py-2.5 border-t border-border bg-gray-50">
+          {/* Stay / Next dropdown */}
           <div ref={stayMenuRef} className="relative">
             <button onClick={() => setShowStayMenu(v => !v)}
               className="flex items-center gap-1.5 text-[12px] font-medium text-gray-700 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
@@ -610,7 +612,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
               <ChevronDown size={13} />
             </button>
             {showStayMenu && (
-              <div className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
+              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
                 <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
                   {stayOnTicket && <Check size={11} className="text-[#6c47ff]" />}
@@ -627,7 +629,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
             )}
           </div>
 
-          {/* Right: Submit as [Status] split button */}
+          {/* Submit as [Status] split button */}
           <div ref={submitMenuRef} className="relative flex items-center">
             <button
               disabled={!draft.trim()}
@@ -667,11 +669,11 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, mode, flagRules 
 
 // ── Ticket Info Panel ──────────────────────────────────────────
 
-function TicketInfoPanel({ thread, mode, flagRules }: {
-  thread: EmailThread; mode: OperationMode; flagRules: FlagRule[];
+function TicketInfoPanel({ thread, globalMode, flagRules }: {
+  thread: EmailThread; globalMode: OperationMode; flagRules: FlagRule[];
 }) {
   const { aiCard } = thread;
-  const conf = confidenceBand(aiCard.confidence);
+  const mode = thread.threadMode ?? globalMode;
   const { flagged, reason } = mode === "production" ? evaluateThread(thread, flagRules) : { flagged: false, reason: "" };
   const [showSummaryZh, setShowSummaryZh] = useState(false);
 
@@ -682,9 +684,6 @@ function TicketInfoPanel({ thread, mode, flagRules }: {
       <div className="px-4 py-3 border-b border-border flex items-center gap-2">
         <Bot size={13} className="text-[#6c47ff]" />
         <span className="text-[13px] font-semibold text-gray-900">Ticket Info</span>
-        <span className={cn("ml-auto text-[10px] font-semibold flex items-center gap-0.5", conf.cls)}>
-          <Zap size={9} />{conf.label} ({Math.round(aiCard.confidence * 100)}%)
-        </span>
       </div>
 
       {mode === "production" && (
@@ -702,7 +701,6 @@ function TicketInfoPanel({ thread, mode, flagRules }: {
         <InfoRow label="Sentiment" value={<span className={cn("text-[11px] font-medium px-1.5 py-0.5 rounded", sentimentColor(aiCard.sentiment))}>{sentimentLabel(aiCard.sentiment)}</span>} />
         <InfoRow label="Order"    value={aiCard.orderNumber ?? <span className="text-gray-400">—</span>} />
         <InfoRow label="Status"   value={aiCard.orderStatus ?? <span className="text-gray-400">—</span>} />
-        <InfoRow label="Tracking" value={aiCard.tracking ? <span className="font-mono text-[10px]">{aiCard.tracking}</span> : <span className="text-gray-400">—</span>} />
         {aiCard.estimatedDelivery && <InfoRow label="ETA"  value={aiCard.estimatedDelivery} />}
         {aiCard.relatedPolicy && (
           <div className="mt-2 p-2.5 rounded-lg bg-blue-50 border border-blue-100">
@@ -951,7 +949,7 @@ export default function EmailPage() {
             threads={threads}
             selectedId={selectedId}
             onSelect={handleSelect}
-            mode={mode}
+            globalMode={mode}
             flagRules={flagRules}
             onOpenSettings={() => setShowSyncSettings(true)}
             width={listWidth}
@@ -964,12 +962,12 @@ export default function EmailPage() {
                 onSend={handleSend}
                 onStatusChange={s => handleStatusChange(selectedThread.id, s)}
                 onGoNext={handleGoNext}
-                mode={mode}
+                globalMode={mode}
                 flagRules={flagRules}
               />
               <TicketInfoPanel
                 thread={selectedThread}
-                mode={mode}
+                globalMode={mode}
                 flagRules={flagRules}
               />
             </>
