@@ -517,7 +517,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
   const ModeIcon = modeCfg.icon;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-white h-full overflow-hidden">
+    <div className="flex-1 flex flex-col min-w-0 bg-white h-full">
       {/* Thread header */}
       <div className="px-4 py-3 border-b border-border shrink-0 bg-white">
         <div className="flex items-start justify-between gap-3">
@@ -530,7 +530,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide", modeCfg.tagCls)}>
+            <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-bold rounded-sm px-1.5 py-0.5 uppercase tracking-wide pointer-events-none select-none", modeCfg.tagCls)}>
               <ModeIcon size={9} />{modeCfg.label}
             </span>
             <StatusDropdown status={thread.status} onChange={onStatusChange} />
@@ -718,21 +718,21 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode }: {
           </div>
 
           {/* Submit as [Status] split button */}
-          <div ref={submitMenuRef} className="relative flex items-center rounded-lg overflow-hidden border border-[#6c47ff]">
+          <div ref={submitMenuRef} className="relative flex items-center">
             <button
               onClick={handleSubmit}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors">
+              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-l-lg border border-[#6c47ff]">
               <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
               Submit as {statusInfo(submitStatus).label}
             </button>
-            <div className="w-px h-4 bg-white/30 shrink-0" />
+            <div className="w-px h-4 bg-white/30 shrink-0 bg-[#6c47ff]" />
             <button
               onClick={() => setShowSubmitMenu(v => !v)}
-              className="flex items-center justify-center h-8 w-8 text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors">
+              className="flex items-center justify-center h-8 w-8 text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-r-lg border border-l-0 border-[#6c47ff]">
               <ChevronDown size={12} />
             </button>
             {showSubmitMenu && (
-              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[145px]">
+              <div className="absolute right-0 bottom-full mb-1 z-[200] bg-white rounded-lg border border-border shadow-lg py-1 min-w-[145px]">
                 {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
                   <button key={opt.value} onClick={() => { setSubmitStatus(opt.value); setShowSubmitMenu(false); }}
                     className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
