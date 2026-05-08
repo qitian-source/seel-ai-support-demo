@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seel Review Agent — PRD v2 (合规版)</title>
+<title>Seel Review Agent — PRD v2</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -311,7 +311,7 @@ p:last-child { margin-bottom: 0; }
     <div class="s-logo">S</div>
     <div>
       <div class="s-name">Seel Review Agent</div>
-      <div class="s-sub">PRD · 合规版 方案 B</div>
+      <div class="s-sub">PRD v2.0</div>
     </div>
   </div>
 
@@ -324,7 +324,7 @@ p:last-child { margin-bottom: 0; }
   <div class="nav-section">
     <div class="nav-section-label">Flow</div>
     <a class="nav-link" href="#flow"><span class="nav-num">3</span>用户交互流程</a>
-    <a class="nav-link" href="#dual"><span class="nav-num">4</span>双路并行设计</a>
+    <a class="nav-link" href="#rollout"><span class="nav-num">4</span>灰度设置</a>
   </div>
 
   <div class="nav-section">
@@ -344,16 +344,14 @@ p:last-child { margin-bottom: 0; }
 
   <!-- Cover -->
   <div class="cover">
-    <div class="cover-eyebrow">Product Requirements Document · 方案 B（合规版）</div>
+    <div class="cover-eyebrow">Product Requirements Document</div>
     <div class="cover-title">Seel Review Agent</div>
-    <div class="cover-sub">合规版 · 方案 B — 全量邀请 + 并列反馈<br>
-    问题解决后向全量用户同时发送 Trustpilot 邀请与私密反馈入口，两路独立并行。符合 FTC、Trustpilot ToS 及 EU Omnibus Directive，可使用 Trustpilot 官方 Invitation API。</div>
+    <div class="cover-sub">AI 对话解决用户问题后，通过灰度控制向选定用户发送 Trustpilot 邀请。符合 FTC、Trustpilot ToS 及 EU Omnibus Directive，可使用 Trustpilot 官方 Invitation API。</div>
     <div class="cover-meta">
       <div class="cover-meta-item">
         <div class="key">状态</div>
         <div class="val">
           <span class="status-chip"><span class="status-dot"></span>In Development</span>
-          <span class="cover-compliance">✅ 合规</span>
         </div>
       </div>
       <div class="cover-meta-item">
@@ -379,7 +377,7 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">产品概述</div>
     </div>
 
-    <p>Seel Review Agent（合规版）<strong>内嵌在 Seel Live Widget 脚本中</strong>，商户无需额外集成步骤——已部署 Live Widget 的商户自动获得 Review Agent 能力。方案 B 移除了满意度前置筛选，AI 解决问题后向全量用户同时展示 Trustpilot 邀请与私密反馈入口。</p>
+    <p>Seel Review Agent <strong>内嵌在 Seel Live Widget 脚本中</strong>，商户无需额外集成步骤——已部署 Live Widget 的商户自动获得 Review Agent 能力。AI 解决问题后通过灰度控制向选定用户发送 Trustpilot 邀请，无满意度前置筛选。</p>
 
     <div class="card-grid" style="margin-top:16px">
       <div class="info-card">
@@ -413,7 +411,7 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">Live Demo</div>
     </div>
 
-    <p>合规版 Demo 展示全量并列邀请设计：AI 解决问题后，所有用户均同时看到 Trustpilot 邀请入口与私密反馈入口，两路独立并行，互不依赖。</p>
+    <p>Demo 展示完整的单路径邀请流程：AI 解决问题后，经灰度判断，向选定用户发送 Trustpilot 邀请。</p>
 
     <div class="demo-block">
       <span style="color:#6b7280;font-size:12px;flex-shrink:0">Demo 地址</span>
@@ -429,7 +427,7 @@ p:last-child { margin-bottom: 0; }
 
     <div class="note success">
       <span class="note-icon">✅</span>
-      <span><strong>合规版 Demo</strong> — 所有用户均可见 Trustpilot 邀请，私密反馈并列呈现。Demo 使用模拟数据，无需真实 Trustpilot 账号或 Seel API Key。</span>
+      <span><strong>Demo</strong> — 展示灰度控制下的 Trustpilot 邀请流程。使用模拟数据，无需真实 Trustpilot 账号或 Seel API Key。</span>
     </div>
   </section>
 
@@ -441,79 +439,51 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">用户交互流程</div>
     </div>
 
-    <p>完整状态流程图，覆盖从打开聊天气泡到双路并行邀请各自完成的全链路。方案 B 无 CSAT 前置评分步骤，AI 解决问题后直接展示并列入口。</p>
+    <p>完整状态流程：打开聊天 → AI 对话 → 问题解决 → 灰度判断 → （命中）发送 Trustpilot 邀请 → 用户点击 → Trustpilot → 归因 → 计费。无 CSAT 前置评分，无双路分叉。</p>
 
     <iframe src="/seel-flow-compliant.html" class="diagram-frame" style="height:860px"></iframe>
   </section>
 
 
-  <!-- ══════════════════════ 4. 双路并行设计 ══════════════════════ -->
-  <section id="dual">
+  <!-- ══════════════════════ 4. 灰度设置 ══════════════════════ -->
+  <section id="rollout">
     <div class="section-header">
-      <div class="section-num indigo-num">4</div>
-      <div class="section-title">双路并行设计</div>
+      <div class="section-num">4</div>
+      <div class="section-title">灰度设置 · Rollout Configuration</div>
     </div>
 
-    <p>与方案 A 的核心区别：不做满意度前置筛选，问题解决后同时展示两个独立入口。两条路径互不依赖，用户拥有完全自主选择权。</p>
+    <p>通过 <code style="background:var(--gray-100);padding:1px 6px;border-radius:4px;font-size:12px">rolloutPct</code> 参数控制触发 Trustpilot 邀请的用户比例，支持新商家上线时灰度验证，稳定后逐步提升至 100%。</p>
 
-    <div class="dual-grid">
-      <!-- Left: Trustpilot -->
-      <div class="dual-card tp">
-        <div class="dc-emoji">🌟</div>
-        <div class="dc-title">Trustpilot 公开评价</div>
-        <div class="dc-steps">
-          1. AI 解决问题后自动展示邀请<br>
-          2. 用户自主选择星级（1–5 星）<br>
-          3. 点击跳转 Trustpilot<br>
-          4. 评价提交后归因并计费 $5
-        </div>
-        <span class="dc-badge">所有用户均可见，含差评用户</span>
+    <table class="prd-table" style="margin-top:16px">
+      <thead>
+        <tr><th>配置参数</th><th>取值范围</th><th>默认值</th><th>功能说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong><code style="font-size:11px">rolloutPct</code></strong></td>
+          <td>0 – 100</td>
+          <td><span class="chip green">100</span></td>
+          <td>控制触发 Trustpilot 邀请的用户比例（百分比）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card-grid" style="margin-top:16px">
+      <div class="info-card">
+        <div class="ic-icon">📊</div>
+        <div class="ic-title">示例：rolloutPct = 50</div>
+        <div class="ic-desc">随机 50% 的已解决会话触发 Trustpilot 邀请；另外 50% 不触发，仅完成 AI 对话</div>
       </div>
-      <!-- Right: Private feedback -->
-      <div class="dual-card private">
-        <div class="dc-emoji">📝</div>
-        <div class="dc-title">私密反馈（可选）</div>
-        <div class="dc-steps">
-          1. 与 TP 邀请同时展示<br>
-          2. 用户自主决定是否填写<br>
-          3. 提交后仅内部可见<br>
-          4. 不发布到任何公开平台
-        </div>
-        <span class="dc-badge">不替代 TP 邀请，互不影响</span>
+      <div class="info-card">
+        <div class="ic-icon">🚀</div>
+        <div class="ic-title">推荐上线策略</div>
+        <div class="ic-desc">新商家从 10–20% 开始灰度验证；数据稳定后逐步提升；全量验证通过后设为 100%</div>
       </div>
     </div>
 
-    <div class="note success">
-      <span class="note-icon">✅</span>
-      <span><strong>设计原则：</strong>两个入口并列呈现，互不依赖。用户可选择仅做 TP 评价、仅提交私密反馈、两者都做，或都不做。系统不以私密反馈替代或屏蔽 Trustpilot 入口。</span>
-    </div>
-
-    <div class="contrast-box">
-      <div class="cb-title">🔄 方案对比 — 方案 A vs 方案 B</div>
-      <div class="contrast-grid">
-        <div class="contrast-col v1">
-          <div class="cc-hdr">方案 A（CSAT 前置筛选）</div>
-          <ul>
-            <li>先展示满意度评分（😊 / 😐 / ☹️）</li>
-            <li>仅 Satisfied 用户可见 TP 邀请</li>
-            <li>Neutral / Unhappy 路径不触达 TP</li>
-            <li>计费门槛：仅 5 星评价</li>
-            <li>⚠️ 违反 FTC / Trustpilot ToS</li>
-            <li>⚠️ 不可使用官方 Invitation API</li>
-          </ul>
-        </div>
-        <div class="contrast-col v2">
-          <div class="cc-hdr">方案 B（全量并列，本文档）</div>
-          <ul>
-            <li>无前置筛选，直接展示双入口</li>
-            <li>所有用户均可见 TP 邀请</li>
-            <li>私密反馈与 TP 邀请并列独立</li>
-            <li>计费门槛：任意星级均可</li>
-            <li>✅ 符合 FTC / Trustpilot ToS</li>
-            <li>✅ 可使用官方 Invitation API</li>
-          </ul>
-        </div>
-      </div>
+    <div class="note info">
+      <span class="note-icon">ℹ️</span>
+      <span><strong>灰度判断时机：</strong>在 AI 判定"问题已解决"后、发送邀请前执行。未命中灰度的会话正常关闭，不影响用户体验；命中的会话继续触发 Trustpilot 邀请流程。</span>
     </div>
   </section>
 
@@ -525,13 +495,13 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">评价归因方案</div>
     </div>
 
-    <p>Seel 需要证明一条 Trustpilot 公开评价是由插件引导产生的，才能合理计费。方案 B 因符合 Trustpilot ToS，可直接使用官方 Business API，实现精确归因。</p>
+    <p>Seel 需要证明一条 Trustpilot 公开评价是由插件引导产生的，才能合理计费。Seel Review Agent 符合 Trustpilot ToS，可直接使用官方 Business API，实现精确归因。</p>
 
     <iframe src="/seel-attribution-compare.html" class="diagram-frame" style="height:980px"></iframe>
 
     <div class="note success">
       <span class="note-icon">✅</span>
-      <span><strong>方案 B 推荐使用 Trustpilot Invitation API（referenceId 绑定）</strong>，实现 100% 精确归因，无需爬取。每次发送邀请时附带唯一 referenceId，评价提交后通过 Webhook 或 API 查询直接匹配到对应 plugin session，置信度 100%，无需任何模糊匹配算法。</span>
+      <span><strong>推荐使用 Trustpilot Invitation API（referenceId 绑定）</strong>，实现 100% 精确归因，无需爬取。每次发送邀请时附带唯一 referenceId，评价提交后通过 Webhook 或 API 查询直接匹配到对应 plugin session，置信度 100%，无需任何模糊匹配算法。</span>
     </div>
   </section>
 
@@ -563,11 +533,11 @@ p:last-child { margin-bottom: 0; }
           <td>$0</td>
         </tr>
         <tr>
-          <td>私密反馈提交</td>
+          <td>灰度未命中（未触发邀请）</td>
           <td>—</td>
           <td>—</td>
           <td><span class="chip gray">不计费</span></td>
-          <td>$0 <span style="color:#9ca3af;font-size:11px">（服务改进价值）</span></td>
+          <td>$0</td>
         </tr>
       </tbody>
     </table>
@@ -589,17 +559,17 @@ p:last-child { margin-bottom: 0; }
     <div class="version-row">
       <span class="v-ver">v2.0</span>
       <span class="v-date">2026-05-08</span>
-      <span class="v-desc">合规版发布。移除 CSAT 前置筛选，改为全量双路并行邀请；任意星级均可归因计费；符合 FTC / Trustpilot ToS / EU Omnibus Directive；支持 Trustpilot 官方 Invitation API（referenceId 精确归因）</span>
+      <span class="v-desc">v2.0 发布。移除 CSAT 前置筛选，单路径流程 + 灰度控制（rolloutPct）；任意星级均可归因计费；符合 FTC / Trustpilot ToS / EU Omnibus Directive；支持 Trustpilot 官方 Invitation API（referenceId 精确归因）</span>
     </div>
     <div class="version-row">
       <span class="v-ver" style="color:var(--purple)">v1.1</span>
       <span class="v-date">2026-05-08</span>
-      <span class="v-desc">（方案 A）移除 End Session 按钮，CSAT 自动触发；Satisfied 点击星级直接跳转 Trustpilot；移除 Powered by Seel 水印；所有 tier 卡片新增返回按钮；表单提交新增 sending 过渡动画</span>
+      <span class="v-desc">移除 End Session 按钮，CSAT 自动触发；Satisfied 点击星级直接跳转 Trustpilot；移除 Powered by Seel 水印；所有 tier 卡片新增返回按钮；表单提交新增 sending 过渡动画</span>
     </div>
     <div class="version-row">
       <span class="v-ver" style="color:var(--purple)">v1.0</span>
       <span class="v-date">2026-05-07</span>
-      <span class="v-desc">（方案 A）初版发布。3-Tier CSAT 流程（Satisfied / Neutral / Dissatisfied），Shadow DOM 挂载，Mock AlexSong Store 订单页 Demo，商户 Dashboard 归因 + 计费展示</span>
+      <span class="v-desc">初版发布。3-Tier CSAT 流程（Satisfied / Neutral / Dissatisfied），Shadow DOM 挂载，Mock AlexSong Store 订单页 Demo，商户 Dashboard 归因 + 计费展示</span>
     </div>
   </section>
 

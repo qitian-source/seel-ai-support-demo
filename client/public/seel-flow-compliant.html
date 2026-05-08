@@ -37,7 +37,7 @@ header {
   padding: 36px;
   box-shadow: 0 4px 40px rgba(16,185,129,.08), 0 1px 3px rgba(0,0,0,.06);
   width: 100%;
-  max-width: 920px;
+  max-width: 760px;
 }
 svg { display: block; }
 svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; }
@@ -53,6 +53,7 @@ footer {
 .legend-item { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 11px; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .legend-line { width: 18px; height: 2px; flex-shrink: 0; border-radius: 2px; }
+.legend-dash { width: 18px; height: 2px; flex-shrink: 0; border-radius: 2px; background: repeating-linear-gradient(to right, #94a3b8 0, #94a3b8 4px, transparent 4px, transparent 8px); }
 </style>
 </head>
 <body>
@@ -61,12 +62,12 @@ footer {
   <div class="logo">S</div>
   <div class="header-text">
     <h1>Seel Review Agent — 合规版流程图</h1>
-    <p>Compliant Flow · All Users Invited · V2</p>
+    <p>Compliant Flow · Rollout Check · V3</p>
   </div>
 </header>
 
 <div class="card">
-<svg width="100%" viewBox="0 0 860 842" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" viewBox="0 0 720 900" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <filter id="sh" x="-15%" y="-15%" width="130%" height="130%">
     <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.07)"/>
@@ -74,190 +75,161 @@ footer {
   <pattern id="dots" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
     <circle cx="1" cy="1" r="1" fill="#dde3ed"/>
   </pattern>
-  <!-- Arrow markers -->
+  <!-- Green arrowhead (main path) -->
   <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
     <path d="M0,0 L0,6 L8,3 z" fill="#10b981"/>
   </marker>
-  <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-    <path d="M0,0 L0,6 L8,3 z" fill="#818cf8"/>
-  </marker>
+  <!-- Gray arrowhead (neutral / skip) -->
   <marker id="an" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
     <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+  </marker>
+  <!-- Amber arrowhead (diamond branches) -->
+  <marker id="aa" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#d97706"/>
   </marker>
 </defs>
 
 <!-- Background -->
-<rect width="860" height="842" fill="url(#dots)"/>
-<rect width="860" height="842" fill="rgba(248,249,251,0.6)"/>
+<rect width="720" height="900" fill="url(#dots)"/>
+<rect width="720" height="900" fill="rgba(248,249,251,0.6)"/>
 
 <!-- Title -->
-<text x="430" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b" letter-spacing="0.3">Seel Review Agent — 合规版用户交互流程</text>
+<text x="360" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b" letter-spacing="0.3">Seel Review Agent · 用户交互流程</text>
 
-<!-- ════════════════════════════════════
-     TOP CENTER FLOW
-════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════
+     NODE 1: 用户打开聊天窗口  (y=48)
+════════════════════════════════════════ -->
+<rect x="210" y="48" width="300" height="50" rx="12" fill="#6c47ff" filter="url(#sh)"/>
+<text x="360" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="white">💬 用户打开聊天窗口</text>
+<text x="360" y="86" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.72)">点击订单页右下角聊天气泡</text>
 
-<!-- Node A: Open chat -->
-<rect x="305" y="44" width="250" height="48" rx="11" fill="#6c47ff" filter="url(#sh)"/>
-<text x="430" y="63" text-anchor="middle" font-size="12" font-weight="700" fill="white">💬 用户打开聊天窗口</text>
-<text x="430" y="81" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.7)">点击订单页右下角聊天气泡</text>
+<!-- 1 → 2 -->
+<line x1="360" y1="98" x2="360" y2="120" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
 
-<!-- A→B -->
-<line x1="430" y1="92" x2="430" y2="112" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
+<!-- ═══════════════════════════════════════
+     NODE 2: AI 实时对话  (y=124)
+════════════════════════════════════════ -->
+<rect x="210" y="124" width="300" height="50" rx="12" fill="#4f46e5" filter="url(#sh)"/>
+<text x="360" y="144" text-anchor="middle" font-size="12" font-weight="700" fill="white">🤖 AI 实时对话</text>
+<text x="360" y="162" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.75)">理解诉求 · 解决问题 · 确认满意</text>
 
-<!-- Node B: AI conversation -->
-<rect x="290" y="116" width="280" height="48" rx="11" fill="#4f46e5" filter="url(#sh)"/>
-<text x="430" y="135" text-anchor="middle" font-size="12" font-weight="700" fill="white">🤖 AI 实时对话</text>
-<text x="430" y="153" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.75)">理解诉求 · 解决问题 · 确认满意</text>
+<!-- 2 → 3 -->
+<line x1="360" y1="174" x2="360" y2="196" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
 
-<!-- B→C -->
-<line x1="430" y1="164" x2="430" y2="184" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
+<!-- ═══════════════════════════════════════
+     NODE 3: 系统检测问题已解决  (y=200)
+════════════════════════════════════════ -->
+<rect x="198" y="200" width="324" height="50" rx="12" fill="#059669" filter="url(#sh)"/>
+<text x="360" y="222" text-anchor="middle" font-size="13" font-weight="800" fill="white">✅ 系统检测：问题已解决</text>
+<text x="360" y="239" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.8)">触发灰度过滤逻辑</text>
 
-<!-- Node C: Resolved (milestone) -->
-<rect x="278" y="188" width="304" height="50" rx="11" fill="#059669" filter="url(#sh)"/>
-<text x="430" y="209" text-anchor="middle" font-size="13" font-weight="800" fill="white">✅ 系统检测：问题已解决</text>
-<text x="430" y="227" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.8)">同时触发两路独立流程</text>
+<!-- 3 → 4 diamond -->
+<line x1="360" y1="250" x2="360" y2="272" stroke="#d97706" stroke-width="1.5" marker-end="url(#aa)"/>
 
-<!-- ════════════════════════════════════
-     FORK LINES
-════════════════════════════════════ -->
-<!-- Left fork: green -->
-<path d="M430,238 L430,262 L215,262 L215,298" stroke="#10b981" stroke-width="1.5" fill="none" marker-end="url(#ag)"/>
-<!-- Right fork: indigo -->
-<path d="M430,238 L430,262 L645,262 L645,298" stroke="#818cf8" stroke-width="1.5" fill="none" marker-end="url(#ab)"/>
+<!-- ═══════════════════════════════════════
+     NODE 4: 灰度过滤 Diamond  (y=276)
+     Diamond centered at (360, 316) — width 240, height 80
+════════════════════════════════════════ -->
+<!-- Diamond shape: top (360,276) right (480,316) bottom (360,356) left (240,316) -->
+<polygon points="360,276 480,316 360,356 240,316" fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#sh)"/>
+<text x="360" y="308" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">⚙️ 灰度过滤</text>
+<text x="360" y="323" text-anchor="middle" font-size="10" fill="#b45309">Rollout Check</text>
+<text x="360" y="337" text-anchor="middle" font-size="9.5" fill="#92400e">该用户在推送比例内？</text>
 
-<!-- ════════════════════════════════════
-     COLUMN PATH LABELS
-════════════════════════════════════ -->
-<!-- Left path label banner -->
-<rect x="76" y="264" width="278" height="36" rx="8" fill="#059669"/>
-<text x="215" y="279" text-anchor="middle" font-size="11" font-weight="800" fill="white" letter-spacing="0.4">🌟 公开评价路径 · PATH A</text>
-<text x="215" y="295" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.85)" letter-spacing="0.3">全量触达 · Trustpilot · 任意星级均可提交</text>
+<!-- Diamond YES branch: bottom → down (main path) -->
+<!-- Y label left of arrow -->
+<text x="342" y="375" text-anchor="middle" font-size="10" font-weight="700" fill="#059669">是 (Y)</text>
+<line x1="360" y1="356" x2="360" y2="398" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- Right path label banner -->
-<rect x="506" y="264" width="278" height="36" rx="8" fill="#4f46e5"/>
-<text x="645" y="279" text-anchor="middle" font-size="11" font-weight="800" fill="white" letter-spacing="0.4">📝 私密反馈路径 · PATH B</text>
-<text x="645" y="295" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.85)" letter-spacing="0.3">用户自愿 · 仅内部可见 · 不替代公开评价</text>
+<!-- Diamond NO branch: right → side box -->
+<!-- N label above the horizontal line -->
+<text x="528" y="310" text-anchor="middle" font-size="10" font-weight="700" fill="#94a3b8">否 (N)</text>
+<path d="M480,316 L560,316 L560,370" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#an)"/>
 
-<!-- Vertical divider -->
-<line x1="430" y1="260" x2="430" y2="700" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,4"/>
+<!-- Side box: 不触发邀请 -->
+<rect x="490" y="374" width="180" height="44" rx="10" fill="#f8f9fb" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="5,3" filter="url(#sh)"/>
+<text x="580" y="392" text-anchor="middle" font-size="10.5" font-weight="600" fill="#94a3b8">会话结束</text>
+<text x="580" y="408" text-anchor="middle" font-size="9.5" fill="#b0b8c4">不触发邀请</text>
 
-<!-- ════════════════════════════════════
-     LEFT COLUMN — Trustpilot
-════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════
+     ROLLOUT PATH label banner  (y=400)
+════════════════════════════════════════ -->
+<rect x="230" y="402" width="260" height="22" rx="11" fill="#059669"/>
+<text x="360" y="417" text-anchor="middle" font-size="10" font-weight="800" fill="white" letter-spacing="0.5">🌟 ROLLOUT PATH</text>
 
-<!-- L1: All-user invite -->
-<rect x="76" y="302" width="278" height="66" rx="11" fill="white" stroke="#10b981" stroke-width="2" filter="url(#sh)"/>
-<text x="215" y="323" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">🌟 全量发送 Trustpilot 邀请</text>
-<text x="215" y="341" text-anchor="middle" font-size="10" fill="#047857">所有用户均可见入口</text>
-<rect x="118" y="351" width="194" height="18" rx="9" fill="#dcfce7"/>
-<text x="215" y="363" text-anchor="middle" font-size="9.5" font-weight="600" fill="#15803d">✓ 差评用户同样看到 Trustpilot 入口</text>
+<!-- ═══════════════════════════════════════
+     NODE 5: 发送 Trustpilot 邀请  (y=430)
+════════════════════════════════════════ -->
+<!-- connector from label to node -->
+<line x1="360" y1="424" x2="360" y2="434" stroke="#10b981" stroke-width="1.5"/>
+<rect x="180" y="434" width="360" height="64" rx="12" fill="white" stroke="#10b981" stroke-width="2" filter="url(#sh)"/>
+<text x="360" y="456" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">🌟 发送 Trustpilot 邀请</text>
+<text x="360" y="472" text-anchor="middle" font-size="10" fill="#047857">用户收到邀请链接，无星级预评价</text>
+<rect x="232" y="480" width="256" height="16" rx="8" fill="#dcfce7"/>
+<text x="360" y="491" text-anchor="middle" font-size="9" font-weight="600" fill="#15803d">✓ 任意星级均可提交，不设最低门槛</text>
 
-<!-- L1→L2 -->
-<line x1="215" y1="368" x2="215" y2="390" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
+<!-- 5 → 6 -->
+<line x1="360" y1="498" x2="360" y2="520" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- L2: User rates freely -->
-<rect x="76" y="394" width="278" height="48" rx="11" fill="white" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
-<text x="215" y="414" text-anchor="middle" font-size="12" font-weight="600" fill="#065f46">用户自主选择是否评价</text>
-<text x="215" y="432" text-anchor="middle" font-size="11" fill="#047857">1–5 星均接受，不设最低星级门槛</text>
+<!-- ═══════════════════════════════════════
+     NODE 6: 用户点击直接跳转  (y=524)
+════════════════════════════════════════ -->
+<rect x="200" y="524" width="320" height="50" rx="12" fill="white" stroke="#10b981" stroke-width="2" filter="url(#sh)"/>
+<text x="360" y="545" text-anchor="middle" font-size="12" font-weight="600" fill="#065f46">用户点击 → 直接跳转 Trustpilot</text>
+<text x="360" y="562" text-anchor="middle" font-size="10" fill="#6b7280">无中间评分页，直达平台</text>
 
-<!-- L2→L3 -->
-<line x1="215" y1="442" x2="215" y2="462" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
+<!-- 6 → 7 -->
+<line x1="360" y1="574" x2="360" y2="596" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- L3: Attribution -->
-<rect x="76" y="466" width="278" height="48" rx="11" fill="white" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
-<text x="215" y="486" text-anchor="middle" font-size="12" font-weight="600" fill="#065f46">评价提交 · 归因追踪</text>
-<text x="215" y="504" text-anchor="middle" font-size="10" fill="#6b7280">Plugin session → Trustpilot review 匹配</text>
+<!-- ═══════════════════════════════════════
+     NODE 7: 归因追踪  (y=600)
+════════════════════════════════════════ -->
+<rect x="210" y="600" width="300" height="50" rx="12" fill="white" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
+<text x="360" y="621" text-anchor="middle" font-size="12" font-weight="600" fill="#065f46">归因追踪（72h 匹配窗口）</text>
+<text x="360" y="638" text-anchor="middle" font-size="10" fill="#6b7280">Plugin session → Trustpilot review 匹配</text>
 
-<!-- L3→L4 -->
-<line x1="215" y1="514" x2="215" y2="534" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
+<!-- 7 → 8 -->
+<line x1="360" y1="650" x2="360" y2="672" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
 
-<!-- L4: Billing -->
-<rect x="76" y="538" width="278" height="66" rx="11" fill="#6c47ff" filter="url(#sh)"/>
-<text x="215" y="557" text-anchor="middle" font-size="12" font-weight="700" fill="white">💰 按归因评论计费</text>
-<!-- 5★ outcome pill -->
-<rect x="86" y="565" width="120" height="18" rx="9" fill="rgba(255,255,255,.22)"/>
-<text x="146" y="578" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">⭐⭐⭐⭐⭐ 5★ → $5 计费</text>
-<!-- low-star outcome pill -->
-<rect x="216" y="565" width="128" height="18" rx="9" fill="rgba(255,255,255,.12)"/>
-<text x="280" y="578" text-anchor="middle" font-size="9.5" fill="rgba(255,255,255,.75)">1–4★ → 归因记录，不计费</text>
+<!-- ═══════════════════════════════════════
+     NODE 8: 计费结果  (y=676)
+════════════════════════════════════════ -->
+<rect x="180" y="676" width="360" height="72" rx="12" fill="#6c47ff" filter="url(#sh)"/>
+<text x="360" y="698" text-anchor="middle" font-size="12" font-weight="700" fill="white">💰 计费结果</text>
+<!-- 5-star pill -->
+<rect x="192" y="706" width="154" height="22" rx="11" fill="rgba(255,255,255,.22)"/>
+<text x="269" y="721" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">⭐⭐⭐⭐⭐ 5★ → $5 计费</text>
+<!-- 1-4 star pill -->
+<rect x="354" y="706" width="174" height="22" rx="11" fill="rgba(255,255,255,.12)"/>
+<text x="441" y="721" text-anchor="middle" font-size="9.5" fill="rgba(255,255,255,.78)">1-4★ → 归因记录，不计费</text>
 <!-- sub note -->
-<text x="215" y="597" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.6)">归因窗口 72h · 系统自动匹配</text>
+<text x="360" y="740" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.6)">归因窗口 72h · 系统自动匹配</text>
 
-<!-- ════════════════════════════════════
-     RIGHT COLUMN — Private Feedback
-════════════════════════════════════ -->
+<!-- 8 → 9 -->
+<line x1="360" y1="748" x2="360" y2="770" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
 
-<!-- R1: Optional private feedback -->
-<rect x="506" y="302" width="278" height="66" rx="11" fill="white" stroke="#818cf8" stroke-width="2" filter="url(#sh)"/>
-<text x="645" y="323" text-anchor="middle" font-size="12" font-weight="700" fill="#3730a3">📝 私密反馈入口（可选）</text>
-<text x="645" y="341" text-anchor="middle" font-size="10" fill="#4338ca">与 Trustpilot 邀请并列呈现</text>
-<rect x="548" y="351" width="194" height="18" rx="9" fill="#e0e7ff"/>
-<text x="645" y="363" text-anchor="middle" font-size="9.5" font-weight="600" fill="#3730a3">≠ 差评拦截 · 不替代公开评价入口</text>
+<!-- ═══════════════════════════════════════
+     NODE 9: 会话结束  (y=774)
+════════════════════════════════════════ -->
+<rect x="235" y="774" width="250" height="46" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
+<text x="360" y="794" text-anchor="middle" font-size="12" font-weight="600" fill="#64748b">会话结束</text>
+<text x="360" y="810" text-anchor="middle" font-size="10" fill="#9ca3af">数据归档 · 等待归因匹配窗口（72h）</text>
 
-<!-- R1→R2 -->
-<line x1="645" y1="368" x2="645" y2="390" stroke="#818cf8" stroke-width="1.5" marker-end="url(#ab)"/>
-
-<!-- R2: User optional fill -->
-<rect x="506" y="394" width="278" height="48" rx="11" fill="white" stroke="#a5b4fc" stroke-width="1.5" filter="url(#sh)"/>
-<text x="645" y="414" text-anchor="middle" font-size="12" font-weight="600" fill="#3730a3">用户自主决定是否填写</text>
-<text x="645" y="432" text-anchor="middle" font-size="10" fill="#6b7280">不填写不影响 Trustpilot 邀请展示</text>
-
-<!-- R2→R3 -->
-<line x1="645" y1="442" x2="645" y2="462" stroke="#818cf8" stroke-width="1.5" marker-end="url(#ab)"/>
-
-<!-- R3: Internal only -->
-<rect x="506" y="466" width="278" height="48" rx="11" fill="white" stroke="#a5b4fc" stroke-width="1.5" filter="url(#sh)"/>
-<text x="645" y="486" text-anchor="middle" font-size="12" font-weight="600" fill="#3730a3">反馈仅内部可见</text>
-<text x="645" y="504" text-anchor="middle" font-size="10" fill="#6b7280">不发布到任何公开平台</text>
-
-<!-- R3→R4 -->
-<line x1="645" y1="514" x2="645" y2="534" stroke="#818cf8" stroke-width="1.5" marker-end="url(#ab)"/>
-
-<!-- R4: Merchant improvement -->
-<rect x="506" y="538" width="278" height="48" rx="11" fill="#e0e7ff" filter="url(#sh)"/>
-<text x="645" y="558" text-anchor="middle" font-size="12" font-weight="700" fill="#3730a3">商家内部改进依据</text>
-<text x="645" y="576" text-anchor="middle" font-size="10" fill="#4338ca">服务质量 ↑ → 自然好评率提升</text>
-
-<!-- ════════════════════════════════════
-     COMPLIANCE CALLOUT
-════════════════════════════════════ -->
-<!-- Arrows from L4 and R4 to callout -->
-<line x1="215" y1="604" x2="215" y2="626" stroke="#94a3b8" stroke-width="1.5"/>
-<path d="M215,626 L430,638" stroke="#94a3b8" stroke-width="1.5" fill="none" marker-end="url(#an)"/>
-<line x1="645" y1="586" x2="645" y2="626" stroke="#94a3b8" stroke-width="1.5"/>
-<path d="M645,626 L430,638" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
-
-<!-- Callout box -->
-<rect x="60" y="642" width="740" height="64" rx="13" fill="#f0fdf4" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
-<text x="430" y="664" text-anchor="middle" font-size="11.5" font-weight="800" fill="#15803d">🛡 合规要点</text>
-<text x="430" y="683" text-anchor="middle" font-size="10.5" fill="#047857">两路并行触发，互不依赖 · 不做满意度前置筛选 · 差评用户等同可见 Trustpilot 入口</text>
-<text x="430" y="698" text-anchor="middle" font-size="10.5" fill="#047857">私密反馈不阻断公开评价 · 可正常使用 Trustpilot 官方 Invitation API</text>
-
-<!-- Callout→End -->
-<line x1="430" y1="706" x2="430" y2="726" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
-
-<!-- End node -->
-<rect x="305" y="730" width="250" height="46" rx="11" fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
-<text x="430" y="749" text-anchor="middle" font-size="12" font-weight="600" fill="#64748b">会话结束</text>
-<text x="430" y="766" text-anchor="middle" font-size="10" fill="#9ca3af">数据归档 · 等待归因匹配窗口（72h）</text>
-
-<!-- Old vs New comparison note -->
-<rect x="60" y="790" width="740" height="36" rx="8" fill="#fef9ec" stroke="#fde68a" stroke-width="1"/>
-<text x="118" y="806" font-size="10" font-weight="700" fill="#92400e">旧版（不合规）：</text>
-<text x="222" y="806" font-size="10" fill="#b45309">CSAT 前置筛选 → 只有 Satisfied 用户看到 Trustpilot，差评被拦截</text>
-<text x="118" y="820" font-size="10" font-weight="700" fill="#15803d">新版（合规）：</text>
-<text x="204" y="820" font-size="10" fill="#047857">问题解决后全量触发 → 所有用户均可选择公开评价，私密反馈独立并列</text>
+<!-- ═══════════════════════════════════════
+     Bottom compliance note  (y=838)
+════════════════════════════════════════ -->
+<rect x="60" y="838" width="600" height="44" rx="10" fill="#f0fdf4" stroke="#6ee7b7" stroke-width="1"/>
+<text x="360" y="856" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">🛡 合规要点</text>
+<text x="360" y="872" text-anchor="middle" font-size="9.5" fill="#047857">灰度过滤后全量触达 · 不做满意度前置筛选 · 任意星级均可提交</text>
 
 </svg>
 </div>
 
 <footer>
   <div class="legend-item"><div class="legend-line" style="background:#94a3b8"></div>主流程</div>
-  <div class="legend-item"><div class="legend-line" style="background:#059669"></div>PATH A · 公开评价路径（Trustpilot 全量）</div>
-  <div class="legend-item"><div class="legend-line" style="background:#4f46e5"></div>PATH B · 私密反馈路径（用户自愿）</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#6c47ff"></div>⭐⭐⭐⭐⭐ 5★ 归因 → 计费 $5</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0"></div>1–4★ 归因记录 → 不计费</div>
+  <div class="legend-item"><div class="legend-line" style="background:#10b981"></div>Trustpilot 路径</div>
+  <div class="legend-item"><div class="legend-dash"></div>灰度跳过</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6c47ff"></div>5★ 归因计费</div>
 </footer>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seel Review Agent — 方案对比</title>
+<title>Seel Review Agent · 产品方案</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -63,14 +63,14 @@ body {
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,.06);
 }
-.v-card.v1 { border-color: #fecaca; }
+.v-card.v1 { border-color: var(--gray-300, #d1d5db); opacity: 0.72; }
 .v-card.v2 { border-color: #6ee7b7; }
 
 .v-header {
   padding: 20px 24px 18px;
   border-bottom: 1px solid var(--gray-100);
 }
-.v-header.v1 { background: linear-gradient(135deg, #fee2e2, #fef2f2); }
+.v-header.v1 { background: linear-gradient(135deg, #f3f4f6, #e5e7eb); }
 .v-header.v2 { background: linear-gradient(135deg, #dcfce7, #f0fdf4); }
 
 .v-badge {
@@ -79,17 +79,17 @@ body {
   font-size: 10px; font-weight: 800; letter-spacing: .5px;
   text-transform: uppercase; margin-bottom: 10px;
 }
-.v-badge.v1 { background: #fee2e2; color: #991b1b; }
+.v-badge.v1 { background: var(--gray-200); color: var(--gray-600); }
 .v-badge.v2 { background: #dcfce7; color: #065f46; }
 
 .v-name {
   font-size: 18px; font-weight: 800; margin-bottom: 4px;
 }
-.v-card.v1 .v-name { color: #991b1b; }
+.v-card.v1 .v-name { color: var(--gray-600); }
 .v-card.v2 .v-name { color: #065f46; }
 
 .v-tagline { font-size: 12px; }
-.v-card.v1 .v-tagline { color: #b91c1c; }
+.v-card.v1 .v-tagline { color: var(--gray-400); }
 .v-card.v2 .v-tagline { color: #047857; }
 
 .v-body { padding: 20px 24px; }
@@ -126,7 +126,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; z-index: 1;
 }
-.v-card.v1 .step-num { background: #fee2e2; color: #991b1b; }
+.v-card.v1 .step-num { background: var(--gray-200); color: var(--gray-600); }
 .v-card.v2 .step-num { background: #dcfce7; color: #065f46; }
 
 .step-content { padding-top: 3px; }
@@ -191,7 +191,7 @@ body {
   border-bottom: 1.5px solid var(--gray-200);
   background: var(--gray-50);
 }
-.ct th:nth-child(2) { background: #fef2f2; color: #991b1b; }
+.ct th:nth-child(2) { background: var(--gray-100); color: var(--gray-400); text-decoration: line-through; opacity: 0.7; }
 .ct th:nth-child(3) { background: #f0fdf4; color: #065f46; }
 
 .ct td {
@@ -240,8 +240,8 @@ body {
   <!-- ── Header ── -->
   <div class="page-header">
     <div class="page-eyebrow">Seel Review Agent</div>
-    <div class="page-title">产品方案对比</div>
-    <div class="page-sub">两个版本的核心流程、合规性与商业模式差异，供决策参考</div>
+    <div class="page-title">产品方案</div>
+    <div class="page-sub">方案 B 已正式采用为唯一方案；方案 A 因合规风险已停用</div>
   </div>
 
   <!-- ── Version Cards ── -->
@@ -250,7 +250,7 @@ body {
     <!-- ══ V1 ══ -->
     <div class="v-card v1">
       <div class="v-header v1">
-        <div class="v-badge v1">⚠ 方案 A · 当前版本</div>
+        <div class="v-badge v1">⚠ 已停用</div>
         <div class="v-name">满意度前置过滤</div>
         <div class="v-tagline">CSAT → 筛选 → 定向引导至 Trustpilot</div>
       </div>
@@ -356,9 +356,9 @@ body {
     <!-- ══ V2 ══ -->
     <div class="v-card v2">
       <div class="v-header v2">
-        <div class="v-badge v2">✓ 方案 B · 合规版本</div>
-        <div class="v-name">全量邀请 + 并列反馈</div>
-        <div class="v-tagline">问题解决后全量触发，两路独立并行</div>
+        <div class="v-badge v2">✅ 当前方案</div>
+        <div class="v-name">Seel Review Agent</div>
+        <div class="v-tagline">全量邀请 + 并列反馈 · 问题解决后全量触发，两路独立并行</div>
       </div>
 
       <div class="v-body">
@@ -468,15 +468,15 @@ body {
     <div class="compare-header">
       <div>
         <h2>维度对比</h2>
-        <p>方案 A vs 方案 B — 核心差异一览</p>
+        <p>以下为两版本关键差异对比（方案 A 已停用）</p>
       </div>
     </div>
     <table class="ct">
       <thead>
         <tr>
           <th>维度</th>
-          <th>⚠ 方案 A · 当前版本</th>
-          <th>✅ 方案 B · 合规版本</th>
+          <th>⚠ 方案 A（已停用）</th>
+          <th>✅ 当前方案</th>
         </tr>
       </thead>
       <tbody>
@@ -549,22 +549,22 @@ body {
     <div class="compare-header">
       <div>
         <h2>用户交互流程对比</h2>
-        <p>两个方案的完整状态流程图</p>
+        <p>方案 A（已停用，左）vs 当前方案（右）</p>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid #e5e7eb">
-      <!-- V1 flow -->
-      <div style="border-right:1px solid #e5e7eb">
-        <div style="padding:12px 20px;background:#fff5f5;border-bottom:1px solid #fecaca;display:flex;align-items:center;gap:8px">
-          <span style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;border-radius:6px;padding:2px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">⚠ 方案 A · 当前版本</span>
-          <span style="font-size:11px;color:#b91c1c;font-weight:600">满意度前置过滤 · CSAT → 筛选 → Trustpilot</span>
+    <div style="display:grid;grid-template-columns:2fr 3fr;gap:0;border-top:1px solid #e5e7eb">
+      <!-- V1 flow (deprecated) -->
+      <div style="border-right:1px solid #e5e7eb;position:relative;opacity:0.55;filter:grayscale(60%)">
+        <div style="padding:12px 20px;background:#f3f4f6;border-bottom:1px solid #d1d5db;display:flex;align-items:center;gap:8px">
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#e5e7eb;color:#6b7280;border-radius:6px;padding:2px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">⚠ 已停用</span>
+          <span style="font-size:11px;color:#9ca3af;font-weight:600">方案 A · 满意度前置过滤</span>
         </div>
         <iframe src="/seel-flow.html" style="width:100%;height:1040px;border:none;display:block;background:white"></iframe>
       </div>
-      <!-- V2 flow -->
+      <!-- V2 flow (current) -->
       <div>
         <div style="padding:12px 20px;background:#f0fdf4;border-bottom:1px solid #86efac;display:flex;align-items:center;gap:8px">
-          <span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#065f46;border-radius:6px;padding:2px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">✅ 方案 B · 合规版本</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#065f46;border-radius:6px;padding:2px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px">✅ 当前方案</span>
           <span style="font-size:11px;color:#047857;font-weight:600">全量邀请 · 两路并行 · 不做满意度筛选</span>
         </div>
         <iframe src="/seel-flow-compliant.html" style="width:100%;height:1060px;border:none;display:block;background:white"></iframe>
@@ -574,11 +574,11 @@ body {
 
   <!-- ── Recommendation ── -->
   <div class="rec-box">
-    <div class="rec-eyebrow">建议</div>
-    <div class="rec-title">推荐采用方案 B，以合规为基础重建价值主张</div>
+    <div class="rec-eyebrow">决策结果</div>
+    <div class="rec-title">已采用方案 B（现为唯一方案）</div>
     <div class="rec-body">
-      方案 A 的核心问题在于商业模式的根基违规——不是技术实现问题，而是产品逻辑本身就是监管打击对象。即使短期内没有被执法，随着 FTC 和 EU 对 review gating 的持续关注，风险只会增加。<br><br>
-      方案 B 不是对方案 A 的妥协，而是更强的产品壁垒：通过官方 API 实现 100% 置信度归因、私密反馈帮助商户真正改善服务从而自然提升好评率、合规可对外宣传形成差异化。
+      方案 A 因 Review Gating 违规问题已正式停用——根本问题在于产品逻辑本身是监管打击对象，而非技术实现层面的缺陷。随着 FTC 和 EU 对 review gating 的持续关注，该路径风险不可接受。<br><br>
+      方案 B 现为 Seel Review Agent 的唯一产品方案：通过官方 Invitation API 实现 100% 置信度归因、私密反馈帮助商户真正改善服务、合规可对外宣传形成差异化壁垒。
     </div>
     <div class="rec-chips">
       <span class="rec-chip">✓ 零合规风险</span>

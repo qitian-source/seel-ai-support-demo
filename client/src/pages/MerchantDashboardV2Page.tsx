@@ -1,15 +1,12 @@
 /*
- * /merchant-dashboard-v2 — Seel Review Agent · 方案 B Dashboard
- *
- * Compliant flow: all users get Trustpilot invite. Billing on any attributed
- * review regardless of star rating.
+ * /merchant-dashboard-v2 — Seel Review Agent Dashboard
  */
 import { useMemo } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   Star, DollarSign, ExternalLink, MessageSquareText,
-  ArrowLeft, ShieldCheck, Zap, Clock, CheckCircle2,
+  ArrowLeft, Zap, Clock, SlidersHorizontal,
 } from "lucide-react";
 import { MERCHANT_NAME } from "@/lib/reviewData";
 
@@ -88,10 +85,9 @@ export default function MerchantDashboardV2Page() {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   ), []);
 
-  const charged       = sessions.filter(s => s.charged);
-  const reviewed      = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
-  const feedbackCount = sessions.filter(s => s.hasFeedback).length;
-  const totalBilled   = charged.reduce((s, r) => s + r.amount, 0);
+  const charged     = sessions.filter(s => s.charged);
+  const reviewed    = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
+  const totalBilled = charged.reduce((s, r) => s + r.amount, 0);
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex flex-col">
@@ -105,13 +101,8 @@ export default function MerchantDashboardV2Page() {
           <span className="text-[14px] font-medium text-foreground">Review Agent</span>
           <span className="text-muted-foreground">/</span>
           <span className="text-[14px] text-muted-foreground">{MERCHANT_NAME}</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold ml-1">✅ 方案 B · 合规版</span>
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <Link href="/merchant-dashboard" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground font-medium">
-            方案 A Dashboard
-          </Link>
-          <span className="text-border">|</span>
           <Link href="/plugin-demo-v2" className="flex items-center gap-1.5 text-[12px] text-emerald-600 hover:underline font-medium">
             <MessageSquareText size={14} />Demo V2
           </Link>
@@ -125,7 +116,7 @@ export default function MerchantDashboardV2Page() {
       <div className="flex-1 p-8 max-w-[1080px] mx-auto w-full space-y-6">
 
         {/* ── Big Numbers ── */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <MetricCard
             icon={<MessageSquareText size={18} />}
             label="邀请发送"
@@ -147,13 +138,35 @@ export default function MerchantDashboardV2Page() {
             sub={`${charged.length} 条 5星归因评价 × $5`}
             accent="bg-emerald-50 text-emerald-600"
           />
-          <MetricCard
-            icon={<ShieldCheck size={18} />}
-            label="私密反馈"
-            value={String(feedbackCount)}
-            sub="仅内部可见，服务改进依据"
-            accent="bg-indigo-50 text-indigo-600"
-          />
+        </div>
+
+        {/* ── Grayscale / Rollout Config ── */}
+        <div className="rounded-2xl border border-border bg-white shadow-sm p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center">
+                <SlidersHorizontal size={18} />
+              </div>
+              <div>
+                <h2 className="text-[15px] font-semibold text-foreground">灰度设置 · Rollout Config</h2>
+                <p className="text-[12px] text-muted-foreground mt-0.5">控制触发评价邀请的用户比例</p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 text-[11px] font-semibold">
+              Active
+            </span>
+          </div>
+          <div className="mt-5 flex items-end gap-6">
+            <p className="text-[48px] font-bold text-foreground leading-none tracking-tight">100%</p>
+            <div className="flex-1 pb-2">
+              <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
+              </div>
+            </div>
+          </div>
+          <p className="text-[12px] text-muted-foreground mt-3">
+            当前配置：全量推送 · 所有符合条件用户均触发邀请
+          </p>
         </div>
 
         {/* ── Billing ── */}
@@ -209,7 +222,7 @@ export default function MerchantDashboardV2Page() {
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-[15px] font-semibold text-foreground">All Sessions</h2>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              所有用户均收到双路邀请 · {reviewed.length} reviewed · {feedbackCount} feedback · {sessions.filter(s => s.outcome === "pending").length} pending
+              所有用户均收到邀请 · {reviewed.length} reviewed · {sessions.filter(s => s.outcome === "pending").length} pending
             </p>
           </div>
 
@@ -228,7 +241,7 @@ export default function MerchantDashboardV2Page() {
               <span className="text-muted-foreground text-[12px]">{fmtDate(s.timestamp)} · {fmtTime(s.timestamp)}</span>
               <span>
                 {s.outcome === "reviewed" && <span className="inline-flex items-center gap-1 rounded-full bg-[#00B67A]/10 text-[#005a3c] px-2.5 py-0.5 text-[11px] font-medium">⭐ Reviewed</span>}
-                {s.outcome === "feedback" && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-0.5 text-[11px] font-medium">📝 Feedback</span>}
+                {s.outcome === "feedback" && <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">—</span>}
                 {s.outcome === "both"     && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-0.5 text-[11px] font-medium">✦ Both</span>}
                 {s.outcome === "pending"  && <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-500 px-2.5 py-0.5 text-[11px] font-medium">Pending</span>}
               </span>
@@ -241,10 +254,6 @@ export default function MerchantDashboardV2Page() {
                   <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Clock size={11} />Pending
                   </span>
-                ) : s.outcome === "feedback" ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <CheckCircle2 size={11} className="text-indigo-400" />Internal
-                  </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">—</span>
                 )}
@@ -254,7 +263,7 @@ export default function MerchantDashboardV2Page() {
         </div>
 
         <p className="text-center text-[11px] text-muted-foreground pb-4">
-          Seel Review Agent · 方案 B 合规版 · Demo build · Data is simulated
+          Seel Review Agent · Demo build · Data is simulated
         </p>
       </div>
     </div>

@@ -3,18 +3,17 @@
  *
  * Self-contained drop-in script. Mounts via Shadow DOM — zero CSS conflicts.
  *
- * Compliance-first flow: NO CSAT pre-screening.
- * All users see both Trustpilot invite AND private feedback in parallel.
+ * Simplified flow:
+ *   idle → playing → invite → done
  *
- * Phase state machine:
- *   idle → playing → invite → tp → tp-done
- *                           → feedback → sending-feedback → feedback-done
+ * After last chat message, rollout check (rolloutPct) determines whether
+ * the invite card is shown. If not selected, skips silently to done.
  *
  * Usage:
  *   <script src="seel-demo-widget-v2.js" async></script>
  *
  * Optional config (set before script tag):
- *   window.SeelDemoV2Config = { merchantName, orderId, customerName };
+ *   window.SeelDemoV2Config = { merchantName, orderId, customerName, rolloutPct };
  */
 (function (G) {
   'use strict';
@@ -25,9 +24,13 @@
 
   /* ─── Config ──────────────────────────────────────────────────────────────── */
   var CFG = Object.assign(
-    { merchantName: 'AlexSong Store', orderId: '10342', customerName: 'Carlos Rivera' },
+    { merchantName: 'AlexSong Store', orderId: '10342', customerName: 'Carlos Rivera', rolloutPct: 100 },
     G.SeelDemoV2Config || G.SeelDemoConfig || {}
   );
+
+  var ROLLOUT_PCT = Number(CFG.rolloutPct);
+  if (isNaN(ROLLOUT_PCT) || ROLLOUT_PCT < 0) ROLLOUT_PCT = 0;
+  if (ROLLOUT_PCT > 100) ROLLOUT_PCT = 100;
 
   var PURPLE   = '#6c47ff';
   var TP_GREEN = '#00B67A';
@@ -46,15 +49,12 @@
 
   /* ─── State ───────────────────────────────────────────────────────────────── */
   var S = {
-    open:        false,
-    phase:       'idle',   // idle | playing | invite | tp | feedback | sending-feedback | tp-done | feedback-done
-    msgIdx:      0,
-    hoverStar:   0,
-    selStar:     0,
-    feedbackText:'',
-    timers:      [],
-    shownMsgs:   [],
-    typing:      false,
+    open:      false,
+    phase:     'idle',   // idle | playing | invite | done
+    msgIdx:    0,
+    timers:    [],
+    shownMsgs: [],
+    typing:    false,
   };
 
   var shadow; // set after boot
@@ -83,20 +83,8 @@
     color = color || 'white';
     return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   }
-  function backIcon(color) {
-    color = color || 'currentColor';
-    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
-  }
-  function starSVG(filled, size) {
-    size = size || 34;
-    var fill = filled ? TP_GREEN : '#e5e7eb';
-    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="' + fill + '" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
-  }
   function checkIcon(color) {
     return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-  }
-  function lockIcon() {
-    return '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
   }
   function extLinkIcon() {
     return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="' + TP_GREEN + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
@@ -106,10 +94,6 @@
   }
   function replayIcon() {
     return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>';
-  }
-  function noteIcon(color) {
-    color = color || PURPLE;
-    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>';
   }
 
   /* ─── CSS ─────────────────────────────────────────────────────────────────── */
@@ -170,97 +154,26 @@
     @keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}\
     \
     /* Invite card */\
-    .invite-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px 14px}\
+    .invite-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px 16px}\
+    .invite-emoji{text-align:center;font-size:28px;margin-bottom:8px}\
     .invite-title{font-size:13px;font-weight:600;color:#111827;text-align:center;margin-bottom:3px}\
-    .invite-sub{font-size:11px;color:#9ca3af;text-align:center;margin-bottom:14px}\
-    .invite-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}\
-    .inv-btn{display:flex;flex-direction:column;align-items:center;gap:5px;border:2px solid transparent;\
-      border-radius:12px;padding:13px 8px;cursor:pointer;background:none;\
-      transition:border-color .18s,background .18s,transform .18s;font-family:inherit}\
-    .inv-btn:active{transform:scale(.96)}\
-    .inv-btn.tp-opt{border-color:rgba(0,182,122,.35)}\
-    .inv-btn.tp-opt:hover{border-color:' + TP_GREEN + ';background:rgba(0,182,122,.05)}\
-    .inv-btn.fb-opt{border-color:rgba(108,71,255,.3)}\
-    .inv-btn.fb-opt:hover{border-color:' + PURPLE + ';background:rgba(108,71,255,.05)}\
-    .inv-icon{font-size:28px;line-height:1}\
-    .inv-label{font-size:13px;font-weight:600;color:#111827}\
-    .inv-desc{font-size:11px;color:#6b7280;text-align:center}\
-    .inv-tag{font-size:10px;color:#9ca3af;font-style:italic}\
+    .invite-sub{font-size:11px;color:#9ca3af;text-align:center;margin-bottom:16px}\
+    .tp-full-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;\
+      border:none;border-radius:10px;padding:12px 0;font-size:13px;font-weight:700;\
+      cursor:pointer;background:' + TP_GREEN + ';color:#fff;font-family:inherit;\
+      transition:background .18s,transform .15s;margin-bottom:10px}\
+    .tp-full-btn:hover{background:#009e6c}\
+    .tp-full-btn:active{transform:scale(.97)}\
     .invite-note{text-align:center;font-size:10px;color:#9ca3af;padding-top:2px}\
     \
-    /* Back button */\
-    .back-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;\
-      font-size:11px;font-weight:500;padding:2px 0;opacity:.7;transition:opacity .15s;line-height:0}\
-    .back-btn:hover{opacity:1}\
-    .back-btn-tp{color:rgba(255,255,255,.85)}\
-    .back-btn-tp:hover{color:#fff}\
-    .back-btn-fb{color:rgba(108,71,255,.75)}\
-    .back-btn-fb:hover{color:' + PURPLE + '}\
-    \
-    /* Trustpilot card */\
-    .tp-card{border:1px solid rgba(0,182,122,.3);border-radius:16px;overflow:hidden;background:#fff;\
-      box-shadow:0 2px 8px rgba(0,0,0,.08)}\
-    .tp-hdr{background:' + TP_GREEN + ';padding:12px 16px;display:flex;align-items:center;gap:8px}\
-    .tp-brand{color:#fff;font-weight:700;font-size:15px}\
-    .tp-dom{color:rgba(255,255,255,.7);font-size:10px}\
-    .tp-sm-stars{display:flex;gap:3px;margin-left:auto}\
-    .tp-sms{width:24px;height:24px;background:#fff;border-radius:3px;display:flex;align-items:center;justify-content:center}\
-    .tp-body{padding:14px 16px 0}\
-    .tp-q{font-size:12px;font-weight:600;color:#111827;margin-bottom:3px}\
-    .tp-qs{font-size:11px;color:#9ca3af;margin-bottom:14px}\
-    .tp-stars{display:flex;justify-content:center;gap:6px;margin-bottom:10px}\
-    .tp-st{background:none;border:none;cursor:pointer;transition:transform .15s;line-height:0;padding:0}\
-    .tp-st:hover{transform:scale(1.12)}\
-    .tp-hint{text-align:center;font-size:10px;color:#9ca3af;margin-bottom:12px}\
-    .tp-success{display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 0 10px;\
-      animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}\
-    @keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}\
-    .tp-suc-stars{display:flex;gap:4px}\
-    .tp-suc-msg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:' + TP_GREEN + '}\
-    .tp-ext{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:' + TP_GREEN + ';font-weight:500;text-decoration:none}\
-    .tp-ftr{border-top:1px solid #f3f4f6;padding:9px 16px;display:flex;align-items:center;gap:5px;font-size:10px;color:#9ca3af}\
-    \
-    /* Feedback card */\
-    .fb-card{border:1px solid rgba(108,71,255,.25);border-radius:16px;overflow:hidden;background:#fff;\
-      box-shadow:0 2px 8px rgba(0,0,0,.08)}\
-    .fb-hdr{background:' + PURPLE + ';padding:12px 16px;display:flex;align-items:center;gap:8px}\
-    .fb-brand{color:#fff;font-weight:700;font-size:14px}\
-    .fb-sub{color:rgba(255,255,255,.7);font-size:10px}\
-    .fb-body{padding:14px 16px}\
-    .fb-q{font-size:12px;font-weight:600;color:#111827;margin-bottom:3px}\
-    .fb-qs{font-size:11px;color:#9ca3af;margin-bottom:12px}\
-    .f-ta{width:100%;border:1px solid #e0d9ff;border-radius:8px;padding:10px 12px;\
-      font-size:12px;resize:none;font-family:inherit;color:#111827;background:#faf9ff;outline:none;transition:box-shadow .2s}\
-    .f-ta:focus{box-shadow:0 0 0 3px rgba(108,71,255,.18);border-color:' + PURPLE + '}\
-    .sub-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;\
-      border:none;border-radius:8px;padding:9px 0;font-size:12px;font-weight:600;cursor:pointer;\
-      transition:background .2s,opacity .2s;font-family:inherit;background:' + PURPLE + ';color:#fff}\
-    .sub-btn:hover{background:#5535e0}\
-    .sub-btn:disabled{opacity:.4;cursor:default;pointer-events:none}\
-    .fb-priv{display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;\
-      color:rgba(108,71,255,.55);margin-top:8px}\
-    \
-    /* Sending state */\
-    .sending-card{border-radius:16px;padding:22px 16px;text-align:center;display:flex;\
-      flex-direction:column;align-items:center;gap:10px;\
-      background:rgba(108,71,255,.04);border:1px solid rgba(108,71,255,.2)}\
-    .sending-dots{display:flex;gap:6px;justify-content:center}\
-    .sd{width:8px;height:8px;border-radius:50%;background:' + PURPLE + ';animation:bce .9s infinite}\
-    .sd:nth-child(2){animation-delay:.15s}.sd:nth-child(3){animation-delay:.3s}\
-    .sending-label{font-size:12px;font-weight:500;color:#4c2fbd}\
-    \
-    /* Done states */\
-    .done{border-radius:16px;padding:22px;text-align:center;animation:doneIn .55s cubic-bezier(.34,1.56,.64,1)}\
+    /* Done state */\
+    .done{border-radius:16px;padding:22px;text-align:center;animation:doneIn .55s cubic-bezier(.34,1.56,.64,1);\
+      background:rgba(0,182,122,.05);border:1px solid rgba(0,182,122,.3)}\
     @keyframes doneIn{from{opacity:0;transform:scale(.88) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}\
-    .done.tp-done{background:rgba(0,182,122,.05);border:1px solid rgba(0,182,122,.3)}\
-    .done.fb-done{background:rgba(108,71,255,.04);border:1px solid rgba(108,71,255,.2)}\
-    .done-ic{font-size:28px;margin-bottom:8px}\
-    .done-t{font-size:13px;font-weight:600;margin-bottom:4px}\
-    .done-s{font-size:11px;opacity:.75}\
-    .done.tp-done .done-t,.done.tp-done .done-s{color:#065f46}\
-    .done.fb-done .done-t,.done.fb-done .done-s{color:#4c2fbd}\
-    .done-stars{display:flex;justify-content:center;gap:4px;margin-bottom:10px;animation:popIn .6s cubic-bezier(.34,1.56,.64,1)}\
     .done-check{animation:popIn .5s .1s cubic-bezier(.34,1.56,.64,1) both}\
+    @keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}\
+    .done-t{font-size:13px;font-weight:600;margin-bottom:4px;color:#065f46;margin-top:8px}\
+    .done-s{font-size:11px;opacity:.75;color:#065f46}\
   ';
 
   /* ─── HTML builders ───────────────────────────────────────────────────────── */
@@ -284,109 +197,31 @@
 
   function inviteHTML() {
     return '<div class="invite-card">'
+      + '<p class="invite-emoji">🙏</p>'
       + '<p class="invite-title">感谢您的支持！</p>'
-      + '<p class="invite-sub">请选择您希望如何分享您的体验</p>'
-      + '<div class="invite-grid">'
-      + '<button class="inv-btn tp-opt" data-action="go-tp">'
-      + '<span class="inv-icon">🌟</span>'
-      + '<span class="inv-label">Trustpilot 评价</span>'
-      + '<span class="inv-desc">公开分享您的体验</span>'
-      + '</button>'
-      + '<button class="inv-btn fb-opt" data-action="go-feedback">'
-      + '<span class="inv-icon">📝</span>'
-      + '<span class="inv-label">私密反馈</span>'
-      + '<span class="inv-desc">仅我们内部可见</span>'
-      + '<span class="inv-tag">（可选）</span>'
-      + '</button>'
-      + '</div>'
-      + '<p class="invite-note">两个选项相互独立，可都选择</p>'
+      + '<p class="invite-sub">请在 Trustpilot 分享您的体验</p>'
+      + '<button class="tp-full-btn" data-action="go-tp">⭐ 在 Trustpilot 留评</button>'
+      + '<p class="invite-note">公开评价 · trustpilot.com</p>'
       + '</div>';
   }
 
-  function starsRowHTML() {
-    var html = '<div class="tp-stars" id="star-row">';
-    for (var i = 1; i <= 5; i++) {
-      var filled = i <= (S.hoverStar || S.selStar);
-      html += '<button class="tp-st" data-action="rate-star" data-star="' + i + '">' + starSVG(filled) + '</button>';
-    }
-    return html + '</div>';
-  }
-
-  function tpCardHTML() {
-    var sel = S.selStar;
-    var hov = S.hoverStar;
-    return '<div class="tp-card">'
-      + '<div class="tp-hdr">'
-      + '<button class="back-btn back-btn-tp" data-action="back">' + backIcon('rgba(255,255,255,.85)') + '</button>'
-      + '<div><div class="tp-brand">Trustpilot</div><div class="tp-dom">trustpilot.com</div></div>'
-      + '<div class="tp-sm-stars">'
-      + [1,2,3,4,5].map(function(){ return '<div class="tp-sms">' + starSVG(true, 13) + '</div>'; }).join('')
-      + '</div></div>'
-      + '<div class="tp-body">'
-      + '<p class="tp-q">How was your experience with ' + esc(CFG.merchantName) + '?</p>'
-      + '<p class="tp-qs">Takes less than 30 seconds.</p>'
-      + (!sel
-          ? starsRowHTML() + '<p class="tp-hint">Click a star to rate</p>'
-          : '<div class="tp-success">'
-            + '<div class="tp-suc-stars">' + [1,2,3,4,5].map(function(n){ return starSVG(n <= sel, 30); }).join('') + '</div>'
-            + '<div class="tp-suc-msg">' + checkIcon(TP_GREEN) + ' Redirecting to Trustpilot…</div>'
-            + '<a href="https://www.trustpilot.com" target="_blank" class="tp-ext">Open Trustpilot ' + extLinkIcon() + '</a>'
-            + '</div>'
-        )
-      + '</div>'
-      + '<div class="tp-ftr">' + lockIcon() + ' Publicly visible on Trustpilot</div>'
-      + '</div>';
-  }
-
-  function feedbackCardHTML() {
-    return '<div class="fb-card">'
-      + '<div class="fb-hdr">'
-      + '<button class="back-btn back-btn-fb" data-action="back">' + backIcon('rgba(255,255,255,.85)') + '</button>'
-      + '<div>' + noteIcon('#fff') + '</div>'
-      + '<div><div class="fb-brand">私密反馈</div><div class="fb-sub">仅我们内部可见</div></div>'
-      + '</div>'
-      + '<div class="fb-body">'
-      + '<p class="fb-q">您对这次服务有什么想法？</p>'
-      + '<p class="fb-qs">您的反馈帮助我们持续改进。</p>'
-      + '<textarea class="f-ta" rows="3" placeholder="请告诉我们您的想法…" id="feedback-ta"></textarea>'
-      + '<button class="sub-btn" data-action="submit-feedback" disabled>提交反馈</button>'
-      + '<p class="fb-priv">' + lockIcon() + ' 仅与我们的团队共享</p>'
-      + '</div></div>';
-  }
-
-  function sendingFeedbackHTML() {
-    return '<div class="sending-card">'
-      + '<div class="sending-dots"><div class="sd"></div><div class="sd"></div><div class="sd"></div></div>'
-      + '<p class="sending-label">正在发送您的反馈…</p>'
-      + '</div>';
-  }
-
-  function doneHTML(type, stars) {
-    if (type === 'tp') {
-      return '<div class="done tp-done">'
-        + '<div class="done-stars">' + [1,2,3,4,5].map(function(n){ return starSVG(n <= stars, 22); }).join('') + '</div>'
-        + '<div class="done-check">' + checkIcon(TP_GREEN) + '</div>'
-        + '<p class="done-t" style="margin-top:6px">Thank you for your review!</p>'
-        + '<p class="done-s">Your ' + stars + '-star review means the world to us.</p>'
-        + '</div>';
-    }
-    return '<div class="done fb-done">'
-      + '<div class="done-ic">📩</div>'
-      + '<p class="done-t">反馈已收到，感谢您！</p>'
-      + '<p class="done-s">我们会认真阅读您的每一条反馈。</p>'
+  function doneHTML() {
+    return '<div class="done">'
+      + '<div class="done-check">' + checkIcon(TP_GREEN) + '</div>'
+      + '<p class="done-t">感谢您的评价！</p>'
+      + '<p class="done-s">已跳转至 Trustpilot</p>'
       + '</div>';
   }
 
   function footerHTML() {
     var p = S.phase;
-    var isDone = p === 'tp-done' || p === 'feedback-done';
     if (p === 'playing') {
       return '<div class="ftr"><div class="input-row">'
         + '<div class="fake-input">Type a message…</div>'
         + '<div class="send-fk">' + sendIcon() + '</div>'
         + '</div></div>';
     }
-    if (isDone) {
+    if (p === 'done') {
       return '<div class="ftr"><button class="replay-row" data-action="replay">' + replayIcon() + ' Replay Demo →</button></div>';
     }
     return '<div class="ftr"><div class="sess-active">💬 Session Active · AI Support</div></div>';
@@ -400,12 +235,8 @@
     var msgsInner = msgs.map(msgHTML).join('');
 
     var card = '';
-    if (p === 'invite')           card = inviteHTML();
-    else if (p === 'tp')          card = tpCardHTML();
-    else if (p === 'feedback')    card = feedbackCardHTML();
-    else if (p === 'sending-feedback') card = sendingFeedbackHTML();
-    else if (p === 'tp-done')     card = doneHTML('tp', S.selStar);
-    else if (p === 'feedback-done') card = doneHTML('feedback', 0);
+    if (p === 'invite') card = inviteHTML();
+    else if (p === 'done') card = doneHTML();
 
     return '<div class="panel">'
       + '<div class="hdr">' + avHTML()
@@ -427,38 +258,11 @@
       + '<button class="bubble-btn' + (S.open ? ' open' : '') + '" data-action="open-widget">'
       + (S.open ? closeIcon() : chatIcon()) + '</button>';
     scrollMsgs();
-    wireTextarea();
   }
 
   function scrollMsgs() {
     var el = shadow.getElementById('msgs-area');
     if (el) el.scrollTop = el.scrollHeight;
-  }
-
-  function wireTextarea() {
-    var ta = shadow.getElementById('feedback-ta');
-    if (ta) {
-      ta.addEventListener('input', function() {
-        var btn = shadow.querySelector('[data-action="submit-feedback"]');
-        if (btn) btn.disabled = !ta.value.trim();
-        S.feedbackText = ta.value;
-      });
-    }
-  }
-
-  /* ─── Partial star re-render ──────────────────────────────────────────────── */
-  function reRenderStars() {
-    var row = shadow.getElementById('star-row');
-    if (!row) return;
-    row.innerHTML = '';
-    for (var i = 1; i <= 5; i++) {
-      var btn = document.createElement('button');
-      btn.className = 'tp-st';
-      btn.setAttribute('data-action', 'rate-star');
-      btn.setAttribute('data-star', i);
-      btn.innerHTML = starSVG(i <= (S.hoverStar || S.selStar));
-      row.appendChild(btn);
-    }
   }
 
   /* ─── State transitions ───────────────────────────────────────────────────── */
@@ -472,9 +276,6 @@
     S.phase = 'playing';
     S.shownMsgs = [];
     S.typing = false;
-    S.selStar = 0;
-    S.hoverStar = 0;
-    S.feedbackText = '';
     clearTimers();
 
     var cumulative = 400;
@@ -504,44 +305,23 @@
         el.scrollTop = el.scrollHeight;
 
         if (idx === MSGS.length - 1) {
-          later(function() { S.phase = 'invite'; renderRoot(); }, 1500);
+          later(function() {
+            if (Math.random() * 100 < ROLLOUT_PCT) {
+              S.phase = 'invite';
+            } else {
+              S.phase = 'done';
+            }
+            renderRoot();
+          }, 1500);
         }
       }; }(msg, i), revealAt);
     });
   }
 
-  function goBack() {
-    S.phase = 'invite';
-    S.hoverStar = 0;
-    S.selStar = 0;
-    renderRoot();
-  }
-
   function goTp() {
-    S.phase = 'tp';
+    G.open('https://www.trustpilot.com', '_blank');
+    S.phase = 'done';
     renderRoot();
-  }
-
-  function goFeedback() {
-    S.phase = 'feedback';
-    renderRoot();
-  }
-
-  function rateStar(n) {
-    if (S.selStar) return;
-    S.selStar = n;
-    renderRoot();
-    later(function() {
-      G.open('https://www.trustpilot.com', '_blank');
-      S.phase = 'tp-done';
-      renderRoot();
-    }, 800);
-  }
-
-  function submitFeedback() {
-    S.phase = 'sending-feedback';
-    renderRoot();
-    later(function() { S.phase = 'feedback-done'; renderRoot(); }, 900);
   }
 
   function replay() {
@@ -549,9 +329,6 @@
     S.phase = 'idle';
     S.shownMsgs = [];
     S.typing = false;
-    S.selStar = 0;
-    S.hoverStar = 0;
-    S.feedbackText = '';
     S.open = false;
     renderRoot();
   }
@@ -562,35 +339,10 @@
     if (!el) return;
     var action = el.getAttribute('data-action');
     switch (action) {
-      case 'open-widget':  openWidget(); break;
-      case 'toggle':       openWidget(); break;
-      case 'go-tp':        goTp(); break;
-      case 'go-feedback':  goFeedback(); break;
-      case 'back':         goBack(); break;
-      case 'rate-star':
-        var n = parseInt(el.getAttribute('data-star'), 10);
-        if (n) rateStar(n);
-        break;
-      case 'submit-feedback': submitFeedback(); break;
-      case 'replay':       replay(); break;
-    }
-  }
-
-  function onShadowMouseover(e) {
-    if (S.selStar) return;
-    var star = e.target.closest('[data-action="rate-star"]');
-    if (star) {
-      S.hoverStar = parseInt(star.getAttribute('data-star'), 10);
-      reRenderStars();
-    }
-  }
-
-  function onShadowMouseout(e) {
-    if (S.selStar) return;
-    var starsRow = e.target.closest('#star-row');
-    if (starsRow && !starsRow.contains(e.relatedTarget)) {
-      S.hoverStar = 0;
-      reRenderStars();
+      case 'open-widget': openWidget(); break;
+      case 'toggle':      openWidget(); break;
+      case 'go-tp':       goTp(); break;
+      case 'replay':      replay(); break;
     }
   }
 
@@ -613,9 +365,7 @@
     root.className = 'root';
     shadow.appendChild(root);
 
-    shadow.addEventListener('click',     onShadowClick);
-    shadow.addEventListener('mouseover', onShadowMouseover);
-    shadow.addEventListener('mouseout',  onShadowMouseout);
+    shadow.addEventListener('click', onShadowClick);
 
     renderRoot();
   }

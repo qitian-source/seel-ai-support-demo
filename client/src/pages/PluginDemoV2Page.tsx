@@ -1,5 +1,5 @@
 /*
- * /plugin-demo-v2 — Seel Review Agent · Compliant Flow Demo (方案 B)
+ * /plugin-demo-v2 — Seel Review Agent · Demo
  *
  * Uses seel-demo-widget-v2.js — all users see both Trustpilot invite AND
  * private feedback in parallel after AI resolves the issue. No CSAT gate.
@@ -191,15 +191,14 @@ function DemoControls() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="max-w-5xl mx-auto px-6 h-11 flex items-center gap-3">
-        <Link href="/plugin-demo"
+        <Link href="/"
           className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground shrink-0">
-          <ArrowLeft size={12} /> V1 Demo
+          <ArrowLeft size={12} /> Back
         </Link>
         <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 shrink-0">
           <div className="w-4 h-4 rounded bg-emerald-600 flex items-center justify-center text-white text-[8px] font-bold">S</div>
-          方案 B · 合规版 Demo
+          Seel Review Agent · Demo
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold shrink-0">✅ 合规</span>
         <span className="text-border shrink-0">·</span>
         <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
           <Code2 size={12} className="text-emerald-600 shrink-0" />
