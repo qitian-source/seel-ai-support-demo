@@ -5,8 +5,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import {
-  Star, DollarSign, ExternalLink, MessageSquareText,
-  ArrowLeft, Zap, Clock, SlidersHorizontal,
+  Star, MessageSquareText, ArrowLeft, SlidersHorizontal, ExternalLink,
 } from "lucide-react";
 import { MERCHANT_NAME } from "@/lib/reviewData";
 
@@ -85,9 +84,7 @@ export default function MerchantDashboardV2Page() {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   ), []);
 
-  const charged     = sessions.filter(s => s.charged);
-  const reviewed    = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
-  const totalBilled = charged.reduce((s, r) => s + r.amount, 0);
+  const reviewed = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex flex-col">
@@ -116,7 +113,7 @@ export default function MerchantDashboardV2Page() {
       <div className="flex-1 p-8 max-w-[1080px] mx-auto w-full space-y-6">
 
         {/* ── Big Numbers ── */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <MetricCard
             icon={<MessageSquareText size={18} />}
             label="邀请发送"
@@ -130,13 +127,6 @@ export default function MerchantDashboardV2Page() {
             value={String(reviewed.length)}
             sub="任意星级均可归因"
             accent="bg-[#00B67A]/10 text-[#00B67A]"
-          />
-          <MetricCard
-            icon={<DollarSign size={18} />}
-            label="Total Billing"
-            value={`$${totalBilled.toFixed(2)}`}
-            sub={`${charged.length} 条 5星归因评价 × $5`}
-            accent="bg-emerald-50 text-emerald-600"
           />
         </div>
 
@@ -169,95 +159,38 @@ export default function MerchantDashboardV2Page() {
           </p>
         </div>
 
-        {/* ── Billing ── */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <div>
-              <h2 className="text-[15px] font-semibold text-foreground flex items-center gap-2">
-                <DollarSign size={15} className="text-emerald-600" />
-                Billing
-              </h2>
-              <p className="text-[12px] text-muted-foreground mt-0.5">
-                仅 5 星评价且归因成功才计费 $5
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 rounded-full px-3 py-1.5 text-[13px] font-bold border border-emerald-200">
-              <Zap size={12} />${totalBilled.toFixed(2)}
-            </span>
-          </div>
-
-          {charged.length === 0 ? (
-            <div className="px-6 py-10 text-center text-[13px] text-muted-foreground">暂无归因评价。</div>
-          ) : (
-            <>
-              <div className="grid grid-cols-[1fr_160px_140px_100px_120px] text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-6 py-3 border-b border-border bg-[#fafafa]">
-                <span>Public Review</span>
-                <span>Reviewer</span>
-                <span>Order ID</span>
-                <span>Rating</span>
-                <span className="text-right">Charge</span>
-              </div>
-              {charged.map(s => (
-                <div key={s.id} className="grid grid-cols-[1fr_160px_140px_100px_120px] items-center px-6 py-4 border-b border-border last:border-0 hover:bg-[#f9fffc] transition-colors">
-                  <a href={s.reviewUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-[13px] text-emerald-700 hover:underline font-medium">
-                    <ExternalLink size={11} />View on Trustpilot
-                  </a>
-                  <span className="text-[13px] font-medium text-foreground">{s.customerName}</span>
-                  <span className="text-[13px] font-mono text-foreground">#{s.orderId}</span>
-                  <StarRow n={s.stars ?? 5} />
-                  <div className="flex justify-end">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 text-[12px] font-bold">
-                      <DollarSign size={11} />$5
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
         {/* ── All Sessions ── */}
         <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-[15px] font-semibold text-foreground">All Sessions</h2>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              所有用户均收到邀请 · {reviewed.length} reviewed · {sessions.filter(s => s.outcome === "pending").length} pending
+              {sessions.length} conversations · {reviewed.length} reviewed · {sessions.filter(s => s.outcome === "pending").length} pending
             </p>
           </div>
 
-          <div className="grid grid-cols-[1fr_120px_180px_120px_110px] text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-6 py-3 border-b border-border bg-[#fafafa]">
+          <div className="grid grid-cols-[1fr_180px_200px_160px] text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-6 py-3 border-b border-border bg-[#fafafa]">
             <span>Customer</span>
-            <span>Order</span>
+            <span>Conversation</span>
             <span>Date</span>
             <span>Outcome</span>
-            <span className="text-right">Status</span>
           </div>
 
           {sessions.map(s => (
-            <div key={s.id} className="grid grid-cols-[1fr_120px_180px_120px_110px] items-center px-6 py-4 border-b border-border last:border-0 text-[13px] hover:bg-[#fafafa] transition-colors">
+            <div key={s.id} className="grid grid-cols-[1fr_180px_200px_160px] items-center px-6 py-4 border-b border-border last:border-0 text-[13px] hover:bg-[#fafafa] transition-colors">
               <span className="font-medium text-foreground">{s.customerName}</span>
-              <span className="text-muted-foreground font-mono">#{s.orderId}</span>
+              <a
+                href={`/customer-chat`}
+                className="flex items-center gap-1.5 text-[12px] font-mono text-[#6c47ff] hover:underline"
+              >
+                <ExternalLink size={11} />conv-{s.orderId}
+              </a>
               <span className="text-muted-foreground text-[12px]">{fmtDate(s.timestamp)} · {fmtTime(s.timestamp)}</span>
               <span>
-                {s.outcome === "reviewed" && <span className="inline-flex items-center gap-1 rounded-full bg-[#00B67A]/10 text-[#005a3c] px-2.5 py-0.5 text-[11px] font-medium">⭐ Reviewed</span>}
-                {s.outcome === "feedback" && <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">—</span>}
-                {s.outcome === "both"     && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-0.5 text-[11px] font-medium">✦ Both</span>}
-                {s.outcome === "pending"  && <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-500 px-2.5 py-0.5 text-[11px] font-medium">Pending</span>}
+                {s.stars != null
+                  ? <StarRow n={s.stars} />
+                  : <span className="text-[12px] text-muted-foreground">—</span>
+                }
               </span>
-              <div className="flex justify-end">
-                {s.charged ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold">
-                    <DollarSign size={10} />$5
-                  </span>
-                ) : s.outcome === "pending" ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Clock size={11} />Pending
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">—</span>
-                )}
-              </div>
             </div>
           ))}
         </div>

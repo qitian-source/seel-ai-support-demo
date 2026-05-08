@@ -495,13 +495,82 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">评价归因方案</div>
     </div>
 
-    <p>Seel 需要证明一条 Trustpilot 公开评价是由插件引导产生的，才能合理计费。Seel Review Agent 符合 Trustpilot ToS，可直接使用官方 Business API，实现精确归因。</p>
+    <p>Seel 使用<strong>模糊归因（Fuzzy Attribution）</strong>将 Trustpilot 公开评价与对应的 plugin session 匹配，无需依赖 Trustpilot 官方 API，适用性更广。归因置信度通过多维度信号综合计算，高置信度匹配才触发计费。</p>
 
-    <iframe src="/seel-attribution-compare.html" class="diagram-frame" style="height:980px"></iframe>
+    <!-- ── 归因信号表 ── -->
+    <table class="prd-table" style="margin-top:20px">
+      <thead>
+        <tr><th>归因信号</th><th>说明</th><th>权重</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>时间窗口</strong></td>
+          <td>Plugin session 结束后 72h 内提交的评价，纳入候选池</td>
+          <td><span class="chip green">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>用户 ID / Email 哈希</strong></td>
+          <td>Seel 内部用户标识与 TP 评价人匹配（哈希比对，不明文存储）</td>
+          <td><span class="chip green">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>商家 ID</strong></td>
+          <td>评价必须发布在对应商家的 TP 主页</td>
+          <td><span class="chip green">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>订单号 / 内容匹配</strong></td>
+          <td>评价内容中提及订单号或 Seel session 相关关键词，加分</td>
+          <td><span class="chip amber">中</span></td>
+        </tr>
+        <tr>
+          <td><strong>设备 / IP 指纹</strong></td>
+          <td>相同设备在 session 结束后访问 TP，辅助匹配</td>
+          <td><span class="chip amber">中</span></td>
+        </tr>
+      </tbody>
+    </table>
 
-    <div class="note success">
-      <span class="note-icon">✅</span>
-      <span><strong>推荐使用 Trustpilot Invitation API（referenceId 绑定）</strong>，实现 100% 精确归因，无需爬取。每次发送邀请时附带唯一 referenceId，评价提交后通过 Webhook 或 API 查询直接匹配到对应 plugin session，置信度 100%，无需任何模糊匹配算法。</span>
+    <!-- ── 归因触发机制：Log 监测 ── -->
+    <div style="margin-top:24px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px 24px">
+      <div style="font-size:13px;font-weight:800;color:#065f46;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">⚡</span> 归因触发机制 · Log 监测 + 定时爬虫
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">系统检测 Intent Log 更新</div>
+            <div style="font-size:11px;color:#047857;margin-top:2px">Plugin session 成功解决问题 → 写入 Intent Log（含用户 ID、商家 ID、时间戳、session 状态）</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">20 分钟内触发 TP 爬虫</div>
+            <div style="font-size:11px;color:#047857;margin-top:2px">检测到 log 新增条目后，<strong>20 分钟内</strong>启动爬虫抓取对应商家 Trustpilot 主页，获取最新评价列表（增量检测）</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">新评价 diff 与 Intent Log 比对</div>
+            <div style="font-size:11px;color:#047857;margin-top:2px">将爬取到的新评价与 72h 时间窗口内的 Intent Log 运行模糊匹配算法，输出归因置信度分数</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">高置信度 → 归因成功，触发计费</div>
+            <div style="font-size:11px;color:#047857;margin-top:2px">置信度 ≥ 阈值（可配置）时，标记为归因成功，写入计费记录；低于阈值标记为自然评价，不计费</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:16px">
+      <span class="note-icon">💡</span>
+      <span><strong>去重规则：</strong>每条 Intent Log 最多与一条 Trustpilot 评价匹配，已使用的记录加入 used set，同一用户在同一 session 周期内不触发重复计费。72h 窗口到期后，未匹配的 log 条目自动关闭。</span>
     </div>
   </section>
 
