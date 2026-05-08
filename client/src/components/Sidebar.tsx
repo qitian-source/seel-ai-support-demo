@@ -5,8 +5,9 @@
 import { useApp } from "@/contexts/AppContext";
 import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
-  Puzzle, Star, Bot, Grid3X3, Bell, Settings
+  Puzzle, Star, Bot, Grid3X3, Bell, Settings, MessageCircleHeart,
 } from "lucide-react";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -26,7 +27,7 @@ const customizeNav = [
   { icon: Bell, label: "Notifications", disabled: true },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ activePage = "AI support" }: { activePage?: string }) {
   return (
     <aside className="w-[220px] shrink-0 border-r border-border bg-[#fafafa] flex flex-col h-screen sticky top-0">
       {/* Store header */}
@@ -42,7 +43,7 @@ export default function Sidebar() {
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
         {mainNav.map((item) => {
-          const isActive = item.label === "AI support";
+          const isActive = item.label === activePage;
           return (
             <button
               key={item.label}
@@ -65,6 +66,19 @@ export default function Sidebar() {
             </button>
           );
         })}
+
+        {/* Review Agent — linked entry below AI support */}
+        <Link href="/review-agent">
+          <a className={cn(
+            "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors pl-8",
+            activePage === "Review Agent"
+              ? "bg-[#f0edff] text-[#6c47ff]"
+              : "text-[#6d7175] hover:bg-[#f1f2f3]"
+          )}>
+            <MessageCircleHeart size={15} strokeWidth={1.8} />
+            Review Agent
+          </a>
+        </Link>
 
         {/* Customize section */}
         <div className="mt-4 mb-1 px-3">

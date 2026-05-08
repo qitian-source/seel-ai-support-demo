@@ -38,7 +38,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <Sidebar />
+      <Sidebar activePage="AI support" />
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
