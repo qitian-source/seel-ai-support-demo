@@ -11,6 +11,7 @@ import MerchantDashboardPage from "./pages/MerchantDashboardPage";
 import MerchantDashboardV2Page from "./pages/MerchantDashboardV2Page";
 import PluginDemoPage from "./pages/PluginDemoPage";
 import PluginDemoV2Page from "./pages/PluginDemoV2Page";
+import ReviewAgentSettingsPage from "./pages/ReviewAgentSettingsPage";
 
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/merchant-dashboard-v2"} component={MerchantDashboardV2Page} />
       <Route path={"/plugin-demo"} component={PluginDemoPage} />
       <Route path={"/plugin-demo-v2"} component={PluginDemoV2Page} />
+      <Route path={"/review-agent-settings"} component={ReviewAgentSettingsPage} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import {
-  Star, MessageSquareText, ArrowLeft, SlidersHorizontal, ExternalLink,
+  Star, MessageSquareText, ArrowLeft, Settings, ExternalLink,
 } from "lucide-react";
 import { MERCHANT_NAME } from "@/lib/reviewData";
 
@@ -84,7 +84,8 @@ export default function MerchantDashboardV2Page() {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   ), []);
 
-  const reviewed = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
+  const reviewed   = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
+  const fiveStars  = sessions.filter(s => s.stars === 5);
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex flex-col">
@@ -101,7 +102,11 @@ export default function MerchantDashboardV2Page() {
         </div>
         <div className="ml-auto flex items-center gap-3">
           <Link href="/plugin-demo-v2" className="flex items-center gap-1.5 text-[12px] text-emerald-600 hover:underline font-medium">
-            <MessageSquareText size={14} />Demo V2
+            <MessageSquareText size={14} />Demo
+          </Link>
+          <span className="text-border">|</span>
+          <Link href="/review-agent-settings" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground font-medium">
+            <Settings size={14} />Settings
           </Link>
           <span className="text-border">|</span>
           <Link href="/" className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground">
@@ -113,7 +118,7 @@ export default function MerchantDashboardV2Page() {
       <div className="flex-1 p-8 max-w-[1080px] mx-auto w-full space-y-6">
 
         {/* ── Big Numbers ── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <MetricCard
             icon={<MessageSquareText size={18} />}
             label="邀请发送"
@@ -128,35 +133,13 @@ export default function MerchantDashboardV2Page() {
             sub="任意星级均可归因"
             accent="bg-[#00B67A]/10 text-[#00B67A]"
           />
-        </div>
-
-        {/* ── Grayscale / Rollout Config ── */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center">
-                <SlidersHorizontal size={18} />
-              </div>
-              <div>
-                <h2 className="text-[15px] font-semibold text-foreground">灰度设置 · Rollout Config</h2>
-                <p className="text-[12px] text-muted-foreground mt-0.5">控制触发评价邀请的用户比例</p>
-              </div>
-            </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 text-[11px] font-semibold">
-              Active
-            </span>
-          </div>
-          <div className="mt-5 flex items-end gap-6">
-            <p className="text-[48px] font-bold text-foreground leading-none tracking-tight">100%</p>
-            <div className="flex-1 pb-2">
-              <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
-              </div>
-            </div>
-          </div>
-          <p className="text-[12px] text-muted-foreground mt-3">
-            当前配置：全量推送 · 所有符合条件用户均触发邀请
-          </p>
+          <MetricCard
+            icon={<Star size={18} />}
+            label="五星好评"
+            value={String(fiveStars.length)}
+            sub={`好评率 ${Math.round(fiveStars.length / (reviewed.length || 1) * 100)}%`}
+            accent="bg-amber-50 text-amber-500"
+          />
         </div>
 
         {/* ── All Sessions ── */}
