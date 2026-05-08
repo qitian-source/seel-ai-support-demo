@@ -37,9 +37,9 @@ const V2_SESSIONS: V2Session[] = [
   { id: "s-006", customerName: "Amy Liu",          orderId: "10301", timestamp: "2026-05-04T16:05:00Z", outcome: "reviewed", stars: 5, charged: true,  amount: 5, reviewUrl: "https://www.trustpilot.com" },
   { id: "s-007", customerName: "James Wilson",     orderId: "10371", timestamp: "2026-05-04T22:22:00Z", outcome: "feedback", hasFeedback: true, charged: false, amount: 0 },
   { id: "s-008", customerName: "Robert Kim",       orderId: "10315", timestamp: "2026-05-05T03:30:00Z", outcome: "reviewed", stars: 5, charged: true,  amount: 5, reviewUrl: "https://www.trustpilot.com" },
-  { id: "s-009", customerName: "Sophie Nguyen",    orderId: "10384", timestamp: "2026-05-05T17:50:00Z", outcome: "both",     stars: 3, hasFeedback: true, charged: true,  amount: 5, reviewUrl: "https://www.trustpilot.com" },
+  { id: "s-009", customerName: "Sophie Nguyen",    orderId: "10384", timestamp: "2026-05-05T17:50:00Z", outcome: "both",     stars: 3, hasFeedback: true, charged: false, amount: 0, reviewUrl: "https://www.trustpilot.com" },
   { id: "s-010", customerName: "Marcus Johnson",   orderId: "10397", timestamp: "2026-05-05T12:05:00Z", outcome: "feedback", hasFeedback: true, charged: false, amount: 0 },
-  { id: "s-011", customerName: "Linda Park",       orderId: "10412", timestamp: "2026-05-06T19:33:00Z", outcome: "reviewed", stars: 2, charged: true,  amount: 5, reviewUrl: "https://www.trustpilot.com" },
+  { id: "s-011", customerName: "Linda Park",       orderId: "10412", timestamp: "2026-05-06T19:33:00Z", outcome: "reviewed", stars: 2, charged: false, amount: 0, reviewUrl: "https://www.trustpilot.com" },
   { id: "s-012", customerName: "Emma Davis",       orderId: "10329", timestamp: "2026-05-05T21:45:00Z", outcome: "reviewed", stars: 5, charged: true,  amount: 5, reviewUrl: "https://www.trustpilot.com" },
 ];
 
@@ -144,7 +144,7 @@ export default function MerchantDashboardV2Page() {
             icon={<DollarSign size={18} />}
             label="Total Billing"
             value={`$${totalBilled.toFixed(2)}`}
-            sub={`${charged.length} 条归因评价 × $5`}
+            sub={`${charged.length} 条 5星归因评价 × $5`}
             accent="bg-emerald-50 text-emerald-600"
           />
           <MetricCard
@@ -165,7 +165,7 @@ export default function MerchantDashboardV2Page() {
                 Billing
               </h2>
               <p className="text-[12px] text-muted-foreground mt-0.5">
-                归因成功的评价均计费 $5，不设星级门槛
+                仅 5 星评价且归因成功才计费 $5
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 rounded-full px-3 py-1.5 text-[13px] font-bold border border-emerald-200">
