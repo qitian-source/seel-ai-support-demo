@@ -41,6 +41,18 @@ header {
 }
 svg { display: block; }
 svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; }
+footer {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #d1d5db;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; color: #6b7280; font-size: 11px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-line { width: 18px; height: 2px; flex-shrink: 0; border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -54,7 +66,7 @@ svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica
 </header>
 
 <div class="card">
-<svg width="100%" viewBox="0 0 860 830" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" viewBox="0 0 860 842" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <filter id="sh" x="-15%" y="-15%" width="130%" height="130%">
     <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.07)"/>
@@ -75,8 +87,8 @@ svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica
 </defs>
 
 <!-- Background -->
-<rect width="860" height="830" fill="url(#dots)"/>
-<rect width="860" height="830" fill="rgba(248,249,251,0.6)"/>
+<rect width="860" height="842" fill="url(#dots)"/>
+<rect width="860" height="842" fill="rgba(248,249,251,0.6)"/>
 
 <!-- Title -->
 <text x="430" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b" letter-spacing="0.3">Seel Review Agent — 合规版用户交互流程</text>
@@ -115,15 +127,17 @@ svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica
 <path d="M430,238 L430,262 L645,262 L645,298" stroke="#818cf8" stroke-width="1.5" fill="none" marker-end="url(#ab)"/>
 
 <!-- ════════════════════════════════════
-     COLUMN HEADERS
+     COLUMN PATH LABELS
 ════════════════════════════════════ -->
-<!-- Left label -->
-<rect x="76" y="270" width="278" height="22" rx="6" fill="#dcfce7"/>
-<text x="215" y="284" text-anchor="middle" font-size="9.5" font-weight="700" fill="#15803d" letter-spacing="0.6">PUBLIC · TRUSTPILOT 路径（全量）</text>
+<!-- Left path label banner -->
+<rect x="76" y="264" width="278" height="36" rx="8" fill="#059669"/>
+<text x="215" y="279" text-anchor="middle" font-size="11" font-weight="800" fill="white" letter-spacing="0.4">🌟 公开评价路径 · PATH A</text>
+<text x="215" y="295" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.85)" letter-spacing="0.3">全量触达 · Trustpilot · 任意星级均可提交</text>
 
-<!-- Right label -->
-<rect x="506" y="270" width="278" height="22" rx="6" fill="#e0e7ff"/>
-<text x="645" y="284" text-anchor="middle" font-size="9.5" font-weight="700" fill="#3730a3" letter-spacing="0.6">PRIVATE · 内部反馈路径（可选）</text>
+<!-- Right path label banner -->
+<rect x="506" y="264" width="278" height="36" rx="8" fill="#4f46e5"/>
+<text x="645" y="279" text-anchor="middle" font-size="11" font-weight="800" fill="white" letter-spacing="0.4">📝 私密反馈路径 · PATH B</text>
+<text x="645" y="295" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.85)" letter-spacing="0.3">用户自愿 · 仅内部可见 · 不替代公开评价</text>
 
 <!-- Vertical divider -->
 <line x1="430" y1="260" x2="430" y2="700" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="5,4"/>
@@ -159,9 +173,16 @@ svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica
 <line x1="215" y1="514" x2="215" y2="534" stroke="#10b981" stroke-width="1.5" marker-end="url(#ag)"/>
 
 <!-- L4: Billing -->
-<rect x="76" y="538" width="278" height="48" rx="11" fill="#6c47ff" filter="url(#sh)"/>
-<text x="215" y="558" text-anchor="middle" font-size="12" font-weight="700" fill="white">💰 按归因评论计费</text>
-<text x="215" y="576" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.8)">$5 / 归因评论（任意星级均可归因）</text>
+<rect x="76" y="538" width="278" height="66" rx="11" fill="#6c47ff" filter="url(#sh)"/>
+<text x="215" y="557" text-anchor="middle" font-size="12" font-weight="700" fill="white">💰 按归因评论计费</text>
+<!-- 5★ outcome pill -->
+<rect x="86" y="565" width="120" height="18" rx="9" fill="rgba(255,255,255,.22)"/>
+<text x="146" y="578" text-anchor="middle" font-size="9.5" font-weight="700" fill="white">⭐⭐⭐⭐⭐ 5★ → $5 计费</text>
+<!-- low-star outcome pill -->
+<rect x="216" y="565" width="128" height="18" rx="9" fill="rgba(255,255,255,.12)"/>
+<text x="280" y="578" text-anchor="middle" font-size="9.5" fill="rgba(255,255,255,.75)">1–4★ → 归因记录，不计费</text>
+<!-- sub note -->
+<text x="215" y="597" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.6)">归因窗口 72h · 系统自动匹配</text>
 
 <!-- ════════════════════════════════════
      RIGHT COLUMN — Private Feedback
@@ -202,34 +223,42 @@ svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica
      COMPLIANCE CALLOUT
 ════════════════════════════════════ -->
 <!-- Arrows from L4 and R4 to callout -->
-<line x1="215" y1="586" x2="215" y2="614" stroke="#94a3b8" stroke-width="1.5"/>
-<path d="M215,614 L430,626" stroke="#94a3b8" stroke-width="1.5" fill="none" marker-end="url(#an)"/>
-<line x1="645" y1="586" x2="645" y2="614" stroke="#94a3b8" stroke-width="1.5"/>
-<path d="M645,614 L430,626" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+<line x1="215" y1="604" x2="215" y2="626" stroke="#94a3b8" stroke-width="1.5"/>
+<path d="M215,626 L430,638" stroke="#94a3b8" stroke-width="1.5" fill="none" marker-end="url(#an)"/>
+<line x1="645" y1="586" x2="645" y2="626" stroke="#94a3b8" stroke-width="1.5"/>
+<path d="M645,626 L430,638" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
 
 <!-- Callout box -->
-<rect x="60" y="628" width="740" height="64" rx="13" fill="#f0fdf4" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
-<text x="430" y="650" text-anchor="middle" font-size="11.5" font-weight="800" fill="#15803d">🛡 合规要点</text>
-<text x="430" y="669" text-anchor="middle" font-size="10.5" fill="#047857">两路并行触发，互不依赖 · 不做满意度前置筛选 · 差评用户等同可见 Trustpilot 入口</text>
-<text x="430" y="684" text-anchor="middle" font-size="10.5" fill="#047857">私密反馈不阻断公开评价 · 可正常使用 Trustpilot 官方 Invitation API</text>
+<rect x="60" y="642" width="740" height="64" rx="13" fill="#f0fdf4" stroke="#6ee7b7" stroke-width="1.5" filter="url(#sh)"/>
+<text x="430" y="664" text-anchor="middle" font-size="11.5" font-weight="800" fill="#15803d">🛡 合规要点</text>
+<text x="430" y="683" text-anchor="middle" font-size="10.5" fill="#047857">两路并行触发，互不依赖 · 不做满意度前置筛选 · 差评用户等同可见 Trustpilot 入口</text>
+<text x="430" y="698" text-anchor="middle" font-size="10.5" fill="#047857">私密反馈不阻断公开评价 · 可正常使用 Trustpilot 官方 Invitation API</text>
 
 <!-- Callout→End -->
-<line x1="430" y1="692" x2="430" y2="714" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
+<line x1="430" y1="706" x2="430" y2="726" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#an)"/>
 
 <!-- End node -->
-<rect x="305" y="718" width="250" height="46" rx="11" fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
-<text x="430" y="737" text-anchor="middle" font-size="12" font-weight="600" fill="#64748b">会话结束</text>
-<text x="430" y="754" text-anchor="middle" font-size="10" fill="#9ca3af">数据归档 · 等待归因匹配窗口（72h）</text>
+<rect x="305" y="730" width="250" height="46" rx="11" fill="white" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
+<text x="430" y="749" text-anchor="middle" font-size="12" font-weight="600" fill="#64748b">会话结束</text>
+<text x="430" y="766" text-anchor="middle" font-size="10" fill="#9ca3af">数据归档 · 等待归因匹配窗口（72h）</text>
 
 <!-- Old vs New comparison note -->
-<rect x="60" y="778" width="740" height="36" rx="8" fill="#fef9ec" stroke="#fde68a" stroke-width="1"/>
-<text x="118" y="794" font-size="10" font-weight="700" fill="#92400e">旧版（不合规）：</text>
-<text x="222" y="794" font-size="10" fill="#b45309">CSAT 前置筛选 → 只有 Satisfied 用户看到 Trustpilot，差评被拦截</text>
-<text x="118" y="808" font-size="10" font-weight="700" fill="#15803d">新版（合规）：</text>
-<text x="204" y="808" font-size="10" fill="#047857">问题解决后全量触发 → 所有用户均可选择公开评价，私密反馈独立并列</text>
+<rect x="60" y="790" width="740" height="36" rx="8" fill="#fef9ec" stroke="#fde68a" stroke-width="1"/>
+<text x="118" y="806" font-size="10" font-weight="700" fill="#92400e">旧版（不合规）：</text>
+<text x="222" y="806" font-size="10" fill="#b45309">CSAT 前置筛选 → 只有 Satisfied 用户看到 Trustpilot，差评被拦截</text>
+<text x="118" y="820" font-size="10" font-weight="700" fill="#15803d">新版（合规）：</text>
+<text x="204" y="820" font-size="10" fill="#047857">问题解决后全量触发 → 所有用户均可选择公开评价，私密反馈独立并列</text>
 
 </svg>
 </div>
+
+<footer>
+  <div class="legend-item"><div class="legend-line" style="background:#94a3b8"></div>主流程</div>
+  <div class="legend-item"><div class="legend-line" style="background:#059669"></div>PATH A · 公开评价路径（Trustpilot 全量）</div>
+  <div class="legend-item"><div class="legend-line" style="background:#4f46e5"></div>PATH B · 私密反馈路径（用户自愿）</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6c47ff"></div>⭐⭐⭐⭐⭐ 5★ 归因 → 计费 $5</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e2e8f0"></div>1–4★ 归因记录 → 不计费</div>
+</footer>
 
 </body>
 </html>
