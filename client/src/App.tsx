@@ -8,7 +8,9 @@ import { AppProvider } from "./contexts/AppContext";
 import Home from "./pages/Home";
 import CustomerChatPage from "./pages/CustomerChatPage";
 import MerchantDashboardPage from "./pages/MerchantDashboardPage";
+import MerchantDashboardV2Page from "./pages/MerchantDashboardV2Page";
 import PluginDemoPage from "./pages/PluginDemoPage";
+import PluginDemoV2Page from "./pages/PluginDemoV2Page";
 
 
 function Router() {
@@ -17,7 +19,9 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/customer-chat"} component={CustomerChatPage} />
       <Route path={"/merchant-dashboard"} component={MerchantDashboardPage} />
+      <Route path={"/merchant-dashboard-v2"} component={MerchantDashboardV2Page} />
       <Route path={"/plugin-demo"} component={PluginDemoPage} />
+      <Route path={"/plugin-demo-v2"} component={PluginDemoV2Page} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

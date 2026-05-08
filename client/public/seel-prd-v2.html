@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seel Review Agent — PRD v2 (合规版)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple: #6c47ff;
+  --purple-light: #ede9fe;
+  --green: #00B67A;
+  --green-light: #d1fae5;
+  --green-dark: #065f46;
+  --indigo: #4f46e5;
+  --indigo-light: #eef2ff;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: #fafafa;
+  color: var(--gray-800);
+  line-height: 1.6;
+}
+
+/* ── Layout ── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 228px; flex-shrink: 0;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  padding: 28px 0;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 9px;
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--gray-100);
+  margin-bottom: 16px;
+}
+.sidebar-logo .s-logo {
+  width: 30px; height: 30px; background: var(--green);
+  border-radius: 7px; display: flex; align-items: center;
+  justify-content: center; color: white; font-weight: 800; font-size: 13px;
+  flex-shrink: 0;
+}
+.sidebar-logo .s-name { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+.sidebar-logo .s-sub  { font-size: 10px; color: var(--gray-400); margin-top: 1px; }
+
+.nav-section { padding: 4px 12px; margin-bottom: 2px; }
+.nav-section-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--gray-400); padding: 0 8px; margin-bottom: 4px;
+}
+.nav-link {
+  display: block; padding: 6px 8px; border-radius: 7px;
+  font-size: 12px; color: var(--gray-600); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.nav-link:hover { background: var(--gray-100); color: var(--gray-900); }
+.nav-link.active { background: var(--green-light); color: var(--green-dark); font-weight: 600; }
+.nav-num { font-size: 10px; color: var(--gray-400); margin-right: 5px; }
+
+/* ── Main ── */
+.main { flex: 1; min-width: 0; padding: 48px 56px 80px; max-width: 900px; }
+
+/* ── Cover ── */
+.cover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border-radius: 16px; padding: 40px 44px; margin-bottom: 48px;
+  color: white;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; opacity: .7; margin-bottom: 12px;
+}
+.cover-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+.cover-sub { font-size: 14px; opacity: .8; margin-bottom: 28px; line-height: 1.55; }
+.cover-meta {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,.2); padding-top: 20px;
+}
+.cover-meta-item { font-size: 11px; }
+.cover-meta-item .key { opacity: .6; margin-bottom: 2px; }
+.cover-meta-item .val { font-weight: 600; font-size: 12px; }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.15); border-radius: 20px;
+  padding: 3px 10px; font-size: 11px; font-weight: 600;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+
+/* ── Compliance badge ── */
+.cover-compliance {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.4);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; font-weight: 700; color: white;
+  margin-left: 8px;
+}
+
+/* ── Sections ── */
+section { margin-bottom: 52px; }
+section:last-child { margin-bottom: 0; }
+
+.section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  padding-bottom: 12px; border-bottom: 1.5px solid var(--gray-200);
+}
+.section-num {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: var(--green); color: white; font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-num.indigo-num { background: var(--indigo); }
+.section-title { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+
+h3 {
+  font-size: 13px; font-weight: 700; color: var(--gray-800);
+  margin: 20px 0 8px;
+}
+p {
+  font-size: 13px; color: var(--gray-600); line-height: 1.7; margin-bottom: 10px;
+}
+p:last-child { margin-bottom: 0; }
+
+/* ── Info cards ── */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.card-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.info-card {
+  background: white; border: 1.5px solid var(--gray-200);
+  border-radius: 12px; padding: 16px;
+}
+.info-card .ic-icon { font-size: 22px; margin-bottom: 8px; }
+.info-card .ic-title { font-size: 12px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+.info-card .ic-desc  { font-size: 11px; color: var(--gray-400); line-height: 1.5; }
+
+/* ── Demo block ── */
+.demo-block {
+  background: var(--gray-900); border-radius: 12px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.demo-block .url {
+  font-family: 'SF Mono', Menlo, Monaco, monospace;
+  font-size: 13px; color: #a5f3fc; flex: 1;
+}
+.demo-block .open-btn {
+  background: var(--green); color: white; border: none; border-radius: 8px;
+  padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+  text-decoration: none; white-space: nowrap;
+}
+.demo-block .open-btn:hover { background: #047857; }
+
+/* ── Code block ── */
+.code-block {
+  background: var(--gray-900); border-radius: 10px;
+  padding: 16px 20px; font-family: 'SF Mono', Menlo, Monaco, monospace;
+  font-size: 12px; line-height: 1.8; margin-bottom: 14px; overflow-x: auto;
+}
+.code-block .c-comment { color: #6b7280; }
+.code-block .c-key     { color: #f472b6; }
+.code-block .c-val     { color: #a5f3fc; }
+.code-block .c-str     { color: #fde68a; }
+.code-block .c-tag     { color: #86efac; }
+
+/* ── Dual path cards (2-col) ── */
+.dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.dual-card {
+  border-radius: 12px; padding: 18px; border: 1.5px solid;
+}
+.dual-card.tp     { background: #f0fdf4; border-color: #86efac; }
+.dual-card.private { background: var(--indigo-light); border-color: #c7d2fe; }
+.dual-card .dc-emoji { font-size: 24px; margin-bottom: 8px; }
+.dual-card .dc-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.dual-card.tp      .dc-title { color: #065f46; }
+.dual-card.private .dc-title { color: #3730a3; }
+.dual-card .dc-steps { font-size: 10.5px; line-height: 1.75; margin-bottom: 10px; }
+.dual-card.tp      .dc-steps { color: #047857; }
+.dual-card.private .dc-steps { color: #4338ca; }
+.dual-card .dc-badge {
+  display: inline-block; border-radius: 6px; padding: 3px 8px;
+  font-size: 10px; font-weight: 700;
+}
+.dual-card.tp      .dc-badge { background: #bbf7d0; color: #064e3b; }
+.dual-card.private .dc-badge { background: #c7d2fe; color: #312e81; }
+
+/* ── Contrast box (V1 vs V2) ── */
+.contrast-box {
+  background: #fffbeb; border: 1.5px solid #fde68a;
+  border-radius: 12px; padding: 16px 20px; margin-bottom: 14px;
+  font-size: 12px;
+}
+.contrast-box .cb-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: #78350f; margin-bottom: 12px;
+}
+.contrast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.contrast-col .cc-hdr {
+  font-size: 11px; font-weight: 700; margin-bottom: 6px; padding: 4px 10px;
+  border-radius: 6px;
+}
+.contrast-col.v1 .cc-hdr { background: #fee2e2; color: #991b1b; }
+.contrast-col.v2 .cc-hdr { background: #d1fae5; color: #065f46; }
+.contrast-col ul { padding-left: 14px; }
+.contrast-col ul li { font-size: 11px; line-height: 1.7; color: var(--gray-600); }
+
+/* ── Table ── */
+.prd-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
+.prd-table th {
+  background: var(--gray-50); padding: 10px 14px; text-align: left;
+  font-size: 11px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+.prd-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-600); vertical-align: top;
+}
+.prd-table tr:last-child td { border-bottom: none; }
+.prd-table td strong { color: var(--gray-900); }
+.chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.chip.green  { background: #d1fae5; color: #065f46; }
+.chip.amber  { background: #fef3c7; color: #78350f; }
+.chip.red    { background: #fee2e2; color: #991b1b; }
+.chip.purple { background: var(--purple-light); color: var(--purple); }
+.chip.gray   { background: var(--gray-100); color: var(--gray-600); }
+.chip.indigo { background: #eef2ff; color: #3730a3; }
+
+/* ── Attribution compare mini ── */
+.attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.attr-col {
+  border-radius: 12px; padding: 18px; border: 1.5px solid;
+}
+.attr-col.free    { background: #fff7ed; border-color: #fed7aa; }
+.attr-col.premium { background: #fefce8; border-color: #fde68a; }
+.attr-col .ac-hdr { font-size: 12px; font-weight: 700; margin-bottom: 12px; }
+.attr-col.free    .ac-hdr { color: #9a3412; }
+.attr-col.premium .ac-hdr { color: #713f12; }
+.attr-step {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 11px; line-height: 1.5; margin-bottom: 8px;
+}
+.attr-step .n {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; margin-top: 1px;
+}
+.attr-col.free    .attr-step .n { background: #fed7aa; color: #9a3412; }
+.attr-col.premium .attr-step .n { background: #fde68a; color: #713f12; }
+.attr-col.free    .attr-step     { color: #c2410c; }
+.attr-col.premium .attr-step     { color: #a16207; }
+
+/* ── Iframe embed ── */
+.diagram-frame {
+  width: 100%; border: none; border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  display: block; background: white;
+}
+
+/* ── Note box ── */
+.note {
+  border-radius: 10px; padding: 12px 16px; font-size: 12px;
+  line-height: 1.6; margin-bottom: 14px; display: flex; gap: 10px;
+}
+.note.info    { background: var(--purple-light); color: #4c1d95; }
+.note.warning { background: #fff7ed; color: #9a3412; }
+.note.success { background: #f0fdf4; color: #065f46; }
+.note .note-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+/* ── Billing table highlight ── */
+.billing-row-charged td { background: #f0fdf4; }
+
+/* ── Tech specs ── */
+.spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.spec-item {
+  background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px;
+}
+.spec-item .si-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); margin-bottom: 5px; }
+.spec-item .si-val { font-size: 12px; color: var(--gray-800); font-weight: 500; }
+
+/* ── Version log ── */
+.version-row { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: 12px; }
+.version-row:last-child { border-bottom: none; }
+.version-row .v-ver { color: var(--green); font-weight: 700; width: 52px; flex-shrink: 0; }
+.version-row .v-date { color: var(--gray-400); width: 90px; flex-shrink: 0; }
+.version-row .v-desc { color: var(--gray-600); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="s-logo">S</div>
+    <div>
+      <div class="s-name">Seel Review Agent</div>
+      <div class="s-sub">PRD · 合规版 方案 B</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-link active" href="#overview"><span class="nav-num">1</span>产品概述</a>
+    <a class="nav-link" href="#demo"><span class="nav-num">2</span>Live Demo</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Flow</div>
+    <a class="nav-link" href="#flow"><span class="nav-num">3</span>用户交互流程</a>
+    <a class="nav-link" href="#dual"><span class="nav-num">4</span>双路并行设计</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Attribution</div>
+    <a class="nav-link" href="#attribution"><span class="nav-num">5</span>评价归因方案</a>
+    <a class="nav-link" href="#billing"><span class="nav-num">6</span>计费规则</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Changelog</div>
+    <a class="nav-link" href="#changelog"><span class="nav-num">7</span>版本记录</a>
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="cover-eyebrow">Product Requirements Document · 方案 B（合规版）</div>
+    <div class="cover-title">Seel Review Agent</div>
+    <div class="cover-sub">合规版 · 方案 B — 全量邀请 + 并列反馈<br>
+    问题解决后向全量用户同时发送 Trustpilot 邀请与私密反馈入口，两路独立并行。符合 FTC、Trustpilot ToS 及 EU Omnibus Directive，可使用 Trustpilot 官方 Invitation API。</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="key">状态</div>
+        <div class="val">
+          <span class="status-chip"><span class="status-dot"></span>In Development</span>
+          <span class="cover-compliance">✅ 合规</span>
+        </div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">版本</div>
+        <div class="val">v2.0</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">更新日期</div>
+        <div class="val">2026-05-08</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">负责人</div>
+        <div class="val">Tammy</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ 1. 产品概述 ══════════════════════ -->
+  <section id="overview">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">产品概述</div>
+    </div>
+
+    <p>Seel Review Agent（合规版）是一个<strong>单脚本嵌入式插件</strong>，商户在订单追踪页放入一行 <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:11px">&lt;script&gt;</code> 标签即可集成。插件以 Shadow DOM 挂载，不污染商户样式，无需构建步骤。方案 B 移除了满意度前置筛选，采用全量并列邀请设计。</p>
+
+    <div class="card-grid" style="margin-top:16px">
+      <div class="info-card">
+        <div class="ic-icon">🎯</div>
+        <div class="ic-title">核心目标</div>
+        <div class="ic-desc">通过解决用户问题提升真实满意度，自然产生公开评价；不对评价结果进行预先筛选</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">💰</div>
+        <div class="ic-title">商业模式</div>
+        <div class="ic-desc">按成效计费：每条归因的 Trustpilot 评价（任意星级）收取 $5，无星级门槛限制</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🛡️</div>
+        <div class="ic-title">合规保障</div>
+        <div class="ic-desc">符合 FTC 2022 / Trustpilot ToS / EU Omnibus Directive，零违规风险，可使用官方 Invitation API</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⚡</div>
+        <div class="ic-title">零摩擦集成</div>
+        <div class="ic-desc">Shadow DOM 隔离，单 &lt;script&gt; 标签，无 React 依赖，无构建流程，2 分钟上线</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════ 2. Live Demo ══════════════════════ -->
+  <section id="demo">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Live Demo</div>
+    </div>
+
+    <p>合规版 Demo 展示全量并列邀请设计：AI 解决问题后，所有用户均同时看到 Trustpilot 邀请入口与私密反馈入口，两路独立并行，互不依赖。</p>
+
+    <div class="demo-block">
+      <span style="color:#6b7280;font-size:12px;flex-shrink:0">Demo 地址</span>
+      <span class="url">http://localhost:5173/plugin-demo-v2</span>
+      <a class="open-btn" href="/plugin-demo-v2" target="_blank">打开 Demo ↗</a>
+    </div>
+
+    <div class="demo-block" style="background:#0d1117">
+      <span style="color:#6b7280;font-size:12px;flex-shrink:0">商户 Dashboard</span>
+      <span class="url" style="color:#6ee7b7">http://localhost:5173/merchant-dashboard-v2</span>
+      <a class="open-btn" href="/merchant-dashboard-v2" target="_blank" style="background:#047857">打开 Dashboard ↗</a>
+    </div>
+
+    <div class="note success">
+      <span class="note-icon">✅</span>
+      <span><strong>合规版 Demo</strong> — 所有用户均可见 Trustpilot 邀请，私密反馈并列呈现。Demo 使用模拟数据，无需真实 Trustpilot 账号或 Seel API Key。</span>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════ 3. 用户交互流程 ══════════════════════ -->
+  <section id="flow">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">用户交互流程</div>
+    </div>
+
+    <p>完整状态流程图，覆盖从打开聊天气泡到双路并行邀请各自完成的全链路。方案 B 无 CSAT 前置评分步骤，AI 解决问题后直接展示并列入口。</p>
+
+    <iframe src="/seel-flow-compliant.html" class="diagram-frame" style="height:860px"></iframe>
+  </section>
+
+
+  <!-- ══════════════════════ 4. 双路并行设计 ══════════════════════ -->
+  <section id="dual">
+    <div class="section-header">
+      <div class="section-num indigo-num">4</div>
+      <div class="section-title">双路并行设计</div>
+    </div>
+
+    <p>与方案 A 的核心区别：不做满意度前置筛选，问题解决后同时展示两个独立入口。两条路径互不依赖，用户拥有完全自主选择权。</p>
+
+    <div class="dual-grid">
+      <!-- Left: Trustpilot -->
+      <div class="dual-card tp">
+        <div class="dc-emoji">🌟</div>
+        <div class="dc-title">Trustpilot 公开评价</div>
+        <div class="dc-steps">
+          1. AI 解决问题后自动展示邀请<br>
+          2. 用户自主选择星级（1–5 星）<br>
+          3. 点击跳转 Trustpilot<br>
+          4. 评价提交后归因并计费 $5
+        </div>
+        <span class="dc-badge">所有用户均可见，含差评用户</span>
+      </div>
+      <!-- Right: Private feedback -->
+      <div class="dual-card private">
+        <div class="dc-emoji">📝</div>
+        <div class="dc-title">私密反馈（可选）</div>
+        <div class="dc-steps">
+          1. 与 TP 邀请同时展示<br>
+          2. 用户自主决定是否填写<br>
+          3. 提交后仅内部可见<br>
+          4. 不发布到任何公开平台
+        </div>
+        <span class="dc-badge">不替代 TP 邀请，互不影响</span>
+      </div>
+    </div>
+
+    <div class="note success">
+      <span class="note-icon">✅</span>
+      <span><strong>设计原则：</strong>两个入口并列呈现，互不依赖。用户可选择仅做 TP 评价、仅提交私密反馈、两者都做，或都不做。系统不以私密反馈替代或屏蔽 Trustpilot 入口。</span>
+    </div>
+
+    <div class="contrast-box">
+      <div class="cb-title">🔄 方案对比 — 方案 A vs 方案 B</div>
+      <div class="contrast-grid">
+        <div class="contrast-col v1">
+          <div class="cc-hdr">方案 A（CSAT 前置筛选）</div>
+          <ul>
+            <li>先展示满意度评分（😊 / 😐 / ☹️）</li>
+            <li>仅 Satisfied 用户可见 TP 邀请</li>
+            <li>Neutral / Unhappy 路径不触达 TP</li>
+            <li>计费门槛：仅 5 星评价</li>
+            <li>⚠️ 违反 FTC / Trustpilot ToS</li>
+            <li>⚠️ 不可使用官方 Invitation API</li>
+          </ul>
+        </div>
+        <div class="contrast-col v2">
+          <div class="cc-hdr">方案 B（全量并列，本文档）</div>
+          <ul>
+            <li>无前置筛选，直接展示双入口</li>
+            <li>所有用户均可见 TP 邀请</li>
+            <li>私密反馈与 TP 邀请并列独立</li>
+            <li>计费门槛：任意星级均可</li>
+            <li>✅ 符合 FTC / Trustpilot ToS</li>
+            <li>✅ 可使用官方 Invitation API</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════ 5. 评价归因方案 ══════════════════════ -->
+  <section id="attribution">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-title">评价归因方案</div>
+    </div>
+
+    <p>Seel 需要证明一条 Trustpilot 公开评价是由插件引导产生的，才能合理计费。方案 B 因符合 Trustpilot ToS，可直接使用官方 Business API，实现精确归因。</p>
+
+    <iframe src="/seel-attribution-compare.html" class="diagram-frame" style="height:980px"></iframe>
+
+    <div class="note success">
+      <span class="note-icon">✅</span>
+      <span><strong>方案 B 推荐使用 Trustpilot Invitation API（referenceId 绑定）</strong>，实现 100% 精确归因，无需爬取。每次发送邀请时附带唯一 referenceId，评价提交后通过 Webhook 或 API 查询直接匹配到对应 plugin session，置信度 100%，无需任何模糊匹配算法。</span>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════ 6. 计费规则 ══════════════════════ -->
+  <section id="billing">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-title">计费规则</div>
+    </div>
+
+    <table class="prd-table">
+      <thead>
+        <tr><th>场景</th><th>归因结果</th><th>评分</th><th>计费</th><th>金额</th></tr>
+      </thead>
+      <tbody>
+        <tr class="billing-row-charged">
+          <td><strong>TP 评价提交（任意星级）</strong></td>
+          <td><span class="chip green">匹配成功</span></td>
+          <td>任意星级</td>
+          <td><span class="chip green">✅ 计费</span></td>
+          <td><strong>$5.00</strong></td>
+        </tr>
+        <tr>
+          <td>TP 评价（无法归因）</td>
+          <td><span class="chip amber">自然评价</span></td>
+          <td>任意</td>
+          <td><span class="chip gray">不计费</span></td>
+          <td>$0</td>
+        </tr>
+        <tr>
+          <td>私密反馈提交</td>
+          <td>—</td>
+          <td>—</td>
+          <td><span class="chip gray">不计费</span></td>
+          <td>$0 <span style="color:#9ca3af;font-size:11px">（服务改进价值）</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note success">
+      <span class="note-icon">💡</span>
+      <span><strong>计费逻辑简化：</strong>只要评价被成功归因到 plugin session，无论星级均计费 $5。不再区分星级门槛。去重规则：每条 Intent Log 最多与一条 Trustpilot 评价匹配，已使用的记录加入 used set，同一用户不触发重复计费。</span>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════ 7. 版本记录 ══════════════════════ -->
+  <section id="changelog">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <div class="section-title">版本记录</div>
+    </div>
+
+    <div class="version-row">
+      <span class="v-ver">v2.0</span>
+      <span class="v-date">2026-05-08</span>
+      <span class="v-desc">合规版发布。移除 CSAT 前置筛选，改为全量双路并行邀请；任意星级均可归因计费；符合 FTC / Trustpilot ToS / EU Omnibus Directive；支持 Trustpilot 官方 Invitation API（referenceId 精确归因）</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver" style="color:var(--purple)">v1.1</span>
+      <span class="v-date">2026-05-08</span>
+      <span class="v-desc">（方案 A）移除 End Session 按钮，CSAT 自动触发；Satisfied 点击星级直接跳转 Trustpilot；移除 Powered by Seel 水印；所有 tier 卡片新增返回按钮；表单提交新增 sending 过渡动画</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver" style="color:var(--purple)">v1.0</span>
+      <span class="v-date">2026-05-07</span>
+      <span class="v-desc">（方案 A）初版发布。3-Tier CSAT 流程（Satisfied / Neutral / Dissatisfied），Shadow DOM 挂载，Mock AlexSong Store 订单页 Demo，商户 Dashboard 归因 + 计费展示</span>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+// Highlight active nav link on scroll
+const links = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('section[id]');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const match = document.querySelector('.nav-link[href="#' + e.target.id + '"]');
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
