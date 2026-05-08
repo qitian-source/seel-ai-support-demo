@@ -6,16 +6,55 @@
 <title>Seel Review Agent — 合规版流程</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: #f8f9fb; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: 32px 24px;
+  background: #f0fdf4;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
 }
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.logo {
+  width: 36px; height: 36px;
+  background: #10b981;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 800; font-size: 15px;
+  box-shadow: 0 4px 12px rgba(16,185,129,.35);
+}
+.header-text h1 { font-size: 17px; font-weight: 700; color: #1f2937; letter-spacing: -.3px; }
+.header-text p  { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: 0 4px 40px rgba(16,185,129,.08), 0 1px 3px rgba(0,0,0,.06);
+  width: 100%;
+  max-width: 920px;
+}
+svg { display: block; }
+svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; }
 </style>
 </head>
 <body>
-<svg width="860" height="830" viewBox="0 0 860 830" xmlns="http://www.w3.org/2000/svg">
+
+<header>
+  <div class="logo">S</div>
+  <div class="header-text">
+    <h1>Seel Review Agent — 合规版流程图</h1>
+    <p>Compliant Flow · All Users Invited · V2</p>
+  </div>
+</header>
+
+<div class="card">
+<svg width="100%" viewBox="0 0 860 830" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <filter id="sh" x="-15%" y="-15%" width="130%" height="130%">
     <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.07)"/>
@@ -190,5 +229,7 @@ body {
 <text x="204" y="808" font-size="10" fill="#047857">问题解决后全量触发 → 所有用户均可选择公开评价，私密反馈独立并列</text>
 
 </svg>
+</div>
+
 </body>
 </html>
