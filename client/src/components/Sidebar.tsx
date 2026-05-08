@@ -20,6 +20,7 @@ const mainNav = [
   { icon: Puzzle, label: "Integrations", disabled: true },
   { icon: Star, label: "Reviews", disabled: true },
   { icon: Bot, label: "AI support", disabled: false },
+  { icon: MessageCircleHeart, label: "Review Agent", disabled: false },
 ];
 
 const customizeNav = [
@@ -44,41 +45,51 @@ export default function Sidebar({ activePage = "AI support" }: { activePage?: st
       <nav className="flex-1 overflow-y-auto py-2 px-2">
         {mainNav.map((item) => {
           const isActive = item.label === activePage;
+          const isReviewAgent = item.label === "Review Agent";
+          const isAISupport = item.label === "AI support";
+
+          const cls = cn(
+            "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors",
+            isActive
+              ? "bg-[#f0edff] text-[#6c47ff]"
+              : item.disabled
+                ? "text-[#8c9196] hover:bg-[#f1f2f3] cursor-default"
+                : "text-[#6d7175] hover:bg-[#f1f2f3]"
+          );
+
+          if (isReviewAgent) {
+            return (
+              <Link key={item.label} href="/review-agent">
+                <a className={cls}>
+                  <item.icon size={16} strokeWidth={1.8} />
+                  {item.label}
+                </a>
+              </Link>
+            );
+          }
+
+          if (isAISupport) {
+            return (
+              <Link key={item.label} href="/">
+                <a className={cls}>
+                  <item.icon size={16} strokeWidth={1.8} />
+                  {item.label}
+                </a>
+              </Link>
+            );
+          }
+
           return (
             <button
               key={item.label}
-              onClick={() => {
-                if (item.disabled) {
-                  toast("Feature coming soon", { description: `${item.label} is not available in this demo.` });
-                }
-              }}
-              className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors",
-                isActive
-                  ? "bg-[#f0edff] text-[#6c47ff]"
-                  : item.disabled
-                    ? "text-[#8c9196] hover:bg-[#f1f2f3] cursor-default"
-                    : "text-[#6d7175] hover:bg-[#f1f2f3]"
-              )}
+              onClick={() => toast("Feature coming soon", { description: `${item.label} is not available in this demo.` })}
+              className={cls}
             >
               <item.icon size={16} strokeWidth={1.8} />
               {item.label}
             </button>
           );
         })}
-
-        {/* Review Agent — linked entry below AI support */}
-        <Link href="/review-agent">
-          <a className={cn(
-            "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors pl-8",
-            activePage === "Review Agent"
-              ? "bg-[#f0edff] text-[#6c47ff]"
-              : "text-[#6d7175] hover:bg-[#f1f2f3]"
-          )}>
-            <MessageCircleHeart size={15} strokeWidth={1.8} />
-            Review Agent
-          </a>
-        </Link>
 
         {/* Customize section */}
         <div className="mt-4 mb-1 px-3">
