@@ -7,8 +7,11 @@ import Sidebar from "@/components/Sidebar";
 import { cn } from "@/lib/utils";
 import {
   Star, MessageSquareText, CheckCircle2, AlertCircle, ExternalLink,
+  Globe, Pencil, Check, X,
 } from "lucide-react";
 import { MERCHANT_NAME } from "@/lib/reviewData";
+
+const DEFAULT_TP_URL = "https://www.trustpilot.com/review/alexsong.com";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -122,6 +125,12 @@ function PerformanceTab() {
   const reviewed  = sessions.filter(s => s.outcome === "reviewed" || s.outcome === "both");
   const fiveStars = sessions.filter(s => s.stars === 5);
 
+  const [tpUrl, setTpUrl]     = useState(DEFAULT_TP_URL);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft]     = useState(DEFAULT_TP_URL);
+  function saveUrl()    { setTpUrl(draft); setEditing(false); }
+  function cancelEdit() { setDraft(tpUrl); setEditing(false); }
+
   return (
     <div className="p-6 space-y-5 max-w-[960px]">
 
@@ -143,6 +152,48 @@ function PerformanceTab() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Trustpilot Page */}
+      <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe size={14} className="text-[#00B67A]" />
+            <h2 className="text-[14px] font-semibold text-foreground">Trustpilot Page</h2>
+          </div>
+          {!editing && (
+            <button onClick={() => { setDraft(tpUrl); setEditing(true); }}
+              className="flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+              <Pencil size={12}/> Edit
+            </button>
+          )}
+        </div>
+        <div className="px-5 py-3.5">
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input autoFocus value={draft} onChange={e => setDraft(e.target.value)}
+                className="flex-1 text-[13px] border border-border rounded-lg px-3 py-2 outline-none focus:border-[#00B67A] focus:ring-1 focus:ring-[#00B67A] font-mono"
+                placeholder="https://www.trustpilot.com/review/your-domain.com" />
+              <button onClick={saveUrl}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg bg-[#00B67A] text-white text-[12px] font-semibold hover:bg-[#009e6a] transition-colors">
+                <Check size={13}/> Save
+              </button>
+              <button onClick={cancelEdit}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-border text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                <X size={13}/> Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-[#00B67A] shrink-0" />
+              <span className="text-[13px] font-mono text-foreground flex-1 truncate">{tpUrl}</span>
+              <a href={tpUrl} target="_blank" rel="noreferrer"
+                className="flex items-center gap-1 text-[12px] text-[#00B67A] hover:underline shrink-0">
+                <ExternalLink size={11}/> Visit
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Rollout config */}
@@ -185,7 +236,8 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 export default function ReviewAgentPage() {
-  const [tab, setTab] = useState<TabId>("performance");
+  const [tab, setTab]         = useState<TabId>("performance");
+  const [enabled, setEnabled] = useState(true);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -194,7 +246,32 @@ export default function ReviewAgentPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <div className="border-b border-border bg-white">
           <div className="px-6 pt-4 pb-0">
-            <h1 className="text-[18px] font-bold text-foreground mb-3">Review Agent</h1>
+            {/* Title row with toggle */}
+            <div className="flex items-center gap-3 mb-3">
+              <h1 className="text-[18px] font-bold text-foreground">Review Agent</h1>
+              <button
+                onClick={() => setEnabled(v => !v)}
+                className="flex items-center gap-2.5"
+                aria-label="Toggle Review Agent"
+              >
+                <span className={cn(
+                  "text-[12px] font-medium transition-colors",
+                  enabled ? "text-emerald-600" : "text-muted-foreground"
+                )}>
+                  {enabled ? "On" : "Off"}
+                </span>
+                <div className={cn(
+                  "relative w-9 h-5 rounded-full transition-colors duration-200",
+                  enabled ? "bg-emerald-500" : "bg-gray-200"
+                )}>
+                  <div className={cn(
+                    "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200",
+                    enabled ? "left-[18px]" : "left-0.5"
+                  )} />
+                </div>
+              </button>
+            </div>
+            {/* Tabs */}
             <div className="flex items-center gap-0">
               {TABS.map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)}
@@ -212,7 +289,16 @@ export default function ReviewAgentPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto bg-[#fafafa]">
-          {tab === "performance" && <PerformanceTab />}
+          {!enabled && (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <CheckCircle2 size={20} className="text-gray-300" />
+              </div>
+              <p className="text-[14px] font-medium text-gray-400">Review Agent is off</p>
+              <p className="text-[12px] text-gray-300">Toggle on to start sending Trustpilot invites</p>
+            </div>
+          )}
+          {enabled && tab === "performance" && <PerformanceTab />}
         </div>
       </div>
     </div>

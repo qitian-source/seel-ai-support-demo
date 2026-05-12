@@ -256,7 +256,7 @@ export default function MerchantDashboardV2Page() {
         <div className="border-b border-border bg-white">
           <div className="px-6 pt-4 pb-0">
             {/* Title row with toggle */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 mb-3">
               <h1 className="text-[18px] font-bold text-foreground">Review Agent</h1>
               <button
                 onClick={() => setEnabled(v => !v)}
