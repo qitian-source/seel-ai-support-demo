@@ -52,57 +52,61 @@ function StarRow({ n }: { n: number }) {
 
 // ─── Rollout mini-card ────────────────────────────────────────────────────────
 
+const UNLIMITED = 0;
 const PRESETS = [
-  { label:"测试期", pct:10  },
-  { label:"小流量", pct:25  },
-  { label:"半量",   pct:50  },
-  { label:"全量",   pct:100 },
+  { label:"Starter",   cap:10,       sub:"10 / day" },
+  { label:"Growth",    cap:30,       sub:"30 / day" },
+  { label:"Standard",  cap:50,       sub:"50 / day" },
+  { label:"Unlimited", cap:UNLIMITED, sub:"∞" },
 ];
 
 function RolloutCard() {
-  const [rollout, setRollout] = useState(100);
+  const [cap, setCap] = useState(UNLIMITED);
+  const isUnlimited = cap === UNLIMITED;
+  const displayCap = isUnlimited ? "∞" : String(cap);
+
   return (
     <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
       <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
         <div>
-          <h2 className="text-[14px] font-semibold text-foreground">灰度设置 · Rollout</h2>
-          <p className="text-[11px] text-muted-foreground mt-0.5">控制触发 Trustpilot 邀请的用户比例</p>
+          <h2 className="text-[14px] font-semibold text-foreground">Daily Invite Limit</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Max Trustpilot invites sent per calendar day</p>
         </div>
         <span className={cn(
           "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold border",
-          rollout === 100
+          isUnlimited
             ? "bg-emerald-50 border-emerald-200 text-emerald-700"
             : "bg-amber-50 border-amber-200 text-amber-700"
         )}>
-          {rollout}% Active
+          {isUnlimited ? "∞ Unlimited" : `${cap}/day`}
         </span>
       </div>
       <div className="px-5 py-4">
         <div className="flex items-center gap-4 mb-4">
-          <p className="text-[40px] font-bold text-foreground leading-none tracking-tight shrink-0">{rollout}%</p>
+          <p className="text-[40px] font-bold text-foreground leading-none tracking-tight shrink-0 w-16 text-right">{displayCap}</p>
           <div className="flex-1 space-y-1">
-            <input type="range" min={0} max={100} step={5} value={rollout}
-              onChange={e => setRollout(Number(e.target.value))}
+            <input type="range" min={0} max={100} step={5} value={cap}
+              onChange={e => setCap(Number(e.target.value))}
               className="w-full accent-emerald-500 cursor-pointer" />
-            <div className="flex justify-between text-[10px] text-muted-foreground"><span>0%</span><span>100%</span></div>
+            <div className="flex justify-between text-[10px] text-muted-foreground"><span>∞ Unlimited</span><span>100/day</span></div>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2 mb-3">
           {PRESETS.map(p => (
-            <button key={p.pct} onClick={() => setRollout(p.pct)}
+            <button key={p.cap} onClick={() => setCap(p.cap)}
               className={cn("rounded-lg border px-3 py-2 text-center transition-colors",
-                rollout === p.pct ? "border-emerald-400 bg-emerald-50" : "border-border bg-white hover:bg-gray-50")}>
-              <p className={cn("text-[12px] font-bold", rollout===p.pct ? "text-emerald-700" : "text-foreground")}>{p.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{p.pct}%</p>
+                cap === p.cap ? "border-emerald-400 bg-emerald-50" : "border-border bg-white hover:bg-gray-50")}>
+              <p className={cn("text-[12px] font-bold", cap===p.cap ? "text-emerald-700" : "text-foreground")}>{p.label}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{p.sub}</p>
             </button>
           ))}
         </div>
         <div className={cn("flex items-center gap-2 text-[11px] rounded-lg px-3 py-2.5",
-          rollout===100 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200")}>
-          {rollout===100
-            ? <><CheckCircle2 size={13}/> 全量推送 · 所有已解决会话均触发邀请</>
-            : <><AlertCircle size={13}/> 灰度中 · 约 {rollout}% 的已解决会话触发邀请，其余静默结束</>}
+          isUnlimited ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200")}>
+          {isUnlimited
+            ? <><CheckCircle2 size={13}/> Unlimited · All resolved sessions will trigger an invite</>
+            : <><AlertCircle size={13}/> Capped at {cap}/day · Resets at midnight UTC</>}
         </div>
       </div>
     </div>
@@ -124,9 +128,9 @@ function PerformanceTab() {
       {/* Big numbers */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label:"邀请发送",  value: sessions.length, sub:"所有已解决会话",  icon:<MessageSquareText size={16}/>, accent:"bg-[#6c47ff]/10 text-[#6c47ff]" },
-          { label:"收到评价",  value: reviewed.length,  sub:"任意星级均归因",  icon:<Star size={16}/>,              accent:"bg-[#00B67A]/10 text-[#00B67A]" },
-          { label:"五星好评",  value: fiveStars.length, sub:`好评率 ${Math.round(fiveStars.length/(reviewed.length||1)*100)}%`, icon:<Star size={16}/>, accent:"bg-amber-50 text-amber-500" },
+          { label:"Invites Sent",   value: sessions.length, sub:"All resolved sessions",        icon:<MessageSquareText size={16}/>, accent:"bg-[#6c47ff]/10 text-[#6c47ff]" },
+          { label:"Reviews",        value: reviewed.length,  sub:"Any star rating attributed",   icon:<Star size={16}/>,              accent:"bg-[#00B67A]/10 text-[#00B67A]" },
+          { label:"5-Star Reviews", value: fiveStars.length, sub:`${Math.round(fiveStars.length/(reviewed.length||1)*100)}% 5-star rate`, icon:<Star size={16}/>, accent:"bg-amber-50 text-amber-500" },
         ].map(c => (
           <div key={c.label} className="rounded-xl border border-border bg-white p-5 flex flex-col gap-3 shadow-sm">
             <div className="flex items-center justify-between">

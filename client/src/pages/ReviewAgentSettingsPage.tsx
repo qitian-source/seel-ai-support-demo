@@ -10,11 +10,12 @@ import {
 import { cn } from "@/lib/utils";
 import { MERCHANT_NAME } from "@/lib/reviewData";
 
+const UNLIMITED = 0;
 const PRESETS = [
-  { label: "测试期", pct: 10,  desc: "新商家上线验证阶段，小范围灰度" },
-  { label: "小流量", pct: 25,  desc: "稳定后扩大至四分之一用户" },
-  { label: "半量",   pct: 50,  desc: "AB 测试或中期过渡" },
-  { label: "全量",   pct: 100, desc: "所有符合条件用户均触发邀请" },
+  { label: "测试期", cap: 10,       desc: "新商家上线，先观察 10 人/天的归因质量" },
+  { label: "小流量", cap: 30,       desc: "稳定后扩大至 30 人/天" },
+  { label: "标准",   cap: 50,       desc: "日常运营推荐量级" },
+  { label: "无限制", cap: UNLIMITED, desc: "所有符合条件用户均触发邀请" },
 ];
 
 function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
@@ -30,7 +31,8 @@ function Section({ title, sub, children }: { title: string; sub?: string; childr
 }
 
 export default function ReviewAgentSettingsPage() {
-  const [rollout, setRollout] = useState(100);
+  const [cap, setCap] = useState(UNLIMITED);
+  const isUnlimited = cap === UNLIMITED;
   const [triggerDelay, setTriggerDelay] = useState(20);
   const [attributionWindow, setAttributionWindow] = useState(72);
   const [saved, setSaved] = useState(false);
@@ -64,20 +66,22 @@ export default function ReviewAgentSettingsPage() {
 
       <div className="flex-1 p-8 max-w-[720px] mx-auto w-full space-y-6">
 
-        {/* ── Rollout / Grayscale ── */}
-        <Section title="灰度设置 · Rollout" sub="控制触发 Trustpilot 邀请的用户比例">
+        {/* ── Daily Invite Limit ── */}
+        <Section title="每日邀请上限 · Daily Invite Limit" sub="每自然日最多向多少用户发送 Trustpilot 邀请">
 
           {/* Big number + bar */}
           <div className="flex items-end gap-5 mb-5">
-            <p className="text-[56px] font-bold text-foreground leading-none tracking-tight">{rollout}%</p>
+            <p className="text-[56px] font-bold text-foreground leading-none tracking-tight w-24">
+              {isUnlimited ? "∞" : cap}
+            </p>
             <div className="flex-1 pb-2 space-y-1.5">
               <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>0%</span><span>100%</span>
+                <span>∞ 无限制</span><span>100 / 天</span>
               </div>
               <input
                 type="range" min={0} max={100} step={5}
-                value={rollout}
-                onChange={e => setRollout(Number(e.target.value))}
+                value={cap}
+                onChange={e => setCap(Number(e.target.value))}
                 className="w-full accent-emerald-500 h-2 cursor-pointer"
               />
             </div>
@@ -87,16 +91,16 @@ export default function ReviewAgentSettingsPage() {
           <div className="grid grid-cols-4 gap-2 mb-5">
             {PRESETS.map(p => (
               <button
-                key={p.pct}
-                onClick={() => setRollout(p.pct)}
+                key={p.cap}
+                onClick={() => setCap(p.cap)}
                 className={cn(
                   "rounded-xl border px-3 py-3 text-left transition-colors",
-                  rollout === p.pct
+                  cap === p.cap
                     ? "border-emerald-400 bg-emerald-50"
                     : "border-border bg-white hover:bg-gray-50"
                 )}
               >
-                <p className={cn("text-[13px] font-bold", rollout === p.pct ? "text-emerald-700" : "text-foreground")}>
+                <p className={cn("text-[13px] font-bold", cap === p.cap ? "text-emerald-700" : "text-foreground")}>
                   {p.label}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{p.desc}</p>
@@ -106,13 +110,13 @@ export default function ReviewAgentSettingsPage() {
 
           <div className={cn(
             "flex items-center gap-2 text-[12px] rounded-xl px-4 py-3",
-            rollout === 100
+            isUnlimited
               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
               : "bg-amber-50 text-amber-700 border border-amber-200"
           )}>
-            {rollout === 100
-              ? <><CheckCircle2 size={14} /> 全量推送 · 所有符合条件的已解决会话均会触发邀请</>
-              : <><AlertCircle size={14} /> 灰度中 · 约 {rollout}% 的已解决会话触发邀请，其余静默结束</>
+            {isUnlimited
+              ? <><CheckCircle2 size={14} /> 无限制 · 所有符合条件的已解决会话均会触发邀请</>
+              : <><AlertCircle size={14} /> 每日上限 {cap} 人 · 达到上限后当日不再触发邀请，次日零点重置</>
             }
           </div>
         </Section>

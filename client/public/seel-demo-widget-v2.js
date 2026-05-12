@@ -198,18 +198,18 @@
   function inviteHTML() {
     return '<div class="invite-card">'
       + '<p class="invite-emoji">🙏</p>'
-      + '<p class="invite-title">感谢您的支持！</p>'
-      + '<p class="invite-sub">请在 Trustpilot 分享您的体验</p>'
-      + '<button class="tp-full-btn" data-action="go-tp">⭐ 在 Trustpilot 留评</button>'
-      + '<p class="invite-note">公开评价 · trustpilot.com</p>'
+      + '<p class="invite-title">Thank you for your support!</p>'
+      + '<p class="invite-sub">Share your experience on Trustpilot</p>'
+      + '<button class="tp-full-btn" data-action="go-tp">⭐ Leave a Review on Trustpilot</button>'
+      + '<p class="invite-note">Public review · trustpilot.com</p>'
       + '</div>';
   }
 
   function doneHTML() {
     return '<div class="done">'
       + '<div class="done-check">' + checkIcon(TP_GREEN) + '</div>'
-      + '<p class="done-t">感谢您的评价！</p>'
-      + '<p class="done-s">已跳转至 Trustpilot</p>'
+      + '<p class="done-t">Thank you for your review!</p>'
+      + '<p class="done-s">Redirected to Trustpilot</p>'
       + '</div>';
   }
 

@@ -324,7 +324,7 @@ p:last-child { margin-bottom: 0; }
   <div class="nav-section">
     <div class="nav-section-label">Flow</div>
     <a class="nav-link" href="#flow"><span class="nav-num">3</span>用户交互流程</a>
-    <a class="nav-link" href="#rollout"><span class="nav-num">4</span>灰度设置</a>
+    <a class="nav-link" href="#rollout"><span class="nav-num">4</span>邀请量上限</a>
   </div>
 
   <div class="nav-section">
@@ -388,7 +388,7 @@ p:last-child { margin-bottom: 0; }
       <div class="info-card">
         <div class="ic-icon">💰</div>
         <div class="ic-title">商业模式</div>
-        <div class="ic-desc">按成效计费：每条归因的 Trustpilot 评价（任意星级）收取 $5，无星级门槛限制</div>
+        <div class="ic-desc">按成效计费：仅五星（5★）归因评价收取 $5；1–4 星归因评价不计费</div>
       </div>
       <div class="info-card">
         <div class="ic-icon">🛡️</div>
@@ -445,14 +445,14 @@ p:last-child { margin-bottom: 0; }
   </section>
 
 
-  <!-- ══════════════════════ 4. 灰度设置 ══════════════════════ -->
+  <!-- ══════════════════════ 4. 邀请量上限 ══════════════════════ -->
   <section id="rollout">
     <div class="section-header">
       <div class="section-num">4</div>
-      <div class="section-title">灰度设置 · Rollout Configuration</div>
+      <div class="section-title">邀请量上限 · Daily Invite Limit</div>
     </div>
 
-    <p>通过 <code style="background:var(--gray-100);padding:1px 6px;border-radius:4px;font-size:12px">rolloutPct</code> 参数控制触发 Trustpilot 邀请的用户比例，支持新商家上线时灰度验证，稳定后逐步提升至 100%。</p>
+    <p>通过 <code style="background:var(--gray-100);padding:1px 6px;border-radius:4px;font-size:12px">dailyInviteLimit</code> 参数设置每日最多向多少用户发送 Trustpilot 邀请。新商家可从小量开始验证效果，稳定后逐步提升或设为无限制。</p>
 
     <table class="prd-table" style="margin-top:16px">
       <thead>
@@ -460,10 +460,10 @@ p:last-child { margin-bottom: 0; }
       </thead>
       <tbody>
         <tr>
-          <td><strong><code style="font-size:11px">rolloutPct</code></strong></td>
-          <td>0 – 100</td>
-          <td><span class="chip green">100</span></td>
-          <td>控制触发 Trustpilot 邀请的用户比例（百分比）</td>
+          <td><strong><code style="font-size:11px">dailyInviteLimit</code></strong></td>
+          <td>1 – ∞（0 = 无限制）</td>
+          <td><span class="chip green">∞ 无限制</span></td>
+          <td>每自然日（UTC 00:00 重置）最多触发邀请的用户数量；当日已达上限的会话正常关闭、不发邀请</td>
         </tr>
       </tbody>
     </table>
@@ -471,19 +471,19 @@ p:last-child { margin-bottom: 0; }
     <div class="card-grid" style="margin-top:16px">
       <div class="info-card">
         <div class="ic-icon">📊</div>
-        <div class="ic-title">示例：rolloutPct = 50</div>
-        <div class="ic-desc">随机 50% 的已解决会话触发 Trustpilot 邀请；另外 50% 不触发，仅完成 AI 对话</div>
+        <div class="ic-title">示例：dailyInviteLimit = 50</div>
+        <div class="ic-desc">每天最多向 50 名用户发送邀请；第 51 个符合条件的会话当日不触发邀请，次日零点重置计数</div>
       </div>
       <div class="info-card">
         <div class="ic-icon">🚀</div>
         <div class="ic-title">推荐上线策略</div>
-        <div class="ic-desc">新商家从 10–20% 开始灰度验证；数据稳定后逐步提升；全量验证通过后设为 100%</div>
+        <div class="ic-desc">新商家从 10/天开始观察归因与评价质量；稳定后提升至 50–200/天；确认无异常后设为无限制</div>
       </div>
     </div>
 
     <div class="note info">
       <span class="note-icon">ℹ️</span>
-      <span><strong>灰度判断时机：</strong>在 AI 判定"问题已解决"后、发送邀请前执行。未命中灰度的会话正常关闭，不影响用户体验；命中的会话继续触发 Trustpilot 邀请流程。</span>
+      <span><strong>判断时机：</strong>在 AI 判定"问题已解决"后、发送邀请前检查当日已发量。未达上限则正常触发邀请；已达上限的会话正常关闭，不影响用户体验。</span>
     </div>
   </section>
 
@@ -495,82 +495,125 @@ p:last-child { margin-bottom: 0; }
       <div class="section-title">评价归因方案</div>
     </div>
 
-    <p>Seel 使用<strong>模糊归因（Fuzzy Attribution）</strong>将 Trustpilot 公开评价与对应的 plugin session 匹配，无需依赖 Trustpilot 官方 API，适用性更广。归因置信度通过多维度信号综合计算，高置信度匹配才触发计费。</p>
+    <!-- 5.1 归因背景 -->
+    <p style="margin-bottom:8px"><strong>核心问题：</strong>Trustpilot 不向第三方提供 Webhook 或回调接口。用户点击邀请跳转至 Trustpilot 后，Seel 无法直接得知该用户是否真的提交了评价。</p>
+    <p><strong>解决方案（模糊归因）：</strong>用户点击邀请按钮时，Seel 写入一条 <strong>Intent Log</strong>，记录本次"评价意图"。随后，系统主动爬取商家 Trustpilot 页面，将新出现的评价与 Intent Log 做多维度匹配，推断归因关系。置信度达标 + 五星 → 触发计费。</p>
 
-    <!-- ── 归因信号表 ── -->
-    <table class="prd-table" style="margin-top:20px">
+    <!-- 5.2 Intent Log 字段 -->
+    <div style="margin-top:24px;margin-bottom:6px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em">Intent Log · 记录字段（用户点击邀请按钮时写入）</div>
+    <table class="prd-table">
       <thead>
-        <tr><th>归因信号</th><th>说明</th><th>权重</th></tr>
+        <tr><th>字段</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>session_id</code></td><td>Seel plugin session 唯一标识</td></tr>
+        <tr><td><code>merchant_id</code></td><td>商家在 Trustpilot 上的主页标识（用于锁定爬取目标）</td></tr>
+        <tr><td><code>customer_name</code></td><td>买家姓名（来自 Shopify 订单，用于后续评价人名字模糊匹配）</td></tr>
+        <tr><td><code>order_id</code></td><td>订单号（用于评价正文关键词匹配）</td></tr>
+        <tr><td><code>invite_clicked_at</code></td><td>用户点击邀请按钮的 UTC 时间戳，归因窗口从此刻起算</td></tr>
+        <tr><td><code>device_fingerprint</code></td><td>浏览器/设备指纹（Canvas + UA + 分辨率哈希）</td></tr>
+        <tr><td><code>attribution_expires_at</code></td><td><code>invite_clicked_at + 6h</code>，爬虫轮询的终止时间；到期后 log 关闭，不再参与匹配</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 爬取时间参数 -->
+    <div style="margin-top:16px;margin-bottom:6px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em">爬取时间参数（系统级配置）</div>
+    <table class="prd-table">
+      <thead>
+        <tr><th>参数</th><th>默认值</th><th>含义</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td><strong>时间窗口</strong></td>
-          <td>Plugin session 结束后 72h 内提交的评价，纳入候选池</td>
-          <td><span class="chip green">高</span></td>
+          <td><code>first_crawl_delay</code></td>
+          <td><strong>2 h</strong></td>
+          <td>Intent Log 写入后，触发第一次爬取的等待时间（即 T+2h）。给用户足够时间在 Trustpilot 完成提交。</td>
         </tr>
         <tr>
-          <td><strong>用户 ID / Email 哈希</strong></td>
-          <td>Seel 内部用户标识与 TP 评价人匹配（哈希比对，不明文存储）</td>
-          <td><span class="chip green">高</span></td>
+          <td><code>crawl_interval</code></td>
+          <td><strong>1 h</strong></td>
+          <td>首次爬取后，每隔 1 小时重复爬取一次，固定节点：T+3h / T+4h / T+5h / T+6h。</td>
         </tr>
         <tr>
-          <td><strong>商家 ID</strong></td>
-          <td>评价必须发布在对应商家的 TP 主页</td>
-          <td><span class="chip green">高</span></td>
-        </tr>
-        <tr>
-          <td><strong>订单号 / 内容匹配</strong></td>
-          <td>评价内容中提及订单号或 Seel session 相关关键词，加分</td>
-          <td><span class="chip amber">中</span></td>
-        </tr>
-        <tr>
-          <td><strong>设备 / IP 指纹</strong></td>
-          <td>相同设备在 session 结束后访问 TP，辅助匹配</td>
-          <td><span class="chip amber">中</span></td>
+          <td><code>attribution_window</code></td>
+          <td><strong>6 h</strong></td>
+          <td>归因窗口总时长。5 次爬取（T+2h / T+3h / T+4h / T+5h / T+6h）后窗口关闭，log 自动失效。</td>
         </tr>
       </tbody>
     </table>
 
-    <!-- ── 归因触发机制：Log 监测 ── -->
+    <!-- 5.3 触发流程 -->
     <div style="margin-top:24px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px 24px">
-      <div style="font-size:13px;font-weight:800;color:#065f46;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:18px">⚡</span> 归因触发机制 · Log 监测 + 定时爬虫
+      <div style="font-size:13px;font-weight:800;color:#065f46;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">⚡</span> 归因触发流程 · Intent Log 监测 + 周期爬虫匹配
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px">
+      <!-- 两个参数的关系说明 -->
+      <div style="font-size:11px;color:#047857;background:#dcfce7;border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.6">
+        <strong>T+2h</strong> 是首次爬取时间（给用户 2 小时在 Trustpilot 完成提交）；之后每小时爬一次（T+3h / T+4h / T+5h / T+6h），共 <strong>5 次</strong>爬取，<strong>T+6h 窗口关闭</strong>——前者是"何时开始"，后者是"监测多久"。
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
         <div style="display:flex;gap:12px;align-items:flex-start">
           <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
           <div>
-            <div style="font-size:12px;font-weight:700;color:#065f46">系统检测 Intent Log 更新</div>
-            <div style="font-size:11px;color:#047857;margin-top:2px">Plugin session 成功解决问题 → 写入 Intent Log（含用户 ID、商家 ID、时间戳、session 状态）</div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">用户点击邀请 → 写入 Intent Log，6h 归因窗口开启</div>
+            <div style="font-size:11px;color:#047857;margin-top:3px">Widget 检测到"⭐ 在 Trustpilot 留评"点击事件 → 立即将上表字段写入 Intent Log → 用户跳转至 Trustpilot。<code>attribution_expires_at = now + 6h</code> 开始计时。</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start">
           <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
           <div>
-            <div style="font-size:12px;font-weight:700;color:#065f46">20 分钟内触发 TP 爬虫</div>
-            <div style="font-size:11px;color:#047857;margin-top:2px">检测到 log 新增条目后，<strong>20 分钟内</strong>启动爬虫抓取对应商家 Trustpilot 主页，获取最新评价列表（增量检测）</div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">T+2h / T+3h / T+4h / T+5h / T+6h：每小时爬取一次，共 5 次</div>
+            <div style="font-size:11px;color:#047857;margin-top:3px">从 T+2h 开始，每小时爬取商家 TP 主页增量评价（new_reviews），对所有仍开放的 Intent Log 运行多信号匹配算法。一旦某次命中，立即标记归因成功并关闭该 log，不再继续轮询。T+6h 仍未命中则窗口关闭。</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start">
           <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
           <div>
-            <div style="font-size:12px;font-weight:700;color:#065f46">新评价 diff 与 Intent Log 比对</div>
-            <div style="font-size:11px;color:#047857;margin-top:2px">将爬取到的新评价与 72h 时间窗口内的 Intent Log 运行模糊匹配算法，输出归因置信度分数</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="width:26px;height:26px;border-radius:50%;background:#dcfce7;color:#065f46;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#065f46">高置信度 → 归因成功，触发计费</div>
-            <div style="font-size:11px;color:#047857;margin-top:2px">置信度 ≥ 阈值（可配置）时，标记为归因成功，写入计费记录；低于阈值标记为自然评价，不计费</div>
+            <div style="font-size:12px;font-weight:700;color:#065f46">置信度达标 → 归因成功；五星 → 触发计费</div>
+            <div style="font-size:11px;color:#047857;margin-top:3px">每轮匹配中，置信度 ≥ 阈值（默认 70，可配置）→ 归因成功，写入计费候选。<strong>仅当星级 = 5★ 时收取 $5</strong>；1–4 星归因成功但不计费。T+6h 仍未匹配的 log 自动关闭，标记为"未归因"，不计费。</div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- 5.4 匹配信号表 -->
+    <div style="margin-top:24px;margin-bottom:6px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.05em">匹配信号说明</div>
+    <table class="prd-table">
+      <thead>
+        <tr><th>信号</th><th>判断方式</th><th>权重</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>时间窗口</strong></td>
+          <td>评价发布时间在 <code>invite_clicked_at</code> 之后、<code>attribution_expires_at</code>（+6h）之前；发布越早置信度越高</td>
+          <td><span class="chip green">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>评价人姓名</strong></td>
+          <td>Trustpilot 评价人显示名与 <code>customer_name</code> 做模糊匹配（Levenshtein 相似度 ≥ 0.8 视为匹配）</td>
+          <td><span class="chip green">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>订单号关键词</strong></td>
+          <td>评价正文中包含 <code>order_id</code> 或其部分片段（后 6 位），视为强匹配信号</td>
+          <td><span class="chip amber">中</span></td>
+        </tr>
+        <tr>
+          <td><strong>设备指纹</strong></td>
+          <td>与 <code>device_fingerprint</code> 一致的浏览器在 invite click 后访问了 Trustpilot（通过 Seel JS SDK 的跨页面指纹追踪记录）</td>
+          <td><span class="chip amber">中</span></td>
+        </tr>
+        <tr>
+          <td><strong>点击-发布时间差</strong></td>
+          <td>invite_click → review_submit 间隔越短（如 &lt; 30 分钟），归因概率越高，对置信度额外加权</td>
+          <td><span class="chip amber">中</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 5.5 去重规则 -->
     <div class="note" style="margin-top:16px">
       <span class="note-icon">💡</span>
-      <span><strong>去重规则：</strong>每条 Intent Log 最多与一条 Trustpilot 评价匹配，已使用的记录加入 used set，同一用户在同一 session 周期内不触发重复计费。72h 窗口到期后，未匹配的 log 条目自动关闭。</span>
+      <span><strong>去重规则：</strong>每条 Intent Log 最多与一条 Trustpilot 评价匹配（1:1），已匹配的 log 加入 used set，不再参与后续匹配。同一用户在同一 session 周期内不触发重复计费。T+6h 窗口到期后，未匹配的 log 条目自动关闭，不再计费。</span>
     </div>
   </section>
 
@@ -588,11 +631,18 @@ p:last-child { margin-bottom: 0; }
       </thead>
       <tbody>
         <tr class="billing-row-charged">
-          <td><strong>TP 评价提交（任意星级）</strong></td>
+          <td><strong>TP 评价提交（五星）</strong></td>
           <td><span class="chip green">匹配成功</span></td>
-          <td>任意星级</td>
+          <td>五星（5★）</td>
           <td><span class="chip green">✅ 计费</span></td>
           <td><strong>$5.00</strong></td>
+        </tr>
+        <tr>
+          <td>TP 评价提交（1–4 星）</td>
+          <td><span class="chip green">匹配成功</span></td>
+          <td>1–4 星</td>
+          <td><span class="chip gray">不计费</span></td>
+          <td>$0</td>
         </tr>
         <tr>
           <td>TP 评价（无法归因）</td>
@@ -613,7 +663,7 @@ p:last-child { margin-bottom: 0; }
 
     <div class="note success">
       <span class="note-icon">💡</span>
-      <span><strong>计费逻辑简化：</strong>只要评价被成功归因到 plugin session，无论星级均计费 $5。不再区分星级门槛。去重规则：每条 Intent Log 最多与一条 Trustpilot 评价匹配，已使用的记录加入 used set，同一用户不触发重复计费。</span>
+      <span><strong>计费规则：</strong>仅五星（5★）归因评价触发计费 $5；1–4 星归因评价不计费。去重规则：每条 Intent Log 最多与一条 Trustpilot 评价匹配，已使用的记录加入 used set，同一用户不触发重复计费。</span>
     </div>
   </section>
 
@@ -628,7 +678,7 @@ p:last-child { margin-bottom: 0; }
     <div class="version-row">
       <span class="v-ver">v2.0</span>
       <span class="v-date">2026-05-08</span>
-      <span class="v-desc">v2.0 发布。移除 CSAT 前置筛选，单路径流程 + 灰度控制（rolloutPct）；任意星级均可归因计费；符合 FTC / Trustpilot ToS / EU Omnibus Directive；支持 Trustpilot 官方 Invitation API（referenceId 精确归因）</span>
+      <span class="v-desc">v2.0 发布。移除 CSAT 前置筛选，单路径流程 + 灰度控制（rolloutPct）；仅五星（5★）归因评价计费 $5，1–4 星不计费；符合 FTC / Trustpilot ToS / EU Omnibus Directive；支持 Trustpilot 官方 Invitation API（referenceId 精确归因）</span>
     </div>
     <div class="version-row">
       <span class="v-ver" style="color:var(--purple)">v1.1</span>
