@@ -8,16 +8,21 @@ import AgentsPage from "@/pages/AgentsPage";
 import PlaybookPage from "@/pages/PlaybookPage";
 import PerformancePage from "@/pages/PerformancePage";
 import EmailPage from "@/pages/EmailPage";
+import SalesAgentPage from "@/pages/SalesAgentPage";
 import SetupSettings from "@/components/SetupSettings";
 import { cn } from "@/lib/utils";
-import { Badge, } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
-const tabs = [
+const aiSupportTabs = [
   { id: "agents" as const, label: "Agents" },
   { id: "playbook" as const, label: "Playbook" },
   { id: "email" as const, label: "Email Inbox", badge: true },
   { id: "performance" as const, label: "Performance" },
+];
+
+const salesAgentTabs = [
+  { id: "sales-agent" as const, label: "Analytics" },
 ];
 
 export default function Home() {
@@ -26,6 +31,8 @@ export default function Home() {
     showSettings, setShowSettings,
     playbookDeepLink, setPlaybookDeepLink,
   } = useApp();
+
+  const isSalesAgent = mainTab === "sales-agent";
 
   /* Handle tab switch — consume playbookDeepLink */
   const handleTabSwitch = (tabId: typeof mainTab) => {
@@ -36,6 +43,9 @@ export default function Home() {
     }
   };
 
+  const activeTabs = isSalesAgent ? salesAgentTabs : aiSupportTabs;
+  const pageTitle = isSalesAgent ? "Sales Agent" : "Support agent";
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
@@ -45,10 +55,10 @@ export default function Home() {
         {/* Page header */}
         <div className="border-b border-border bg-white">
           <div className="px-6 pt-4 pb-0">
-            <h1 className="text-[18px] font-bold text-foreground mb-3">AI support</h1>
+            <h1 className="text-[18px] font-bold text-foreground mb-3">{pageTitle}</h1>
             {/* Top tabs */}
             <div className="flex items-center gap-0">
-              {tabs.map((tab) => (
+              {activeTabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabSwitch(tab.id)}
@@ -60,7 +70,7 @@ export default function Home() {
                   )}
                 >
                   {tab.label}
-                  {tab.badge && (
+                  {"badge" in tab && tab.badge && (
                     <span className="text-[10px] font-bold bg-[#6c47ff] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">
                       4
                     </span>
@@ -70,7 +80,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
 
         {/* Content */}
         <div className="flex-1 overflow-hidden bg-[#fafafa]">
@@ -94,10 +103,11 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {mainTab === "agents" && <AgentsPage />}
-              {mainTab === "playbook" && <PlaybookPage />}
+              {mainTab === "agents"      && <AgentsPage />}
+              {mainTab === "playbook"    && <PlaybookPage />}
               {mainTab === "performance" && <PerformancePage />}
-              {mainTab === "email" && <EmailPage />}
+              {mainTab === "email"       && <EmailPage />}
+              {mainTab === "sales-agent" && <SalesAgentPage />}
             </>
           )}
         </div>

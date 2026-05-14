@@ -154,18 +154,18 @@ export interface PerformanceDaily {
   tickets: number;
   resolved: number;
   escalated: number;
-  csat: number;
-  firstResponseTime: number;
-  fullResolutionTime: number;
   autoResolutionRate: number;
-  sentimentChangedRate: number;
+  sentimentImprovementRate: number;
+  avgTurns: number;
+  entrySentimentScore: number;
+  exitSentimentScore: number;
 }
 
 export interface IntentRow {
   intent: string;
   volume: number;
   resolutionRate: number;
-  csat: number;
+  sentimentChange: number;
 }
 
 // --- CONVERSATION LOG ---
@@ -185,6 +185,7 @@ export interface ConversationLog {
   customer: string;
   email: string;
   intent: string;
+  entrySentiment: string;
   sentiment: string;
   outcome: "Resolved" | "Escalated" | "Handling";
   mode: "Production" | "Training";
@@ -665,45 +666,56 @@ export const escalationFeed: EscalationCard[] = [
 // PERFORMANCE DATA
 // ============================================================
 export const performanceSummary: PerformanceKPI[] = [
-  { label: "Total Tickets", value: 156, unit: "", trend: 12, trendLabel: "vs previous period" },
-  { label: "Auto-Resolution Rate", value: 68, unit: "%", trend: 4, trendLabel: "vs previous period" },
-  { label: "Escalation Rate", value: 32, unit: "%", trend: -4, trendLabel: "vs previous period" },
-  { label: "Sentiment Improve Rate", value: 8.3, unit: "%", trend: -1.1, trendLabel: "vs previous period" },
-  { label: "CSAT Score", value: 4.6, unit: "/5", trend: 0.2, trendLabel: "vs previous period" },
-  { label: "Full Resolution Time", value: 750, unit: "s", trend: -130, trendLabel: "vs previous period" },
+  { label: "Total Tickets",              value: 156,  unit: "",  trend: 12,   trendLabel: "vs previous period" },
+  { label: "Resolution Rate",            value: 68,   unit: "%", trend: 4,    trendLabel: "vs previous period" },
+  { label: "Escalation Rate",            value: 32,   unit: "%", trend: -4,   trendLabel: "vs previous period" },
+  { label: "Sentiment Improvement Rate", value: 54,   unit: "%", trend: 6.2,  trendLabel: "vs previous period" },
+  { label: "Avg. Turns",                 value: 4.5,  unit: "",  trend: -0.3, trendLabel: "vs previous period" },
 ];
 
-export const performanceDaily: PerformanceDaily[] = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date(2026, 2, i + 1);
-  const dayOfWeek = d.getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  const baseVolume = isWeekend ? 35 : 60;
-  const growthFactor = 1 + (i / 30) * 0.15;
-  const tickets = Math.round(baseVolume * growthFactor + (Math.random() * 10 - 5));
-  const resRate = Math.min(75, 55 + i * 0.5 + (Math.random() * 6 - 3));
-  const resolved = Math.round(tickets * resRate / 100);
+// Sentiment score: -2=Furious -1=Negative 0=Neutral +1=Positive +2=Satisfied
+export const performanceDaily: PerformanceDaily[] = Array.from({ length: 180 }, (_, i) => {
+  const d = new Date(2025, 11, i + 1);
+  const isWeekend = [0, 6].includes(d.getDay());
+  const tickets = Math.round((isWeekend ? 35 : 60) * (1 + (i / 30) * 0.15) + (Math.random() * 10 - 5));
+  const resRate = Math.min(80, Math.max(52, 62 + (i / 180) * 8 + (Math.random() * 6 - 3)));
+  // Entry: pre-sale — Furious/Negative tail visible (frustrated buyers), mostly Neutral
+  const re = Math.random();
+  const rawEntry = re < 0.12 ? -(1.5 + Math.random() * 0.5)          // Furious  ~12%
+                : re < 0.25  ? -(0.5 + Math.random() * 0.9)          // Negative ~13%
+                : re < 0.80  ? (-0.4 + Math.random() * 0.8)          // Neutral  ~55%
+                : re < 0.95  ? (0.5  + Math.random() * 0.9)          // Positive ~15%
+                :               (1.5  + Math.random() * 0.5);         // Satisfied  ~5%
+  const entryScore = Math.round(Math.max(-2, Math.min(2, rawEntry)) * 10) / 10;
+  // Exit: AI resolved well — Furious eliminated, majority Positive/Satisfied
+  const rx = Math.random();
+  const rawExit = rx < 0.07   ? -(0.5 + Math.random() * 0.9)         // Negative   ~7%
+               : rx < 0.22    ? (-0.4 + Math.random() * 0.8)         // Neutral   ~15%
+               : rx < 0.57    ? (0.5  + Math.random() * 0.9)         // Positive  ~35%
+               :                 (1.5  + Math.random() * 0.5);        // Satisfied ~43%
+  const exitScore = Math.round(Math.max(-2, Math.min(2, rawExit)) * 10) / 10;
   return {
     date: d.toISOString().split("T")[0],
     tickets,
-    resolved,
-    escalated: tickets - resolved,
+    resolved: Math.round(tickets * resRate / 100),
+    escalated: Math.round(tickets * (1 - resRate / 100)),
     autoResolutionRate: Math.round(resRate * 10) / 10,
-    csat: Math.round(Math.min(4.8, 3.9 + i * 0.015 + (Math.random() * 0.3 - 0.15)) * 10) / 10,
-    sentimentChangedRate: Math.round(Math.max(3, 15 - i * 0.25 + (Math.random() * 4 - 2)) * 10) / 10,
-    firstResponseTime: Math.round(Math.max(30, 90 - i * 1.5 + (Math.random() * 15 - 7))),
-    fullResolutionTime: Math.round(Math.max(300, 1200 - i * 20 + (Math.random() * 200 - 100))),
+    sentimentImprovementRate: Math.round(Math.min(70, 40 + i * 0.8 + (Math.random() * 8 - 4)) * 10) / 10,
+    avgTurns: Math.round((5.5 - i * 0.03 + (Math.random() * 0.6 - 0.3)) * 10) / 10,
+    entrySentimentScore: entryScore,
+    exitSentimentScore: exitScore,
   };
 });
 
 export const intentData: IntentRow[] = [
-  { intent: "Where Is My Order", volume: 156, resolutionRate: 89, csat: 4.5 },
-  { intent: "Refunds", volume: 98, resolutionRate: 62, csat: 4.0 },
-  { intent: "Cancellations", volume: 67, resolutionRate: 78, csat: 4.2 },
-  { intent: "Product Issues", volume: 52, resolutionRate: 55, csat: 3.8 },
-  { intent: "Shipping", volume: 45, resolutionRate: 71, csat: 4.1 },
-  { intent: "Returns", volume: 38, resolutionRate: 58, csat: 3.9 },
-  { intent: "Pre-sale Questions", volume: 31, resolutionRate: 82, csat: 4.4 },
-  { intent: "Account Issues", volume: 18, resolutionRate: 44, csat: 3.6 },
+  { intent: "Where Is My Order",  volume: 156, resolutionRate: 89, sentimentChange: +0.8 },
+  { intent: "Refunds",            volume: 98,  resolutionRate: 62, sentimentChange: +0.3 },
+  { intent: "Cancellations",      volume: 67,  resolutionRate: 78, sentimentChange: +0.5 },
+  { intent: "Product Issues",     volume: 52,  resolutionRate: 55, sentimentChange: -0.1 },
+  { intent: "Shipping",           volume: 45,  resolutionRate: 71, sentimentChange: +0.6 },
+  { intent: "Returns",            volume: 38,  resolutionRate: 58, sentimentChange: +0.2 },
+  { intent: "Pre-sale Questions", volume: 31,  resolutionRate: 82, sentimentChange: +0.9 },
+  { intent: "Account Issues",     volume: 18,  resolutionRate: 44, sentimentChange: -0.2 },
 ];
 
 // ============================================================
@@ -712,7 +724,7 @@ export const intentData: IntentRow[] = [
 export const conversationLogs: ConversationLog[] = [
   {
     ticketId: "TK-4891", customer: "Emma Thompson", email: "emma.t@gmail.com",
-    intent: "WISMO", sentiment: "Neutral", outcome: "Resolved", mode: "Production",
+    intent: "WISMO", entrySentiment: "Neutral", sentiment: "Satisfied", outcome: "Resolved", mode: "Production",
     turns: 1, duration: "1m 12s", summary: "Customer asked about order #DBH-29174 shipping status.", time: "Today 9:42 AM", startedAt: "Today 9:41 AM",
     thread: tickets[0].thread,
     reasoning: [{
@@ -730,7 +742,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4892", customer: "James Wright", email: "j.wright@outlook.com",
-    intent: "Cancellation", sentiment: "Neutral", outcome: "Resolved", mode: "Production",
+    intent: "Cancellation", entrySentiment: "Negative", sentiment: "Positive", outcome: "Resolved", mode: "Production",
     turns: 1, duration: "2m 05s", summary: "Customer requested cancellation of unfulfilled order #DBH-29201.", time: "Today 9:37 AM", startedAt: "Today 9:35 AM",
     thread: tickets[1].thread,
     reasoning: [{
@@ -749,7 +761,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4893", customer: "Priya Patel", email: "priya.p@yahoo.com",
-    intent: "Complaint", sentiment: "Frustrated", outcome: "Escalated", mode: "Production",
+    intent: "Complaint", entrySentiment: "Furious", sentiment: "Furious", outcome: "Escalated", mode: "Production",
     turns: 1, duration: "0m 45s", summary: "Wrong item received — escalated due to frustrated sentiment.", time: "Today 8:52 AM", startedAt: "Today 8:50 AM",
     escalationReason: "Customer sentiment: frustrated + item mismatch requires warehouse verification",
     handoffNotes: "Wrong item received. Customer ordered red dress, received blue. VIP customer with high LTV. Requires warehouse check for inventory mismatch.",
@@ -771,7 +783,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4894", customer: "Oliver Bennett", email: "oliver.b@icloud.com",
-    intent: "Address Change", sentiment: "Neutral", outcome: "Resolved", mode: "Training",
+    intent: "Address Change", entrySentiment: "Neutral", sentiment: "Neutral", outcome: "Resolved", mode: "Training",
     turns: 1, duration: "0m 55s", summary: "Customer requested address change for unfulfilled order.", time: "Today 9:16 AM", startedAt: "Today 9:15 AM",
     thread: tickets[3].thread,
     reasoning: [{
@@ -789,7 +801,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4895", customer: "Sophie Williams", email: "sophie.w@gmail.com",
-    intent: "Refund", sentiment: "Neutral", outcome: "Resolved", mode: "Production",
+    intent: "Refund", entrySentiment: "Negative", sentiment: "Negative", outcome: "Resolved", mode: "Production",
     turns: 1, duration: "1m 30s", summary: "Customer inquired about refund status for returned item.", time: "Today 9:01 AM", startedAt: "Today 9:00 AM",
     thread: tickets[4].thread,
     reasoning: [{
@@ -1610,4 +1622,90 @@ export const topics: Topic[] = [
     sourceTickets: ["TK-4891"],
     status: "pending",
   },
+];
+
+// ============================================================
+// SALES AGENT DATA
+// ============================================================
+
+export interface SalesOrder {
+  id: string;
+  customer: string;
+  email: string;
+  items: { name: string; qty: number; price: string }[];
+  recommendedItem: string;   // name of the attributed/recommended product
+  total: string;
+  date: string;
+  status: "fulfilled" | "pending" | "refunded";
+  touchpoint: string;
+  channel: string;
+}
+
+export interface SalesTouchpointRow {
+  touchpoint: string;
+  attributedSales: number;
+  salesDelta: number;
+  ordersInfluenced: number;
+  ctr: number;
+  aov: number;        // Avg. Item Value — attributed product only
+  actualAov: number;  // Avg. Order Value — full basket
+  clicks: number;
+  impressions: number;
+  orders: SalesOrder[];
+}
+
+export interface SalesDailyPoint {
+  date: string;
+  total: number;
+  resolutionCenter: number;
+  wfpEmail: number;
+  supportAgent: number;
+  searchBar: number;
+}
+
+function makeSalesDaily(): SalesDailyPoint[] {
+  const seed = [1240, 1380, 1290, 1450, 1520, 1410, 1330, 1480, 1390, 1550,
+                1310, 1420, 1360, 1500, 1590, 1460, 1380, 1610, 1530, 1440,
+                1370, 1490, 1560, 1420, 1480, 1640, 1510, 1380, 1450, 1320];
+  return seed.map((total, i) => {
+    const d = new Date("2026-04-08");
+    d.setDate(d.getDate() + i);
+    return {
+      date: d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" }),
+      total,
+      resolutionCenter: Math.round(total * 0.27),
+      wfpEmail: Math.round(total * 0.26),
+      supportAgent: Math.round(total * 0.24),
+      searchBar: Math.round(total * 0.23),
+    };
+  });
+}
+export const salesDaily: SalesDailyPoint[] = makeSalesDaily();
+
+const sampleOrders: Record<string, SalesOrder[]> = {
+  "Seel Resolution Center": [
+    { id: "ORD-10421", customer: "Emma Wilson", email: "emma@example.com", items: [{ name: "Wireless Earbuds Pro", qty: 1, price: "$79.99" }, { name: "Phone Case", qty: 2, price: "$12.99" }], recommendedItem: "Wireless Earbuds Pro", total: "$105.97", date: "May 3, 2026", status: "fulfilled", touchpoint: "Seel Resolution Center", channel: "Web" },
+    { id: "ORD-10398", customer: "James Chen", email: "jchen@example.com", items: [{ name: "Smart Watch Band", qty: 1, price: "$34.99" }], recommendedItem: "Smart Watch Band", total: "$34.99", date: "May 2, 2026", status: "fulfilled", touchpoint: "Seel Resolution Center", channel: "Web" },
+    { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Seel Resolution Center", channel: "Mobile" },
+  ],
+  "WFP Policy Email": [
+    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "WFP Policy Email", channel: "Email" },
+    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "WFP Policy Email", channel: "Email" },
+  ],
+  "Support Agent": [
+    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Support Agent", channel: "Chat" },
+    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Support Agent", channel: "Chat" },
+    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Support Agent", channel: "Chat" },
+  ],
+  "Search Bar": [
+    { id: "ORD-10466", customer: "Olivia Davis", email: "o.davis@example.com", items: [{ name: "Bluetooth Speaker", qty: 1, price: "$69.99" }], recommendedItem: "Bluetooth Speaker", total: "$69.99", date: "May 6, 2026", status: "fulfilled", touchpoint: "Search Bar", channel: "Web" },
+    { id: "ORD-10448", customer: "Lucas Martinez", email: "lucas.m@example.com", items: [{ name: "Ring Light Kit", qty: 1, price: "$79.99" }, { name: "Phone Tripod", qty: 1, price: "$24.99" }], recommendedItem: "Ring Light Kit", total: "$104.98", date: "May 4, 2026", status: "pending", touchpoint: "Search Bar", channel: "Mobile" },
+  ],
+};
+
+export const salesTouchpoints: SalesTouchpointRow[] = [
+  { touchpoint: "Seel Resolution Center", attributedSales: 11611.80, salesDelta: 24.1,  ordersInfluenced: 170, ctr: 4.3, aov: 68.30, actualAov: 106.45, clicks: 2118, impressions: 49368, orders: sampleOrders["Seel Resolution Center"] },
+  { touchpoint: "WFP Policy Email",        attributedSales: 10870.50, salesDelta: 43.0,  ordersInfluenced: 157, ctr: 4.3, aov: 69.24, actualAov: 103.80, clicks: 1950, impressions: 44916, orders: sampleOrders["WFP Policy Email"] },
+  { touchpoint: "Support Agent",           attributedSales: 10234.20, salesDelta: 70.2,  ordersInfluenced: 146, ctr: 4.4, aov: 70.10, actualAov: 108.20, clicks: 1782, impressions: 40464, orders: sampleOrders["Support Agent"] },
+  { touchpoint: "Search Bar",              attributedSales:  9542.95, salesDelta: 103.7, ordersInfluenced: 134, ctr: 4.5, aov: 71.22, actualAov: 101.90, clicks: 1607, impressions: 35808, orders: sampleOrders["Search Bar"] },
 ];
