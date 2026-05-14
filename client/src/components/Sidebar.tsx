@@ -19,7 +19,7 @@ const mainNav = [
   { icon: Shield,      label: "Protection",   tab: null, disabled: true },
   { icon: Puzzle,      label: "Integrations", tab: null, disabled: true },
   { icon: Star,        label: "Reviews",      tab: null, disabled: true },
-  { icon: Bot,         label: "AI support",   tab: null, disabled: false },
+  { icon: Bot,         label: "AI support",   tab: null, disabled: true },
   { icon: Headphones,  label: "Support agent", tab: "agents" as const, disabled: false },
   { icon: TrendingUp,  label: "Sales agent",  tab: "sales-agent" as const, disabled: false },
 ];
@@ -48,11 +48,12 @@ export default function Sidebar() {
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
         {mainNav.map((item) => {
-          const isActive = item.tab
-            ? mainTab === item.tab
-            : !item.disabled && item.label === "AI support"
-              && mainTab !== "sales-agent"
-              && mainTab !== "agents";
+          const supportAgentTabs = ["agents", "playbook", "performance", "email"];
+          const isActive = item.label === "Support agent"
+            ? supportAgentTabs.includes(mainTab)
+            : item.tab
+              ? mainTab === item.tab
+              : false;
           return (
             <button
               key={item.label}
