@@ -157,7 +157,6 @@
     <a href="#sales-orders">三、Sales Agent — 订单详情</a>
     <a href="#nonfunc">四、非功能需求</a>
     <a href="#design">五、设计规范</a>
-    <a href="#demo">六、Demo 测试用例（DJI USA）</a>
     <a href="#"></a>
   </div>
 
@@ -479,122 +478,6 @@
     </div>
   </div>
 
-  <!-- 六、Demo 测试用例 -->
-  <div class="section" id="demo">
-    <div class="demo-header">
-      <h2>六、Demo 测试用例（DJI USA）</h2>
-      <p>以下问题用于演示和验证 Support Agent 的意图识别、推理能力与产品推荐效果，覆盖 7 大意图场景共 35 个用例。</p>
-      <a class="demo-link" href="https://nervous-torvalds-c1d7bd.vercel.app" target="_blank">
-        🔗 打开 Demo →
-      </a>
-    </div>
-    <div class="section-body" style="padding:0">
-
-      <!-- 重点场景 -->
-      <div style="padding:16px 24px 0">
-        <h3 style="margin-top:0">重点测试场景</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>问题摘要</th><th>测试重点</th></tr></thead>
-            <tbody>
-              <tr class="highlight-row"><td>#3</td><td>Fly More Combo 分包裹发货</td><td>分批发货逻辑判断</td></tr>
-              <tr class="highlight-row"><td>#9</td><td>RC-N1 无信号连接失败</td><td>多步骤排障引导能力</td></tr>
-              <tr class="highlight-row"><td>#13</td><td>DJI Care Refresh 碰撞理赔</td><td>保险覆盖范围判断 + 引导流程</td></tr>
-              <tr class="highlight-row"><td>#21</td><td>入门推荐 $300 以内</td><td>预算约束下的产品推荐</td></tr>
-              <tr class="highlight-row"><td>#24</td><td>房地产航拍推荐</td><td>场景理解 + 专业导购</td></tr>
-              <tr class="highlight-row"><td>#33</td><td>Mavic 3 Classic vs Air 3 对比</td><td>多维度产品对比能力</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- 6.1 WISMO -->
-      <div class="intent-section">
-        <div class="intent-title">📦 6.1 订单与物流（WISMO）</div>
-        <ul class="q-list">
-          <li><span class="q-num">1</span>I placed an order 3 days ago but haven't received a shipping confirmation yet. Order #DJI-109823. Can you check on this?</li>
-          <li><span class="q-num">2</span>My tracking shows "Out for Delivery" since yesterday but nothing arrived. What should I do?</li>
-          <li><span class="q-num">3</span>I ordered a DJI Mini 4 Pro Fly More Combo but only received the drone without the accessories. Is the rest of the order coming separately?</li>
-          <li><span class="q-num">4</span>I need to change my shipping address — my order hasn't shipped yet. Is that possible?</li>
-        </ul>
-      </div>
-
-      <!-- 6.2 Refund -->
-      <div class="intent-section">
-        <div class="intent-title">🔄 6.2 退换货与退款（Return / Refund）</div>
-        <ul class="q-list">
-          <li><span class="q-num">5</span>I just received my DJI Air 3 and the gimbal cover is scratched. I want to return it. What's the process?</li>
-          <li><span class="q-num">6</span>I bought my drone 12 days ago. I haven't opened it yet — can I still return it?</li>
-          <li><span class="q-num">7</span>I requested a refund 5 days ago but haven't seen it on my credit card. How long does it take?</li>
-          <li><span class="q-num">8</span>I received the wrong item — I ordered the DJI Osmo Mobile 6 but got the Osmo Mobile SE. How do I get the right one?</li>
-        </ul>
-      </div>
-
-      <!-- 6.3 Tech -->
-      <div class="intent-section">
-        <div class="intent-title">🔧 6.3 技术支持（Tech Support）</div>
-        <ul class="q-list">
-          <li><span class="q-num">9</span>My DJI Mini 3 Pro won't connect to the RC-N1 controller. The app keeps saying "No Signal." I've tried restarting both.</li>
-          <li><span class="q-num">10</span>My drone crashed and the gimbal is shaking during flight now. Is this something I can fix myself or does it need repair?</li>
-          <li><span class="q-num">11</span>The DJI Fly app is asking me to update firmware but the update keeps failing at 60%. What should I do?</li>
-          <li><span class="q-num">12</span>My battery isn't charging — the light just blinks three times and stops. The battery is only 2 months old.</li>
-        </ul>
-      </div>
-
-      <!-- 6.4 Warranty -->
-      <div class="intent-section">
-        <div class="intent-title">🛡️ 6.4 保修与 DJI Care Refresh（Warranty）</div>
-        <ul class="q-list">
-          <li><span class="q-num">13</span>I crashed my DJI Air 3 into a tree. Does my DJI Care Refresh cover this? How do I file a claim?</li>
-          <li><span class="q-num">14</span>My drone is 10 months old and the camera suddenly stopped working. Is this covered under warranty?</li>
-          <li><span class="q-num">15</span>I bought DJI Care Refresh but never activated it. Can I still activate it now? I've had the drone for 3 weeks.</li>
-          <li><span class="q-num">16</span>What's the difference between the standard warranty and DJI Care Refresh? Is it worth buying?</li>
-        </ul>
-      </div>
-
-      <!-- 6.5 Compliance -->
-      <div class="intent-section">
-        <div class="intent-title">🌐 6.5 合规与飞行限制（Compliance / No-fly Zones）</div>
-        <ul class="q-list">
-          <li><span class="q-num">17</span>I'm trying to fly near a local park in NYC and DJI Fly is blocking me. How do I request an unlock?</li>
-          <li><span class="q-num">18</span>I'm traveling to Japan next month. Can I bring my DJI Air 3? Are there any restrictions I should know about?</li>
-        </ul>
-      </div>
-
-      <!-- 6.6 Account -->
-      <div class="intent-section">
-        <div class="intent-title">💳 6.6 账户与激活（Account / Activation）</div>
-        <ul class="q-list">
-          <li><span class="q-num">19</span>I just got a second-hand DJI Mavic 3. How do I transfer the DJI Care Refresh to my account?</li>
-          <li><span class="q-num">20</span>I can't log into my DJI account — it's asking for phone verification but I changed my number. How do I recover access?</li>
-        </ul>
-      </div>
-
-      <!-- 6.7 Product Recommendation -->
-      <div class="intent-section">
-        <div class="intent-title">🛒 6.7 产品推荐（Product Recommendation）</div>
-        <ul class="q-list">
-          <li style="background:#f0edff; border-left: 3px solid #6c47ff; padding-left:11px"><span class="q-num" style="color:#6c47ff">tip</span><em style="font-size:12px;color:#6c47ff">重点测试 AI 能否理解用户场景、追问需求、给出有理由的推荐，而非简单列出参数。</em></li>
-          <li><span class="q-num">21</span>I'm a complete beginner and want my first drone for under $300. What do you recommend?</li>
-          <li><span class="q-num">22</span>I want to buy a drone as a gift for my 14-year-old son who's into photography. What's a good starter option?</li>
-          <li><span class="q-num">23</span>I've never flown a drone before. Is the DJI Mini 4 Pro too advanced for me, or should I start with something simpler?</li>
-          <li><span class="q-num">24</span>I'm a real estate agent and need a drone for aerial property shots. Image quality is the priority. What would you suggest?</li>
-          <li><span class="q-num">25</span>I go hiking and backpacking a lot — I need something lightweight that fits in my pack. What are my options?</li>
-          <li><span class="q-num">26</span>I want to film my kids' sports games. I need something easy to fly with good subject tracking. What do you recommend?</li>
-          <li><span class="q-num">27</span>I'm a surf photographer. I need a drone that can handle wind and salt air. Which model is most durable?</li>
-          <li><span class="q-num">28</span>I do wedding videography professionally. What's the best DJI drone for cinematic footage under $2,000?</li>
-          <li><span class="q-num">29</span>I just bought the DJI Air 3. What accessories do you recommend I get to start with?</li>
-          <li><span class="q-num">30</span>Is the Fly More Combo worth the extra cost, or should I just buy extra batteries separately?</li>
-          <li><span class="q-num">31</span>I want to start doing FPV flying. I have no experience — where do I even start with DJI's lineup?</li>
-          <li><span class="q-num">32</span>What's the actual difference between the DJI Mini 4 Pro and the Mini 3 Pro? Is it worth the price difference?</li>
-          <li><span class="q-num">33</span>I'm deciding between the DJI Mavic 3 Classic and the Air 3. I shoot mostly landscape and nature. Which one wins?</li>
-          <li><span class="q-num">34</span>I already own a DJI Mavic Air 2. Is it worth upgrading to the Air 3, or is the difference not significant enough?</li>
-          <li><span class="q-num">35</span>I'm looking at the DJI Osmo Pocket 3 vs the Action 4. I mostly vlog indoors and outdoors. Which one fits better?</li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
 
 </div><!-- /container -->
 </body>
