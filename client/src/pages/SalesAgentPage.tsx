@@ -10,7 +10,7 @@ import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePick
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, X, ExternalLink, Info, Calendar, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, X, Info, Calendar, Sparkles } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
@@ -115,17 +115,10 @@ function OrderDetailsPanel({
           <div className="space-y-3">
             {row.orders.map((order) => (
               <div key={order.id} className="border border-border rounded-lg p-3.5 hover:bg-muted/20 transition-colors">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] font-mono font-medium text-[#6c47ff]">{order.id}</span>
-                      <StatusBadge status={order.status} />
-                    </div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">{order.customer} · {order.email}</div>
-                  </div>
-                  <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5">
-                    <ExternalLink size={13} />
-                  </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[12px] font-mono font-medium text-[#6c47ff]">{order.id}</span>
+                  <StatusBadge status={order.status} />
+                  <span className="text-[11px] text-muted-foreground ml-1">{order.email}</span>
                 </div>
 
                 {/* Items */}
