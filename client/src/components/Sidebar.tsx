@@ -6,7 +6,7 @@ import { useApp } from "@/contexts/AppContext";
 import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
   Puzzle, Star, Bot, Grid3X3, Bell, Settings,
-  Headphones, TrendingUp, UserSquare2,
+  Headphones, TrendingUp, UserSquare2, CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ const mainNav = [
   { icon: Bot,         label: "AI support",   tab: null, disabled: true },
   { icon: Headphones,  label: "Support agent", tab: "agents" as const, disabled: false },
   { icon: TrendingUp,  label: "Sales agent",  tab: "sales-agent" as const, disabled: false },
+  { icon: CreditCard,  label: "Billing",      tab: "billing" as const,     disabled: false },
 ];
 
 const customizeNav = [
