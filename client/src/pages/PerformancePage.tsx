@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import ConversationLogSidebar from "@/components/ConversationLogSidebar";
 import TimeRangePicker, { type TimeRangeValue, type CustomRange } from "@/components/TimeRangePicker";
+import ChannelPicker, { type ChannelValue } from "@/components/ChannelPicker";
 
 type TimeRange = "yesterday" | "7d" | "30d" | "90d" | "custom";
 type SubTab = "dashboard" | "conversations";
@@ -109,6 +110,7 @@ export default function PerformancePage() {
   const [subTab, setSubTab] = useState<SubTab>("dashboard");
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
+  const [channelFilter, setChannelFilter] = useState<ChannelValue>("all");
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>("all");
   const [intentFilter, setIntentFilter] = useState<IntentFilter>("all");
   const [sentimentFilter, setSentimentFilter] = useState<SentimentFilter>("all");
@@ -249,14 +251,17 @@ export default function PerformancePage() {
                   <h1 className="text-[15px] font-semibold text-foreground">Dashboard</h1>
                   <p className="text-[12px] text-muted-foreground mt-0.5">Monitor your AI Rep's performance metrics.</p>
                 </div>
-                <TimeRangePicker
-                  value={timeRange as TimeRangeValue}
-                  customRange={customRange}
-                  onChange={(v, custom) => {
-                    setTimeRange(v as TimeRange);
-                    if (custom) setCustomRange(custom);
-                  }}
-                />
+                <div className="flex items-center gap-2">
+                  <TimeRangePicker
+                    value={timeRange as TimeRangeValue}
+                    customRange={customRange}
+                    onChange={(v, custom) => {
+                      setTimeRange(v as TimeRange);
+                      if (custom) setCustomRange(custom);
+                    }}
+                  />
+                  <ChannelPicker value={channelFilter} onChange={setChannelFilter} />
+                </div>
               </div>
 
               {/* ── AI Summary ── */}
