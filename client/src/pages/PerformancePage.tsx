@@ -4,7 +4,7 @@
  * Charts: Resolution Rate trend + Sentiment Flow (Entry vs Exit score over time)
  * Table: Contact Reason with Volume, Resolution Rate, Sentiment Change
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   performanceSummary, performanceDaily, intentData, conversationLogs,
   type ConversationLog,
@@ -119,21 +119,29 @@ export default function PerformancePage() {
   const [sortField, setSortField] = useState<SortField>("time");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [summaryState, setSummaryState] = useState<"idle" | "loading" | "done">("idle");
+  const [summaryState, setSummaryState] = useState<"loading" | "done">("loading");
   const [summaryTs, setSummaryTs] = useState<string>("");
   const [summaryCollapsed, setSummaryCollapsed] = useState(false);
+  const summaryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const daysMap: Record<TimeRange, number> = { "yesterday": 1, "7d": 7, "30d": 30, "90d": 90, "custom": 30 };
   const visibleDays = performanceDaily.slice(-daysMap[timeRange]);
 
   function generateSummary() {
+    if (summaryTimerRef.current) clearTimeout(summaryTimerRef.current);
     setSummaryState("loading");
-    setTimeout(() => {
+    summaryTimerRef.current = setTimeout(() => {
       setSummaryState("done");
       const now = new Date();
       setSummaryTs(now.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }));
     }, 2200);
   }
+
+  /* Auto-generate on mount and re-generate when filters change */
+  useEffect(() => {
+    generateSummary();
+    return () => { if (summaryTimerRef.current) clearTimeout(summaryTimerRef.current); };
+  }, [timeRange, channelFilter]);
 
   const chartData = visibleDays.map((d) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -265,17 +273,6 @@ export default function PerformancePage() {
               </div>
 
               {/* ── AI Summary ── */}
-              {summaryState === "idle" && (
-                <div className="mb-5">
-                  <button
-                    onClick={generateSummary}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6c47ff]/8 hover:bg-[#6c47ff]/14 text-[#6c47ff] text-[13px] font-medium transition-colors border border-[#6c47ff]/20"
-                  >
-                    <Sparkles size={14} />
-                    Generate AI Summary
-                  </button>
-                </div>
-              )}
 
               {summaryState === "loading" && (
                 <div className="mb-5 rounded-2xl border border-[#6c47ff]/20 bg-white px-5 py-4 flex items-center gap-3">
@@ -305,21 +302,12 @@ export default function PerformancePage() {
                         <span className="text-[13px] font-semibold text-foreground">AI Summary</span>
                         <span className="text-[10px] text-muted-foreground ml-1">Generated {summaryTs}</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={generateSummary}
-                          className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-[#6c47ff] transition-colors"
-                        >
-                          <RefreshCw size={11} />
-                          Regenerate
-                        </button>
-                        <button
-                          onClick={() => setSummaryCollapsed(c => !c)}
-                          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <ChevronDown size={14} className={cn("transition-transform duration-200", summaryCollapsed ? "-rotate-90" : "")} />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setSummaryCollapsed(c => !c)}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ChevronDown size={14} className={cn("transition-transform duration-200", summaryCollapsed ? "-rotate-90" : "")} />
+                      </button>
                     </div>
 
                     {/* Body */}
