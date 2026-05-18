@@ -578,13 +578,13 @@ export default function PerformancePage() {
                     </SelectContent>
                   </Select>
 
-                  {/* Entry Sentiment dropdown */}
+                  {/* Incoming Sentiment dropdown */}
                   <Select value={entrySentimentFilter} onValueChange={(v) => setEntrySentimentFilter(v as EntrySentimentFilter)}>
-                    <SelectTrigger className="h-7 text-[11px] min-w-[155px] bg-white">
-                      <SelectValue placeholder="Entry Sentiment" />
+                    <SelectTrigger className="h-7 text-[11px] min-w-[175px] bg-white">
+                      <SelectValue placeholder="Incoming Sentiment" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All entry sentiments</SelectItem>
+                      <SelectItem value="all">All incoming sentiments</SelectItem>
                       <SelectItem value="Satisfied">Satisfied</SelectItem>
                       <SelectItem value="Positive">Positive</SelectItem>
                       <SelectItem value="Neutral">Neutral</SelectItem>
@@ -597,6 +597,7 @@ export default function PerformancePage() {
                   <Select value={sentimentFilter} onValueChange={(v) => setSentimentFilter(v as SentimentFilter)}>
                     <SelectTrigger className="h-7 text-[11px] min-w-[150px] bg-white">
                       <SelectValue placeholder="Exit Sentiment" />
+
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All exit sentiments</SelectItem>
@@ -633,7 +634,7 @@ export default function PerformancePage() {
                             { label: "Ticket",    field: "ticketId"  as SortField },
                             { label: "Customer",  field: null },
                             { label: "Intent",    field: "intent"    as SortField },
-                            { label: "Exit Sentiment", field: "sentiment" as SortField },
+                            { label: "Exit Sent.", field: "sentiment" as SortField },
                             { label: "Outcome",   field: "outcome"   as SortField },
                             { label: "Mode",      field: "mode"      as SortField },
                             { label: "Turns",     field: "turns"     as SortField },
