@@ -251,20 +251,99 @@
 
       <h4>2.1.5 AI Summary（AI 自动摘要）</h4>
       <ul>
-        <li>入口：Dashboard 顶部"Generate AI Summary"按钮</li>
-        <li>触发后展示加载状态（约 2 秒），再呈现摘要卡片</li>
-        <li>支持"Regenerate"重新生成；支持折叠/展开（Collapse）</li>
+        <li>进入 Dashboard 后<strong>自动生成</strong>，无需手动触发</li>
+        <li>切换时间范围或 Channel 筛选时<strong>自动重新生成</strong></li>
+        <li>支持折叠/展开（Collapse），无 Regenerate 按钮</li>
+        <li>生成过程展示 loading 动画（约 2 秒）</li>
       </ul>
+
+      <h4>输出结构（三栏卡片）</h4>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>区块</th><th>内容</th></tr></thead>
+          <thead><tr><th>区块</th><th>颜色</th><th>内容</th></tr></thead>
           <tbody>
-            <tr><td>✅ <strong>What's Working</strong></td><td>表现最好的意图、Resolution Rate 趋势正向信号</td></tr>
-            <tr><td>⚠️ <strong>Needs Attention</strong></td><td>Resolution Rate 最低的意图、Escalation Rate 超阈值提示</td></tr>
-            <tr><td>💡 <strong>Recommendations</strong></td><td>针对性改进建议，引用真实指标数值</td></tr>
+            <tr><td>✅ <strong>What's Working</strong></td><td>绿色</td><td>resolution_rate 最高意图 + 趋势正向信号 + 体量类正向信号，各 1 条，必须含具体数字</td></tr>
+            <tr><td>⚠️ <strong>Needs Attention</strong></td><td>橙色</td><td>resolution_rate 最低意图 + escalation 结构归因（定位 2-3 个高 escalation intent）+ entry sentiment 前置触发分析</td></tr>
+            <tr><td>💡 <strong>Recommendations</strong></td><td>紫色</td><td>三条可落地建议，每条对应 Needs Attention 一个痛点，形成"问题→动作"闭环，第三条必须可供商家向上汇报 AI 价值</td></tr>
           </tbody>
         </table>
       </div>
+
+      <h4>AI Summary Prompt</h4>
+      <div class="callout callout-note" style="margin-bottom:12px;">
+        以下 prompt 用于后端调用 LLM 生成 AI Summary 内容，输入数据由系统在请求时动态填充。
+      </div>
+      <pre style="background:#f8f7ff;border:1px solid #e0d9ff;border-radius:10px;padding:18px 20px;font-size:11.5px;line-height:1.75;color:#1e1b4b;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono',Monaco,monospace;">你是 Seel AI Support Agent 的业绩分析师。基于以下数据，为商家生成一份
+Dashboard AI Summary，渲染到三栏（What's Working / Needs Attention /
+Recommendations）。请严格遵循以下原则。
+
+<span style="color:#6c47ff;font-weight:700;"># 输入数据</span>
+- 时间窗口：{date_range}
+- 渠道：{channels}
+- 核心指标：total_tickets, resolution_rate, escalation_rate,
+  sentiment_improvement_rate, avg_turns（含与上一周期 delta）
+- 意图分布（Contact Reason）：每个 intent 的 volume / resolution_rate /
+  sentiment_change
+- 情绪分布：incoming vs exit 的 positive / neutral / negative / furious 占比
+- Resolution 趋势曲线（按日）
+
+<span style="color:#6c47ff;font-weight:700;"># 输出结构</span>
+
+<span style="font-weight:700;">## 1. 顶部摘要段（2-3 句）</span>
+- 第一句：本期总量 + 解决率 + 平均轮次（带主语"your AI Support Agent"）
+- 第二句：情绪改善率 + 一句话定性（"de-escalate and resolve effectively"）
+- 第三句：一个需要警示的指标（如 escalation rate vs benchmark），用
+  高亮色（绿/橙/红）标注数字
+- 数字用 &lt;strong&gt; 包裹，benchmark 对比写明 pp 差异
+
+<span style="font-weight:700;">## 2. What's Working（绿色卡）</span>
+- 锁定 resolution_rate 最高的 1 个 intent，给出具体数值
+- 给出一个趋势性正向信号（如"resolution rate trending +X% vs previous period"）
+- 给出一个体量类正向信号（如"[Intent] is the highest-volume contact reason
+  — the agent is absorbing the bulk of repetitive inquiries successfully"）
+- 共 3 个 bullet，每个 1-2 句，必须带具体数字
+
+<span style="font-weight:700;">## 3. Needs Attention（橙色卡）</span>
+- 锁定 resolution_rate 最低的 1 个 intent，标注数值，给出业务含义
+  （"consider expanding the playbook for this intent"）
+- 拆解 escalation 的结构原因：定位到 2-3 个高 escalation 的 intent
+  （如 Complaint / Refund），写明"driven primarily by ..."
+- 用 entry sentiment 解释一个"前置触发"问题（如 Furious/Negative
+  entry 占比 → early-stage tone detection could route faster）
+- 严禁笼统的"加强培训 / 优化流程"，必须结构化归因到具体 intent / 情绪 / 路径
+
+<span style="font-weight:700;">## 4. Recommendations（紫色卡）</span>
+- 三条建议，每条对应上一栏的一个痛点，形成"问题→动作"闭环：
+  1. 针对低解决率 intent → "Strengthen [Intent] playbook with more
+     resolution paths to improve the X% rate"
+  2. 针对高体量 intent → 主动预防型动作（如"Add proactive [X] messaging
+     to reduce [Intent] volume — this alone could free up significant
+     agent capacity"）
+  3. 把正向数据包装成商家可对外引用的价值点（如"Exit sentiment of
+     +X vs entry of -Y shows a strong uplift — highlight this in
+     merchant reporting to demonstrate AI value"）
+- 每条建议必须可在 2 周内落地，禁止空泛词
+
+<span style="color:#6c47ff;font-weight:700;"># 风格约束</span>
+1. <strong>结构归因，而非能力归因</strong>：把 escalation / not_resolved 拆成
+   "意图×情绪×路径"的结构原因，不要写"AI 能力不足"。
+2. <strong>数字优先</strong>：每个 bullet 至少出现一个具体数字（百分比 / pp / 倍数）。
+3. <strong>去模板化</strong>：不同商家的 Summary 读起来必须不同——具体 intent 名、
+   具体百分比、具体高频意图必须替换，不能留占位符或通用形容词。
+4. <strong>正向数据要"可被商家转述"</strong>：Recommendations 第三条要让商家能
+   直接拿去给老板汇报，体现 AI 价值。
+5. <strong>语气</strong>：分析师视角，克制、可被引用、不夸张；不用 emoji；不用
+   "amazing / great job"等口语化褒奖。
+6. <strong>长度</strong>：摘要段 ≤ 80 词；每张卡 3 个 bullet，每 bullet 1-2 句。
+
+<span style="color:#6c47ff;font-weight:700;"># 输出格式</span>
+返回 JSON：
+{
+  "summary": "...",
+  "whats_working": ["...", "...", "..."],
+  "needs_attention": ["...", "...", "..."],
+  "recommendations": ["...", "...", "..."]
+}</pre>
 
       <hr id="support-conversations" />
 
@@ -278,7 +357,7 @@
           <tbody>
             <tr><td><strong>Outcome</strong></td><td>All / Resolved / Escalated / Handling</td></tr>
             <tr><td><strong>Intent</strong></td><td>All / WISMO / Cancellation / Address Change / Refund / Complaint</td></tr>
-            <tr><td><strong>Entry Sentiment</strong></td><td>All / Satisfied / Positive / Neutral / Negative / Furious</td></tr>
+            <tr><td><strong>Incoming Sentiment</strong></td><td>All / Satisfied / Positive / Neutral / Negative / Furious</td></tr>
             <tr><td><strong>Exit Sentiment</strong></td><td>All / Satisfied / Positive / Neutral / Negative / Furious</td></tr>
             <tr><td><strong>搜索框</strong></td><td>按 Ticket ID / 客户名 / 邮箱 / 对话摘要全文检索</td></tr>
           </tbody>
@@ -293,7 +372,7 @@
             <tr><td><strong>Ticket ID</strong></td><td>工单唯一标识</td></tr>
             <tr><td><strong>Customer</strong></td><td>客户姓名 + 邮箱</td></tr>
             <tr><td><strong>Intent</strong></td><td>意图分类</td></tr>
-            <tr><td><strong>Entry Sentiment</strong></td><td>入口情绪标签（带颜色）</td></tr>
+            <tr><td><strong>Incoming Sentiment</strong></td><td>入口情绪标签（带颜色）</td></tr>
             <tr><td><strong>Exit Sentiment</strong></td><td>出口情绪标签（带颜色）</td></tr>
             <tr><td><strong>Outcome</strong></td><td>处理结果：Resolved / Escalated / Handling</td></tr>
             <tr><td><strong>Mode</strong></td><td>运行模式：Training / Production</td></tr>
