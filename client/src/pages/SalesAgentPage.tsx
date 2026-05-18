@@ -6,6 +6,7 @@
 import { useState, useMemo } from "react";
 import { salesDaily, salesTouchpoints, type SalesTouchpointRow, type SalesOrder } from "@/lib/data";
 import SalesAgentBanner from "@/components/SalesAgentBanner";
+import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePicker";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,10 +17,10 @@ import {
 } from "recharts";
 
 type AgentSubTab = "touchpoints" | "strategies" | "analytics";
-type TimeRange = "7d" | "14d" | "30d";
+type TimeRange = "yesterday" | "7d" | "30d" | "90d" | "custom";
 type TouchpointFilter = "all" | string;
 
-const TIME_SCALE: Record<string, number> = { "7d": 7 / 30, "14d": 14 / 30, "30d": 1 };
+const TIME_SCALE: Record<string, number> = { "yesterday": 1 / 30, "7d": 7 / 30, "30d": 1, "90d": 3, "custom": 1 };
 
 function computeKPIs(tpFilter: string, timeRange: string) {
   const scale = TIME_SCALE[timeRange] ?? 1;
@@ -176,10 +177,11 @@ function OrderDetailsPanel({
 /* ── Analytics sub-tab ── */
 function AnalyticsTab() {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [tpFilter, setTpFilter] = useState<TouchpointFilter>("all");
   const [selectedRow, setSelectedRow] = useState<SalesTouchpointRow | null>(null);
 
-  const daysMap: Record<TimeRange, number> = { "7d": 7, "14d": 14, "30d": 30 };
+  const daysMap: Record<TimeRange, number> = { "yesterday": 1, "7d": 7, "30d": 30, "90d": 90, "custom": 30 };
   const chartData = salesDaily.slice(-daysMap[timeRange]);
   const kpis = useMemo(() => computeKPIs(tpFilter, timeRange), [tpFilter, timeRange]);
 
@@ -194,20 +196,15 @@ function AnalyticsTab() {
 
         {/* Filters */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={13} className="text-muted-foreground" />
-            <span className="text-[12px] text-muted-foreground">Time range</span>
-          </div>
-          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-            <SelectTrigger className="h-7 text-[12px] min-w-[130px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="14d">Last 14 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <span className="text-[12px] text-muted-foreground">Time range</span>
+          <TimeRangePicker
+            value={timeRange as TimeRangeValue}
+            customRange={customRange}
+            onChange={(v, custom) => {
+              setTimeRange(v as TimeRange);
+              if (custom) setCustomRange(custom);
+            }}
+          />
           <Select value={tpFilter} onValueChange={(v) => setTpFilter(v as TouchpointFilter)}>
             <SelectTrigger className="h-7 text-[12px] min-w-[160px]">
               <SelectValue />
@@ -242,13 +239,13 @@ function AnalyticsTab() {
 
         {/* Sales Trend Bar Chart */}
         <Card className="mb-5">
-          <CardHeader className="pb-2 flex-row items-center justify-between">
-            <CardTitle className="text-[13px] font-semibold">Sales trend</CardTitle>
-            <Info size={13} className="text-muted-foreground/40" />
-          </CardHeader>
-          <CardContent>
+          <CardHeader className="pb-3 flex-row items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-[13px] font-semibold">Sales trend</CardTitle>
+              <Info size={13} className="text-muted-foreground/40" />
+            </div>
             {/* Legend */}
-            <div className="flex items-center gap-4 mb-3 flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
               {[
                 { key: "resolutionCenter", label: "Resolution Center", color: TP_COLORS.resolutionCenter },
                 { key: "wfpEmail",         label: "WFP Confirmation Email", color: TP_COLORS.wfpEmail },
@@ -261,6 +258,8 @@ function AnalyticsTab() {
                 </span>
               ))}
             </div>
+          </CardHeader>
+          <CardContent>
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }} barSize={tpFilter === "all" ? 6 : 14}>

@@ -20,8 +20,9 @@ import {
   Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import ConversationLogSidebar from "@/components/ConversationLogSidebar";
+import TimeRangePicker, { type TimeRangeValue, type CustomRange } from "@/components/TimeRangePicker";
 
-type TimeRange = "7d" | "30d" | "90d" | "180d" | "all";
+type TimeRange = "yesterday" | "7d" | "30d" | "90d" | "custom";
 type SubTab = "dashboard" | "conversations";
 type OutcomeFilter  = "all" | "Resolved" | "Escalated" | "Handling";
 type IntentFilter   = "all" | "WISMO" | "Cancellation" | "Address Change" | "Refund" | "Complaint";
@@ -107,6 +108,7 @@ function VolBar({ value, max }: { value: number; max: number }) {
 export default function PerformancePage() {
   const [subTab, setSubTab] = useState<SubTab>("dashboard");
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>("all");
   const [intentFilter, setIntentFilter] = useState<IntentFilter>("all");
   const [sentimentFilter, setSentimentFilter] = useState<SentimentFilter>("all");
@@ -119,7 +121,7 @@ export default function PerformancePage() {
   const [summaryTs, setSummaryTs] = useState<string>("");
   const [summaryCollapsed, setSummaryCollapsed] = useState(false);
 
-  const daysMap: Record<TimeRange, number> = { "7d": 7, "30d": 30, "90d": 90, "180d": 180, "all": 180 };
+  const daysMap: Record<TimeRange, number> = { "yesterday": 1, "7d": 7, "30d": 30, "90d": 90, "custom": 30 };
   const visibleDays = performanceDaily.slice(-daysMap[timeRange]);
 
   function generateSummary() {
@@ -247,18 +249,14 @@ export default function PerformancePage() {
                   <h1 className="text-[15px] font-semibold text-foreground">Dashboard</h1>
                   <p className="text-[12px] text-muted-foreground mt-0.5">Monitor your AI Rep's performance metrics.</p>
                 </div>
-                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-                  <SelectTrigger className="h-8 w-[150px] text-[12px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Last 7 days</SelectItem>
-                    <SelectItem value="30d">Last 30 days</SelectItem>
-                    <SelectItem value="90d">Last 90 days</SelectItem>
-                    <SelectItem value="180d">Last 180 days</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
+                <TimeRangePicker
+                  value={timeRange as TimeRangeValue}
+                  customRange={customRange}
+                  onChange={(v, custom) => {
+                    setTimeRange(v as TimeRange);
+                    if (custom) setCustomRange(custom);
+                  }}
+                />
               </div>
 
               {/* ── AI Summary ── */}
