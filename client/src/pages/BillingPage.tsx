@@ -59,7 +59,6 @@ export default function BillingPage() {
             <div className="flex items-start gap-2.5 bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-4 py-3 mb-6">
               <Info size={15} className="text-[#1d4ed8] mt-0.5 shrink-0" />
               <p className="text-[13px] text-[#1d4ed8] leading-relaxed">
-                当前 Credit 仅供记录使用，商家无需付费，无限额度。<br />
                 Credits are for tracking only — no charges apply. Every merchant has unlimited credits.
               </p>
             </div>
