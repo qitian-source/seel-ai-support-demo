@@ -461,8 +461,8 @@ export default function PerformancePage() {
                   <CardContent>
                     <div className="flex gap-2">
                       {[
-                        { label: "Entry", dist: entryDist,  avg: avgEntryScore },
-                        { label: "Exit",  dist: exitDist,   avg: avgExitScore  },
+                        { label: "At Worst", dist: entryDist,  avg: avgEntryScore },
+                        { label: "At Exit",  dist: exitDist,   avg: avgExitScore  },
                       ].map(({ label, dist, avg }) => {
                         const avgNum = parseFloat(avg);
                         const isPositive = avgNum > 0;
