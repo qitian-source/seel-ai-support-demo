@@ -11,6 +11,7 @@ import EmailPage from "@/pages/EmailPage";
 import SalesAgentPage from "@/pages/SalesAgentPage";
 import BillingPage from "@/pages/BillingPage";
 import SetupSettings from "@/components/SetupSettings";
+import OrgMenu from "@/components/OrgMenu";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
@@ -51,6 +52,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
+      <OrgMenu />
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
