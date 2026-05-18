@@ -108,7 +108,7 @@ function VolBar({ value, max }: { value: number; max: number }) {
 
 export default function PerformancePage() {
   const [subTab, setSubTab] = useState<SubTab>("dashboard");
-  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [channelFilter, setChannelFilter] = useState<ChannelValue>("all");
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>("all");

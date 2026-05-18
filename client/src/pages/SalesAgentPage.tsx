@@ -176,7 +176,7 @@ function OrderDetailsPanel({
 
 /* ── Analytics sub-tab ── */
 function AnalyticsTab() {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [tpFilter, setTpFilter] = useState<TouchpointFilter>("all");
   const [selectedRow, setSelectedRow] = useState<SalesTouchpointRow | null>(null);

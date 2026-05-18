@@ -103,19 +103,21 @@ export default function TimeRangePicker({ value, customRange, onChange }: Props)
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">From</label>
                 <input
-                  type="date"
+                  type="text"
                   value={from}
                   onChange={(e) => setFrom(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg border border-border text-[12px] text-foreground bg-white focus:outline-none focus:ring-1 focus:ring-[#6c47ff] focus:border-[#6c47ff]"
+                  placeholder="YYYY-MM-DD"
+                  className="w-full h-8 px-3 rounded-lg border border-border text-[12px] text-foreground bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-[#6c47ff] focus:border-[#6c47ff]"
                 />
               </div>
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">To</label>
                 <input
-                  type="date"
+                  type="text"
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg border border-border text-[12px] text-foreground bg-white focus:outline-none focus:ring-1 focus:ring-[#6c47ff] focus:border-[#6c47ff]"
+                  placeholder="YYYY-MM-DD"
+                  className="w-full h-8 px-3 rounded-lg border border-border text-[12px] text-foreground bg-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-[#6c47ff] focus:border-[#6c47ff]"
                 />
               </div>
               <button
