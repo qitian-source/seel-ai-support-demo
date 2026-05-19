@@ -196,8 +196,8 @@
             <tr><td><strong>Total Tickets</strong></td><td>选定周期内 AI 处理的总工单数</td><td>增加 ↑</td></tr>
             <tr><td><strong>Resolution Rate</strong></td><td>AI 独立闭环工单数 / 总工单数</td><td>增加 ↑</td></tr>
             <tr><td><strong>Escalation Rate</strong></td><td>转人工工单数 / 总工单数</td><td>降低 ↓</td></tr>
-            <tr><td><strong>Sentiment Improvement Rate</strong></td><td>Exit 情绪得分 &gt; Entry 情绪得分的对话占比</td><td>增加 ↑</td></tr>
-            <tr><td><strong>Avg. Turns</strong></td><td>每条对话平均轮次（AI + 用户消息之和 / 2）</td><td>降低 ↓</td></tr>
+            <tr><td><strong>Sentiment Improvement Rate</strong></td><td>Exit 情绪得分 &gt; Incoming 情绪得分的对话占比</td><td>增加 ↑</td></tr>
+            <tr><td><strong>Avg. Turns</strong></td><td>每条对话平均轮次（AI + 用户消息之和）/ 2</td><td>降低 ↓</td></tr>
           </tbody>
         </table>
       </div>
@@ -216,7 +216,7 @@
         <table>
           <thead><tr><th>字段</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td><strong>Entry Sentiment</strong></td><td>对话开始时用户的情绪分类（售前多为 Neutral）</td></tr>
+            <tr><td><strong>Incoming Sentiment</strong></td><td>对话开始时用户的情绪分类（售前多为 Neutral）</td></tr>
             <tr><td><strong>Exit Sentiment</strong></td><td>对话结束时用户的情绪分类（AI 介入后改善）</td></tr>
             <tr><td><strong>圆环中心数字</strong></td><td>当前周期的平均情绪得分（-2 ～ +2），正值绿色，负值橙色</td></tr>
             <tr><td><strong>图例</strong></td><td>每种情绪的颜色 + 名称 + 百分比，列于环形图下方</td></tr>

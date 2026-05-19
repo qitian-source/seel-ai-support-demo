@@ -205,7 +205,7 @@ function UnifiedConvoDetail({ convo }: { convo: ConversationLog }) {
   const fields: MetaField[] = [
     { label: "Customer", value: `${convo.customer} (${convo.email})` },
     { label: "Intent", value: convo.intent },
-    { label: "Sentiment", value: convo.sentiment, badge: true, badgeVariant: "outline", badgeClass: cn("capitalize", convo.sentiment === "Frustrated" ? "border-red-200 text-red-700 bg-red-50" : convo.sentiment === "Positive" ? "border-green-200 text-green-700 bg-green-50" : "") },
+    { label: "Exit Sentiment", value: convo.sentiment, badge: true, badgeVariant: "outline", badgeClass: cn("capitalize", convo.sentiment === "Frustrated" ? "border-red-200 text-red-700 bg-red-50" : convo.sentiment === "Positive" ? "border-green-200 text-green-700 bg-green-50" : "") },
     { label: "Outcome", value: convo.outcome, badge: true, badgeVariant: "outline", badgeClass: outcomeBadgeClass },
     { label: "Mode", value: convo.mode, badge: true, badgeVariant: "outline", badgeClass: "" },
     { label: "Turns", value: String(convo.turns) },
