@@ -527,7 +527,6 @@ export default function PerformancePage() {
                         <th className="text-left py-2.5 px-4 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Intent</th>
                         <th className="text-left py-2.5 px-4 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Volume</th>
                         <th className="text-left py-2.5 px-4 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Resolution Rate</th>
-                        <th className="text-left py-2.5 px-4 text-[10px] font-medium text-muted-foreground uppercase tracking-wider w-[110px]">Sentiment Change</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -536,7 +535,6 @@ export default function PerformancePage() {
                           <td className="py-2.5 px-4 font-medium">{row.intent}</td>
                           <td className="py-2.5 px-4"><VolBar value={row.volume} max={maxVolume} /></td>
                           <td className="py-2.5 px-4"><ResBar value={row.resolutionRate} /></td>
-                          <td className="py-2.5 px-4 w-[110px]"><SentimentChangeBadge value={row.sentimentChange} /></td>
                         </tr>
                       ))}
                     </tbody>
