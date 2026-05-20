@@ -21,7 +21,7 @@ import {
   GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
   ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
-  Underline, List, ListOrdered, Link,
+  Underline, List, ListOrdered, Link, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -291,6 +291,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
 }) {
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const [showRules, setShowRules] = useState(false);
   const rulesAnchorRef = useRef<HTMLButtonElement>(null);
 
@@ -301,10 +302,16 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
     solved:  threads.filter(t => t.status === "solved").length,
   };
 
+  const q = searchQuery.trim().toLowerCase();
   const filtered = threads.filter((t) => {
     const typeOk = typeFilter === "all" || t.emailType === typeFilter;
     const statusOk = statusFilter.size === 0 || statusFilter.has(t.status);
-    return typeOk && statusOk;
+    const searchOk = !q ||
+      t.customerEmail.toLowerCase().includes(q) ||
+      t.customer.toLowerCase().includes(q) ||
+      t.subject.toLowerCase().includes(q) ||
+      t.inboxSummary.toLowerCase().includes(q);
+    return typeOk && statusOk && searchOk;
   });
 
   // Sort by updatedAt ascending (oldest first = most urgent)
@@ -333,6 +340,28 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
               </span>
             </button>
           ))}
+        </div>
+
+        {/* Search */}
+        <div className="px-3 py-2 border-b border-border">
+          <div className="relative flex items-center">
+            <Search size={12} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by email, name, subject…"
+              className="w-full pl-7 pr-7 py-1.5 text-[11px] rounded-lg border border-border bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff]/50 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Status filter + Escalation rules toggle */}
