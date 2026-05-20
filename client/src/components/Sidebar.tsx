@@ -5,28 +5,34 @@
 import { useApp } from "@/contexts/AppContext";
 import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
-  Puzzle, Star, Bot, Grid3X3, Bell, Settings
+  Puzzle, Star, Bot, Grid3X3, Bell, Settings,
+  Headphones, TrendingUp, UserSquare2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const mainNav = [
-  { icon: Home, label: "Home", disabled: true },
-  { icon: BarChart3, label: "Analytics", disabled: true },
-  { icon: ShoppingBag, label: "Orders", disabled: true },
-  { icon: AlertCircle, label: "Issues", disabled: true },
-  { icon: Shield, label: "Protection", disabled: true },
-  { icon: Puzzle, label: "Integrations", disabled: true },
-  { icon: Star, label: "Reviews", disabled: true },
-  { icon: Bot, label: "AI support", disabled: false },
+  { icon: Home,        label: "Home",         tab: null, disabled: true },
+  { icon: BarChart3,   label: "Analytics",    tab: null, disabled: true },
+  { icon: ShoppingBag, label: "Orders",       tab: null, disabled: true },
+  { icon: AlertCircle, label: "Issues",       tab: null, disabled: true },
+  { icon: Shield,      label: "Protection",   tab: null, disabled: true },
+  { icon: Puzzle,      label: "Integrations", tab: null, disabled: true },
+  { icon: Star,        label: "Reviews",      tab: null, disabled: true },
+  { icon: Bot,         label: "Conversation",  tab: null, disabled: true },
+  { icon: Headphones,  label: "Support agent", tab: "agents" as const, disabled: false },
+  { icon: TrendingUp,  label: "Sales agent",  tab: "sales-agent" as const, disabled: false },
 ];
 
 const customizeNav = [
-  { icon: Grid3X3, label: "Widgets", disabled: true },
-  { icon: Bell, label: "Notifications", disabled: true },
+  { icon: Grid3X3,     label: "Widgets",         disabled: true },
+  { icon: UserSquare2, label: "Customer Portal",  disabled: true },
+  { icon: Bell,        label: "Notifications",    disabled: true },
 ];
 
 export default function Sidebar() {
+  const { mainTab, setMainTab } = useApp();
+
   return (
     <aside className="w-[220px] shrink-0 border-r border-border bg-[#fafafa] flex flex-col h-screen sticky top-0">
       {/* Store header */}
@@ -35,19 +41,26 @@ export default function Sidebar() {
           S
         </div>
         <span className="text-[13px] font-medium text-foreground truncate">
-          alexsong.myshopify.c...
+          seel-test-alexsong-1200...
         </span>
       </div>
 
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
         {mainNav.map((item) => {
-          const isActive = item.label === "AI support";
+          const supportAgentTabs = ["agents", "playbook", "performance", "email"];
+          const isActive = item.label === "Support agent"
+            ? supportAgentTabs.includes(mainTab)
+            : item.tab
+              ? mainTab === item.tab
+              : false;
           return (
             <button
               key={item.label}
               onClick={() => {
-                if (item.disabled) {
+                if (item.tab) {
+                  setMainTab(item.tab);
+                } else if (item.disabled) {
                   toast("Feature coming soon", { description: `${item.label} is not available in this demo.` });
                 }
               }}

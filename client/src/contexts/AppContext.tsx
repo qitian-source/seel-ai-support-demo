@@ -17,7 +17,7 @@ import {
 } from "@/lib/data";
 
 /* ── Navigation ── */
-type MainTab = "agents" | "playbook" | "performance" | "email";
+type MainTab = "agents" | "playbook" | "performance" | "email" | "sales-agent" | "billing";
 type GoLiveMode = "training" | "production" | "off";
 
 /* ── Zendesk sub-step state machine ── */
