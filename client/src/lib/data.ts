@@ -854,6 +854,20 @@ export const DEFAULT_FLAG_RULES: FlagRule[] = [
   { id: "no_order",             label: "No order number found",            description: "Flag emails with no identifiable order reference",   enabled: false },
 ];
 
+export interface EmailLabel {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export const DEFAULT_EMAIL_LABELS: EmailLabel[] = [
+  { id: "lbl-vip",      label: "VIP",       color: "#7c3aed" },
+  { id: "lbl-urgent",   label: "Urgent",    color: "#dc2626" },
+  { id: "lbl-followup", label: "Follow-up", color: "#d97706" },
+  { id: "lbl-warranty", label: "Warranty",  color: "#2563eb" },
+  { id: "lbl-refund",   label: "Refund",    color: "#16a34a" },
+];
+
 export interface EmailMessage {
   id: string;
   from: "customer" | "agent";
@@ -862,6 +876,7 @@ export interface EmailMessage {
   content: string;
   contentZh?: string;
   timestamp: string;
+  isInternal?: boolean;  // internal note — visible to agents only
 }
 
 export interface AIEmailCard {
@@ -893,6 +908,8 @@ export interface EmailThread {
   updatedAt: string;
   inboxSummary: string;
   lockedBy?: string;
+  labels?: string[];
+  customerNote?: string;  // persistent note about this customer, shown across tickets
   aiCard: AIEmailCard;
   messages: EmailMessage[];
 }
@@ -911,6 +928,7 @@ export const emailThreads: EmailThread[] = [
     receivedAt: "Today 10:23 AM",
     updatedAt: "Today 11:44 AM",
     inboxSummary: "Customer asking about order #DJI-88412 shipped 5 days ago with no update",
+    labels: ["lbl-followup"],
     aiCard: {
       intent: "Order Status",
       sentiment: "neutral",
@@ -978,6 +996,7 @@ DJI美国客服团队`,
     receivedAt: "Today 9:47 AM",
     updatedAt: "Today 9:47 AM",
     inboxSummary: "Drone crashed due to signal loss in open field, requesting warranty replacement, 14 days old",
+    labels: ["lbl-warranty", "lbl-vip"],
     aiCard: {
       intent: "Warranty Coverage",
       sentiment: "frustrated",

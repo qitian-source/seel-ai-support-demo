@@ -21,7 +21,7 @@ import {
   GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
   ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
-  Underline, List, ListOrdered, Link, Search,
+  Underline, List, ListOrdered, Link, Search, Pencil, Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -280,7 +280,7 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
   { value: "non-user", label: "Non-user" },
 ];
 
-function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart }: {
+function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart, onCompose, isComposing }: {
   threads: EmailThread[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -288,12 +288,22 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   onOpenSettings: () => void;
   width: number;
   onResizeStart: (e: React.MouseEvent) => void;
+  onCompose: () => void;
+  isComposing: boolean;
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
   const [showRules, setShowRules] = useState(false);
   const rulesAnchorRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  // Feature 1: scroll selected item back into view after reply (threads change)
+  useEffect(() => {
+    if (!selectedId) return;
+    const el = itemRefs.current.get(selectedId);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId, threads]);
 
   const statusCounts: Record<EmailStatus, number> = {
     new:     threads.filter(t => t.status === "new").length,
@@ -327,7 +337,41 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
     <div className="flex shrink-0 h-full" style={{ width }}>
       <div className="flex-1 flex flex-col border-r border-border bg-white h-full min-w-0 relative">
 
-        {/* Type tabs */}
+        {/* 1. Compose — top of panel, Gmail style */}
+        <div className="px-3 pt-3 pb-2 border-b border-border">
+          <button onClick={onCompose}
+            className={cn(
+              "flex items-center gap-3 h-10 pl-4 pr-6 rounded-2xl text-[13px] font-medium transition-all select-none",
+              isComposing
+                ? "bg-[#6c47ff] text-white shadow-md"
+                : "bg-[#f0ebff] text-[#3b1fa8] shadow-md hover:shadow-lg hover:bg-[#e5dcff] active:shadow-sm"
+            )}>
+            <Pencil size={15} strokeWidth={2} className="shrink-0" />
+            Compose
+          </button>
+        </div>
+
+        {/* 2. Search */}
+        <div className="px-3 py-2 border-b border-border">
+          <div className="relative flex items-center">
+            <Search size={13} className="absolute left-2.5 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search emails…"
+              className="w-full pl-8 pr-7 py-1.5 text-[12px] rounded-xl border border-border bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff]/50 focus:bg-white transition-all"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")}
+                className="absolute right-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={11} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Type tabs */}
         <div className="flex border-b border-border">
           {TYPE_TABS.map((tab) => (
             <button key={tab.value} onClick={() => setTypeFilter(tab.value)}
@@ -342,35 +386,13 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
           ))}
         </div>
 
-        {/* Search */}
-        <div className="px-3 py-2 border-b border-border">
-          <div className="relative flex items-center">
-            <Search size={12} className="absolute left-2.5 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by email, name, subject…"
-              className="w-full pl-7 pr-7 py-1.5 text-[11px] rounded-lg border border-border bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff]/50 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X size={11} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Status filter + Escalation rules toggle */}
+        {/* 4. Filters row */}
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
-          <span className="text-[10px] text-gray-400">{sorted.length} tickets</span>
+          <span className="text-[10px] text-gray-400 ml-auto">{sorted.length}</span>
           <button ref={rulesAnchorRef} onClick={() => setShowRules(v => !v)}
             title="Escalation rules"
-            className={cn("ml-auto flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
+            className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
               showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
             <SlidersHorizontal size={11} />
           </button>
@@ -384,7 +406,9 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
             const threadMode = thread.threadMode ?? globalMode;
             const info = statusInfo(thread.status);
             return (
-              <button key={thread.id} onClick={() => onSelect(thread.id)}
+              <button key={thread.id}
+                ref={(el) => { if (el) itemRefs.current.set(thread.id, el); else itemRefs.current.delete(thread.id); }}
+                onClick={() => onSelect(thread.id)}
                 className={cn(
                   "w-full text-left px-3 py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
                   isSelected ? "bg-[#6c47ff]/5 border-l-2 border-l-[#6c47ff]" : "border-l-2 border-l-transparent",
@@ -540,11 +564,126 @@ function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
   );
 }
 
+// ── Compose View ───────────────────────────────────────────────
+
+function ComposeView({ onSend, onClose, globalMode, showList, onToggleList }: {
+  onSend: (to: string, subject: string, body: string) => void;
+  onClose: () => void;
+  globalMode: OperationMode;
+  showList: boolean;
+  onToggleList: () => void;
+}) {
+  const [to, setTo] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [attachments, setAttachments] = useState<{ name: string; size: string }[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current; if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 400) + "px";
+  }, [body]);
+
+  const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    setAttachments(prev => [...prev, ...files.map(f => ({
+      name: f.name,
+      size: f.size > 1024 * 1024 ? `${(f.size / 1024 / 1024).toFixed(1)} MB` : `${Math.round(f.size / 1024)} KB`,
+    }))]);
+    e.target.value = "";
+  };
+
+  const handleSend = () => {
+    if (!to.trim()) { toast.error("Please enter a recipient"); return; }
+    if (!subject.trim()) { toast.error("Please enter a subject"); return; }
+    onSend(to.trim(), subject.trim(), body.trim());
+  };
+
+  return (
+    <div className="flex-1 flex flex-col min-w-0 bg-white h-full">
+      {/* Header */}
+      <div className="px-3 py-3 border-b border-border shrink-0 bg-white">
+        <div className="flex items-center gap-2">
+          <button onClick={onToggleList} title={showList ? "Hide list" : "Show list"}
+            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+            {showList ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+          </button>
+          <div className="flex items-center gap-2 flex-1">
+            <Pencil size={13} className="text-[#6c47ff] shrink-0" />
+            <h2 className="text-[14px] font-semibold text-gray-900">New Email</h2>
+          </div>
+          <button onClick={onClose} title="Discard"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-red-500 transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* To / Subject fields */}
+      <div className="border-b border-border">
+        <div className="flex items-center px-4 py-2 border-b border-border/60">
+          <span className="text-[11px] text-gray-400 w-14 shrink-0">To</span>
+          <input value={to} onChange={e => setTo(e.target.value)}
+            placeholder="recipient@example.com"
+            className="flex-1 text-[13px] text-gray-800 focus:outline-none placeholder:text-gray-300 bg-transparent" />
+        </div>
+        <div className="flex items-center px-4 py-2">
+          <span className="text-[11px] text-gray-400 w-14 shrink-0">Subject</span>
+          <input value={subject} onChange={e => setSubject(e.target.value)}
+            placeholder="Subject"
+            className="flex-1 text-[13px] text-gray-800 focus:outline-none placeholder:text-gray-300 bg-transparent" />
+        </div>
+      </div>
+
+      {/* Body area */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+        <FormatToolbar textareaRef={textareaRef} value={body} onChange={setBody} onAttach={() => fileInputRef.current?.click()} />
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
+        <textarea ref={textareaRef} value={body} onChange={e => setBody(e.target.value)}
+          placeholder="Write your email…"
+          style={{ minHeight: "160px" }}
+          className="flex-1 px-4 py-3 text-[13px] leading-relaxed text-gray-700 resize-none focus:outline-none placeholder:text-gray-300 bg-white" />
+      </div>
+
+      {/* Attachments */}
+      {attachments.length > 0 && (
+        <div className="px-4 pb-2 flex flex-wrap gap-1.5 border-t border-border pt-2">
+          {attachments.map((att, i) => (
+            <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-100 rounded-lg px-2 py-1 border border-border">
+              <FileText size={11} className="text-gray-400 shrink-0" />
+              <span className="max-w-[140px] truncate">{att.name}</span>
+              <span className="text-[10px] text-gray-400 shrink-0">{att.size}</span>
+              <button onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                className="text-gray-400 hover:text-red-500 transition-colors shrink-0 ml-0.5">
+                <XCircle size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Bottom bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-gray-50 shrink-0">
+        <button onClick={handleSend}
+          className="flex items-center gap-1.5 h-8 px-4 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-lg">
+          <Send size={12} />Send
+        </button>
+        <button onClick={onClose}
+          className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-600 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+          Discard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Thread View ────────────────────────────────────────────────
 
 function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, showList, showInfo, onToggleList, onToggleInfo }: {
   thread: EmailThread;
-  onSend: (text: string) => void;
+  onSend: (text: string, isInternal?: boolean) => void;
   onStatusChange: (s: EmailStatus) => void;
   onGoNext: () => void;
   globalMode: OperationMode;
@@ -554,6 +693,9 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
   onToggleInfo: () => void;
 }) {
   const [draft, setDraft] = useState("");
+  const [isInternalNote, setIsInternalNote] = useState(false);
+  const [showModeMenu, setShowModeMenu] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
   const [aiInserted, setAiInserted] = useState(false);
   const [translatedMsgIds, setTranslatedMsgIds] = useState<Set<string>>(new Set());
   const [showAiReplyZh, setShowAiReplyZh] = useState(false);
@@ -595,17 +737,22 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
     const close = (e: MouseEvent) => {
       if (submitMenuRef.current && !submitMenuRef.current.contains(e.target as Node)) setShowSubmitMenu(false);
       if (stayMenuRef.current && !stayMenuRef.current.contains(e.target as Node)) setShowStayMenu(false);
+      if (modeMenuRef.current && !modeMenuRef.current.contains(e.target as Node)) setShowModeMenu(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
   const handleSubmit = () => {
-    if (draft.trim()) onSend(draft.trim());
-    onStatusChange(submitStatus);
-    setDraft(""); setAiInserted(false); setAttachments([]);
-    toast.success(`Ticket → ${statusInfo(submitStatus).label}`);
-    if (!stayOnTicket) onGoNext();
+    if (draft.trim()) onSend(draft.trim(), isInternalNote);
+    if (!isInternalNote) {
+      onStatusChange(submitStatus);
+      toast.success(`Ticket → ${statusInfo(submitStatus).label}`);
+      if (!stayOnTicket) onGoNext();
+    } else {
+      toast.success("Internal note added");
+    }
+    setDraft(""); setAiInserted(false); setAttachments([]); setIsInternalNote(false);
   };
 
   const modeCfg = MODE_CONFIG[mode];
@@ -667,22 +814,36 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
       <div className={cn("flex-1 overflow-y-auto px-4 py-4 space-y-3 min-h-0", modeCfg.msgsBg)}>
         {thread.messages.map((msg) => {
           const isCustomer = msg.from === "customer";
+          const msgIsInternal = !!msg.isInternal;
           const hasTranslation = !!msg.contentZh;
           const showTr = translatedMsgIds.has(msg.id);
           return (
             <div key={msg.id} className={cn("rounded-xl border p-3.5 text-[13px] leading-relaxed",
-              isCustomer
-                ? "bg-white border-border"
-                : mode === "production"
-                  ? "bg-blue-50/70 border-blue-100"
-                  : "bg-amber-50/70 border-amber-100")}>
+              msgIsInternal
+                ? "bg-amber-50 border-amber-200"
+                : isCustomer
+                  ? "bg-white border-border"
+                  : mode === "production"
+                    ? "bg-blue-50/70 border-blue-100"
+                    : "bg-amber-50/70 border-amber-100")}>
+              {msgIsInternal && (
+                <div className="flex items-center gap-1 mb-2 text-[10px] font-semibold text-amber-700 bg-amber-100 rounded px-2 py-0.5 w-fit border border-amber-200">
+                  <Lock size={9} />Internal Note · Only visible to agents
+                </div>
+              )}
               <div className="flex items-center gap-2 mb-2">
                 <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
-                  isCustomer ? "bg-gray-200 text-gray-600" : mode === "production" ? "bg-blue-500 text-white" : "bg-amber-400 text-white")}>
-                  {isCustomer ? <User size={11} /> : "AI"}
+                  msgIsInternal
+                    ? "bg-amber-400 text-white"
+                    : isCustomer
+                      ? "bg-gray-200 text-gray-600"
+                      : mode === "production"
+                        ? "bg-blue-500 text-white"
+                        : "bg-amber-400 text-white")}>
+                  {isCustomer ? <User size={11} /> : msgIsInternal ? <Lock size={9} /> : "AI"}
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">{msg.authorName}</span>
-                {!isCustomer && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
+                {!isCustomer && !msgIsInternal && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
                 {/* Right cluster: time + copy + translate (always shown) */}
                 <div className="ml-auto flex items-center gap-1.5 shrink-0">
                   <span className="text-[11px] text-gray-400">{fullDate(msg.timestamp)}</span>
@@ -780,9 +941,12 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
         <div className="px-3 pt-3 pb-1 space-y-2">
           <textarea ref={textareaRef} value={draft} onChange={e => setDraft(e.target.value)}
-            placeholder="Write your reply, or insert the AI draft above…"
+            placeholder={isInternalNote ? "Add an internal note (only visible to agents)…" : "Write your reply, or insert the AI draft above…"}
             style={{ minHeight: "80px", maxHeight: "240px" }}
-            className="w-full px-3 py-2 rounded-lg border border-border bg-white text-[13px] leading-relaxed resize-none overflow-y-auto focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30 focus:border-[#6c47ff] placeholder:text-gray-400" />
+            className={cn("w-full px-3 py-2 rounded-lg border text-[13px] leading-relaxed resize-none overflow-y-auto focus:outline-none focus:ring-2 placeholder:text-gray-400",
+              isInternalNote
+                ? "border-amber-300 bg-amber-50 focus:ring-amber-300/30 focus:border-amber-400"
+                : "border-border bg-white focus:ring-[#6c47ff]/30 focus:border-[#6c47ff]")} />
           {aiInserted && (
             <button className="text-[11px] text-gray-400 hover:text-gray-600 flex items-center gap-1 rounded-md"
               onClick={() => { setDraft(""); setAiInserted(false); }}>
@@ -809,63 +973,103 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
         )}
 
         {/* Bottom action bar */}
-        <div className="flex items-center justify-end gap-2 px-3 py-2.5 border-t border-border bg-gray-50">
-          {/* Stay / Next dropdown */}
-          <div ref={stayMenuRef} className="relative">
-            <button onClick={() => setShowStayMenu(v => !v)}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-600 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
-              {stayOnTicket ? "Stay on ticket" : "Go to next ticket"}
-              <ChevronDown size={12} />
+        <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border bg-gray-50">
+          {/* Mode toggle: Public reply / Internal note */}
+          <div ref={modeMenuRef} className="relative">
+            <button onClick={() => setShowModeMenu(v => !v)}
+              className={cn("flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium rounded-lg border transition-colors",
+                isInternalNote
+                  ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50")}>
+              {isInternalNote ? <Lock size={11} /> : <Send size={11} />}
+              {isInternalNote ? "Internal note" : "Public reply"}
+              <ChevronDown size={11} />
             </button>
-            {showStayMenu && (
-              <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
-                <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
-                  {stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
-                  Stay on ticket
+            {showModeMenu && (
+              <div className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[160px]">
+                <button onClick={() => { setIsInternalNote(false); setShowModeMenu(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
+                  {!isInternalNote ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
+                  <Send size={11} className="text-gray-500 shrink-0" />
+                  <span>Public reply</span>
                 </button>
-                <button onClick={() => { setStayOnTicket(false); setShowStayMenu(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
-                  {!stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
-                  Go to next ticket
+                <button onClick={() => { setIsInternalNote(true); setShowModeMenu(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700">
+                  {isInternalNote ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
+                  <Lock size={11} className="text-amber-600 shrink-0" />
+                  <span>Internal note</span>
                 </button>
               </div>
             )}
           </div>
 
-          {/* Submit — click to open picker, choose status to submit */}
-          <div ref={submitMenuRef} className="relative">
-            <button
-              onClick={() => setShowSubmitMenu(v => !v)}
-              className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-lg">
-              <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
-              Submit as {statusInfo(submitStatus).label}
-              <ChevronDown size={12} className="ml-0.5" />
+          <div className="flex-1" />
+
+          {isInternalNote ? (
+            <button onClick={handleSubmit}
+              className="flex items-center gap-1.5 h-8 px-4 text-[12px] font-medium text-amber-700 bg-amber-50 border border-amber-300 hover:bg-amber-100 transition-colors rounded-lg">
+              <Lock size={11} />Add note
             </button>
-            {showSubmitMenu && (
-              <div className="absolute right-0 bottom-full mb-1.5 z-[200] bg-white rounded-xl border border-border shadow-xl py-1 min-w-[160px]">
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-b border-border mb-1">Submit as</div>
-                {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
-                  <button key={opt.value}
-                    onClick={() => {
-                      setShowSubmitMenu(false);
-                      if (draft.trim()) onSend(draft.trim());
-                      onStatusChange(opt.value);
-                      setSubmitStatus(opt.value);
-                      setDraft(""); setAiInserted(false); setAttachments([]);
-                      toast.success(`Submitted as ${opt.label}`);
-                      if (!stayOnTicket) onGoNext();
-                    }}
-                    className={cn("w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
-                      opt.value === submitStatus && "bg-[#6c47ff]/5")}>
-                    <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
-                    <span className="flex-1 text-left">{opt.label}</span>
-                    {opt.value === submitStatus && <Check size={10} className="text-[#6c47ff]" />}
-                  </button>
-                ))}
+          ) : (
+            <>
+              {/* Stay / Next dropdown */}
+              <div ref={stayMenuRef} className="relative">
+                <button onClick={() => setShowStayMenu(v => !v)}
+                  className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-gray-600 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+                  {stayOnTicket ? "Stay on ticket" : "Go to next ticket"}
+                  <ChevronDown size={12} />
+                </button>
+                {showStayMenu && (
+                  <div className="absolute right-0 bottom-full mb-1 z-50 bg-white rounded-lg border border-border shadow-lg py-1 min-w-[170px]">
+                    <button onClick={() => { setStayOnTicket(true); setShowStayMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
+                      {stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
+                      Stay on ticket
+                    </button>
+                    <button onClick={() => { setStayOnTicket(false); setShowStayMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-gray-50 text-gray-700">
+                      {!stayOnTicket ? <Check size={11} className="text-[#6c47ff]" /> : <span className="w-[11px]" />}
+                      Go to next ticket
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Submit — click to open picker, choose status to submit */}
+              <div ref={submitMenuRef} className="relative">
+                <button
+                  onClick={() => setShowSubmitMenu(v => !v)}
+                  className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-[#6c47ff] hover:bg-[#5a3ad9] transition-colors rounded-lg">
+                  <span className={cn("w-2 h-2 rounded-full shrink-0", statusInfo(submitStatus).dot)} />
+                  Submit as {statusInfo(submitStatus).label}
+                  <ChevronDown size={12} className="ml-0.5" />
+                </button>
+                {showSubmitMenu && (
+                  <div className="absolute right-0 bottom-full mb-1.5 z-[200] bg-white rounded-xl border border-border shadow-xl py-1 min-w-[160px]">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wide border-b border-border mb-1">Submit as</div>
+                    {STATUS_OPTIONS.filter(o => o.value !== "new").map(opt => (
+                      <button key={opt.value}
+                        onClick={() => {
+                          setShowSubmitMenu(false);
+                          if (draft.trim()) onSend(draft.trim(), false);
+                          onStatusChange(opt.value);
+                          setSubmitStatus(opt.value);
+                          setDraft(""); setAiInserted(false); setAttachments([]);
+                          toast.success(`Submitted as ${opt.label}`);
+                          if (!stayOnTicket) onGoNext();
+                        }}
+                        className={cn("w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-gray-50 text-gray-700 transition-colors",
+                          opt.value === submitStatus && "bg-[#6c47ff]/5")}>
+                        <span className={cn("w-2 h-2 rounded-full shrink-0", opt.dot)} />
+                        <span className="flex-1 text-left">{opt.label}</span>
+                        {opt.value === submitStatus && <Check size={10} className="text-[#6c47ff]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -874,19 +1078,37 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
 
 // ── Ticket Info Panel ──────────────────────────────────────────
 
-function TicketInfoPanel({ thread, globalMode }: {
-  thread: EmailThread; globalMode: OperationMode;
+function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
+  thread: EmailThread;
+  globalMode: OperationMode;
+  onUpdateCustomerNote: (note: string) => void;
 }) {
   const { aiCard } = thread;
   const [showSummaryZh, setShowSummaryZh] = useState(false);
+  const [customerNote, setCustomerNote] = useState(thread.customerNote ?? "");
 
-  useEffect(() => { setShowSummaryZh(false); }, [thread.id]);
+  useEffect(() => { setShowSummaryZh(false); setCustomerNote(thread.customerNote ?? ""); }, [thread.id]);
 
   return (
     <div className="w-[300px] shrink-0 flex flex-col border-l border-border bg-white h-full overflow-y-auto">
       <div className="px-4 py-3 border-b border-border flex items-center gap-2">
         <Bot size={13} className="text-[#6c47ff]" />
         <span className="text-[13px] font-semibold text-gray-900">Ticket Info</span>
+      </div>
+
+      {/* Customer Notes section */}
+      <div className="px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Customer Notes</span>
+        </div>
+        <textarea
+          value={customerNote}
+          onChange={e => { setCustomerNote(e.target.value); onUpdateCustomerNote(e.target.value); }}
+          placeholder="Add notes about this customer…"
+          rows={3}
+          className="w-full px-2.5 py-2 text-[11px] leading-relaxed rounded-lg border border-border bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff] resize-none placeholder:text-gray-300"
+        />
+        <p className="mt-1 text-[9px] text-gray-300">Persists across all tickets for this customer.</p>
       </div>
 
       <div className="px-4 py-3 border-b border-border space-y-2">
@@ -1060,6 +1282,7 @@ export default function EmailPage() {
   const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode } = useApp();
   const [threads, setThreads] = useState<EmailThread[]>(emailThreads);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
   const [listWidth, setListWidth] = useState(260);
   const [showList, setShowList] = useState(true);
@@ -1095,7 +1318,12 @@ export default function EmailPage() {
   const selectedThread = threads.find(t => t.id === selectedId) ?? null;
 
   const handleSelect = (id: string) => {
-    setThreads(prev => prev.map(t => t.id === id ? { ...t, isRead: true } : t));
+    setIsComposing(false);
+    setThreads(prev => prev.map(t =>
+      t.id === id
+        ? { ...t, isRead: true, status: t.status === "new" ? "open" : t.status }
+        : t
+    ));
     setSelectedId(id);
   };
 
@@ -1104,17 +1332,21 @@ export default function EmailPage() {
     toast.success(`Status → ${status}`);
   };
 
-  const handleSend = (text: string) => {
+  const handleSend = (text: string, isInternal?: boolean) => {
     if (!selectedId) return;
     const newMsg = {
       id: `msg-${Date.now()}`, from: "agent" as const,
       authorName: CURRENT_USER, authorEmail: INBOX_EMAIL,
       content: text, timestamp: "Just now",
+      ...(isInternal ? { isInternal: true } : {}),
     };
     setThreads(prev => prev.map(t =>
       t.id === selectedId ? { ...t, status: "open" as const, updatedAt: "Just now", messages: [...t.messages, newMsg] } : t
     ));
-    toast.success("Reply sent");
+  };
+
+  const handleUpdateCustomerNote = (threadId: string, note: string) => {
+    setThreads(prev => prev.map(t => t.id === threadId ? { ...t, customerNote: note } : t));
   };
 
   // Go to next unresolved ticket
@@ -1128,24 +1360,77 @@ export default function EmailPage() {
     }
   };
 
+  // Compose new email
+  const handleCompose = () => {
+    setSelectedId(null);
+    setIsComposing(true);
+  };
+
+  const handleComposeSend = (to: string, subject: string, body: string) => {
+    const newThread: EmailThread = {
+      id: `em-${Date.now()}`,
+      emailType: "non-user",
+      customer: to.split("@")[0].replace(/[._]/g, " "),
+      customerEmail: to,
+      subject,
+      status: "open",
+      priority: "normal",
+      isRead: true,
+      receivedAt: "Just now",
+      updatedAt: "Just now",
+      inboxSummary: body.slice(0, 120),
+      labels: [],
+      aiCard: {
+        intent: "Other",
+        sentiment: "neutral",
+        confidence: 1,
+        summary: body.slice(0, 200),
+        suggestedReply: "",
+      },
+      messages: [{
+        id: `msg-${Date.now()}`,
+        from: "agent",
+        authorName: CURRENT_USER,
+        authorEmail: INBOX_EMAIL,
+        content: body,
+        timestamp: "Just now",
+      }],
+    };
+    setThreads(prev => [newThread, ...prev]);
+    setIsComposing(false);
+    setSelectedId(newThread.id);
+    toast.success("Email sent");
+  };
+
   return (
     <>
       {showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
 
       <div className="flex flex-col h-full overflow-hidden">
+
         <div className="flex flex-1 overflow-hidden min-h-0 select-none">
           {showList && (
             <EmailList
               threads={threads}
-              selectedId={selectedId}
+              selectedId={isComposing ? null : selectedId}
               onSelect={handleSelect}
               globalMode={mode}
               onOpenSettings={() => setShowSyncSettings(true)}
               width={listWidth}
               onResizeStart={handleResizeStart}
+              onCompose={handleCompose}
+              isComposing={isComposing}
             />
           )}
-          {selectedThread ? (
+          {isComposing ? (
+            <ComposeView
+              onSend={handleComposeSend}
+              onClose={() => setIsComposing(false)}
+              globalMode={mode}
+              showList={showList}
+              onToggleList={() => setShowList(v => !v)}
+            />
+          ) : selectedThread ? (
             <>
               <ThreadView
                 thread={selectedThread}
@@ -1162,6 +1447,7 @@ export default function EmailPage() {
                 <TicketInfoPanel
                   thread={selectedThread}
                   globalMode={mode}
+                  onUpdateCustomerNote={(note) => handleUpdateCustomerNote(selectedThread.id, note)}
                 />
               )}
             </>
