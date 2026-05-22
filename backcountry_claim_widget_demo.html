@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backcountry × Seel — Live Widget Claim Flow · Demo</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Demo banner ─────────────────────────────── */
+#demo-bar {
+  background: #1e1b4b;
+  color: #c7d2fe;
+  font-size: 12px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+#demo-bar .pill {
+  background: #6c47ff;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .05em;
+}
+#demo-bar .label { flex: 1; }
+#demo-bar .step-indicator {
+  font-size: 11px;
+  color: #a5b4fc;
+  margin-right: 4px;
+}
+#reset-btn {
+  background: #312e81;
+  color: #a5b4fc;
+  border: 1px solid #4338ca;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .15s;
+}
+#reset-btn:hover { background: #4338ca; color: white; }
+
+/* ── Page layout ─────────────────────────────── */
+#page {
+  display: grid;
+  grid-template-columns: 1fr 390px;
+  min-height: calc(100vh - 37px);
+}
+
+/* ── Left: order content ─────────────────────── */
+#order {
+  background: #f5f5f5;
+  overflow-y: auto;
+}
+
+/* Backcountry nav */
+.bc-nav {
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.bc-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -.3px;
+  text-decoration: none;
+}
+.bc-brand svg { width: 28px; height: 28px; }
+.bc-lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: white;
+}
+.bc-lang-btn:hover { background: #f9fafb; }
+
+/* Order content area */
+.order-area {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 28px 32px 80px;
+}
+
+/* Order header row */
+.order-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.order-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.5px;
+}
+.order-title span { font-weight: 400; }
+.order-date { color: #6b7280; font-size: 13px; margin-top: 3px; }
+
+.receipt-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: white;
+}
+.receipt-btn:hover { background: #f9fafb; }
+
+/* Status card */
+.status-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+.status-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Progress tracker */
+.tracker {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.tracker::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  height: 3px;
+  background: #e5e5e5;
+  z-index: 0;
+}
+.tracker-fill {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  height: 3px;
+  background: #1c4e8a;
+  z-index: 1;
+  transition: width .4s ease;
+  width: 50%;
+}
+.tracker-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+.tracker-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid #e5e5e5;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.tracker-dot.active {
+  border-color: #1c4e8a;
+  background: #1c4e8a;
+  color: white;
+}
+.tracker-dot.done {
+  border-color: #1c4e8a;
+  background: #1c4e8a;
+  color: white;
+}
+.tracker-label { font-size: 12px; font-weight: 500; color: #374151; text-align: center; }
+.tracker-sub { font-size: 11px; color: #9ca3af; text-align: center; }
+
+.tracking-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  background: white;
+}
+.tracking-btn:hover { background: #f9fafb; }
+
+/* You may also like */
+.section-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 28px 0 14px;
+}
+.product-grid {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.product-card {
+  flex: 0 0 150px;
+  cursor: pointer;
+}
+.product-img {
+  width: 150px;
+  height: 180px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e5e7eb;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #9ca3af;
+  overflow: hidden;
+}
+.product-img img { width: 100%; height: 100%; object-fit: cover; }
+.product-name { font-size: 12px; color: #374151; margin-bottom: 2px; line-height: 1.3; }
+.product-price { font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px; }
+.add-cart-btn {
+  width: 100%;
+  background: #1c4e8a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-cart-btn:hover { background: #1a3f72; }
+
+/* Rating */
+.rating-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  padding: 20px 24px;
+  margin-top: 24px;
+}
+.rating-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.stars { display: flex; gap: 6px; }
+.star { font-size: 28px; color: #d1d5db; cursor: pointer; transition: color .1s; }
+.star:hover, .star.filled { color: #f59e0b; }
+
+/* ── Right: Widget panel ─────────────────────── */
+#widget-wrap {
+  background: white;
+  border-left: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 37px);
+  overflow: hidden;
+}
+
+.w-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  flex-shrink: 0;
+}
+
+.w-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scroll-behavior: smooth;
+}
+
+/* ── Chat messages ───────────────────────────── */
+.msg-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.msg-row.user {
+  flex-direction: row-reverse;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #374151;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-icon { font-size: 16px; color: white; }
+
+.bubble {
+  max-width: 82%;
+  background: #f3f4f6;
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 13px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+.msg-row.user .bubble {
+  background: #1c4e8a;
+  color: white;
+  border-radius: 14px 14px 4px 14px;
+}
+
+/* typing indicator */
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+  align-items: center;
+}
+.typing-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+  animation: bounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: .2s; }
+.typing-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+/* ── Item cards in widget ────────────────────── */
+.item-cards { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+.item-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+.item-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.item-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 7px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 18px;
+}
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-size: 12px; font-weight: 600; color: #111; line-height: 1.3; }
+.item-price { font-size: 11px; color: #6b7280; margin-top: 1px; }
+.item-action-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: none;
+  border-top: 1px solid #f0f0f0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+}
+.item-action-btn svg { width: 14px; height: 14px; color: #9ca3af; transition: transform .2s; }
+.item-action-btn.open svg { transform: rotate(180deg); }
+
+/* ── Seel Resolution Component ───────────────── */
+.seel-resolution {
+  border: 1.5px solid #6c47ff;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  animation: slideIn .3s ease;
+  width: 100%;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.seel-header {
+  background: linear-gradient(135deg, #6c47ff, #4f35cc);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.seel-logo {
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: .05em;
+  background: rgba(255,255,255,.2);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.seel-header-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.9);
+}
+.seel-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,.2);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.seel-items-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.seel-tab {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  background: #f3f4f6;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+.seel-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+
+.seel-items-list {
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.seel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.seel-item-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  overflow: hidden;
+}
+.seel-item-info { flex: 1; min-width: 0; }
+.seel-item-name { font-size: 11px; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seel-item-price { font-size: 11px; color: #6b7280; }
+
+.seel-status-section {
+  padding: 10px 14px;
+  border-top: 1px solid #f0f0f0;
+  background: #fefce8;
+}
+.seel-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+.seel-status-row svg { width: 14px; height: 14px; }
+.seel-status-desc {
+  font-size: 11px;
+  color: #78350f;
+  line-height: 1.4;
+}
+
+.seel-actions {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-top: 1px solid #f0f0f0;
+}
+.seel-btn-secondary {
+  width: 100%;
+  padding: 9px;
+  border: 1.5px solid #1c4e8a;
+  border-radius: 8px;
+  background: white;
+  color: #1c4e8a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.seel-btn-secondary:hover { background: #eff6ff; }
+.seel-btn-primary {
+  width: 100%;
+  padding: 9px;
+  background: #1c4e8a;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.seel-btn-primary:hover { background: #1a3f72; }
+
+/* ── Confirmation card ───────────────────────── */
+.confirm-card {
+  border: 1.5px solid #10b981;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  animation: slideIn .3s ease;
+  width: 100%;
+}
+.confirm-header {
+  background: linear-gradient(135deg, #059669, #10b981);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.confirm-icon { font-size: 18px; }
+.confirm-header-label { font-size: 12px; font-weight: 700; color: white; }
+.confirm-body { padding: 14px; }
+.confirm-id {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: monospace;
+  margin-bottom: 10px;
+  letter-spacing: .03em;
+}
+.confirm-text { font-size: 12px; color: #374151; line-height: 1.5; }
+.confirm-steps {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.confirm-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  color: #6b7280;
+}
+.confirm-step-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #059669;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Widget footer ───────────────────────────── */
+.w-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #f0f0f0;
+  background: white;
+}
+
+.quick-replies-wrap {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 6px;
+  flex-wrap: wrap;
+  overflow: hidden;
+  transition: all .3s;
+}
+.qr-chip {
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  background: white;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.qr-chip:hover {
+  border-color: #6c47ff;
+  color: #6c47ff;
+  background: #f5f3ff;
+}
+.qr-chip.claim {
+  border-color: #6c47ff40;
+  background: #f5f3ff;
+  color: #6c47ff;
+}
+.qr-chip.claim:hover {
+  background: #6c47ff;
+  color: white;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+#chat-input {
+  flex: 1;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 8px 14px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+}
+#chat-input:focus { border-color: #6c47ff; }
+#send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1c4e8a;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+#send-btn:hover { background: #1a3f72; }
+#send-btn svg { width: 16px; height: 16px; }
+
+/* ── Scrollbar ───────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ── Step progress in demo bar ───────────────── */
+.step-dots { display: flex; gap: 5px; align-items: center; }
+.step-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #312e81; transition: background .3s;
+}
+.step-dot.active { background: #a5b4fc; }
+.step-dot.done { background: #6c47ff; }
+
+/* ── Live widget indicator ───────────────────── */
+#live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #052e16;
+  border: 1px solid #166534;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 10px;
+  color: #86efac;
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+#live-badge .live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+</style>
+</head>
+<body>
+
+<!-- Demo bar -->
+<div id="demo-bar">
+  <span class="pill">DEMO</span>
+  <span class="label">Backcountry × Seel — Claim Flow Integration&nbsp;&nbsp;<span style="color:#818cf8;font-size:10px">Right panel = scripted UX concept · Real widget also loaded ↙</span></span>
+  <div id="live-badge"><div class="live-dot"></div>Real Widget Active</div>
+  <span class="step-indicator" id="step-label">Step 1 of 4</span>
+  <div class="step-dots">
+    <div class="step-dot active" id="dot-0"></div>
+    <div class="step-dot" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+  </div>
+  <button id="reset-btn" onclick="resetDemo()">↺ Reset</button>
+</div>
+
+<!-- Page -->
+<div id="page">
+
+  <!-- ── Left: Order page ── -->
+  <main id="order">
+    <nav class="bc-nav">
+      <a class="bc-brand" href="#">
+        <!-- Backcountry compass icon (simplified SVG) -->
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="14" cy="14" r="13" stroke="#1a1a1a" stroke-width="2"/>
+          <circle cx="14" cy="14" r="4" fill="#1a1a1a"/>
+          <polygon points="14,3 16,12 14,10 12,12" fill="#1a1a1a"/>
+          <polygon points="25,14 16,16 18,14 16,12" fill="#9ca3af"/>
+          <polygon points="14,25 12,16 14,18 16,16" fill="#9ca3af"/>
+          <polygon points="3,14 12,12 10,14 12,16" fill="#1a1a1a"/>
+        </svg>
+        Backcountry
+      </a>
+      <button class="bc-lang-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        EN
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </nav>
+
+    <div class="order-area">
+      <div class="order-header-row">
+        <div>
+          <div class="order-title">Order: <span>#1352</span></div>
+          <div class="order-date">Order date: Mar 19, 2026</div>
+        </div>
+        <button class="receipt-btn">
+          Receipt
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <!-- Status card -->
+      <div class="status-card">
+        <div class="status-card-title">Order Status</div>
+        <div class="tracker">
+          <div class="tracker-fill"></div>
+
+          <div class="tracker-step">
+            <div class="tracker-dot done">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="tracker-label">Purchased</div>
+              <div class="tracker-sub">Mar 19, 2026, 1:51 PM</div>
+            </div>
+          </div>
+
+          <div class="tracker-step">
+            <div class="tracker-dot active">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <div class="tracker-label">On the way</div>
+              <div class="tracker-sub">&nbsp;</div>
+            </div>
+          </div>
+
+          <div class="tracker-step">
+            <div class="tracker-dot">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="tracker-label" style="color:#9ca3af">Delivered</div>
+              <div class="tracker-sub">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="tracking-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
+          Tracking details
+        </button>
+      </div>
+
+      <!-- Order items list (visible in order page) -->
+      <div class="status-card" style="margin-bottom:20px">
+        <div class="status-card-title" style="margin-bottom:14px">Items in this order</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:56px;height:56px;border-radius:8px;background:#fce7f3;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">👚</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">Floral White Top</div>
+              <div style="font-size:12px;color:#6b7280">$75.00 USD × 1</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:56px;height:56px;border-radius:8px;background:#dbeafe;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">🧥</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">Classic Varsity Top — Small</div>
+              <div style="font-size:12px;color:#6b7280">$60.00 USD × 2</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:56px;height:56px;border-radius:8px;background:#fce7f3;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px">👚</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">Floral White Top — Medium</div>
+              <div style="font-size:12px;color:#6b7280">$75.00 USD × 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- You may also like -->
+      <div class="section-title">You may also like</div>
+      <div class="product-grid">
+        <div class="product-card">
+          <div class="product-img" style="background:#ecfdf5;font-size:32px">👗</div>
+          <div class="product-name">GeeGee Floral Frenz...</div>
+          <div class="product-price">$48.80 USD</div>
+          <button class="add-cart-btn">Add to Cart</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img" style="background:#eff6ff;font-size:32px">🧣</div>
+          <div class="product-name">Alpine Knit Scarf</div>
+          <div class="product-price">$34.00 USD</div>
+          <button class="add-cart-btn">Add to Cart</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img" style="background:#fef3c7;font-size:32px">🎒</div>
+          <div class="product-name">Trail Daypack 22L</div>
+          <div class="product-price">$89.00 USD</div>
+          <button class="add-cart-btn">Add to Cart</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img" style="background:#f5f3ff;font-size:32px">🧤</div>
+          <div class="product-name">Summit Liner Gloves</div>
+          <div class="product-price">$28.50 USD</div>
+          <button class="add-cart-btn">Add to Cart</button>
+        </div>
+      </div>
+
+      <!-- Rating -->
+      <div class="rating-card">
+        <div class="rating-title">How was your order?</div>
+        <div class="stars" id="stars">
+          <span class="star" onclick="rateStar(1)">★</span>
+          <span class="star" onclick="rateStar(2)">★</span>
+          <span class="star" onclick="rateStar(3)">★</span>
+          <span class="star" onclick="rateStar(4)">★</span>
+          <span class="star" onclick="rateStar(5)">★</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Right: Live Support Widget ── -->
+  <aside id="widget-wrap">
+    <div class="w-header">Live Support</div>
+
+    <div class="w-body" id="w-body">
+      <!-- Initial AI message will be injected by JS -->
+    </div>
+
+    <div class="w-footer">
+      <div class="quick-replies-wrap" id="quick-replies"></div>
+      <div class="input-row">
+        <input type="text" id="chat-input" placeholder="Type your message…" />
+        <button id="send-btn" onclick="handleSend()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- /page -->
+
+<script>
+// ── State machine ──────────────────────────────
+let STEP = 0;
+const CLAIM_KEYWORDS = [
+  "claim", "not delivered", "missing", "lost", "didn't arrive", "never received",
+  "where is", "damaged", "broken", "wrong item", "refund", "help", "issue", "problem",
+  "package", "initiate"
+];
+
+const ITEMS = [
+  { emoji: "👚", name: "Floral White Top", price: "$75.00 USD", qty: "× 1" },
+  { emoji: "🧥", name: "Classic Varsity Top – S", price: "$60.00 USD", qty: "× 2" },
+  { emoji: "👚", name: "Floral White Top – M", price: "$75.00 USD", qty: "× 2" },
+];
+
+// ── Render helpers ─────────────────────────────
+function scrollBottom() {
+  const body = document.getElementById("w-body");
+  setTimeout(() => { body.scrollTop = body.scrollHeight; }, 50);
+}
+
+function addMsg(html, isUser = false) {
+  const body = document.getElementById("w-body");
+  const row = document.createElement("div");
+  row.className = "msg-row" + (isUser ? " user" : "");
+  if (!isUser) {
+    row.innerHTML = `
+      <div class="avatar">
+        <span class="avatar-icon">🧑</span>
+      </div>
+      <div class="bubble">${html}</div>`;
+  } else {
+    row.innerHTML = `<div class="bubble">${html}</div>`;
+  }
+  body.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function addElement(el) {
+  const body = document.getElementById("w-body");
+  body.appendChild(el);
+  scrollBottom();
+}
+
+function addTyping() {
+  const body = document.getElementById("w-body");
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.id = "typing-row";
+  row.innerHTML = `
+    <div class="avatar"><span class="avatar-icon">🧑</span></div>
+    <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  body.appendChild(row);
+  scrollBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById("typing-row");
+  if (el) el.remove();
+}
+
+function setQuickReplies(chips) {
+  const wrap = document.getElementById("quick-replies");
+  wrap.innerHTML = "";
+  chips.forEach(c => {
+    const btn = document.createElement("button");
+    btn.className = "qr-chip" + (c.claim ? " claim" : "");
+    btn.textContent = c.label;
+    btn.onclick = () => handleChip(c);
+    wrap.appendChild(btn);
+  });
+}
+
+function updateStepUI(step) {
+  const total = 4;
+  document.getElementById("step-label").textContent = `Step ${step + 1} of ${total}`;
+  for (let i = 0; i < total; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    dot.className = "step-dot" + (i < step ? " done" : i === step ? " active" : "");
+  }
+}
+
+// ── STEP 0: Initial state ──────────────────────
+function initStep0() {
+  STEP = 0;
+  updateStepUI(0);
+  const body = document.getElementById("w-body");
+  body.innerHTML = "";
+
+  // AI greeting
+  addMsg(`Your order includes <strong>Worry-Free Delivery</strong> service for product and delivery issues such as a package lost in transit or not arriving within the expected timeframe.`);
+
+  // Item cards
+  const container = document.createElement("div");
+  container.className = "item-cards";
+  ITEMS.forEach(item => {
+    container.innerHTML += `
+      <div class="item-card">
+        <div class="item-card-top">
+          <div class="item-thumb">${item.emoji}</div>
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            <div class="item-price">${item.price} ${item.qty}</div>
+          </div>
+        </div>
+        <button class="item-action-btn">
+          Return / Refund
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>`;
+  });
+  addElement(container);
+
+  // Quick replies
+  setQuickReplies([
+    { label: "📦 Where is my order?" },
+    { label: "📋 My package wasn't delivered", claim: true },
+    { label: "↩️ Start a claim", claim: true },
+  ]);
+}
+
+// ── STEP 1: User sends message → typing ────────
+function goStep1(text) {
+  STEP = 1;
+  updateStepUI(1);
+  // Clear quick replies
+  document.getElementById("quick-replies").innerHTML = "";
+  // User bubble
+  addMsg(text, true);
+  // Typing
+  setTimeout(() => {
+    addTyping();
+  }, 300);
+  // AI response after delay
+  setTimeout(() => {
+    removeTyping();
+    goStep2();
+  }, 1800);
+}
+
+// ── STEP 2: AI responds + Seel component ───────
+function goStep2() {
+  STEP = 2;
+  updateStepUI(2);
+
+  addMsg(`I can see your order <strong>#1352</strong> shows one item as <strong>Not Delivered</strong>. Since you're covered by Seel Worry-Free Delivery, I can start your claim right here — no need to leave this page.`);
+
+  setTimeout(() => {
+    // Inject Seel Resolution Component
+    const comp = document.createElement("div");
+    comp.className = "seel-resolution";
+    comp.innerHTML = `
+      <div class="seel-header">
+        <span class="seel-logo">SEEL</span>
+        <span class="seel-header-label">Resolution Center</span>
+        <span class="seel-badge">Integrated</span>
+      </div>
+      <div class="seel-items-header">
+        <span class="seel-tab">Other 1</span>
+        <span class="seel-status-badge">Not Delivered</span>
+      </div>
+      <div class="seel-items-list">
+        ${ITEMS.map(i => `
+          <div class="seel-item">
+            <div class="seel-item-thumb">${i.emoji}</div>
+            <div class="seel-item-info">
+              <div class="seel-item-name">${i.name}</div>
+              <div class="seel-item-price">${i.price}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+      <div class="seel-status-section">
+        <div class="seel-status-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Your package status: Not Delivered
+        </div>
+        <div class="seel-status-desc">We recommend contacting the carrier for the latest update, or allow a few more days for delivery.</div>
+      </div>
+      <div class="seel-actions">
+        <button class="seel-btn-secondary" onclick="goStep3(false)">I'll contact the carrier first</button>
+        <button class="seel-btn-primary" onclick="goStep3(true)">Proceed with Seel issue request</button>
+      </div>`;
+    addElement(comp);
+    scrollBottom();
+  }, 400);
+}
+
+// ── STEP 3: Claim submitted or carrier contact ──
+function goStep3(proceed) {
+  STEP = 3;
+  updateStepUI(3);
+
+  if (!proceed) {
+    addMsg(`Got it! You can contact the carrier with your tracking number. If the issue isn't resolved within 3 days, come back and I'll open your Seel claim immediately. 👍`);
+    setQuickReplies([
+      { label: "↩️ Start claim now", claim: true },
+    ]);
+    return;
+  }
+
+  addMsg(`Submitting your claim now…`, false);
+
+  setTimeout(() => {
+    // Remove last bubble
+    const body = document.getElementById("w-body");
+    const last = body.lastElementChild;
+    if (last) last.remove();
+
+    // Confirmation card
+    const claimId = "SL-2026-" + Math.floor(10000 + Math.random() * 90000);
+    const card = document.createElement("div");
+    card.className = "confirm-card";
+    card.innerHTML = `
+      <div class="confirm-header">
+        <span class="confirm-icon">✅</span>
+        <span class="confirm-header-label">Claim Submitted Successfully</span>
+      </div>
+      <div class="confirm-body">
+        <div class="confirm-id">${claimId}</div>
+        <div class="confirm-text">Your Seel Worry-Free Delivery claim has been submitted. Here's what happens next:</div>
+        <div class="confirm-steps">
+          <div class="confirm-step">
+            <div class="confirm-step-dot">1</div>
+            <span>Seel reviews your claim within <strong>1–2 business days</strong></span>
+          </div>
+          <div class="confirm-step">
+            <div class="confirm-step-dot">2</div>
+            <span>You'll receive a confirmation email at your registered address</span>
+          </div>
+          <div class="confirm-step">
+            <div class="confirm-step-dot">3</div>
+            <span>Approved claims are resolved via <strong>replacement or refund</strong></span>
+          </div>
+        </div>
+      </div>`;
+    addElement(card);
+
+    setTimeout(() => {
+      addMsg(`Your claim <strong>${claimId}</strong> is all set! Is there anything else I can help you with?`);
+      setQuickReplies([
+        { label: "💬 Talk to an agent" },
+        { label: "↩️ Start another claim", claim: true },
+      ]);
+    }, 600);
+
+    scrollBottom();
+  }, 1200);
+}
+
+// ── Input handling ─────────────────────────────
+function handleSend() {
+  const input = document.getElementById("chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  dispatchMessage(text);
+}
+
+function handleChip(chip) {
+  dispatchMessage(chip.label.replace(/^[^\s]+ /, ""));
+}
+
+function dispatchMessage(text) {
+  if (STEP === 0) {
+    const lower = text.toLowerCase();
+    const isClaim = CLAIM_KEYWORDS.some(k => lower.includes(k));
+    if (isClaim) {
+      goStep1(text);
+    } else {
+      addMsg(text, true);
+      setTimeout(() => {
+        addTyping();
+        setTimeout(() => {
+          removeTyping();
+          addMsg(`Your order <strong>#1352</strong> is currently <strong>On the Way</strong> with the carrier. Tracking updates can take up to 24 hours to refresh. If you're experiencing a delivery issue, I can help you start a Seel claim.`);
+          setQuickReplies([
+            { label: "📋 My package wasn't delivered", claim: true },
+            { label: "↩️ Start a claim", claim: true },
+          ]);
+        }, 1400);
+      }, 300);
+    }
+  } else if (STEP === 3) {
+    // After claim, just respond generically
+    addMsg(text, true);
+    setTimeout(() => {
+      addTyping();
+      setTimeout(() => {
+        removeTyping();
+        addMsg(`Is there anything else I can help you with regarding order <strong>#1352</strong>?`);
+      }, 1200);
+    }, 300);
+  }
+}
+
+document.getElementById("chat-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") handleSend();
+});
+
+// ── Rating ─────────────────────────────────────
+function rateStar(n) {
+  const stars = document.querySelectorAll(".star");
+  stars.forEach((s, i) => s.classList.toggle("filled", i < n));
+}
+
+// ── Reset ──────────────────────────────────────
+function resetDemo() {
+  initStep0();
+}
+
+// ── Boot ───────────────────────────────────────
+initStep0();
+</script>
+
+<!-- Real Seel Live Widget (connects to live API via test merchant domain) -->
+<script>
+  // Spoof Shopify shop domain so the real widget fetches a valid merchant config.
+  // e3d853-2.myshopify.com is a registered Seel test merchant (enable: true).
+  window.Shopify = { shop: "e3d853-2.myshopify.com" };
+</script>
+<script src="https://static.seel.com/aisupport/main.js"></script>
+
+</body>
+</html>
