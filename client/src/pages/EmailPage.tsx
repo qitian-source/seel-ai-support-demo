@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   emailThreads, type EmailThread, type EmailStatus, type EmailType,
-  type OperationMode, type FlagRule,
+  type OperationMode, type FlagRule, type EmailAttachment,
 } from "@/lib/data";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ import {
   Bold, Image, Palette, ChevronRight, ChevronLeft,
   ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
   Underline, List, ListOrdered, Link, Search, Pencil, Lock,
+  Maximize2, ZoomIn, ZoomOut,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -280,6 +281,7 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
   { value: "non-user", label: "Non-user" },
 ];
 
+
 function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart, onCompose, isComposing }: {
   threads: EmailThread[];
   selectedId: string | null;
@@ -295,15 +297,25 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
   const [showRules, setShowRules] = useState(false);
+  const [viewMode, setViewMode] = useState<"flat" | "grouped">("flat");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const rulesAnchorRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-  // Feature 1: scroll selected item back into view after reply (threads change)
+  // Scroll selected item into view only when selection changes, not on reply
   useEffect(() => {
     if (!selectedId) return;
     const el = itemRefs.current.get(selectedId);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [selectedId, threads]);
+  }, [selectedId]);
+
+  const toggleGroup = (email: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      next.has(email) ? next.delete(email) : next.add(email);
+      return next;
+    });
+  };
 
   const statusCounts: Record<EmailStatus, number> = {
     new:     threads.filter(t => t.status === "new").length,
@@ -333,11 +345,54 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
     "non-user": threads.filter(t => t.emailType === "non-user").length,
   };
 
+  // Build grouped structure
+  const groups: { email: string; customer: string; threads: EmailThread[] }[] = [];
+  if (viewMode === "grouped") {
+    const map = new Map<string, { customer: string; threads: EmailThread[] }>();
+    for (const t of sorted) {
+      if (!map.has(t.customerEmail)) map.set(t.customerEmail, { customer: t.customer, threads: [] });
+      map.get(t.customerEmail)!.threads.push(t);
+    }
+    for (const [email, val] of map) groups.push({ email, ...val });
+  }
+
+  const renderThreadItem = (thread: EmailThread, indented = false) => {
+    const isSelected = thread.id === selectedId;
+    const threadMode = thread.threadMode ?? globalMode;
+    const info = statusInfo(thread.status);
+    return (
+      <button key={thread.id}
+        ref={(el) => { if (el) itemRefs.current.set(thread.id, el); else itemRefs.current.delete(thread.id); }}
+        onClick={() => onSelect(thread.id)}
+        className={cn(
+          "w-full text-left py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
+          indented ? "pl-8 pr-3" : "px-3",
+          isSelected ? "bg-[#6c47ff]/5 border-l-2 border-l-[#6c47ff]" : "border-l-2 border-l-transparent",
+        )}>
+        {/* Subject */}
+        <div className={cn("text-[12px] truncate mb-1.5 leading-tight",
+          !thread.isRead ? "font-semibold text-gray-900" : "text-gray-600")}>
+          {thread.subject}
+        </div>
+        {/* Badges row */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <EmailTypeBadge type={thread.emailType} />
+          <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1 py-0.5", info.cls)}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", info.dot)} />
+            {info.label}
+          </span>
+          <ModeBadge mode={threadMode} />
+          <span className="ml-auto text-[10px] text-gray-400 shrink-0">{shortDate(thread.updatedAt)}</span>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="flex shrink-0 h-full" style={{ width }}>
       <div className="flex-1 flex flex-col border-r border-border bg-white h-full min-w-0 relative">
 
-        {/* 1. Compose — top of panel, Gmail style */}
+        {/* 1. Compose */}
         <div className="px-3 pt-3 pb-2 border-b border-border">
           <button onClick={onCompose}
             className={cn(
@@ -390,6 +445,14 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
           <span className="text-[10px] text-gray-400 ml-auto">{sorted.length}</span>
+          {/* Group toggle */}
+          <button
+            onClick={() => setViewMode(v => v === "flat" ? "grouped" : "flat")}
+            title={viewMode === "grouped" ? "Switch to flat view" : "Group by sender"}
+            className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
+              viewMode === "grouped" ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
+            <Users size={11} />
+          </button>
           <button ref={rulesAnchorRef} onClick={() => setShowRules(v => !v)}
             title="Escalation rules"
             className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
@@ -401,38 +464,51 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
-          {sorted.map((thread) => {
-            const isSelected = thread.id === selectedId;
-            const threadMode = thread.threadMode ?? globalMode;
-            const info = statusInfo(thread.status);
-            return (
-              <button key={thread.id}
-                ref={(el) => { if (el) itemRefs.current.set(thread.id, el); else itemRefs.current.delete(thread.id); }}
-                onClick={() => onSelect(thread.id)}
-                className={cn(
-                  "w-full text-left px-3 py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
-                  isSelected ? "bg-[#6c47ff]/5 border-l-2 border-l-[#6c47ff]" : "border-l-2 border-l-transparent",
-                )}>
-                {/* Subject */}
-                <div className={cn("text-[12px] truncate mb-1.5 leading-tight",
-                  !thread.isRead ? "font-semibold text-gray-900" : "text-gray-600")}>
-                  {thread.subject}
-                </div>
-                {/* Badges row */}
-                <div className="flex items-center gap-1 flex-wrap">
-                  <EmailTypeBadge type={thread.emailType} />
-                  <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1 py-0.5", info.cls)}>
-                    <span className={cn("w-1.5 h-1.5 rounded-full", info.dot)} />
-                    {info.label}
-                  </span>
-                  <ModeBadge mode={threadMode} />
-                  <span className="ml-auto text-[10px] text-gray-400 shrink-0">{shortDate(thread.updatedAt)}</span>
-                </div>
-              </button>
-            );
-          })}
-          {sorted.length === 0 && (
-            <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
+          {viewMode === "flat" ? (
+            <>
+              {sorted.map(t => renderThreadItem(t))}
+              {sorted.length === 0 && (
+                <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
+              )}
+            </>
+          ) : (
+            <>
+              {groups.map(group => {
+                const collapsed = collapsedGroups.has(group.email);
+                const initials = group.customer.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                const unread = group.threads.filter(t => !t.isRead).length;
+                return (
+                  <div key={group.email}>
+                    {/* Group header */}
+                    <button
+                      onClick={() => toggleGroup(group.email)}
+                      className="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-border/60 hover:bg-gray-100 transition-colors">
+                      <div className="w-6 h-6 rounded-full bg-[#6c47ff]/15 text-[#6c47ff] flex items-center justify-center text-[9px] font-bold shrink-0">
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-[11px] font-semibold text-gray-800 truncate">{group.customer}</div>
+                        <div className="text-[9px] text-gray-400 truncate">{group.email}</div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {unread > 0 && (
+                          <span className="text-[8px] font-bold bg-[#6c47ff] text-white rounded-full w-4 h-4 flex items-center justify-center">
+                            {unread}
+                          </span>
+                        )}
+                        <span className="text-[9px] text-gray-400">{group.threads.length}</span>
+                        <ChevronRight size={10} className={cn("text-gray-400 transition-transform", !collapsed && "rotate-90")} />
+                      </div>
+                    </button>
+                    {/* Threads within group */}
+                    {!collapsed && group.threads.map(t => renderThreadItem(t, true))}
+                  </div>
+                );
+              })}
+              {groups.length === 0 && (
+                <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -443,6 +519,140 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         className="w-1.5 cursor-col-resize bg-transparent hover:bg-[#6c47ff]/20 transition-colors shrink-0 h-full"
         title="Drag to resize"
       />
+    </div>
+  );
+}
+
+// ── Image Lightbox (Gmail style) ───────────────────────────────
+
+function ImageLightbox({ images, initialIndex, onClose }: {
+  images: { url: string; name: string }[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const [scale, setScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const offsetStart = useRef({ x: 0, y: 0 });
+
+  const img = images[index];
+  const STEP = 0.25;
+  const MIN = 0.25;
+  const MAX = 8;
+
+  const zoomIn  = useCallback(() => setScale(s => Math.min(MAX, parseFloat((s + STEP).toFixed(2)))), []);
+  const zoomOut = useCallback(() => setScale(s => { const next = Math.max(MIN, parseFloat((s - STEP).toFixed(2))); if (next <= 1) setOffset({ x: 0, y: 0 }); return next; }), []);
+  const reset   = useCallback(() => { setScale(1); setOffset({ x: 0, y: 0 }); }, []);
+  const goTo    = useCallback((i: number) => { setIndex(i); reset(); }, [reset]);
+
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "+" || e.key === "=") zoomIn();
+      if (e.key === "-") zoomOut();
+      if (e.key === "0") reset();
+      if (e.key === "ArrowLeft"  && images.length > 1) goTo((index - 1 + images.length) % images.length);
+      if (e.key === "ArrowRight" && images.length > 1) goTo((index + 1) % images.length);
+    };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [index, images.length, onClose, zoomIn, zoomOut, reset, goTo]);
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    e.deltaY < 0 ? zoomIn() : zoomOut();
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale <= 1) return;
+    setIsDragging(true);
+    dragStart.current   = { x: e.clientX, y: e.clientY };
+    offsetStart.current = { ...offset };
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setOffset({
+      x: offsetStart.current.x + (e.clientX - dragStart.current.x),
+      y: offsetStart.current.y + (e.clientY - dragStart.current.y),
+    });
+  };
+  const stopDrag = () => setIsDragging(false);
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/85 flex flex-col select-none" onClick={onClose}>
+
+      {/* ── Top bar: filename + close (Gmail style) ── */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={e => e.stopPropagation()}>
+        <span className="text-white/60 text-[13px] truncate max-w-[60vw]">{img.name}</span>
+        <button onClick={onClose}
+          className="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:bg-white/15 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* ── Main image area ── */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-0"
+           onWheel={handleWheel}
+           onMouseDown={handleMouseDown}
+           onMouseMove={handleMouseMove}
+           onMouseUp={stopDrag}
+           onMouseLeave={stopDrag}
+           onClick={e => e.stopPropagation()}
+           style={{ cursor: isDragging ? "grabbing" : scale > 1 ? "grab" : "default" }}>
+
+        <img src={img.url} alt={img.name} draggable={false}
+             style={{
+               transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+               transformOrigin: "center",
+               transition: isDragging ? "none" : "transform 0.12s ease",
+               maxWidth: "88vw",
+               maxHeight: "78vh",
+             }}
+             className="object-contain rounded-sm shadow-2xl" />
+
+        {/* Left arrow — Gmail style (side of screen) */}
+        {images.length > 1 && (
+          <button onClick={() => goTo((index - 1 + images.length) % images.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-[#3c3c3c] hover:bg-[#555] text-white transition-colors shadow-lg">
+            <ChevronLeft size={22} />
+          </button>
+        )}
+
+        {/* Right arrow */}
+        {images.length > 1 && (
+          <button onClick={() => goTo((index + 1) % images.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-[#3c3c3c] hover:bg-[#555] text-white transition-colors shadow-lg">
+            <ChevronRight size={22} />
+          </button>
+        )}
+      </div>
+
+      {/* ── Bottom zoom pill — Gmail style ── */}
+      <div className="flex items-center justify-center py-5 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center bg-[#3c3c3c] rounded-full px-1 py-1 shadow-xl">
+          {/* Zoom out */}
+          <button onClick={zoomOut}
+            className="w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/15 transition-colors"
+            title="缩小 (-)">
+            <ZoomOut size={18} />
+          </button>
+          {/* Current scale — click to reset */}
+          <button onClick={reset}
+            className="h-10 px-3 flex items-center justify-center rounded-full text-white/80 hover:bg-white/15 transition-colors text-[12px] font-medium min-w-[52px]"
+            title="重置 (点击恢复100%)">
+            {Math.round(scale * 100)}%
+          </button>
+          {/* Zoom in */}
+          <button onClick={zoomIn}
+            className="w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/15 transition-colors"
+            title="放大 (+)">
+            <ZoomIn size={18} />
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
@@ -696,6 +906,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [showModeMenu, setShowModeMenu] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);
+  const [lightbox, setLightbox] = useState<{ images: { url: string; name: string }[]; index: number } | null>(null);
   const [aiInserted, setAiInserted] = useState(false);
   const [translatedMsgIds, setTranslatedMsgIds] = useState<Set<string>>(new Set());
   const [showAiReplyZh, setShowAiReplyZh] = useState(false);
@@ -760,6 +971,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-white h-full">
+      {lightbox && <ImageLightbox images={lightbox.images} initialIndex={lightbox.index} onClose={() => setLightbox(null)} />}
       {/* Thread header */}
       <div className="px-3 py-3 border-b border-border shrink-0 bg-white">
         <div className="flex items-start justify-between gap-2">
@@ -864,6 +1076,43 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
                 </div>
               </div>
               <div className="whitespace-pre-wrap text-gray-700 text-[12.5px]">{msg.content}</div>
+
+              {/* Image attachments — thumbnails */}
+              {(msg.attachments ?? []).some(a => a.mimeType.startsWith("image/")) && (() => {
+                const imgs = (msg.attachments ?? []).filter(a => a.mimeType.startsWith("image/"));
+                return (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {imgs.map((att, idx) => (
+                      <button key={att.id}
+                        onClick={() => setLightbox({ images: imgs.map(a => ({ url: a.url, name: a.name })), index: idx })}
+                        className="relative group rounded-lg overflow-hidden border border-border hover:border-[#6c47ff]/50 transition-all shadow-sm hover:shadow-md"
+                        style={{ width: 110, height: 80 }}>
+                        <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <Maximize2 size={16} className="text-white drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[9px] text-white truncate block">{att.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Non-image attachments */}
+              {(msg.attachments ?? []).some(a => !a.mimeType.startsWith("image/")) && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {(msg.attachments ?? []).filter(a => !a.mimeType.startsWith("image/")).map(att => (
+                    <div key={att.id} className="flex items-center gap-1.5 text-[11px] text-gray-600 bg-gray-100 rounded-lg px-2 py-1 border border-border">
+                      <FileText size={11} className="text-gray-400 shrink-0" />
+                      <span className="max-w-[120px] truncate">{att.name}</span>
+                      {att.size && <span className="text-[10px] text-gray-400 shrink-0">{att.size}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {showTr && msg.contentZh && (
                 <div className="mt-2.5 pt-2.5 border-t border-dashed border-blue-100">
                   <div className="flex items-center gap-1 mb-1">
@@ -941,7 +1190,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAdd} />
         <div className="px-3 pt-3 pb-1 space-y-2">
           <textarea ref={textareaRef} value={draft} onChange={e => setDraft(e.target.value)}
-            placeholder={isInternalNote ? "Add an internal note (only visible to agents)…" : "Write your reply, or insert the AI draft above…"}
+            placeholder={isInternalNote ? "Add an internal note…" : "Write your reply, or insert the AI draft above…"}
             style={{ minHeight: "80px", maxHeight: "240px" }}
             className={cn("w-full px-3 py-2 rounded-lg border text-[13px] leading-relaxed resize-none overflow-y-auto focus:outline-none focus:ring-2 placeholder:text-gray-400",
               isInternalNote
@@ -1096,7 +1345,7 @@ function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
         <span className="text-[13px] font-semibold text-gray-900">Ticket Info</span>
       </div>
 
-      {/* Customer Notes section */}
+      {/* Customer Notes — per-ticket */}
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Customer Notes</span>
@@ -1104,11 +1353,10 @@ function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
         <textarea
           value={customerNote}
           onChange={e => { setCustomerNote(e.target.value); onUpdateCustomerNote(e.target.value); }}
-          placeholder="Add notes about this customer…"
+          placeholder="Add notes about this ticket…"
           rows={3}
           className="w-full px-2.5 py-2 text-[11px] leading-relaxed rounded-lg border border-border bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff] resize-none placeholder:text-gray-300"
         />
-        <p className="mt-1 text-[9px] text-gray-300">Persists across all tickets for this customer.</p>
       </div>
 
       <div className="px-4 py-3 border-b border-border space-y-2">
@@ -1341,7 +1589,7 @@ export default function EmailPage() {
       ...(isInternal ? { isInternal: true } : {}),
     };
     setThreads(prev => prev.map(t =>
-      t.id === selectedId ? { ...t, status: "open" as const, updatedAt: "Just now", messages: [...t.messages, newMsg] } : t
+      t.id === selectedId ? { ...t, status: "open" as const, messages: [...t.messages, newMsg] } : t
     ));
   };
 

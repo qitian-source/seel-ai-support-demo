@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD — Email Inbox v2 功能更新 · Seel AI Support</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #f4f5f7;
+  color: #172b4d;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── Top bar ──────────────────────────────────── */
+.topbar {
+  background: #1e1b4b;
+  color: #c7d2fe;
+  font-size: 12px;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar .logo {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 700; font-size: 13px; color: #fff; letter-spacing: 0.2px;
+}
+.topbar .logo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, #a78bfa, #6c47ff);
+}
+.topbar .sep { color: #4c4882; }
+.topbar .tag {
+  background: #6c47ff; color: #fff;
+  border-radius: 4px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+}
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-right a {
+  color: #a5b4fc; text-decoration: none; font-size: 12px;
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 6px; border: 1px solid #3730a3;
+  transition: all 0.15s;
+}
+.topbar-right a:hover { background: #312e81; color: #e0e7ff; }
+.topbar-right a svg { flex-shrink: 0; }
+
+/* ── Layout ────────────────────────────────────── */
+.page-wrap {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 24px 80px;
+}
+
+/* ── Header ────────────────────────────────────── */
+.doc-header {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e4e7eb;
+  padding: 36px 40px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.doc-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0c0a3e;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+.doc-header h1 span {
+  background: linear-gradient(135deg, #6c47ff, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+}
+.meta-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  border: 1px solid;
+}
+.meta-badge.version  { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.meta-badge.date     { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.meta-badge.status   { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+.meta-badge.demo     { background: #eff6ff; color: #1e40af; border-color: #93c5fd; }
+.meta-badge.demo a   { color: inherit; text-decoration: none; }
+.meta-badge.demo a:hover { text-decoration: underline; }
+
+.goals-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px;
+}
+.goal-card {
+  background: #fafafa; border: 1px solid #e9ecef;
+  border-radius: 8px; padding: 14px 16px;
+}
+.goal-card .num {
+  font-size: 20px; font-weight: 800; color: #6c47ff; line-height: 1;
+  margin-bottom: 6px;
+}
+.goal-card .title { font-size: 12px; font-weight: 600; color: #172b4d; margin-bottom: 3px; }
+.goal-card .desc  { font-size: 11px; color: #6b778c; line-height: 1.5; }
+
+/* ── TOC ────────────────────────────────────────── */
+.toc {
+  background: #fff; border: 1px solid #e4e7eb; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.toc h4 { font-size: 11px; font-weight: 700; color: #8993a4; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+.toc ol { padding-left: 18px; }
+.toc li { margin-bottom: 5px; }
+.toc a  { color: #6c47ff; text-decoration: none; font-size: 13px; }
+.toc a:hover { text-decoration: underline; }
+.toc .sub { padding-left: 16px; margin-top: 4px; list-style: none; }
+.toc .sub li { margin-bottom: 3px; }
+.toc .sub a  { color: #5e6c84; font-size: 12px; }
+
+/* ── Section card ───────────────────────────────── */
+.section {
+  background: #fff; border: 1px solid #e4e7eb; border-radius: 12px;
+  margin-bottom: 20px; overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 28px; border-bottom: 1px solid #f0f1f3;
+  background: #fafbff;
+}
+.section-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.section-icon.layout   { background: #ede9fe; }
+.section-icon.notes    { background: #fffbeb; }
+.section-icon.lightbox { background: #ecfdf5; }
+.section-icon.data     { background: #eff6ff; }
+.section-icon.rules    { background: #f0fdf4; }
+.section-icon.oos      { background: #fef3c7; }
+.section-icon.qa       { background: #fce7f3; }
+.section-title { flex: 1; }
+.section-title h2 { font-size: 16px; font-weight: 700; color: #0c0a3e; line-height: 1.2; }
+.section-title p  { font-size: 12px; color: #6b778c; margin-top: 2px; }
+.section-body { padding: 24px 28px; }
+
+/* ── Typography ─────────────────────────────────── */
+h3 {
+  font-size: 14px; font-weight: 700; color: #172b4d;
+  margin: 22px 0 10px;
+  display: flex; align-items: center; gap-7: 0;
+}
+h3:first-child { margin-top: 0; }
+h4 {
+  font-size: 12px; font-weight: 700; color: #344563;
+  margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+h4:first-child { margin-top: 0; }
+p { font-size: 13px; color: #344563; margin-bottom: 10px; line-height: 1.7; }
+p:last-child { margin-bottom: 0; }
+
+ul, ol { padding-left: 20px; margin-bottom: 12px; }
+li { font-size: 13px; color: #344563; margin-bottom: 5px; line-height: 1.6; }
+li:last-child { margin-bottom: 0; }
+li strong, p strong { color: #172b4d; }
+
+/* ── Dividers ───────────────────────────────────── */
+.divider { border: none; border-top: 1px solid #f0f1f3; margin: 20px 0; }
+
+/* ── Sub-feature block ──────────────────────────── */
+.feature-block {
+  background: #f8f9fb; border: 1px solid #e9ecef;
+  border-radius: 8px; padding: 16px 18px; margin: 14px 0;
+}
+.feature-block h3 { margin-top: 0; color: #0c0a3e; }
+
+/* ── Callout ────────────────────────────────────── */
+.callout {
+  border-left: 3px solid; border-radius: 0 6px 6px 0;
+  padding: 11px 14px; margin: 12px 0; font-size: 13px;
+}
+.callout.amber { border-color: #f59e0b; background: #fffbeb; color: #78350f; }
+.callout.blue  { border-color: #3b82f6; background: #eff6ff; color: #1e3a8a; }
+.callout.green { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+.callout.purple{ border-color: #8b5cf6; background: #f5f3ff; color: #4c1d95; }
+.callout strong { font-weight: 700; }
+
+/* ── Code ───────────────────────────────────────── */
+code {
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+  font-size: 12px; background: #f0f1f4; color: #0c0a3e;
+  padding: 1px 5px; border-radius: 4px;
+}
+pre {
+  background: #1e1b4b; border-radius: 8px;
+  padding: 16px 18px; overflow-x: auto; margin: 12px 0;
+  border: 1px solid #312e81;
+}
+pre code {
+  background: none; color: #c7d2fe; font-size: 12px;
+  padding: 0; border-radius: 0; line-height: 1.8;
+}
+.pre-label {
+  font-size: 11px; font-weight: 600; color: #8993a4;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 6px; display: block;
+}
+
+/* ── Tables ─────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 12px 0; border-radius: 8px; border: 1px solid #e4e7eb; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: #f8f9fb; }
+th {
+  padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
+  color: #8993a4; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid #e4e7eb;
+}
+td {
+  padding: 10px 14px; color: #344563; border-bottom: 1px solid #f0f1f3;
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #fafbff; }
+td code { font-size: 11px; }
+td strong { color: #172b4d; }
+
+/* ── Badge chips ────────────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+.chip.green  { background: #dcfce7; color: #166534; }
+.chip.amber  { background: #fef3c7; color: #92400e; }
+.chip.blue   { background: #dbeafe; color: #1e40af; }
+.chip.purple { background: #ede9fe; color: #5b21b6; }
+.chip.gray   { background: #f1f3f5; color: #495057; }
+.chip.red    { background: #fee2e2; color: #991b1b; }
+
+/* ── Lightbox diagram ───────────────────────────── */
+.diagram {
+  background: #111827; border-radius: 10px; padding: 20px 24px;
+  margin: 14px 0; border: 1px solid #1f2937;
+  font-family: "SFMono-Regular", "Consolas", monospace;
+  font-size: 12px; color: #9ca3af; line-height: 1.9; overflow-x: auto;
+}
+
+/* ── Keyboard shortcuts ─────────────────────────── */
+.shortcut-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.shortcut {
+  display: flex; align-items: center; gap: 7px;
+  background: #f8f9fb; border: 1px solid #e4e7eb;
+  border-radius: 7px; padding: 7px 12px;
+}
+kbd {
+  background: #fff; border: 1px solid #d0d7de; border-radius: 4px;
+  padding: 1px 6px; font-family: inherit; font-size: 12px;
+  box-shadow: 0 1px 0 #d0d7de; color: #172b4d; font-weight: 600;
+}
+.shortcut span { font-size: 12px; color: #6b778c; }
+
+/* ── Mode toggle mockup ─────────────────────────── */
+.mode-mockup {
+  display: flex; align-items: center; gap: 16px;
+  background: #f8f9fb; border: 1px solid #e4e7eb;
+  border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+  flex-wrap: wrap;
+}
+.btn-mock {
+  display: inline-flex; align-items: center; gap-: 6px;
+  padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  border: 1px solid; cursor: default;
+}
+.btn-mock.public { background: #fff; border-color: #d0d7de; color: #495057; }
+.btn-mock.internal { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.arrow-label { font-size: 13px; color: #8993a4; }
+
+/* ── QA checklist ───────────────────────────────── */
+.qa-table td:first-child { white-space: nowrap; }
+.check-icon { color: #10b981; font-size: 15px; }
+
+/* ── Footer ─────────────────────────────────────── */
+footer {
+  text-align: center; font-size: 12px; color: #8993a4;
+  padding: 32px 0 16px;
+}
+footer a { color: #6c47ff; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+/* ── Backend section ────────────────────────────── */
+.section-icon.backend { background: #e0f2fe; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo"><div class="logo-dot"></div>Seel AI Support</div>
+    <span class="sep">›</span>
+    <span class="tag">PRD</span>
+    <span>Email Inbox v2</span>
+  </div>
+  <div class="topbar-right">
+    <a href="https://seel-ai-support-v2-main.vercel.app" target="_blank">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      查看 Demo
+    </a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <h1>Email Inbox <span>v2</span> · 本期更新</h1>
+    <div class="meta-row">
+      <span class="meta-badge version">📄 v2.0</span>
+      <span class="meta-badge date">📅 2026-05-25</span>
+      <span class="meta-badge status">✅ 前端已完成 · Demo 可用</span>
+      <span class="meta-badge demo">🔗 <a href="https://seel-ai-support-v2-main.vercel.app" target="_blank">seel-ai-support-v2-main.vercel.app</a></span>
+    </div>
+    <div class="goals-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="goal-card">
+        <div class="num">01</div>
+        <div class="title">布局重构</div>
+        <div class="desc">Gmail 风格，搜索置顶，Compose 固定</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">02</div>
+        <div class="title">Internal Notes</div>
+        <div class="desc">消息级内部备注，替代 Labels</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">03</div>
+        <div class="title">Customer Notes</div>
+        <div class="desc">工单级坐席备注</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">04</div>
+        <div class="title">图片灯箱</div>
+        <div class="desc">附件预览、缩放、拖拽</div>
+      </div>
+      <div class="goal-card">
+        <div class="num">05</div>
+        <div class="title">分组视图</div>
+        <div class="desc">按发件人合并展示工单</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h4>目录</h4>
+    <ol>
+      <li><a href="#s1">整体布局重构</a></li>
+      <li><a href="#s2">Internal Notes（内部备注）</a>
+        <ul class="sub">
+          <li><a href="#s2-1">Internal Note — 消息级内部备注</a></li>
+          <li><a href="#s2-2">Customer Notes — 工单级备注</a></li>
+        </ul>
+      </li>
+      <li><a href="#s3">图片附件预览与缩放（Image Lightbox）</a></li>
+      <li><a href="#s4">分组视图（按发件人合并）</a></li>
+      <li><a href="#s5">本期范围内 · 后端实现</a></li>
+      <li><a href="#s6">验收标准</a></li>
+    </ol>
+  </div>
+
+  <!-- Section 1: Layout -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-icon layout">🗂</div>
+      <div class="section-title">
+        <h2>一、整体布局重构</h2>
+        <p>对标 Gmail，重新组织搜索、过滤与三栏结构</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="callout blue">旧版 Email Inbox 搜索框位置不合理，Compose 按钮不够显眼，筛选条件与列表混排，视觉层级混乱。</div>
+
+      <h3>🔍 搜索栏置顶</h3>
+      <ul>
+        <li>搜索框移至左侧列表顶部，<strong>始终可见</strong>；</li>
+        <li>支持按主题、发件人、内容实时过滤工单列表；</li>
+        <li>清空按钮（×）在有输入内容时显示。</li>
+      </ul>
+
+      <h3>✍️ Compose 固定按钮</h3>
+      <ul>
+        <li>左上角新增 <strong>"Compose"</strong> 主操作按钮，紫色高亮，位置固定；</li>
+        <li>点击弹出新建邮件草稿（发件人默认为当前坐席邮箱）。</li>
+      </ul>
+
+      <h3>🔽 筛选条件重组</h3>
+      <ul>
+        <li>状态筛选（All / New / Open / Pending / Solved）以<strong>水平 Tab</strong> 形式展示于搜索栏下方；</li>
+        <li>类型筛选（User / Non-user）与排序（Newest / Oldest）合并至右侧 Icon 按钮，点击展开 Dropdown，减少界面噪音。</li>
+      </ul>
+
+      <h3>📐 三栏布局比例优化</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>栏位</th><th>内容</th><th>比例</th></tr></thead>
+          <tbody>
+            <tr><td>左栏</td><td>工单列表</td><td><span class="chip blue">26%</span></td></tr>
+            <tr><td>中栏</td><td>消息详情（ThreadView）</td><td><span class="chip blue">46%</span></td></tr>
+            <tr><td>右栏</td><td>工单信息面板（TicketInfoPanel）</td><td><span class="chip blue">28%</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>左右分栏支持<strong>拖拽调整宽度</strong>（ResizablePanel）。</p>
+
+      <h3>📌 回复后列表位置保持不变</h3>
+      <ul>
+        <li>旧版发送回复后，工单列表会自动滚回顶部，需要重新下滑找到当前工单；</li>
+        <li>现版本发送回复后，列表<strong>保持原有滚动位置</strong>，工单不重新排序，不自动跳转。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 2: Internal Notes -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-icon notes">🔒</div>
+      <div class="section-title">
+        <h2>二、Internal Notes（内部备注）</h2>
+        <p>替代旧版 Labels，引入消息级与工单级两种备注类型</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="callout amber">旧版 Labels 适合分类标记工单，但不适合坐席之间的协作沟通。本次参考 Zendesk 设计，拆分为两种独立的笔记类型。</div>
+
+      <div class="table-wrap" style="margin-top:16px;">
+        <table>
+          <thead><tr><th>类型</th><th>作用域</th><th>可见范围</th><th>持久化方式</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Internal Note</strong></td>
+              <td>单条消息</td>
+              <td><span class="chip amber">仅坐席可见</span></td>
+              <td>随工单保存</td>
+            </tr>
+            <tr>
+              <td><strong>Customer Notes</strong></td>
+              <td>当前工单</td>
+              <td><span class="chip amber">仅坐席可见</span></td>
+              <td>随工单保存</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="divider">
+
+      <!-- 2.1 Internal Note -->
+      <div class="feature-block" id="s2-1">
+        <h3>2.1 Internal Note — 消息级内部备注</h3>
+
+        <h4>入口</h4>
+        <p>回复栏左下角新增<strong>模式切换按钮</strong>，默认为"Public reply"，点击可切换至"Internal note"：</p>
+
+        <div class="mode-mockup">
+          <div class="btn-mock public">✉ Public reply ▾</div>
+          <span class="arrow-label">→  切换后  →</span>
+          <div class="btn-mock internal">🔒 Internal note ▾</div>
+        </div>
+
+        <p>切换后：</p>
+        <ul>
+          <li>输入框背景变为<strong>淡琥珀色</strong>，视觉提示当前为内部模式；</li>
+          <li>发送按钮变为 <strong>"Add note"</strong>，样式为琥珀色边框。</li>
+        </ul>
+
+        <h4>消息渲染样式</h4>
+        <p>内部备注在消息流中以区别样式展示：</p>
+        <ul>
+          <li>气泡背景：琥珀黄（<code>bg-amber-50 border-amber-200</code>）；</li>
+          <li>顶部标签：<code>🔒 Internal Note · Only visible to agents</code>；</li>
+          <li>不触发工单状态变更（不会将工单置为 Open）。</li>
+        </ul>
+
+        <div class="callout amber"><strong>设计说明：</strong>Internal Note 的核心价值在于"不打扰客户"——坐席可以在工单内部讨论处理思路、记录异常、@同事，这些内容对客户完全不可见。</div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- 2.2 Customer Notes -->
+      <div class="feature-block" id="s2-2">
+        <h3>2.2 Customer Notes — 工单级备注</h3>
+
+        <h4>位置</h4>
+        <p>右侧 Ticket Info Panel 顶部，独立分区 <strong>"Customer Notes"</strong>，替换原有 Labels 分区。</p>
+
+        <h4>交互行为</h4>
+        <ul>
+          <li>多行文本输入框，支持自由输入；</li>
+          <li><strong>实时保存</strong>（onChange 即更新），无需手动确认；</li>
+          <li>备注内容<strong>仅属于当前工单</strong>，切换其他工单后各自独立不共享。</li>
+        </ul>
+
+        <div class="callout green"><strong>设计说明：</strong>Customer Notes 用于记录坐席在处理本工单时的临时观察与注意事项（如沟通要点、特殊承诺等），仅对坐席可见，不影响客户侧展示。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Lightbox -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-icon lightbox">🖼</div>
+      <div class="section-title">
+        <h2>三、图片附件预览与缩放（Image Lightbox）</h2>
+        <p>参考 Gmail，全屏沉浸式图片查看体验</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="callout blue">旧版附件仅提供文件名 + 下载链接，用户无法在当前页直接预览图片，需跳转到新标签页，影响处理效率。</div>
+
+      <hr class="divider">
+
+      <!-- 3.1 Thumbnails -->
+      <div class="feature-block" id="s3-1">
+        <h3>3.1 附件缩略图</h3>
+        <p>当消息包含图片附件（<code>mimeType</code> 为 <code>image/*</code>）时，在消息气泡底部展示<strong>缩略图网格</strong>：</p>
+        <ul>
+          <li>每张缩略图尺寸：<strong>110 × 80 px</strong>，<code>object-cover</code> 裁剪，圆角边框；</li>
+          <li>Hover 时显示半透明蒙层 + 放大镜图标（Maximize2）；</li>
+          <li>Hover 时底部渐变遮罩显示文件名；</li>
+          <li>点击任意缩略图，打开 Lightbox 并<strong>定位到对应图片</strong>。</li>
+        </ul>
+        <p>非图片附件（PDF、文档等）以<strong>文件卡片</strong>形式展示（文件名 + 大小 + 下载按钮）。</p>
+      </div>
+
+      <hr class="divider">
+
+      <!-- 3.2 Lightbox -->
+      <div class="feature-block" id="s3-2">
+        <h3>3.2 Lightbox — 图片灯箱</h3>
+        <p>参考 Gmail 附件预览设计，全屏沉浸式查看体验。</p>
+
+        <h4>布局结构（从上到下）</h4>
+        <div class="diagram">
+┌──────────────────────────────────────────────────┐<br>
+│  crash_site_photo.jpg &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[×]  │ &nbsp;← 顶部栏：文件名 + 关闭<br>
+├──────────────────────────────────────────────────┤<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[‹] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ 图片主体 ] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[›] &nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;← 图片区：左右切换箭头<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │<br>
+├──────────────────────────────────────────────────┤<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╔════════════════╗ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║ &nbsp;⊖ │ 100% │ ⊕ &nbsp;║ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │ &nbsp;← 底部缩放工具条<br>
+│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;╚════════════════╝ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; │<br>
+└──────────────────────────────────────────────────┘
+        </div>
+
+        <h4>缩放控制</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>控件</th><th>功能</th></tr></thead>
+            <tbody>
+              <tr><td><code>⊖</code> 按钮</td><td>缩小 25%，最小值 25%</td></tr>
+              <tr><td><code>100%</code> 百分比</td><td>显示当前缩放比例；<strong>点击重置为 100%</strong></td></tr>
+              <tr><td><code>⊕</code> 按钮</td><td>放大 25%，最大值 300%</td></tr>
+              <tr><td>鼠标滚轮</td><td>向上放大，向下缩小</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>拖拽平移</h4>
+        <ul>
+          <li>缩放倍率 &gt; 1 时，按住鼠标左键可<strong>拖拽移动图片</strong>；</li>
+          <li>切换图片或重置缩放后，偏移量自动归零。</li>
+        </ul>
+
+        <h4>多图导航</h4>
+        <ul>
+          <li>左右箭头按钮（圆形深灰背景，Hover 变亮）；</li>
+          <li>切换时自动重置缩放和偏移；</li>
+          <li>仅有单张图片时，左右按钮仍显示（不隐藏，避免布局跳动）。</li>
+        </ul>
+
+        <h4>键盘快捷键</h4>
+        <div class="shortcut-row">
+          <div class="shortcut"><kbd>ESC</kbd><span>关闭灯箱</span></div>
+          <div class="shortcut"><kbd>←</kbd><kbd>→</kbd><span>上一张 / 下一张</span></div>
+          <div class="shortcut"><kbd>+</kbd><span>放大</span></div>
+          <div class="shortcut"><kbd>-</kbd><span>缩小</span></div>
+          <div class="shortcut"><kbd>0</kbd><span>重置缩放</span></div>
+        </div>
+
+        <h4>关闭方式</h4>
+        <ul>
+          <li>点击右上角 × 按钮；</li>
+          <li>点击图片区域以外的背景蒙层；</li>
+          <li>按 <kbd>ESC</kbd>。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Grouped View -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-icon" style="background:#f0fdf4;">👥</div>
+      <div class="section-title">
+        <h2>四、分组视图（按发件人合并）</h2>
+        <p>将同一发件人的多封工单折叠聚合，一键切换列表展示模式</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="callout blue">当同一客户提交多封工单时，默认平铺视图需要反复上下滚动才能找到关联工单，效率低。分组视图将相同发件人的工单收拢为一个客户组，整体一目了然。</div>
+
+      <h3>🔀 模式切换入口</h3>
+      <p>工单列表过滤行右侧新增 <strong>👥 分组按钮</strong>，与排序/筛选 Dropdown 并排展示：</p>
+      <div class="mode-mockup">
+        <div class="btn-mock public">☰ 平铺视图</div>
+        <span class="arrow-label">点击切换</span>
+        <div class="btn-mock internal" style="background:#f0fdf4; border-color:#6ee7b7; color:#065f46;">👥 分组视图</div>
+      </div>
+      <ul>
+        <li>激活状态下按钮高亮（绿色边框），再次点击还原平铺；</li>
+        <li>切换不影响当前选中工单，也不重置状态筛选 Tab 或搜索关键词。</li>
+      </ul>
+
+      <hr class="divider">
+
+      <h3>📋 分组列表结构</h3>
+      <p>启用分组视图后，工单列表按 <code>customerEmail</code> 聚合，每个客户形成一个可折叠的组：</p>
+
+      <div class="feature-block">
+        <h3>客户组头部（Group Header）</h3>
+        <ul>
+          <li><strong>客户头像</strong>：取客户姓名首字母，圆形色块背景；</li>
+          <li><strong>客户姓名</strong> + 邮箱地址（小字灰色）；</li>
+          <li><strong>工单数量 Badge</strong>：显示该客户下工单总数（如 <code>2 tickets</code>）；</li>
+          <li><strong>未读 Badge</strong>：若有未读工单，显示红色数字角标；</li>
+          <li>点击组头部可<strong>折叠 / 展开</strong>子列表（默认展开）；</li>
+          <li>折叠时显示一个箭头 ▶，展开时显示 ▼。</li>
+        </ul>
+      </div>
+
+      <div class="feature-block">
+        <h3>组内工单条目（Thread Item）</h3>
+        <ul>
+          <li>与平铺视图保持一致的工单卡片样式（主题、最新消息摘要、时间、状态 chip）；</li>
+          <li>左侧增加<strong>缩进</strong>（16 px），与组头部形成层级关系；</li>
+          <li>点击条目后，中栏消息详情正常加载，右侧 Ticket Info Panel 正常显示。</li>
+        </ul>
+      </div>
+
+      <hr class="divider">
+
+      <h3>🗂 排序规则</h3>
+      <ul>
+        <li>各客户组按组内<strong>最新工单的时间</strong>排序（Newest 优先）；</li>
+        <li>组内工单按自身时间独立排序；</li>
+        <li>切换"Oldest"排序时，规则同步应用于组级和条目级排序。</li>
+      </ul>
+
+      <div class="callout green"><strong>Demo 数据：</strong>data.ts 中已内置 Michael Zhang（2 封）和 Sarah Okonkwo（2 封）的多工单数据，可直接在 Demo 中切换分组视图验证效果。</div>
+    </div>
+  </div>
+
+  <!-- Section 5: Backend required -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-icon backend">🔧</div>
+      <div class="section-title">
+        <h2>五、本期范围内 · 后端实现</h2>
+        <p>前端已完成，需后端配合落地</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>功能</th><th>前端现状</th><th>后端需求</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>多人实时同步</strong></td>
+              <td>UI 已支持状态展示；刷新后可看到最新状态</td>
+              <td>接入 WebSocket / SSE 推送，状态变更实时广播到所有在线坐席</td>
+            </tr>
+            <tr>
+              <td><strong>同一邮箱多封邮件合并</strong></td>
+              <td>前端已实现按 sender 分组视图（👥 切换按钮）</td>
+              <td>后端按 customerEmail 聚合线程，返回分组结构；支持跨会话合并同一发件人的多封邮件</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: QA -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-icon qa">✅</div>
+      <div class="section-title">
+        <h2>六、验收标准</h2>
+        <p>逐条可勾选的测试清单</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="table-wrap">
+        <table class="qa-table">
+          <thead><tr><th>功能模块</th><th>验收项</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip purple">布局</span></td><td>搜索栏置顶可用；Compose 按钮固定可见；三栏比例正确</td></tr>
+            <tr><td><span class="chip purple">列表位置</span></td><td>发送回复后，列表滚动位置不跳转；工单不重新排序</td></tr>
+            <tr><td><span class="chip amber">Internal Note</span></td><td>切换模式后样式变化正确；发送后气泡显示琥珀色 + Lock 标签；不触发状态变更</td></tr>
+            <tr><td><span class="chip amber">Customer Notes</span></td><td>输入后切换工单再切回，内容保留；切换至其他工单不共享内容</td></tr>
+            <tr><td><span class="chip green">图片缩略图</span></td><td>图片附件显示缩略图网格；非图片显示文件卡片</td></tr>
+            <tr><td><span class="chip green">Lightbox 打开</span></td><td>点击缩略图打开，定位到对应图片</td></tr>
+            <tr><td><span class="chip green">Lightbox 缩放</span></td><td>⊕/⊖ 按钮有效；百分比实时更新；点击百分比重置为 100%</td></tr>
+            <tr><td><span class="chip green">Lightbox 滚轮</span></td><td>鼠标滚轮缩放有效</td></tr>
+            <tr><td><span class="chip green">Lightbox 拖拽</span></td><td>缩放后可拖拽平移；切换图片后偏移归零</td></tr>
+            <tr><td><span class="chip green">Lightbox 键盘</span></td><td>ESC / 方向键 / + / - / 0 快捷键均有效</td></tr>
+            <tr><td><span class="chip green">Lightbox 关闭</span></td><td>× 按钮、背景点击、ESC 均可关闭</td></tr>
+            <tr><td><span class="chip gray">分组视图</span></td><td>👥 按钮切换后列表按发件人分组展示；组头部显示客户名、邮箱、工单数</td></tr>
+            <tr><td><span class="chip gray">分组折叠</span></td><td>点击组头部可折叠/展开子工单；折叠后仍可通过箭头方向识别状态</td></tr>
+            <tr><td><span class="chip gray">分组选中</span></td><td>点击组内工单条目，中栏消息详情正常加载，右侧面板正常显示</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Seel AI Support — Email Inbox v2 &nbsp;·&nbsp; <a href="https://seel-ai-support-v2-main.vercel.app" target="_blank">查看 Demo</a></p>
+    <p style="margin-top:6px;">Updated 2026-05-25</p>
+  </footer>
+</div>
+
+</body>
+</html>

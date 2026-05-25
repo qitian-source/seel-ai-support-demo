@@ -868,6 +868,14 @@ export const DEFAULT_EMAIL_LABELS: EmailLabel[] = [
   { id: "lbl-refund",   label: "Refund",    color: "#16a34a" },
 ];
 
+export interface EmailAttachment {
+  id: string;
+  name: string;
+  url: string;
+  mimeType: string;  // "image/jpeg" | "image/png" | "application/pdf" | etc.
+  size?: string;
+}
+
 export interface EmailMessage {
   id: string;
   from: "customer" | "agent";
@@ -877,6 +885,7 @@ export interface EmailMessage {
   contentZh?: string;
   timestamp: string;
   isInternal?: boolean;  // internal note — visible to agents only
+  attachments?: EmailAttachment[];
 }
 
 export interface AIEmailCard {
@@ -1049,8 +1058,13 @@ DJI美国客服团队`,
         from: "customer",
         authorName: "Sarah Okonkwo",
         authorEmail: "s.okonkwo@outlook.com",
-          content: "Hello,\n\nI purchased my DJI Mini 4 Pro just 2 weeks ago (order #DJI-87203) and yesterday it crashed in an open field with no obstacles. The drone just lost signal and flew away — I never recovered it.\n\nThis is unacceptable for a brand new drone. I want a full replacement under warranty. I paid $760 for this and it's already gone.\n\nWhat are my options?\n\nSarah",
-        contentZh: "您好，\n\n我两周前购买的 DJI Mini 4 Pro（订单号 #DJI-87203），昨天在开阔地飞行时坠机，周围没有任何障碍物。无人机突然失去信号飞走了，我再也找不到它了。\n\n对于一台全新无人机来说，这是完全无法接受的。我支付了760美元，它就这么没了，我要求在保修范围内进行全额替换。\n\n我有哪些选择？\n\nSarah",
+          content: "Hello,\n\nI purchased my DJI Mini 4 Pro just 2 weeks ago (order #DJI-87203) and yesterday it crashed in an open field with no obstacles. The drone just lost signal and flew away — I never recovered it.\n\nThis is unacceptable for a brand new drone. I want a full replacement under warranty. I paid $760 for this and it's already gone.\n\nAttaching photos of the crash site and the recovered wreckage.\n\nWhat are my options?\n\nSarah",
+        contentZh: "您好，\n\n我两周前购买的 DJI Mini 4 Pro（订单号 #DJI-87203），昨天在开阔地飞行时坠机，周围没有任何障碍物。无人机突然失去信号飞走了，我再也找不到它了。\n\n对于一台全新无人机来说，这是完全无法接受的。我支付了760美元，它就这么没了，我要求在保修范围内进行全额替换。\n\n已附上坠机现场及残骸照片。\n\n我有哪些选择？\n\nSarah",
+        attachments: [
+          { id: "att-002-1", name: "crash_site_photo.jpg",   url: "https://picsum.photos/seed/field1/900/600",  mimeType: "image/jpeg", size: "2.3 MB" },
+          { id: "att-002-2", name: "drone_wreckage.jpg",     url: "https://picsum.photos/seed/drone2/900/600",  mimeType: "image/jpeg", size: "1.8 MB" },
+          { id: "att-002-3", name: "serial_number_label.jpg",url: "https://picsum.photos/seed/label3/900/600",  mimeType: "image/jpeg", size: "0.9 MB" },
+        ],
         timestamp: "Today 9:47 AM",
       },
     ],
@@ -1485,6 +1499,88 @@ DJI美国客服团队`,
         content: "Hi DJI Team,\n\nMy name is Alex Chen and I run 'Fly With Alex' on YouTube (500K subscribers, 8M+ monthly views). I focus exclusively on drone content — reviews, tutorials, and cinematic shots.\n\nI'd love to collaborate on a dedicated review video for the DJI Mini 4 Pro. I can offer:\n- 15-20 min dedicated review video\n- Instagram Reel (450K followers)\n- TikTok feature (280K followers)\n\nWould you be able to provide a review unit? I'm happy to share my full media kit.\n\nBest,\nAlex",
         contentZh: "你好，DJI 团队，\n\n我是 Alex Chen，在 YouTube 上运营「Fly With Alex」频道（50万订阅，月均800万次观看）。我专注于无人机内容——评测、教程和电影级航拍。\n\n我希望合作制作一期 DJI Mini 4 Pro 专属评测视频。我可以提供：\n- 15-20分钟专属评测视频\n- Instagram Reel（45万粉丝）\n- TikTok 推荐（28万粉丝）\n\n请问可以提供一台评测机吗？我很乐意分享完整的媒体资料包。\n\n此致，\nAlex",
         timestamp: "Today 7:30 AM",
+      },
+    ],
+  },
+  // em-009: second ticket from Michael Zhang (same sender grouping demo)
+  {
+    id: "em-009",
+    emailType: "user",
+    threadMode: "production",
+    customer: "Michael Zhang",
+    customerEmail: "michael.zhang@gmail.com",
+    subject: "Mavic 3 Pro — ND filter set compatibility question",
+    status: "solved",
+    priority: "normal",
+    isRead: true,
+    receivedAt: "Yesterday 3:15 PM",
+    updatedAt: "Yesterday 4:02 PM",
+    inboxSummary: "Customer asking which ND filter set is compatible with Mavic 3 Pro Combo",
+    aiCard: {
+      intent: "Product Info",
+      sentiment: "neutral",
+      confidence: 0.95,
+      orderNumber: "#DJI-88412",
+      orderStatus: "Delivered",
+      summary: "Customer asking about ND filter compatibility for their Mavic 3 Pro. Resolved — recommended the DJI ND Filter Set (ND64/128/256/512) specifically designed for Mavic 3 series.",
+      summaryZh: "客户咨询 Mavic 3 Pro 适配的 ND 滤镜套装。已解决——推荐专为 Mavic 3 系列设计的 DJI ND 滤镜套装（ND64/128/256/512）。",
+      suggestedReply: `Hi Michael,\n\nGreat question! The compatible ND filter set for the Mavic 3 Pro is the **DJI ND Filter Set (ND64/128/256/512) for Mavic 3 Series** (SKU: CP.MA.00000488.01).\n\nBest regards,\nDJI USA Customer Support`,
+      suggestedReplyZh: `你好 Michael，\n\n很好的问题！Mavic 3 Pro 适配的 ND 滤镜套装是 **DJI ND 滤镜套装（ND64/128/256/512）Mavic 3 系列专用**（SKU: CP.MA.00000488.01）。\n\n此致，\nDJI美国客服团队`,
+    },
+    messages: [
+      {
+        id: "msg-009-1",
+        from: "customer",
+        authorName: "Michael Zhang",
+        authorEmail: "michael.zhang@gmail.com",
+        content: "Hi,\n\nQuick question — which ND filter set works with the Mavic 3 Pro Combo? I see a few options on the website and want to make sure I get the right one.\n\nThanks,\nMichael",
+        contentZh: "您好，\n\n请问哪款 ND 滤镜套装与 Mavic 3 Pro 套装兼容？网站上有几个选项，想确认一下买哪个。\n\n谢谢，\nMichael",
+        timestamp: "Yesterday 3:15 PM",
+      },
+      {
+        id: "msg-009-2",
+        from: "agent",
+        authorName: "Sarah Chen",
+        authorEmail: "service@djiusa.com",
+        content: "Hi Michael,\n\nThe compatible filter is the DJI ND Filter Set (ND64/128/256/512) for Mavic 3 Series. You can find it directly at store.dji.com.\n\nLet us know if you have any other questions!\n\nBest,\nDJI USA Customer Support",
+        timestamp: "Yesterday 4:02 PM",
+      },
+    ],
+  },
+  // em-010: second ticket from Sarah Okonkwo (same sender grouping demo)
+  {
+    id: "em-010",
+    emailType: "user",
+    threadMode: "production",
+    customer: "Sarah Okonkwo",
+    customerEmail: "s.okonkwo@outlook.com",
+    subject: "Follow-up: Mini 4 Pro repair status update",
+    status: "pending",
+    priority: "normal",
+    isRead: false,
+    receivedAt: "Today 8:10 AM",
+    updatedAt: "Today 8:10 AM",
+    inboxSummary: "Customer following up on repair case after warranty claim was escalated last week",
+    aiCard: {
+      intent: "Repair Status",
+      sentiment: "neutral",
+      confidence: 0.91,
+      orderNumber: "#DJI-87203",
+      orderStatus: "Under Review",
+      summary: "Customer following up on the Mini 4 Pro repair/replacement case submitted last week. Escalation is still under warranty review. Customer wants a status update and estimated timeline.",
+      summaryZh: "客户跟进上周提交的 Mini 4 Pro 维修/换货案件。质保审核仍在进行中。客户希望了解最新进展和预计时间。",
+      suggestedReply: `Hi Sarah,\n\nThank you for following up. Your case (#DJI-87203) is currently under review by our warranty specialist team. You can expect an update within 2-3 business days.\n\nBest regards,\nDJI USA Customer Support`,
+      suggestedReplyZh: `你好 Sarah，\n\n感谢您的跟进。您的案件（#DJI-87203）目前正在由我们的质保专家团队审核中，预计2-3个工作日内会有最新进展。\n\n此致，\nDJI美国客服团队`,
+    },
+    messages: [
+      {
+        id: "msg-010-1",
+        from: "customer",
+        authorName: "Sarah Okonkwo",
+        authorEmail: "s.okonkwo@outlook.com",
+        content: "Hi,\n\nI submitted a warranty claim for my Mini 4 Pro last week (case #DJI-87203) and haven't heard back yet. Can you give me an update on the status?\n\nThank you,\nSarah",
+        contentZh: "您好，\n\n我上周提交了 Mini 4 Pro 的质保申请（案件 #DJI-87203），目前还没有收到回复。能告知一下进展吗？\n\n谢谢，\nSarah",
+        timestamp: "Today 8:10 AM",
       },
     ],
   },
