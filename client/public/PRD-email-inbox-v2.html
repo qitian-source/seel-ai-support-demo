@@ -351,8 +351,8 @@ footer a:hover { text-decoration: underline; }
       </div>
       <div class="goal-card">
         <div class="num">05</div>
-        <div class="title">分组视图</div>
-        <div class="desc">按发件人合并展示工单</div>
+        <div class="title">用户历史工单</div>
+        <div class="desc">详情页右侧展示同客户历史 Tickets</div>
       </div>
     </div>
   </div>
@@ -369,7 +369,7 @@ footer a:hover { text-decoration: underline; }
         </ul>
       </li>
       <li><a href="#s3">图片附件预览与缩放（Image Lightbox）</a></li>
-      <li><a href="#s4">分组视图（按发件人合并）</a></li>
+      <li><a href="#s4">用户历史工单（Customer History）</a></li>
       <li><a href="#s5">本期范围内 · 后端实现</a></li>
       <li><a href="#s6">验收标准</a></li>
     </ol>
@@ -606,66 +606,43 @@ footer a:hover { text-decoration: underline; }
     </div>
   </div>
 
-  <!-- Section 4: Grouped View -->
+  <!-- Section 4: Customer History -->
   <div class="section" id="s4">
     <div class="section-header">
-      <div class="section-icon" style="background:#f0fdf4;">👥</div>
+      <div class="section-icon" style="background:#eff6ff;">🕘</div>
       <div class="section-title">
-        <h2>四、分组视图（按发件人合并）</h2>
-        <p>将同一发件人的多封工单折叠聚合，一键切换列表展示模式</p>
+        <h2>四、用户历史工单（Customer History）</h2>
+        <p>在工单详情右侧面板底部，展示同一客户的其他历史工单</p>
       </div>
     </div>
     <div class="section-body">
-      <div class="callout blue">当同一客户提交多封工单时，默认平铺视图需要反复上下滚动才能找到关联工单，效率低。分组视图将相同发件人的工单收拢为一个客户组，整体一目了然。</div>
+      <div class="callout blue">坐席处理工单时，常需要了解该客户过去是否有过其他投诉或咨询。旧版需要手动搜索客户邮箱，操作繁琐。Customer History 将历史工单直接内嵌在详情面板内，零切换成本。</div>
 
-      <h3>🔀 模式切换入口</h3>
-      <p>工单列表过滤行右侧新增 <strong>👥 分组按钮</strong>，与排序/筛选 Dropdown 并排展示：</p>
-      <div class="mode-mockup">
-        <div class="btn-mock public">☰ 平铺视图</div>
-        <span class="arrow-label">点击切换</span>
-        <div class="btn-mock internal" style="background:#f0fdf4; border-color:#6ee7b7; color:#065f46;">👥 分组视图</div>
-      </div>
+      <h3>📍 位置</h3>
+      <p>右侧 <strong>Ticket Info Panel</strong> 底部，位于 AI Summary 下方，独立区块 <strong>"CUSTOMER HISTORY"</strong>。</p>
+
+      <hr class="divider">
+
+      <h3>🔍 展示逻辑</h3>
       <ul>
-        <li>激活状态下按钮高亮（绿色边框），再次点击还原平铺；</li>
-        <li>切换不影响当前选中工单，也不重置状态筛选 Tab 或搜索关键词。</li>
+        <li>按 <code>customerEmail</code> 匹配，自动聚合该客户的<strong>所有其他工单</strong>（排除当前工单）；</li>
+        <li>若该客户仅有当前一封工单，该区块<strong>自动隐藏</strong>，不占空间；</li>
+        <li>标题显示工单数量，如 <code>CUSTOMER HISTORY (2)</code>。</li>
       </ul>
 
       <hr class="divider">
 
-      <h3>📋 分组列表结构</h3>
-      <p>启用分组视图后，工单列表按 <code>customerEmail</code> 聚合，每个客户形成一个可折叠的组：</p>
-
+      <h3>📋 每条历史工单展示内容</h3>
       <div class="feature-block">
-        <h3>客户组头部（Group Header）</h3>
         <ul>
-          <li><strong>客户头像</strong>：取客户姓名首字母，圆形色块背景；</li>
-          <li><strong>客户姓名</strong> + 邮箱地址（小字灰色）；</li>
-          <li><strong>工单数量 Badge</strong>：显示该客户下工单总数（如 <code>2 tickets</code>）；</li>
-          <li><strong>未读 Badge</strong>：若有未读工单，显示红色数字角标；</li>
-          <li>点击组头部可<strong>折叠 / 展开</strong>子列表（默认展开）；</li>
-          <li>折叠时显示一个箭头 ▶，展开时显示 ▼。</li>
+          <li><strong>工单主题</strong>（truncate 截断，Hover 高亮紫色）；</li>
+          <li><strong>状态 Badge</strong>：与列表保持一致的颜色规范（New / Open / Pending / Solved）；</li>
+          <li><strong>时间</strong>：右对齐，与列表格式一致；</li>
+          <li>整行可点击，点击后<strong>直接切换到该工单</strong>（等同于在左侧列表点击）。</li>
         </ul>
       </div>
 
-      <div class="feature-block">
-        <h3>组内工单条目（Thread Item）</h3>
-        <ul>
-          <li>与平铺视图保持一致的工单卡片样式（主题、最新消息摘要、时间、状态 chip）；</li>
-          <li>左侧增加<strong>缩进</strong>（16 px），与组头部形成层级关系；</li>
-          <li>点击条目后，中栏消息详情正常加载，右侧 Ticket Info Panel 正常显示。</li>
-        </ul>
-      </div>
-
-      <hr class="divider">
-
-      <h3>🗂 排序规则</h3>
-      <ul>
-        <li>各客户组按组内<strong>最新工单的时间</strong>排序（Newest 优先）；</li>
-        <li>组内工单按自身时间独立排序；</li>
-        <li>切换"Oldest"排序时，规则同步应用于组级和条目级排序。</li>
-      </ul>
-
-      <div class="callout green"><strong>Demo 数据：</strong>data.ts 中已内置 Michael Zhang（2 封）和 Sarah Okonkwo（2 封）的多工单数据，可直接在 Demo 中切换分组视图验证效果。</div>
+      <div class="callout green"><strong>Demo 数据：</strong>Michael Zhang 有 2 封工单（ND filter + Mavic 3 Pro 订单），Sarah Okonkwo 有 2 封工单（Mini 4 Pro 维修 + DJI Mini 4 Pro 坠机），可在 Demo 中直接验证。</div>
     </div>
   </div>
 
@@ -724,9 +701,9 @@ footer a:hover { text-decoration: underline; }
             <tr><td><span class="chip green">Lightbox 拖拽</span></td><td>缩放后可拖拽平移；切换图片后偏移归零</td></tr>
             <tr><td><span class="chip green">Lightbox 键盘</span></td><td>ESC / 方向键 / + / - / 0 快捷键均有效</td></tr>
             <tr><td><span class="chip green">Lightbox 关闭</span></td><td>× 按钮、背景点击、ESC 均可关闭</td></tr>
-            <tr><td><span class="chip gray">分组视图</span></td><td>👥 按钮切换后列表按发件人分组展示；组头部显示客户名、邮箱、工单数</td></tr>
-            <tr><td><span class="chip gray">分组折叠</span></td><td>点击组头部可折叠/展开子工单；折叠后仍可通过箭头方向识别状态</td></tr>
-            <tr><td><span class="chip gray">分组选中</span></td><td>点击组内工单条目，中栏消息详情正常加载，右侧面板正常显示</td></tr>
+            <tr><td><span class="chip blue">Customer History</span></td><td>选中有多封工单的客户时，右侧面板底部显示 CUSTOMER HISTORY 区块及工单数量</td></tr>
+            <tr><td><span class="chip blue">历史工单内容</span></td><td>每条显示主题、状态 Badge、时间；单封工单客户时区块自动隐藏</td></tr>
+            <tr><td><span class="chip blue">历史工单跳转</span></td><td>点击历史工单条目，中栏切换至对应工单，左侧列表高亮同步</td></tr>
           </tbody>
         </table>
       </div>
