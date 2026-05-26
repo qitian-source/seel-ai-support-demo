@@ -297,8 +297,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
   const [showRules, setShowRules] = useState(false);
-  const [viewMode, setViewMode] = useState<"flat" | "grouped">("flat");
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const rulesAnchorRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
@@ -308,14 +306,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
     const el = itemRefs.current.get(selectedId);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedId]);
-
-  const toggleGroup = (email: string) => {
-    setCollapsedGroups(prev => {
-      const next = new Set(prev);
-      next.has(email) ? next.delete(email) : next.add(email);
-      return next;
-    });
-  };
 
   const statusCounts: Record<EmailStatus, number> = {
     new:     threads.filter(t => t.status === "new").length,
@@ -345,18 +335,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
     "non-user": threads.filter(t => t.emailType === "non-user").length,
   };
 
-  // Build grouped structure
-  const groups: { email: string; customer: string; threads: EmailThread[] }[] = [];
-  if (viewMode === "grouped") {
-    const map = new Map<string, { customer: string; threads: EmailThread[] }>();
-    for (const t of sorted) {
-      if (!map.has(t.customerEmail)) map.set(t.customerEmail, { customer: t.customer, threads: [] });
-      map.get(t.customerEmail)!.threads.push(t);
-    }
-    for (const [email, val] of map) groups.push({ email, ...val });
-  }
-
-  const renderThreadItem = (thread: EmailThread, indented = false) => {
+  const renderThreadItem = (thread: EmailThread) => {
     const isSelected = thread.id === selectedId;
     const threadMode = thread.threadMode ?? globalMode;
     const info = statusInfo(thread.status);
@@ -365,16 +344,13 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         ref={(el) => { if (el) itemRefs.current.set(thread.id, el); else itemRefs.current.delete(thread.id); }}
         onClick={() => onSelect(thread.id)}
         className={cn(
-          "w-full text-left py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
-          indented ? "pl-8 pr-3" : "px-3",
+          "w-full text-left px-3 py-2.5 border-b border-border/60 transition-colors hover:bg-gray-50",
           isSelected ? "bg-[#6c47ff]/5 border-l-2 border-l-[#6c47ff]" : "border-l-2 border-l-transparent",
         )}>
-        {/* Subject */}
         <div className={cn("text-[12px] truncate mb-1.5 leading-tight",
           !thread.isRead ? "font-semibold text-gray-900" : "text-gray-600")}>
           {thread.subject}
         </div>
-        {/* Badges row */}
         <div className="flex items-center gap-1 flex-wrap">
           <EmailTypeBadge type={thread.emailType} />
           <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1 py-0.5", info.cls)}>
@@ -445,14 +421,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
           <span className="text-[10px] text-gray-400 ml-auto">{sorted.length}</span>
-          {/* Group toggle */}
-          <button
-            onClick={() => setViewMode(v => v === "flat" ? "grouped" : "flat")}
-            title={viewMode === "grouped" ? "Switch to flat view" : "Group by sender"}
-            className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
-              viewMode === "grouped" ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
-            <Users size={11} />
-          </button>
           <button ref={rulesAnchorRef} onClick={() => setShowRules(v => !v)}
             title="Escalation rules"
             className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
@@ -464,51 +432,9 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
-          {viewMode === "flat" ? (
-            <>
-              {sorted.map(t => renderThreadItem(t))}
-              {sorted.length === 0 && (
-                <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
-              )}
-            </>
-          ) : (
-            <>
-              {groups.map(group => {
-                const collapsed = collapsedGroups.has(group.email);
-                const initials = group.customer.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-                const unread = group.threads.filter(t => !t.isRead).length;
-                return (
-                  <div key={group.email}>
-                    {/* Group header */}
-                    <button
-                      onClick={() => toggleGroup(group.email)}
-                      className="w-full flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-border/60 hover:bg-gray-100 transition-colors">
-                      <div className="w-6 h-6 rounded-full bg-[#6c47ff]/15 text-[#6c47ff] flex items-center justify-center text-[9px] font-bold shrink-0">
-                        {initials}
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="text-[11px] font-semibold text-gray-800 truncate">{group.customer}</div>
-                        <div className="text-[9px] text-gray-400 truncate">{group.email}</div>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {unread > 0 && (
-                          <span className="text-[8px] font-bold bg-[#6c47ff] text-white rounded-full w-4 h-4 flex items-center justify-center">
-                            {unread}
-                          </span>
-                        )}
-                        <span className="text-[9px] text-gray-400">{group.threads.length}</span>
-                        <ChevronRight size={10} className={cn("text-gray-400 transition-transform", !collapsed && "rotate-90")} />
-                      </div>
-                    </button>
-                    {/* Threads within group */}
-                    {!collapsed && group.threads.map(t => renderThreadItem(t, true))}
-                  </div>
-                );
-              })}
-              {groups.length === 0 && (
-                <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
-              )}
-            </>
+          {sorted.map(t => renderThreadItem(t))}
+          {sorted.length === 0 && (
+            <div className="flex items-center justify-center py-10 text-[12px] text-gray-400">No tickets</div>
           )}
         </div>
       </div>
@@ -1327,10 +1253,12 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
 
 // ── Ticket Info Panel ──────────────────────────────────────────
 
-function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
+function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote, allThreads, onSelectThread }: {
   thread: EmailThread;
   globalMode: OperationMode;
   onUpdateCustomerNote: (note: string) => void;
+  allThreads: EmailThread[];
+  onSelectThread: (id: string) => void;
 }) {
   const { aiCard } = thread;
   const [showSummaryZh, setShowSummaryZh] = useState(false);
@@ -1368,7 +1296,7 @@ function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
         {aiCard.estimatedDelivery && <InfoRow label="ETA"  value={aiCard.estimatedDelivery} />}
       </div>
 
-      <div className="px-4 py-3 flex-1">
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">AI Summary</span>
           {aiCard.summaryZh && (
@@ -1392,6 +1320,42 @@ function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote }: {
           )}
         </div>
       </div>
+
+      {/* Customer History — other tickets from same sender */}
+      {(() => {
+        const history = allThreads.filter(t => t.customerEmail === thread.customerEmail && t.id !== thread.id);
+        if (history.length === 0) return null;
+        return (
+          <div className="px-4 py-3 flex-1">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Customer History <span className="normal-case font-normal text-gray-300">({history.length})</span>
+            </div>
+            <div className="space-y-1.5">
+              {history.map(t => {
+                const info = statusInfo(t.status);
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => onSelectThread(t.id)}
+                    className="w-full text-left px-2.5 py-2 rounded-lg border border-border/60 bg-gray-50 hover:bg-[#6c47ff]/5 hover:border-[#6c47ff]/30 transition-colors group"
+                  >
+                    <div className="text-[11px] text-gray-700 truncate leading-snug group-hover:text-[#6c47ff] mb-1">
+                      {t.subject}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold border rounded px-1 py-0.5", info.cls)}>
+                        <span className={cn("w-1.5 h-1.5 rounded-full", info.dot)} />
+                        {info.label}
+                      </span>
+                      <span className="ml-auto text-[9px] text-gray-400">{shortDate(t.updatedAt)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1696,6 +1660,8 @@ export default function EmailPage() {
                   thread={selectedThread}
                   globalMode={mode}
                   onUpdateCustomerNote={(note) => handleUpdateCustomerNote(selectedThread.id, note)}
+                  allThreads={threads}
+                  onSelectThread={handleSelect}
                 />
               )}
             </>
