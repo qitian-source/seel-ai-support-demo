@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   emailThreads, type EmailThread, type EmailStatus, type EmailType,
-  type OperationMode, type FlagRule, type EmailAttachment,
+  type OperationMode, type EmailAttachment,
 } from "@/lib/data";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ import {
   Mail, Check, Eye, EyeOff, Languages,
   GraduationCap, Bolt, Tag, Users,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
-  ArrowRight, Settings, Paperclip, FileText, XCircle, SlidersHorizontal,
+  ArrowRight, Settings, Paperclip, FileText, XCircle,
   Underline, List, ListOrdered, Link, Search, Pencil, Lock,
   Maximize2, ZoomIn, ZoomOut,
 } from "lucide-react";
@@ -65,17 +65,6 @@ function confidenceBand(c: number) {
   if (c >= 0.9) return { label: "High", cls: "text-green-700" };
   if (c >= 0.75) return { label: "Medium", cls: "text-amber-600" };
   return { label: "Low", cls: "text-red-600" };
-}
-
-function evaluateThread(thread: EmailThread, rules: FlagRule[]): boolean {
-  const { aiCard } = thread;
-  const on = (id: string) => rules.find(r => r.id === id)?.enabled ?? false;
-  if (on("sentiment_frustrated") && (aiCard.sentiment === "frustrated" || aiCard.sentiment === "negative")) return true;
-  if (on("low_confidence") && aiCard.confidence < 0.90) return true;
-  if (on("complaint_intent") && aiCard.intent === "Complaint") return true;
-  if (on("warranty_intent") && (aiCard.intent === "Warranty Coverage" || aiCard.intent === "Repair Status")) return true;
-  if (on("no_order") && !aiCard.orderNumber) return true;
-  return false;
 }
 
 // Date display helpers (today = 2026-05-07)
@@ -220,59 +209,6 @@ function ModeBadge({ mode }: { mode: OperationMode }) {
 
 // ── Escalation Rules Popover ───────────────────────────────────
 
-const ESCALATION_RULE_IDS = ["sentiment_frustrated", "low_confidence", "complaint_intent"];
-
-function EscalationRulesPopover({ anchorRef, onClose }: {
-  anchorRef: React.RefObject<HTMLButtonElement>;
-  onClose: () => void;
-}) {
-  const { emailFlagRules, setEmailFlagRules } = useApp();
-  const toggle = (id: string) =>
-    setEmailFlagRules(emailFlagRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
-  const rules = emailFlagRules.filter(r => ESCALATION_RULE_IDS.includes(r.id));
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    const rect = anchorRef.current?.getBoundingClientRect();
-    if (rect) setPos({ top: rect.bottom + 6, left: rect.right - 220 });
-  }, [anchorRef]);
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (
-        panelRef.current && !panelRef.current.contains(e.target as Node) &&
-        anchorRef.current && !anchorRef.current.contains(e.target as Node)
-      ) onClose();
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [onClose, anchorRef]);
-
-  return (
-    <div ref={panelRef} style={{ position: "fixed", top: pos.top, left: pos.left, width: 220, zIndex: 9999 }}
-      className="bg-white rounded-xl border border-border shadow-xl overflow-hidden">
-      <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-1.5 border-b border-border bg-gray-50">
-        <SlidersHorizontal size={10} className="text-[#6c47ff] shrink-0" />
-        <span className="text-[11px] font-semibold text-gray-700">Escalation Rules</span>
-        <span className="text-[10px] text-gray-400 ml-1">· production</span>
-      </div>
-      <div className="px-2 py-1.5 space-y-0.5">
-        {rules.map(rule => (
-          <button key={rule.id} onClick={() => toggle(rule.id)}
-            className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-            <div className={cn("w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors",
-              rule.enabled ? "bg-[#6c47ff] border-[#6c47ff]" : "border-gray-300 bg-white")}>
-              {rule.enabled && <Check size={8} className="text-white" />}
-            </div>
-            <span className="text-[11px] font-medium text-gray-700">{rule.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Email List ─────────────────────────────────────────────────
 
 const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
@@ -296,8 +232,6 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Set<EmailStatus>>(new Set());
-  const [showRules, setShowRules] = useState(false);
-  const rulesAnchorRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Scroll selected item into view only when selection changes, not on reply
@@ -421,14 +355,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
         <div className="px-3 py-2 border-b border-border flex items-center gap-1.5">
           <StatusFilterDropdown selected={statusFilter} onChange={setStatusFilter} counts={statusCounts} />
           <span className="text-[10px] text-gray-400 ml-auto">{sorted.length}</span>
-          <button ref={rulesAnchorRef} onClick={() => setShowRules(v => !v)}
-            title="Escalation rules"
-            className={cn("flex items-center justify-center w-6 h-6 rounded-lg border transition-colors",
-              showRules ? "bg-[#6c47ff] border-[#6c47ff] text-white" : "border-border text-gray-400 hover:text-[#6c47ff] hover:border-[#6c47ff]/40 hover:bg-[#6c47ff]/5")}>
-            <SlidersHorizontal size={11} />
-          </button>
         </div>
-        {showRules && <EscalationRulesPopover anchorRef={rulesAnchorRef} onClose={() => setShowRules(false)} />}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">
