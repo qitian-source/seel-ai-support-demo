@@ -189,6 +189,7 @@ export interface ConversationLog {
   sentiment: string;
   outcome: "Resolved" | "Escalated" | "Handling";
   mode: "Production" | "Training";
+  channel: "Zendesk" | "Live Chat Widget" | "Email";
   turns: number;
   duration: string;
   summary: string;
@@ -724,7 +725,7 @@ export const intentData: IntentRow[] = [
 export const conversationLogs: ConversationLog[] = [
   {
     ticketId: "TK-4891", customer: "Emma Thompson", email: "emma.t@gmail.com",
-    intent: "WISMO", entrySentiment: "Neutral", sentiment: "Satisfied", outcome: "Resolved", mode: "Production",
+    intent: "WISMO", entrySentiment: "Neutral", sentiment: "Satisfied", outcome: "Resolved", mode: "Production", channel: "Live Chat Widget",
     turns: 1, duration: "1m 12s", summary: "Customer asked about order #DBH-29174 shipping status.", time: "Today 9:42 AM", startedAt: "Today 9:41 AM",
     thread: tickets[0].thread,
     reasoning: [{
@@ -742,7 +743,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4892", customer: "James Wright", email: "j.wright@outlook.com",
-    intent: "Cancellation", entrySentiment: "Negative", sentiment: "Positive", outcome: "Resolved", mode: "Production",
+    intent: "Cancellation", entrySentiment: "Negative", sentiment: "Positive", outcome: "Resolved", mode: "Production", channel: "Zendesk",
     turns: 1, duration: "2m 05s", summary: "Customer requested cancellation of unfulfilled order #DBH-29201.", time: "Today 9:37 AM", startedAt: "Today 9:35 AM",
     thread: tickets[1].thread,
     reasoning: [{
@@ -761,7 +762,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4893", customer: "Priya Patel", email: "priya.p@yahoo.com",
-    intent: "Complaint", entrySentiment: "Furious", sentiment: "Furious", outcome: "Escalated", mode: "Production",
+    intent: "Complaint", entrySentiment: "Furious", sentiment: "Furious", outcome: "Escalated", mode: "Production", channel: "Email",
     turns: 1, duration: "0m 45s", summary: "Wrong item received — escalated due to frustrated sentiment.", time: "Today 8:52 AM", startedAt: "Today 8:50 AM",
     escalationReason: "Customer sentiment: frustrated + item mismatch requires warehouse verification",
     handoffNotes: "Wrong item received. Customer ordered red dress, received blue. VIP customer with high LTV. Requires warehouse check for inventory mismatch.",
@@ -783,7 +784,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4894", customer: "Oliver Bennett", email: "oliver.b@icloud.com",
-    intent: "Address Change", entrySentiment: "Neutral", sentiment: "Neutral", outcome: "Resolved", mode: "Training",
+    intent: "Address Change", entrySentiment: "Neutral", sentiment: "Neutral", outcome: "Resolved", mode: "Training", channel: "Live Chat Widget",
     turns: 1, duration: "0m 55s", summary: "Customer requested address change for unfulfilled order.", time: "Today 9:16 AM", startedAt: "Today 9:15 AM",
     thread: tickets[3].thread,
     reasoning: [{
@@ -801,7 +802,7 @@ export const conversationLogs: ConversationLog[] = [
   },
   {
     ticketId: "TK-4895", customer: "Sophie Williams", email: "sophie.w@gmail.com",
-    intent: "Refund", entrySentiment: "Negative", sentiment: "Negative", outcome: "Resolved", mode: "Production",
+    intent: "Refund", entrySentiment: "Negative", sentiment: "Negative", outcome: "Resolved", mode: "Production", channel: "Zendesk",
     turns: 1, duration: "1m 30s", summary: "Customer inquired about refund status for returned item.", time: "Today 9:01 AM", startedAt: "Today 9:00 AM",
     thread: tickets[4].thread,
     reasoning: [{

@@ -13,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, ArrowUpDown, Search, ChevronDown, Sparkles, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Lightbulb } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, ArrowUpDown, Search, ChevronDown, Sparkles, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Lightbulb, SlidersHorizontal, X } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid,
@@ -29,8 +31,19 @@ type OutcomeFilter  = "all" | "Resolved" | "Escalated" | "Handling";
 type IntentFilter   = "all" | "WISMO" | "Cancellation" | "Address Change" | "Refund" | "Complaint";
 type SentimentFilter = "all" | "Satisfied" | "Positive" | "Neutral" | "Negative" | "Furious";
 type EntrySentimentFilter = "all" | "Satisfied" | "Positive" | "Neutral" | "Negative" | "Furious";
+type ModeFilter = "all" | "Production" | "Training";
 type SortField = "ticketId" | "intent" | "sentiment" | "outcome" | "mode" | "turns" | "time";
 type SortDir = "asc" | "desc";
+
+/* Parse a ConversationLog.startedAt ("Today 9:41 AM" or "2026/3/29 00:10:00") to a date-only Date */
+function parseLogDate(startedAt: string): Date {
+  if (startedAt.startsWith("Today")) {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+  }
+  const m = startedAt.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+}
 
 function isPositiveTrend(label: string, trend: number) {
   return label === "Escalation Rate" || label === "Avg. Turns" ? trend < 0 : trend > 0;
@@ -111,10 +124,14 @@ export default function PerformancePage() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [channelFilter, setChannelFilter] = useState<ChannelValue>("all");
+  const [convTimeRange, setConvTimeRange] = useState<TimeRange>("7d");
+  const [convCustomRange, setConvCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>("all");
   const [intentFilter, setIntentFilter] = useState<IntentFilter>("all");
   const [sentimentFilter, setSentimentFilter] = useState<SentimentFilter>("all");
   const [entrySentimentFilter, setEntrySentimentFilter] = useState<EntrySentimentFilter>("all");
+  const [modeFilter, setModeFilter] = useState<ModeFilter>("all");
+  const [convChannelFilter, setConvChannelFilter] = useState<ChannelValue>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("time");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -186,13 +203,26 @@ export default function PerformancePage() {
     (visibleDays.reduce((s, d) => s + d.exitSentimentScore, 0) / visibleDays.length).toFixed(2),
   [visibleDays]);
 
-  /* Conversations filters */
-  const filteredLogs = useMemo(() => {
+  /* Conversations filters
+     baseLogs = search + secondary filters (intent / sentiments), but NOT outcome —
+     so the outcome segmented control can show live counts per segment. */
+  const baseLogs = useMemo(() => {
     let logs = [...conversationLogs];
-    if (outcomeFilter !== "all")        logs = logs.filter((l) => l.outcome === outcomeFilter);
+    // Time range
+    if (convTimeRange === "custom" && convCustomRange?.from && convCustomRange?.to) {
+      const from = new Date(convCustomRange.from); from.setHours(0, 0, 0, 0);
+      const to   = new Date(convCustomRange.to);   to.setHours(23, 59, 59, 999);
+      logs = logs.filter((l) => { const d = parseLogDate(l.startedAt); return d >= from && d <= to; });
+    } else if (convTimeRange !== "custom") {
+      const days = { yesterday: 1, "7d": 7, "30d": 30, "90d": 90, custom: 30 }[convTimeRange];
+      const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
+      logs = logs.filter((l) => parseLogDate(l.startedAt) >= start);
+    }
     if (intentFilter !== "all")         logs = logs.filter((l) => l.intent === intentFilter);
     if (entrySentimentFilter !== "all") logs = logs.filter((l) => l.entrySentiment === entrySentimentFilter);
     if (sentimentFilter !== "all")      logs = logs.filter((l) => l.sentiment === sentimentFilter);
+    if (modeFilter !== "all")           logs = logs.filter((l) => l.mode === modeFilter);
+    if (convChannelFilter !== "all")    logs = logs.filter((l) => l.channel === convChannelFilter);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       logs = logs.filter((l) =>
@@ -202,7 +232,19 @@ export default function PerformancePage() {
         l.summary.toLowerCase().includes(q)
       );
     }
-    logs.sort((a, b) => {
+    return logs;
+  }, [convTimeRange, convCustomRange, intentFilter, entrySentimentFilter, sentimentFilter, modeFilter, convChannelFilter, searchQuery]);
+
+  const outcomeCounts = useMemo(() => ({
+    all:       baseLogs.length,
+    Resolved:  baseLogs.filter((l) => l.outcome === "Resolved").length,
+    Escalated: baseLogs.filter((l) => l.outcome === "Escalated").length,
+    Handling:  baseLogs.filter((l) => l.outcome === "Handling").length,
+  }), [baseLogs]);
+
+  const filteredLogs = useMemo(() => {
+    let logs = outcomeFilter === "all" ? baseLogs : baseLogs.filter((l) => l.outcome === outcomeFilter);
+    logs = [...logs].sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
         case "ticketId": cmp = a.ticketId.localeCompare(b.ticketId); break;
@@ -216,7 +258,26 @@ export default function PerformancePage() {
       return sortDir === "desc" ? -cmp : cmp;
     });
     return logs;
-  }, [outcomeFilter, intentFilter, entrySentimentFilter, sentimentFilter, searchQuery, sortField, sortDir]);
+  }, [baseLogs, outcomeFilter, sortField, sortDir]);
+
+  /* Secondary (popover) filter bookkeeping */
+  const activeFilters = useMemo(() => {
+    const chips: { key: string; label: string; value: string; clear: () => void }[] = [];
+    if (modeFilter !== "all")           chips.push({ key: "mode",    label: "Mode",     value: modeFilter,           clear: () => setModeFilter("all") });
+    if (convChannelFilter !== "all")    chips.push({ key: "channel", label: "Channel",  value: convChannelFilter,    clear: () => setConvChannelFilter("all") });
+    if (intentFilter !== "all")         chips.push({ key: "intent",  label: "Intent",   value: intentFilter,         clear: () => setIntentFilter("all") });
+    if (entrySentimentFilter !== "all") chips.push({ key: "entry",   label: "Incoming", value: entrySentimentFilter, clear: () => setEntrySentimentFilter("all") });
+    if (sentimentFilter !== "all")      chips.push({ key: "exit",    label: "Exit",     value: sentimentFilter,      clear: () => setSentimentFilter("all") });
+    return chips;
+  }, [intentFilter, entrySentimentFilter, sentimentFilter, modeFilter, convChannelFilter]);
+
+  const clearAllFilters = () => {
+    setIntentFilter("all");
+    setEntrySentimentFilter("all");
+    setSentimentFilter("all");
+    setModeFilter("all");
+    setConvChannelFilter("all");
+  };
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -547,80 +608,197 @@ export default function PerformancePage() {
           {/* ── Conversations ── */}
           {subTab === "conversations" && (
             <>
-              <div className="flex items-center justify-between mb-4">
+              {/* Title + count */}
+              <div className="flex items-baseline gap-2 mb-3">
                 <h1 className="text-[15px] font-semibold text-foreground">Conversations</h1>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Outcome dropdown */}
-                  <Select value={outcomeFilter} onValueChange={(v) => setOutcomeFilter(v as OutcomeFilter)}>
-                    <SelectTrigger className="h-7 text-[11px] min-w-[130px] bg-white">
-                      <SelectValue placeholder="Outcome" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All outcomes</SelectItem>
-                      <SelectItem value="Resolved">Resolved</SelectItem>
-                      <SelectItem value="Escalated">Escalated</SelectItem>
-                      <SelectItem value="Handling">Handling</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <span className="text-[12px] text-muted-foreground">{filteredLogs.length} results</span>
+              </div>
 
-                  {/* Intent dropdown */}
-                  <Select value={intentFilter} onValueChange={(v) => setIntentFilter(v as IntentFilter)}>
-                    <SelectTrigger className="h-7 text-[11px] min-w-[120px] bg-white">
-                      <SelectValue placeholder="Intent" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All intents</SelectItem>
-                      {(["WISMO", "Cancellation", "Address Change", "Refund", "Complaint"] as IntentFilter[]).filter(v => v !== "all").map((i) => (
-                        <SelectItem key={i} value={i}>{i}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              {/* Toolbar: primary outcome segments (left) + search & filter (right) */}
+              <div className="flex items-center justify-between gap-3 mb-3">
+                {/* Outcome segmented control */}
+                <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted/60 border border-border/50">
+                  {([
+                    { v: "all" as OutcomeFilter,       label: "All" },
+                    { v: "Resolved" as OutcomeFilter,  label: "Resolved" },
+                    { v: "Escalated" as OutcomeFilter, label: "Escalated" },
+                    { v: "Handling" as OutcomeFilter,  label: "Handling" },
+                  ]).map(({ v, label }) => (
+                    <button
+                      key={v}
+                      onClick={() => setOutcomeFilter(v)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 h-7 rounded-md text-[12px] font-medium transition-colors",
+                        outcomeFilter === v
+                          ? "bg-white text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {label}
+                      <span className={cn(
+                        "text-[10px] tabular-nums px-1.5 rounded-full",
+                        outcomeFilter === v ? "bg-muted text-foreground" : "bg-muted-foreground/10 text-muted-foreground"
+                      )}>
+                        {outcomeCounts[v]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
 
-                  {/* Incoming Sentiment dropdown */}
-                  <Select value={entrySentimentFilter} onValueChange={(v) => setEntrySentimentFilter(v as EntrySentimentFilter)}>
-                    <SelectTrigger className="h-7 text-[11px] min-w-[175px] bg-white">
-                      <SelectValue placeholder="Incoming Sentiment" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All incoming sentiments</SelectItem>
-                      <SelectItem value="Satisfied">Satisfied</SelectItem>
-                      <SelectItem value="Positive">Positive</SelectItem>
-                      <SelectItem value="Neutral">Neutral</SelectItem>
-                      <SelectItem value="Negative">Negative</SelectItem>
-                      <SelectItem value="Furious">Furious</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Exit Sentiment dropdown */}
-                  <Select value={sentimentFilter} onValueChange={(v) => setSentimentFilter(v as SentimentFilter)}>
-                    <SelectTrigger className="h-7 text-[11px] min-w-[150px] bg-white">
-                      <SelectValue placeholder="Exit Sentiment" />
-
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All exit sentiments</SelectItem>
-                      <SelectItem value="Satisfied">Satisfied</SelectItem>
-                      <SelectItem value="Positive">Positive</SelectItem>
-                      <SelectItem value="Neutral">Neutral</SelectItem>
-                      <SelectItem value="Negative">Negative</SelectItem>
-                      <SelectItem value="Furious">Furious</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Search */}
+                {/* Search + Time range + Filter */}
+                <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <input
                       type="text"
-                      placeholder="Search ticket ID, email..."
+                      placeholder="Search ticket ID, email…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-lg border border-border/50 bg-white text-[11px] placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 w-[200px]"
+                      className="pl-8 pr-3 h-8 rounded-lg border border-border/50 bg-white text-[12px] placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 w-[220px]"
                     />
                   </div>
-                  <span className="text-[11px] text-muted-foreground">{filteredLogs.length} conversations</span>
+
+                  <TimeRangePicker
+                    value={convTimeRange as TimeRangeValue}
+                    customRange={convCustomRange}
+                    onChange={(v, custom) => {
+                      setConvTimeRange(v as TimeRange);
+                      if (custom) setConvCustomRange(custom);
+                    }}
+                  />
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-8 gap-1.5 text-[12px] bg-white",
+                          activeFilters.length > 0 && "border-primary/40 text-primary"
+                        )}
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        Filter
+                        {activeFilters.length > 0 && (
+                          <span className="ml-0.5 text-[10px] tabular-nums bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center">
+                            {activeFilters.length}
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-72 p-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[12px] font-semibold text-foreground">Filters</span>
+                        {activeFilters.length > 0 && (
+                          <button onClick={clearAllFilters} className="text-[11px] text-muted-foreground hover:text-foreground">
+                            Clear all
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {/* Mode */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Mode</label>
+                          <Select value={modeFilter} onValueChange={(v) => setModeFilter(v as ModeFilter)}>
+                            <SelectTrigger className="h-8 text-[12px] bg-white">
+                              <SelectValue placeholder="All modes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All modes</SelectItem>
+                              <SelectItem value="Production">Production</SelectItem>
+                              <SelectItem value="Training">Training</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Channel */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Channel</label>
+                          <Select value={convChannelFilter} onValueChange={(v) => setConvChannelFilter(v as ChannelValue)}>
+                            <SelectTrigger className="h-8 text-[12px] bg-white">
+                              <SelectValue placeholder="All channels" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All channels</SelectItem>
+                              <SelectItem value="Zendesk">Zendesk</SelectItem>
+                              <SelectItem value="Live Chat Widget">Live Chat Widget</SelectItem>
+                              <SelectItem value="Email">Email</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Intent */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Intent</label>
+                          <Select value={intentFilter} onValueChange={(v) => setIntentFilter(v as IntentFilter)}>
+                            <SelectTrigger className="h-8 text-[12px] bg-white">
+                              <SelectValue placeholder="All intents" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All intents</SelectItem>
+                              {(["WISMO", "Cancellation", "Address Change", "Refund", "Complaint"] as IntentFilter[]).filter(v => v !== "all").map((i) => (
+                                <SelectItem key={i} value={i}>{i}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Incoming Sentiment */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Incoming sentiment</label>
+                          <Select value={entrySentimentFilter} onValueChange={(v) => setEntrySentimentFilter(v as EntrySentimentFilter)}>
+                            <SelectTrigger className="h-8 text-[12px] bg-white">
+                              <SelectValue placeholder="All incoming sentiments" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All incoming sentiments</SelectItem>
+                              <SelectItem value="Satisfied">Satisfied</SelectItem>
+                              <SelectItem value="Positive">Positive</SelectItem>
+                              <SelectItem value="Neutral">Neutral</SelectItem>
+                              <SelectItem value="Negative">Negative</SelectItem>
+                              <SelectItem value="Furious">Furious</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {/* Exit Sentiment */}
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-medium text-muted-foreground">Exit sentiment</label>
+                          <Select value={sentimentFilter} onValueChange={(v) => setSentimentFilter(v as SentimentFilter)}>
+                            <SelectTrigger className="h-8 text-[12px] bg-white">
+                              <SelectValue placeholder="All exit sentiments" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All exit sentiments</SelectItem>
+                              <SelectItem value="Satisfied">Satisfied</SelectItem>
+                              <SelectItem value="Positive">Positive</SelectItem>
+                              <SelectItem value="Neutral">Neutral</SelectItem>
+                              <SelectItem value="Negative">Negative</SelectItem>
+                              <SelectItem value="Furious">Furious</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
+
+              {/* Active filter chips */}
+              {activeFilters.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap mb-3">
+                  {activeFilters.map((f) => (
+                    <button
+                      key={f.key}
+                      onClick={f.clear}
+                      className="group inline-flex items-center gap-1 h-6 pl-2 pr-1.5 rounded-full bg-primary/5 border border-primary/20 text-[11px] text-foreground hover:bg-primary/10 transition-colors"
+                    >
+                      <span className="text-muted-foreground">{f.label}:</span>
+                      <span className="font-medium">{f.value}</span>
+                      <X className="w-3 h-3 text-muted-foreground group-hover:text-foreground" />
+                    </button>
+                  ))}
+                  <button onClick={clearAllFilters} className="text-[11px] text-muted-foreground hover:text-foreground ml-1">
+                    Clear all
+                  </button>
+                </div>
+              )}
 
               <Card>
                 <CardContent className="p-0">
