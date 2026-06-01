@@ -14,7 +14,7 @@ import {
   Send, User, Crown, ChevronDown,
   ThumbsUp, ThumbsDown,
   Bot, Plus, MessageSquare,
-  FileText, UserPlus, Rocket,
+  FileText, Rocket,
   CheckCircle2, Lock, ArrowRight, Inbox, ExternalLink,
   Mail, Ticket, Sliders,
 } from "lucide-react";
@@ -219,23 +219,22 @@ function ProposalCard({ topic, onAccept, onReject, onTicketClick }: {
    ================================================================ */
 function SetupProgress() {
   const {
-    step1Complete, step2Complete, step3Complete, step4Complete, step4Status,
-    goToChannelSettings, goToManagerSettings, primaryChannel,
+    step1Complete, step2Complete, step4Complete, step4Status,
+    goToChannelSettings, primaryChannel,
     setMainTab, setPlaybookDeepLink,
     setShowGoLiveGuide, goLiveGuideShown, setGoLiveGuideShown,
-    hiredRepName, resetDocuments, completeSetupDemo,
+    resetDocuments, completeSetupDemo,
   } = useApp();
 
   // Dynamic prerequisite copy for the locked Go-live step.
   const goLiveMissing: string[] = [];
   if (!step1Complete) goLiveMissing.push("connect a channel");
-  if (!step3Complete) goLiveMissing.push("create an AI rep");
 
   const steps = [
     {
       id: 1,
       label: "Connect a channel",
-      description: "Connect Support Chat, Email, or Zendesk — then pick which AI reps answer on each one.",
+      description: "Connect Support Chat, Email, or Zendesk so your AI can start answering.",
       icon: MessageSquare,
       complete: step1Complete,
       locked: false,
@@ -246,16 +245,6 @@ function SetupProgress() {
     },
     {
       id: 2,
-      label: "Create an AI rep",
-      description: "Add one or more AI reps — each with its own name, personality, and permissions.",
-      icon: UserPlus,
-      complete: step3Complete,
-      locked: false,
-      optional: false,
-      action: () => goToManagerSettings(),
-    },
-    {
-      id: 3,
       label: "Import Policies (optional)",
       description: step2Complete
         ? "Your SOP documents are imported — the AI is using your support rules."
@@ -270,11 +259,11 @@ function SetupProgress() {
       },
     },
     {
-      id: 4,
+      id: 3,
       label: "Go live",
       description: step4Status === "locked"
         ? `First ${goLiveMissing.join(" and ")}.`
-        : `Put ${hiredRepName || "your reps"} to work by setting each channel's Mode to Training or Production.`,
+        : `Set each channel's Mode to Training or Production to go live.`,
       icon: Rocket,
       complete: step4Complete,
       locked: step4Status === "locked",
@@ -302,7 +291,7 @@ function SetupProgress() {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Get Started</h2>
-          <p className="text-sm text-gray-500">Connect a channel and create an AI rep to go live — importing policies is optional.</p>
+          <p className="text-sm text-gray-500">Connect a channel to go live — importing policies is optional.</p>
         </div>
 
         {/* Progress bar — counts essential steps only */}

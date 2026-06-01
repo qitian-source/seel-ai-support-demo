@@ -610,10 +610,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const step2Complete = docsData.some((d) => d.status === "Processed" && d.extractedRules);
   const step3Complete = repHired;
   const step4Complete = anyChannelLive;
-  // Go-live requires only the essentials: a connected channel + a created rep.
+  // Go-live requires only a connected channel. The AI rep concept is configured
+  // in Settings (kept intact) but is no longer surfaced as an AI Manager step.
   // Import Policies (step2) is recommended but no longer blocks activation.
-  const step4Status: SetupStepStatus = (step1Complete && step3Complete) ? (step4Complete ? "complete" : "pending") : "locked";
-  const setupFullyComplete = step1Complete && step3Complete && step4Complete;
+  const step4Status: SetupStepStatus = step1Complete ? (step4Complete ? "complete" : "pending") : "locked";
+  const setupFullyComplete = step1Complete && step4Complete;
 
   return (
     <AppContext.Provider
