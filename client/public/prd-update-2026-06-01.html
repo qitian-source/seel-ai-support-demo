@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seel AI Support — 产品更新说明 · 2026-06-01</title>
+<style>
+  :root {
+    --brand: #6c47ff;
+    --brand-d:#5a3ad9;
+    --dark:  #1E293B;
+    --mid:   #475569;
+    --soft:  #64748B;
+    --border:#E2E8F0;
+    --bg:    #F8FAFC;
+    --ok:    #16A34A;
+    --warn:  #B45309;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+    font-size: 15px; line-height: 1.75; color: var(--dark); background: var(--bg);
+  }
+
+  /* topbar */
+  .topbar {
+    position: sticky; top: 0; z-index: 100; background: #fff;
+    border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px;
+    display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .topbar-brand { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--dark); }
+  .topbar-brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+  .topbar-tag { font-size: 11px; font-weight: 600; background: #f0edff; color: var(--brand); padding: 2px 8px; border-radius: 99px; }
+  .topbar-date { margin-left: auto; font-size: 12px; color: var(--soft); }
+
+  .layout { display: flex; max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+  /* sidebar */
+  .sidebar { width: 210px; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 32px 0; }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--soft); padding: 0 16px 8px; text-transform: uppercase; }
+  .nav-link { display: block; padding: 6px 16px; font-size: 13px; color: var(--mid); text-decoration: none; border-left: 2px solid transparent; transition: all .15s; }
+  .nav-link:hover { color: var(--brand); border-left-color: var(--brand); background: #faf9ff; }
+
+  .main { flex: 1; min-width: 0; padding: 40px 0 80px 48px; }
+
+  /* cover */
+  .cover { background: linear-gradient(135deg, #1b1340 0%, #34246e 55%, #6c47ff 130%); border-radius: 16px; padding: 56px 48px; margin-bottom: 48px; color: #fff; position: relative; overflow: hidden; }
+  .cover::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 25%, rgba(124,58,237,.35) 0%, transparent 60%); }
+  .cover-badge { position: relative; display: inline-block; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.88); padding: 4px 12px; border-radius: 99px; margin-bottom: 22px; }
+  .cover-title { position: relative; font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 10px; }
+  .cover-sub { position: relative; font-size: 17px; color: rgba(255,255,255,.72); margin-bottom: 30px; max-width: 640px; }
+  .cover-meta { position: relative; display: flex; gap: 32px; flex-wrap: wrap; }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .cover-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .cover-meta-value { font-size: 14px; font-weight: 600; color: #fff; }
+
+  /* section */
+  .section { margin-bottom: 48px; scroll-margin-top: 76px; }
+  .section-title { font-size: 22px; font-weight: 700; color: var(--dark); padding-bottom: 12px; border-bottom: 2px solid var(--border); margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
+  .section-num { width: 34px; height: 34px; border-radius: 8px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sub2-title { font-size: 15px; font-weight: 700; color: var(--dark); margin: 22px 0 10px; }
+  p { color: var(--mid); line-height: 1.8; margin-bottom: 12px; }
+  ul { margin: 8px 0 16px 0; padding-left: 22px; color: var(--mid); }
+  li { margin-bottom: 6px; line-height: 1.7; }
+  code { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; background: #f1f0fa; color: var(--brand-d); padding: 1px 6px; border-radius: 4px; }
+
+  /* callout */
+  .callout { border-left: 3px solid var(--brand); background: #faf9ff; border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0 22px; font-size: 14px; color: var(--mid); }
+  .callout strong { color: var(--dark); }
+
+  /* before/after */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 22px; }
+  .ba-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: #fff; }
+  .ba-card.before { background: #fdfbf7; border-color: #f0e3c8; }
+  .ba-card.after  { background: #f4fbf6; border-color: #cde8d6; }
+  .ba-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; display: inline-block; }
+  .ba-card.before .ba-tag { color: var(--warn); }
+  .ba-card.after  .ba-tag { color: var(--ok); }
+  .ba-card p { font-size: 13.5px; margin-bottom: 0; }
+
+  /* table */
+  .tbl-wrap { overflow-x: auto; margin: 14px 0 22px; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: #fff; }
+  th { background: var(--brand); color: #fff; text-align: left; padding: 10px 16px; font-weight: 600; font-size: 12.5px; }
+  td { padding: 9px 16px; border-top: 1px solid var(--border); color: var(--mid); vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafb; }
+  td code { white-space: nowrap; }
+
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 99px; }
+  .pill.new { background: #f0edff; color: var(--brand); }
+  .pill.mod { background: #fef3c7; color: var(--warn); }
+
+  footer { max-width: 1140px; margin: 0 auto; padding: 24px 68px 40px; font-size: 12px; color: #94A3B8; border-top: 1px solid var(--border); }
+
+  @media (max-width: 860px) {
+    .sidebar { display: none; }
+    .main { padding-left: 0; }
+    .ba { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand"><span class="dot"></span>Seel AI Support</div>
+  <span class="topbar-tag">产品更新说明</span>
+  <span class="topbar-date">2026-06-01 · v2 Demo</span>
+</div>
+
+<div class="layout">
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <div class="nav-label">目录</div>
+    <a class="nav-link" href="#overview">概述</a>
+    <a class="nav-link" href="#u1">1 · Live Widget 会话列表</a>
+    <a class="nav-link" href="#u2">2 · Settings 中心重构</a>
+    <a class="nav-link" href="#u3">3 · Onboarding 优化</a>
+    <a class="nav-link" href="#u4">4 · 导航调整</a>
+    <a class="nav-link" href="#impl">5 · 技术实现</a>
+    <a class="nav-link" href="#verify">6 · 验证与部署</a>
+  </aside>
+
+  <!-- main -->
+  <main class="main">
+
+    <!-- cover -->
+    <div class="cover">
+      <div class="cover-badge">Release Notes · 内部 Demo</div>
+      <div class="cover-title">本次产品更新说明</div>
+      <div class="cover-sub">围绕「AI Manager = 数字员工管理中枢」的定位，对会话列表复用、设置中心、Onboarding 引导与左侧导航做了一轮一致性打磨。</div>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">Seel AI Support v2</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-01</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">提交</span><span class="cover-meta-value">25f9f0d</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">影响文件</span><span class="cover-meta-value">7 个源文件</span></div>
+      </div>
+    </div>
+
+    <!-- overview -->
+    <section class="section" id="overview">
+      <div class="section-title"><span class="section-num">0</span>概述</div>
+      <p>本轮更新不引入新功能模块，而是对既有信息架构做收敛与复用，核心目标有三：</p>
+      <ul>
+        <li><strong>单一数据源</strong>：会话列表组件抽离，Performance 与 Live Widget 共用，避免逻辑重复。</li>
+        <li><strong>配置归位</strong>：把分散的设置统一进全局 Settings 中心，按「渠道 / 数字员工」两个维度分层。</li>
+        <li><strong>引导更顺</strong>：Onboarding 步骤的跳转目标与文案更贴合「先选渠道、政策可选」的真实路径。</li>
+      </ul>
+      <div class="callout">本次更新共涉及 <strong>7 个前端源文件</strong>，无新增依赖；TypeScript 类型检查仅余 3 个历史遗留错误（与本次改动无关）。</div>
+    </section>
+
+    <!-- update 1 -->
+    <section class="section" id="u1">
+      <div class="section-title"><span class="section-num">1</span>Live Widget 会话列表复用</div>
+      <p>原先会话日志表格只存在于 <strong>Performance → Conversations</strong>。商家在 Live Widget 渠道页下的 Conversations 子标签只能看到占位空页面,需要切换到 Performance 才能查看该渠道对话——动线割裂。</p>
+      <div class="ba">
+        <div class="ba-card before"><span class="ba-tag">改造前</span><p>会话表格内嵌在 PerformancePage 中,约 265 行逻辑;Live Widget 的 Conversations 子标签是空占位。</p></div>
+        <div class="ba-card after"><span class="ba-tag">改造后</span><p>抽离为独立组件 <code>ConversationsView</code>;Live Widget 与 Performance 共用同一组件,单一数据源。</p></div>
+      </div>
+      <div class="sub2-title">关键设计:<code>lockedChannel</code> 入参</div>
+      <ul>
+        <li>组件接收可选的 <code>lockedChannel?: ChannelValue</code>。</li>
+        <li>Live Widget 传入 <code>"Live Chat Widget"</code> → 列表锁定该渠道,隐藏渠道下拉筛选,展示一枚不可移除的「Channel: Live Chat Widget」上下文标签。</li>
+        <li>Performance 不传该参数 → 保留完整的全渠道筛选能力,行为与改造前完全一致。</li>
+      </ul>
+    </section>
+
+    <!-- update 2 -->
+    <section class="section" id="u2">
+      <div class="section-title"><span class="section-num">2</span>Settings 中心重构</div>
+      <p>全局 Settings 由单一「跳板列表」升级为带子标签的设置中枢,把数字员工配置真正收纳进来,而不再只是把人甩到别处。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th style="width:130px">子标签</th><th>承载内容</th><th style="width:120px">入口</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Channels</strong></td><td>Live Widget / Email Inbox / Zendesk 三个渠道的设置跳板,展示各自连接状态(Live / Training / Connected / Not connected)。</td><td>默认子标签</td></tr>
+            <tr><td><strong>Rep Config</strong></td><td>AI 数字员工配置(<code>ConfigureAgentSection</code>)内联托管:人设、权限、共享默认值。AI Manager 页面本身回归「纯操作」。</td><td>深链跳转</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>深链机制:</strong>新增一次性意图标志 <code>agentSettingsIntent</code>。「编辑人设」或 Onboarding 的「Create an AI rep」会带着该标志进入 Settings,自动定位到 Rep Config 子标签后立即复位。</div>
+    </section>
+
+    <!-- update 3 -->
+    <section class="section" id="u3">
+      <div class="section-title"><span class="section-num">3</span>Onboarding 引导优化</div>
+      <div class="sub2-title"><span class="pill mod">调整</span> &nbsp;Connect a channel 的跳转目标</div>
+      <div class="ba">
+        <div class="ba-card before"><span class="ba-tag">改造前</span><p>直接深链进 Live Widget 渠道的设置子标签——默认就替商家选好了「Chat」渠道。</p></div>
+        <div class="ba-card after"><span class="ba-tag">改造后</span><p>跳转到 <strong>Settings → Channels</strong> 渠道选择列表,由商家自己挑选要接入哪个渠道。</p></div>
+      </div>
+      <div class="sub2-title"><span class="pill mod">调整</span> &nbsp;Import Policies 文案</div>
+      <ul>
+        <li>步骤标题改为 <strong>「Import Policies (optional)」</strong>,把「可选」直接写进标题,任何状态下都可见。</li>
+        <li>移除原先仅在未完成时才出现的独立「Optional」徽标,避免与标题语义重复。</li>
+        <li>「Done」徽标在完成后照常显示;该步骤始终不计入「essentials」进度条。</li>
+      </ul>
+    </section>
+
+    <!-- update 4 -->
+    <section class="section" id="u4">
+      <div class="section-title"><span class="section-num">4</span>左侧导航调整</div>
+      <p>把左侧栏的 <strong>Conversation</strong> 从顶部主导航组移到 <strong>WORKFORCE</strong> 分组下,作为该分组的第一项(位于 Support agent / Sales agent / VOC agent / Review agent 之上)。</p>
+      <ul>
+        <li>顶部主导航组现在止于 Reviews。</li>
+        <li>Conversation 保留当前的 disabled「coming soon」占位行为不变。</li>
+        <li>语义上更合理:对话隶属于「数字员工工作台」这一范畴。</li>
+      </ul>
+    </section>
+
+    <!-- impl -->
+    <section class="section" id="impl">
+      <div class="section-title"><span class="section-num">5</span>技术实现 · 涉及文件</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>文件</th><th style="width:80px">类型</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>components/ConversationsView.tsx</code></td><td><span class="pill new">新增</span></td><td>抽离的会话日志表格,支持 <code>lockedChannel</code> 锁定渠道。</td></tr>
+            <tr><td><code>pages/LiveWidgetPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Conversations 子标签接入共享组件,锁定 Live Chat Widget。</td></tr>
+            <tr><td><code>pages/PerformancePage.tsx</code></td><td><span class="pill mod">修改</span></td><td>重构为复用 ConversationsView(全渠道),移除内嵌重复逻辑。</td></tr>
+            <tr><td><code>pages/SettingsPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>拆分为 Channels / Rep Config 两个子标签,内联托管数字员工配置。</td></tr>
+            <tr><td><code>contexts/AppContext.tsx</code></td><td><span class="pill mod">修改</span></td><td>新增 <code>agentSettingsIntent</code> 深链标志;<code>goToManagerSettings</code> 改指向全局 Settings。</td></tr>
+            <tr><td><code>pages/AgentsPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Onboarding:Connect a channel 跳渠道选择列表;Import Policies (optional) 文案。</td></tr>
+            <tr><td><code>components/Sidebar.tsx</code></td><td><span class="pill mod">修改</span></td><td>Conversation 移入 WORKFORCE 分组首位。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- verify -->
+    <section class="section" id="verify">
+      <div class="section-title"><span class="section-num">6</span>验证与部署</div>
+      <ul>
+        <li><strong>类型检查:</strong><code>tsc --noEmit</code> 仅余 3 个历史遗留错误,本次未引入新错误。</li>
+        <li><strong>预览验证:</strong>Live Widget → Conversations 正确展示锁定渠道的会话表(含上下文标签);Performance → Conversations 全渠道行为不变;Onboarding 跳转与文案、侧栏归位均已截图确认。</li>
+        <li><strong>部署:</strong>提交 <code>25f9f0d</code> 已推送至 <code>feat/email-inbox-v2</code>,触发 Vercel 自动构建并发布到 Demo 环境。</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>© 2026 Seel Inc. · Seel AI Support v2 · 内部 Demo 文档,仅供评审使用</footer>
+</body>
+</html>
