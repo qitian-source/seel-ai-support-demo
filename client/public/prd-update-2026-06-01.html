@@ -125,9 +125,8 @@
     <a class="nav-link" href="#u3">3 · 数字员工配置</a>
     <a class="nav-link" href="#u4">4 · Playbook / 规则</a>
     <a class="nav-link" href="#u5">5 · Onboarding 优化</a>
-    <a class="nav-link" href="#u6">6 · 兄弟数字员工</a>
-    <a class="nav-link" href="#impl">7 · 技术实现 · 涉及文件</a>
-    <a class="nav-link" href="#verify">8 · 验证与部署</a>
+    <a class="nav-link" href="#impl">6 · 技术实现 · 涉及文件</a>
+    <a class="nav-link" href="#verify">7 · 验证与部署</a>
   </aside>
 
   <!-- main -->
@@ -252,20 +251,9 @@
       </ul>
     </section>
 
-    <!-- 6 sibling agents -->
-    <section class="section" id="u6">
-      <div class="section-title"><span class="section-num">6</span>兄弟数字员工 &amp; 其他</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 新增 <strong>Sales Agent</strong> 页面：Analytics + KPI + 日趋势 + 触点表。</li>
-        <li><span class="pill b">3f661cb</span> 新增 <strong>VOC Agent</strong> 页面：Ask Me Anything + Market Insight。</li>
-        <li><span class="pill b">3f661cb</span> 新增 <code>LanguageSwitcher</code>；<code>data.ts</code> 扩充销售数据、<code>zendeskTickets</code>、解析模型与 production-mode 案例。</li>
-      </ul>
-      <div class="callout">注：本次配套两次推送中的 <code>1a43351</code>、<code>ce81a61</code> 为 PRD 文档页，不属于产品功能。</div>
-    </section>
-
     <!-- impl -->
     <section class="section" id="impl">
-      <div class="section-title"><span class="section-num">7</span>技术实现 · 涉及文件</div>
+      <div class="section-title"><span class="section-num">6</span>技术实现 · 涉及文件</div>
       <div class="sub2-title"><span class="pill b">3f661cb</span> 导航重构主提交（节选）</div>
       <div class="tbl-wrap">
         <table>
@@ -303,7 +291,7 @@
 
     <!-- verify -->
     <section class="section" id="verify">
-      <div class="section-title"><span class="section-num">8</span>验证与部署</div>
+      <div class="section-title"><span class="section-num">7</span>验证与部署</div>
       <ul>
         <li><strong>类型检查：</strong><code>tsc --noEmit</code> 仅余 3 个历史遗留错误，本次迭代未引入新错误。</li>
         <li><strong>预览验证：</strong>Live Widget → Conversations 正确展示锁定渠道的会话表（含上下文标签）；Performance → Conversations 全渠道行为不变；Onboarding 跳转与文案、侧栏归位均已截图确认。</li>
