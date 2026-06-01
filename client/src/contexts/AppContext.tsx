@@ -12,38 +12,96 @@ import {
   type Topic,
   type Document,
   type ActionPermission,
-  type OperationMode,
   type FlagRule,
 } from "@/lib/data";
 
 /* ── Navigation ── */
-type MainTab = "agents" | "playbook" | "performance" | "email" | "sales-agent" | "billing";
-type GoLiveMode = "training" | "production" | "off";
+type MainTab = "agents" | "playbook" | "performance" | "email" | "live-widget" | "zendesk" | "settings" | "sales-agent" | "billing" | "voc-agent";
+
+/** Single, unified operating mode shared by every channel (chat / email / zendesk)
+ *  and by the derived agent state. off = paused, training = draft-only, production = autonomous. */
+export type ChannelMode = "off" | "training" | "production";
+
+/* ── Channels ── */
+type PrimaryChannel = "chat" | "email" | "zendesk" | null;
+type AsyncBackbone = "email" | "zendesk" | null;
 
 /* ── Zendesk sub-step state machine ── */
 type ZdAuthStatus = "idle" | "loading" | "success" | "error";
-type ZdSeatStatus = "idle" | "loading" | "verified" | "error";
-type ZdTriggerStatus = "idle" | "loading" | "verified" | "error";
+type ZdStepStatus = "idle" | "loading" | "verified" | "error";
 
 interface ZendeskState {
   subdomain: string;
   authStatus: ZdAuthStatus;
   authError: string;
-  seatStatus: ZdSeatStatus;
+  seatStatus: ZdStepStatus;
   seatError: string;
   selectedSeat: string;
   availableSeats: { id: string; name: string; email: string }[];
-  triggerStatus: ZdTriggerStatus;
+  webhookStatus: ZdStepStatus;
+  webhookError: string;
+  triggerStatus: ZdStepStatus;
   triggerError: string;
+  verifyStatus: ZdStepStatus;
+  verifyError: string;
 }
 
-/* ── Channel / Handoff config ── */
-interface ChannelConfig {
-  email: boolean;
-  liveChat: boolean;
-  sms: boolean;
+/* ── Live Chat Widget customizer config (channel surface layer) ── */
+interface ChatWidgetConfig {
+  /* colors */
+  brandColor: string;
+  textOnBrand: string;
+  botBubble: string;
+  botText: string;
+  userBubble: string;
+  userText: string;
+  windowBackground: string;
+  /* layout */
+  position: "bottom-left" | "bottom-right";
+  distanceBottom: number;
+  distanceRight: number;
+  cornerRadius: number;
+  launcherColor: string;
+  /* typography */
+  fontFamily: string;
+  /* messages */
+  welcomeMessage: string;
+  suggestedQuestions: string[];
+  inputPlaceholder: string;
+  /* behavior */
+  proactiveEnabled: boolean;
+  proactiveDelay: number;
+  talkToHuman: boolean;
+  offlineMessage: string;
+  poweredBy: boolean;
+  preChatForm: boolean;
+  csatEnabled: boolean;
+  /* page targeting */
+  targetAllPages: boolean;
+  targetPages: string[];
+  customPages: string[];
+  deviceTarget: "all" | "desktop" | "mobile";
 }
 
+/* ── Reply & escalation: direct per-channel settings (no agent inheritance) ── */
+export type ChannelKey = "email" | "zendesk" | "chat";
+interface ChannelReplyConfig {
+  signoff: string;        // closing signature (email / zendesk)
+  escalationSeat: string; // human-handoff teammate (seat id)
+}
+
+/* ── AI Rep (brain layer): each rep has its own persona + permissions ── */
+export interface AiRep {
+  id: string;
+  name: string;
+  color: string;
+  personality: "Friendly" | "Professional" | "Casual" | "Customize" | "";
+  customTone: string;
+  permissions: ActionPermission[];
+  discloseAI: boolean;
+}
+
+/* ── Handoff config (reference data: available groups/seats) ── */
 interface HandoffConfig {
   selectedGroup: string;
   availableGroups: string[];
@@ -64,10 +122,10 @@ interface AppState {
 
   /* Setup Progress — 4 steps */
   setupFullyComplete: boolean;
-  step1Complete: boolean; // Ticketing System connected
+  step1Complete: boolean; // At least one channel connected
   step2Complete: boolean; // At least one doc processed with rules
   step3Complete: boolean; // Rep hired (name + personality set)
-  step4Complete: boolean; // Go Live mode set to training or production
+  step4Complete: boolean; // At least one connected channel is in training/production
   step4Status: SetupStepStatus; // locked if 1-3 not all done
 
   /* Zendesk state machine */
@@ -75,9 +133,26 @@ interface AppState {
   setZendesk: (updates: Partial<ZendeskState>) => void;
   zendeskConnected: boolean;
 
-  /* Channel config */
-  channels: ChannelConfig;
-  setChannels: (updates: Partial<ChannelConfig>) => void;
+  /* Live Chat Widget customizer */
+  chatWidget: ChatWidgetConfig;
+  setChatWidget: (updates: Partial<ChatWidgetConfig>) => void;
+
+  /* Channel connection layer (Settings > Channels) */
+  liveChatConnected: boolean;
+  setLiveChatConnected: (v: boolean) => void;
+  liveChatMode: ChannelMode;
+  setLiveChatMode: (m: ChannelMode) => void;
+  emailChannelConnected: boolean;
+  setEmailChannelConnected: (v: boolean) => void;
+  emailChannelAddress: string;
+  setEmailChannelAddress: (s: string) => void;
+  zendeskMode: ChannelMode;
+  setZendeskMode: (m: ChannelMode) => void;
+  asyncBackbone: AsyncBackbone;
+  setAsyncBackbone: (b: AsyncBackbone) => void;
+  primaryChannel: PrimaryChannel;
+  setPrimaryChannel: (c: PrimaryChannel) => void;
+  anyChannelConnected: boolean;
 
   /* Handoff config (per-channel, MVP: email channel) */
   handoff: HandoffConfig;
@@ -100,26 +175,43 @@ interface AppState {
   setRepCustomTone: (t: string) => void;
   repPermissions: ActionPermission[];
   setRepPermissions: (perms: ActionPermission[]) => void;
-  goLiveMode: GoLiveMode;
-  setGoLiveMode: (m: GoLiveMode) => void;
 
-  /* Disclose AI identity */
+  /* Multi-rep registry — the rep-config fields above edit the SELECTED rep */
+  reps: AiRep[];
+  selectedRepId: string;
+  setSelectedRepId: (id: string) => void;
+  addRep: () => void;
+  removeRep: (id: string) => void;
+
+  /* Go-live state — DERIVED from per-channel modes (no global source of truth) */
+  agentMode: ChannelMode;            // production if any connected channel is production; else training if any is training; else off
+  setAllChannelModes: (m: ChannelMode) => void; // bulk action: set every connected channel to this mode
+  anyChannelLive: boolean;          // ≥1 connected channel in training or production
+  isAgentLive: boolean;             // ≥1 connected channel in production
+
+  /* Disclose AI identity (per-rep) */
   discloseAI: boolean;
   setDiscloseAI: (v: boolean) => void;
 
-  /* Email sign-off */
-  emailSignoff: string;
-  setEmailSignoff: (s: string) => void;
+  /* ── Written-reply & escalation: direct per-channel settings ── */
+  channelReply: Record<ChannelKey, ChannelReplyConfig>;
+  setChannelReply: (key: ChannelKey, updates: Partial<ChannelReplyConfig>) => void;
 
-  /* Settings overlay */
-  showSettings: boolean;
-  setShowSettings: (v: boolean) => void;
-  settingsSection: string | null;
-  setSettingsSection: (s: string | null) => void;
+  /* ── Channel → rep assignment (a channel can run multiple reps) ── */
+  channelReps: Record<ChannelKey, string[]>;
+  setChannelReps: (key: ChannelKey, repIds: string[]) => void;
+
+  /* Per-page settings sub-tabs (post-restructure navigation) */
+  managerTab: "operations" | "settings";       // AI Manager page sub-tab
+  setManagerTab: (t: "operations" | "settings") => void;
+  channelSettingsIntent: ChannelKey | null;     // one-shot: open this channel page on its Settings sub-tab
+  setChannelSettingsIntent: (c: ChannelKey | null) => void;
+  goToChannelSettings: (c: ChannelKey) => void;  // navigate to a channel page's Settings sub-tab
+  goToManagerSettings: () => void;               // navigate to AI Manager → Settings (agent config)
 
   /* Email mode & flag rules (configured in Settings > Channels) */
-  emailMode: OperationMode;
-  setEmailMode: (m: OperationMode) => void;
+  emailMode: ChannelMode;
+  setEmailMode: (m: ChannelMode) => void;
   emailFlagRules: FlagRule[];
   setEmailFlagRules: (r: FlagRule[]) => void;
 
@@ -147,6 +239,8 @@ interface AppState {
   rulesData: Rule[];
   updateRule: (id: string, updates: Partial<Rule>) => void;
   toggleRule: (id: string) => void;
+  addRule: (rule: Rule) => void;
+  removeRule: (id: string) => void;
   topicsData: Topic[];
   updateTopic: (id: string, updates: Partial<Topic>) => void;
   addTopic: (topic: Topic) => void;
@@ -170,11 +264,43 @@ const defaultZendesk: ZendeskState = {
   seatError: "",
   selectedSeat: "",
   availableSeats: [],
+  webhookStatus: "idle",
+  webhookError: "",
   triggerStatus: "idle",
   triggerError: "",
+  verifyStatus: "idle",
+  verifyError: "",
 };
 
-const defaultChannels: ChannelConfig = { email: true, liveChat: false, sms: false };
+const defaultChatWidget: ChatWidgetConfig = {
+  brandColor: "#111827",
+  textOnBrand: "#FFFFFF",
+  botBubble: "#F3F4F6",
+  botText: "#111827",
+  userBubble: "#111827",
+  userText: "#FFFFFF",
+  windowBackground: "#FFFFFF",
+  position: "bottom-right",
+  distanceBottom: 20,
+  distanceRight: 20,
+  cornerRadius: 16,
+  launcherColor: "#111827",
+  fontFamily: "Inter",
+  welcomeMessage: "Hi! How can I help you today?",
+  suggestedQuestions: ["Where is my order?", "How do I return an item?", "How do I cancel an order?"],
+  inputPlaceholder: "Type a message...",
+  proactiveEnabled: false,
+  proactiveDelay: 5,
+  talkToHuman: true,
+  offlineMessage: "We're away right now — leave a message and we'll get back to you.",
+  poweredBy: true,
+  preChatForm: false,
+  csatEnabled: false,
+  targetAllPages: false,
+  targetPages: ["home", "pdp", "cart"],
+  customPages: [],
+  deviceTarget: "all",
+};
 
 const defaultHandoff: HandoffConfig = {
   selectedGroup: "",
@@ -199,13 +325,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setZendesk = useCallback((updates: Partial<ZendeskState>) => {
     setZendeskRaw((prev) => ({ ...prev, ...updates }));
   }, []);
-  const zendeskConnected = zendesk.authStatus === "success" && zendesk.seatStatus === "verified" && zendesk.triggerStatus === "verified";
+  const zendeskConnected =
+    zendesk.authStatus === "success" &&
+    zendesk.seatStatus === "verified" &&
+    zendesk.webhookStatus === "verified" &&
+    zendesk.triggerStatus === "verified" &&
+    zendesk.verifyStatus === "verified";
 
-  /* Channels */
-  const [channels, setChannelsRaw] = useState<ChannelConfig>(defaultChannels);
-  const setChannels = useCallback((updates: Partial<ChannelConfig>) => {
-    setChannelsRaw((prev) => ({ ...prev, ...updates }));
+  /* Live Chat Widget customizer */
+  const [chatWidget, setChatWidgetRaw] = useState<ChatWidgetConfig>(defaultChatWidget);
+  const setChatWidget = useCallback((updates: Partial<ChatWidgetConfig>) => {
+    setChatWidgetRaw((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  /* Channel connection layer */
+  const [liveChatConnected, setLiveChatConnected] = useState(false);
+  const [liveChatMode, setLiveChatMode] = useState<ChannelMode>("off");
+  const [emailChannelConnected, setEmailChannelConnected] = useState(false);
+  const [emailChannelAddress, setEmailChannelAddress] = useState("");
+  const [zendeskMode, setZendeskMode] = useState<ChannelMode>("off");
+  const [asyncBackbone, setAsyncBackbone] = useState<AsyncBackbone>(null);
+  const [primaryChannel, setPrimaryChannel] = useState<PrimaryChannel>(null);
 
   /* Handoff */
   const [handoff, setHandoffRaw] = useState<HandoffConfig>(defaultHandoff);
@@ -217,25 +357,99 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sopUploaded, setSopUploaded] = useState(false);
   const [extractedRuleNames, setExtractedRuleNames] = useState<string[]>([]);
 
-  /* Rep config — defaults: Ava / Friendly */
+  /* ── Multi-rep registry (brain layer) — config fields below edit the selected rep ── */
   const [repHired, setRepHired] = useState(false);
-  const [hiredRepName, setHiredRepName] = useState("Ava");
-  const [repPersonality, setRepPersonality] = useState<"Friendly" | "Professional" | "Casual" | "Customize" | "">("Friendly");
-  const [repCustomTone, setRepCustomTone] = useState("");
-  const [repPermissions, setRepPermissions] = useState<ActionPermission[]>([
-    ...defaultReadActions, ...defaultWriteActions,
-  ]);
-  const [goLiveMode, setGoLiveMode] = useState<GoLiveMode>("off");
 
-  const [discloseAI, setDiscloseAI] = useState(true);
-  const [emailSignoff, setEmailSignoff] = useState("Best regards,\nThe Support Team");
+  /* Channel → rep assignment (declared before reps so removeRep can unassign) */
+  const [channelReps, setChannelRepsRaw] = useState<Record<ChannelKey, string[]>>({
+    email: ["rep-ava"], zendesk: ["rep-ava"], chat: ["rep-ava"],
+  });
+  const setChannelReps = useCallback((key: ChannelKey, repIds: string[]) => {
+    setChannelRepsRaw((prev) => ({ ...prev, [key]: repIds }));
+  }, []);
+
+  const REP_COLORS = ["#6c47ff", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
+  const [reps, setReps] = useState<AiRep[]>([
+    {
+      id: "rep-ava", name: "Ava", color: "#6c47ff",
+      personality: "Friendly", customTone: "",
+      permissions: [...defaultReadActions, ...defaultWriteActions],
+      discloseAI: true,
+    },
+  ]);
+  const [selectedRepId, setSelectedRepId] = useState("rep-ava");
+  const selectedRep = reps.find((r) => r.id === selectedRepId) ?? reps[0];
+
+  const updateRep = useCallback((id: string, updates: Partial<AiRep>) => {
+    setReps((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+  }, []);
+
+  const addRep = useCallback(() => {
+    const id = `rep-${Date.now()}`;
+    setReps((prev) => {
+      const color = REP_COLORS[prev.length % REP_COLORS.length];
+      const next: AiRep = {
+        id, name: `Rep ${prev.length + 1}`, color,
+        personality: "Friendly", customTone: "",
+        permissions: [...defaultReadActions, ...defaultWriteActions],
+        discloseAI: true,
+      };
+      return [...prev, next];
+    });
+    setSelectedRepId(id);
+  }, []);
+
+  const removeRep = useCallback((id: string) => {
+    setReps((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.id !== id)));
+    setSelectedRepId((sel) => {
+      if (sel !== id) return sel;
+      const remaining = reps.filter((r) => r.id !== id);
+      return remaining[0]?.id ?? sel;
+    });
+    setChannelRepsRaw((prev) => ({
+      email: prev.email.filter((x) => x !== id),
+      zendesk: prev.zendesk.filter((x) => x !== id),
+      chat: prev.chat.filter((x) => x !== id),
+    }));
+  }, [reps]);
+
+  /* Derived selected-rep accessors — keep the existing single-rep API working */
+  const hiredRepName = selectedRep?.name ?? "";
+  const setHiredRepName = useCallback((name: string) => updateRep(selectedRepId, { name }), [selectedRepId, updateRep]);
+  const repPersonality = selectedRep?.personality ?? "";
+  const setRepPersonality = useCallback((p: AiRep["personality"]) => updateRep(selectedRepId, { personality: p }), [selectedRepId, updateRep]);
+  const repCustomTone = selectedRep?.customTone ?? "";
+  const setRepCustomTone = useCallback((t: string) => updateRep(selectedRepId, { customTone: t }), [selectedRepId, updateRep]);
+  const repPermissions = selectedRep?.permissions ?? [];
+  const setRepPermissions = useCallback((perms: ActionPermission[]) => updateRep(selectedRepId, { permissions: perms }), [selectedRepId, updateRep]);
+  const discloseAI = selectedRep?.discloseAI ?? true;
+  const setDiscloseAI = useCallback((v: boolean) => updateRep(selectedRepId, { discloseAI: v }), [selectedRepId, updateRep]);
+
+  /* Written-reply & escalation: direct per-channel settings */
+  const [channelReply, setChannelReplyRaw] = useState<Record<ChannelKey, ChannelReplyConfig>>({
+    email: { signoff: "Best regards,\nThe Support Team", escalationSeat: "" },
+    zendesk: { signoff: "Best regards,\nThe Support Team", escalationSeat: "" },
+    chat: { signoff: "", escalationSeat: "" },
+  });
+  const setChannelReply = useCallback((key: ChannelKey, updates: Partial<ChannelReplyConfig>) => {
+    setChannelReplyRaw((prev) => ({ ...prev, [key]: { ...prev[key], ...updates } }));
+  }, []);
 
   /* Settings overlay */
-  const [showSettings, setShowSettings] = useState(false);
-  const [settingsSection, setSettingsSection] = useState<string | null>(null);
+  const [managerTab, setManagerTab] = useState<"operations" | "settings">("operations");
+  const [channelSettingsIntent, setChannelSettingsIntent] = useState<ChannelKey | null>(null);
+
+  const goToChannelSettings = useCallback((c: ChannelKey) => {
+    setMainTab(c === "chat" ? "live-widget" : c === "email" ? "email" : "zendesk");
+    setChannelSettingsIntent(c);
+  }, []);
+  const goToManagerSettings = useCallback(() => {
+    setMainTab("agents");
+    setManagerTab("settings");
+  }, []);
 
   /* Email mode & flag rules */
-  const [emailMode, setEmailMode] = useState<OperationMode>("training");
+  const [emailMode, setEmailMode] = useState<ChannelMode>("off");
   const [emailFlagRules, setEmailFlagRules] = useState<FlagRule[]>(DEFAULT_FLAG_RULES);
 
   /* Email sync modal trigger */
@@ -266,6 +480,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleRule = useCallback((id: string) => {
     setRulesData((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
   }, []);
+  const addRule = useCallback((rule: Rule) => {
+    setRulesData((prev) => [rule, ...prev]);
+  }, []);
+  const removeRule = useCallback((id: string) => {
+    setRulesData((prev) => prev.filter((r) => r.id !== id));
+  }, []);
   const updateTopic = useCallback((id: string, updates: Partial<Topic>) => {
     setTopicsData((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
   }, []);
@@ -291,7 +511,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeSetupDemo = useCallback(() => {
-    // Step 1: Complete Zendesk
+    /* One-click demo fill — produces a fully-configured, multi-channel, multi-rep
+       state so the demo can show both the configuration AND its result (the Channel
+       Coverage overview). Connects all three channels and staffs them differently. */
+
+    // ── Step 1a: Live Widget — connected, live in Production ──
+    setLiveChatConnected(true);
+    setLiveChatMode("production");
+
+    // ── Step 1b: Email — connected, in Training ──
+    setEmailChannelConnected(true);
+    setEmailChannelAddress("support@acme-store.com");
+    setEmailMode("training");
+
+    // ── Step 1c: Zendesk — connected, in Training ──
     setZendeskRaw({
       subdomain: "acme-store",
       authStatus: "success",
@@ -303,28 +536,81 @@ export function AppProvider({ children }: { children: ReactNode }) {
         { id: "seat-1", name: "Seel AI Agent", email: "ai@acme.zendesk.com" },
         { id: "seat-2", name: "Backup Agent", email: "backup@acme.zendesk.com" },
       ],
+      webhookStatus: "verified",
+      webhookError: "",
       triggerStatus: "verified",
       triggerError: "",
+      verifyStatus: "verified",
+      verifyError: "",
     });
-    // Step 2: Ensure docs exist
+    setZendeskMode("training");
+    setPrimaryChannel("chat");
+    setAsyncBackbone("zendesk"); // active written-ticket backbone
+
+    // ── Step 2: Policies/docs ──
     setDocsData(defaultDocs);
     setSopUploaded(true);
     setExtractedRuleNames(["Refund Policy", "Shipping SLA", "Warranty Rules"]);
-    // Step 3: Hire rep
+
+    // ── Step 3: Hire two reps with distinct personas ──
+    setReps([
+      {
+        id: "rep-ava", name: "Ava", color: "#6c47ff",
+        personality: "Friendly", customTone: "",
+        permissions: [...defaultReadActions, ...defaultWriteActions],
+        discloseAI: true,
+      },
+      {
+        id: "rep-max", name: "Max", color: "#0ea5e9",
+        personality: "Professional", customTone: "",
+        permissions: [...defaultReadActions, ...defaultWriteActions],
+        discloseAI: true,
+      },
+    ]);
+    setSelectedRepId("rep-ava");
     setRepHired(true);
-    setHiredRepName("Ava");
-    setRepPersonality("Friendly");
-    // Step 4: Go live
-    setGoLiveMode("training");
+
+    // ── Step 4: Staff each channel (shows solo + shared coverage) ──
+    setChannelRepsRaw({
+      chat: ["rep-ava"],            // Ava handles live chat
+      email: ["rep-ava", "rep-max"], // both cover email
+      zendesk: ["rep-max"],          // Max owns Zendesk tickets
+    });
+    // agentMode derives to "production" (chat is live in production)
   }, []);
 
+  /* ── Go-live state derived from per-channel modes (single source of truth = channels) ──
+     All three channels share the same ChannelMode vocabulary (off / training / production). */
+  const anyChannelLive =
+    (liveChatConnected && liveChatMode !== "off") ||
+    (emailChannelConnected && emailMode !== "off") ||
+    (zendeskConnected && zendeskMode !== "off");
+  const isAgentLive =
+    (liveChatConnected && liveChatMode === "production") ||
+    (emailChannelConnected && emailMode === "production") ||
+    (zendeskConnected && zendeskMode === "production");
+  const agentMode: ChannelMode = isAgentLive ? "production" : anyChannelLive ? "training" : "off";
+
+  /* Bulk action: set every CONNECTED channel to the requested mode (off included). */
+  const setAllChannelModes = useCallback(
+    (m: ChannelMode) => {
+      if (liveChatConnected) setLiveChatMode(m);
+      if (zendeskConnected) setZendeskMode(m);
+      if (emailChannelConnected) setEmailMode(m);
+    },
+    [liveChatConnected, zendeskConnected, emailChannelConnected],
+  );
+
   /* ── Setup Progress derived state ── */
-  const step1Complete = zendeskConnected;
+  const anyChannelConnected = liveChatConnected || emailChannelConnected || zendeskConnected;
+  const step1Complete = anyChannelConnected;
   const step2Complete = docsData.some((d) => d.status === "Processed" && d.extractedRules);
   const step3Complete = repHired;
-  const step4Complete = goLiveMode !== "off";
-  const step4Status: SetupStepStatus = (step1Complete && step2Complete && step3Complete) ? (step4Complete ? "complete" : "pending") : "locked";
-  const setupFullyComplete = step1Complete && step2Complete && step3Complete && step4Complete;
+  const step4Complete = anyChannelLive;
+  // Go-live requires only the essentials: a connected channel + a created rep.
+  // Import Policies (step2) is recommended but no longer blocks activation.
+  const step4Status: SetupStepStatus = (step1Complete && step3Complete) ? (step4Complete ? "complete" : "pending") : "locked";
+  const setupFullyComplete = step1Complete && step3Complete && step4Complete;
 
   return (
     <AppContext.Provider
@@ -334,7 +620,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         step1Complete, step2Complete, step3Complete, step4Complete,
         step4Status,
         zendesk, setZendesk, zendeskConnected,
-        channels, setChannels,
+        chatWidget, setChatWidget,
+        liveChatConnected, setLiveChatConnected,
+        liveChatMode, setLiveChatMode,
+        emailChannelConnected, setEmailChannelConnected,
+        emailChannelAddress, setEmailChannelAddress,
+        zendeskMode, setZendeskMode,
+        asyncBackbone, setAsyncBackbone,
+        primaryChannel, setPrimaryChannel,
+        anyChannelConnected,
         handoff, setHandoff,
         sopUploaded, setSopUploaded,
         extractedRuleNames, setExtractedRuleNames,
@@ -343,11 +637,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         repPersonality, setRepPersonality,
         repCustomTone, setRepCustomTone,
         repPermissions, setRepPermissions,
-        goLiveMode, setGoLiveMode,
+        reps, selectedRepId, setSelectedRepId, addRep, removeRep,
+        agentMode, setAllChannelModes, anyChannelLive, isAgentLive,
         discloseAI, setDiscloseAI,
-        emailSignoff, setEmailSignoff,
-        showSettings, setShowSettings,
-        settingsSection, setSettingsSection,
+        channelReply, setChannelReply,
+        channelReps, setChannelReps,
+        managerTab, setManagerTab,
+        channelSettingsIntent, setChannelSettingsIntent,
+        goToChannelSettings, goToManagerSettings,
         emailMode, setEmailMode,
         emailFlagRules, setEmailFlagRules,
         openEmailSyncModal, setOpenEmailSyncModal,
@@ -356,7 +653,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showGoLiveGuide, setShowGoLiveGuide,
         goLiveGuideShown, setGoLiveGuideShown,
         agentsData, updateAgent,
-        rulesData, updateRule, toggleRule,
+        rulesData, updateRule, toggleRule, addRule, removeRule,
         topicsData, updateTopic, addTopic,
         docsData, addDocument, removeDocument, toggleDocInUse, updateDocument, resetDocuments, completeSetupDemo,
       }}

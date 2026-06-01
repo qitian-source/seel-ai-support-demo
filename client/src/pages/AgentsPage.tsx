@@ -5,6 +5,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useApp } from "@/contexts/AppContext";
+import type { ChannelKey, ChannelMode } from "@/contexts/AppContext";
 import { dailyDigest, escalationFeed } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,12 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import {
   Send, User, Crown, ChevronDown,
   ThumbsUp, ThumbsDown,
-  Bot, Settings, Plus, Globe,
-  FileText, UserPlus, Rocket, Mail,
+  Bot, Settings, Plus, MessageSquare,
+  FileText, UserPlus, Rocket,
   CheckCircle2, Lock, ArrowRight, Inbox, ExternalLink,
+  Mail, Ticket, Sliders,
 } from "lucide-react";
 import AgentProfileSheet from "@/components/AgentProfileSheet";
 import ConversationLogSidebar from "@/components/ConversationLogSidebar";
+import SubTabBar, { type SubTabItem } from "@/components/SubTabBar";
+import { ConfigureAgentSection } from "@/components/SetupSettings";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -218,45 +222,48 @@ function ProposalCard({ topic, onAccept, onReject, onTicketClick }: {
 function SetupProgress() {
   const {
     step1Complete, step2Complete, step3Complete, step4Complete, step4Status,
-    setShowSettings, setSettingsSection,
+    goToChannelSettings, goToManagerSettings,
     setMainTab, setPlaybookDeepLink,
     setSelectedAgentId, setShowGoLiveGuide, goLiveGuideShown, setGoLiveGuideShown,
     hiredRepName, resetDocuments, completeSetupDemo,
-    setOpenEmailSyncModal,
   } = useApp();
+
+  // Dynamic prerequisite copy for the locked Go-live step.
+  const goLiveMissing: string[] = [];
+  if (!step1Complete) goLiveMissing.push("connect a channel");
+  if (!step3Complete) goLiveMissing.push("create an AI rep");
 
   const steps = [
     {
       id: 1,
-      label: "Connect Ticketing System",
-      description: "Connect your Zendesk account so your AI Rep can read and respond to tickets.",
-      icon: Globe,
+      label: "Connect a channel",
+      description: "Connect Support Chat, Email, or Zendesk — then pick which AI reps answer on each one.",
+      icon: MessageSquare,
       complete: step1Complete,
       locked: false,
-      action: () => {
-        setSettingsSection("ticketing");
-        setShowSettings(true);
-      },
+      optional: false,
+      action: () => goToChannelSettings("chat"),
     },
     {
       id: 2,
-      label: "Connect Email Assistant",
-      description: "Set up your email inbox so the AI can read and respond to customer emails.",
-      icon: Mail,
-      complete: false,
+      label: "Create an AI rep",
+      description: "Add one or more AI reps — each with its own name, personality, and permissions.",
+      icon: UserPlus,
+      complete: step3Complete,
       locked: false,
-      action: () => {
-        setMainTab("email");
-        setOpenEmailSyncModal(true);
-      },
+      optional: false,
+      action: () => goToManagerSettings(),
     },
     {
       id: 3,
       label: "Import Policies",
-      description: "Upload your SOP documents so the AI can learn your support rules.",
+      description: step2Complete
+        ? "Your SOP documents are imported — the AI is using your support rules."
+        : "Upload your SOP documents to boost answer accuracy. You can do this anytime — it's not required to go live.",
       icon: FileText,
       complete: step2Complete,
       locked: false,
+      optional: true,
       action: () => {
         setPlaybookDeepLink("documents");
         setMainTab("playbook");
@@ -264,25 +271,14 @@ function SetupProgress() {
     },
     {
       id: 4,
-      label: "Configure Agent",
-      description: "Set up your AI Rep's name, personality, and permissions.",
-      icon: UserPlus,
-      complete: step3Complete,
-      locked: false,
-      action: () => {
-        setSettingsSection("agent");
-        setShowSettings(true);
-      },
-    },
-    {
-      id: 5,
-      label: "Send Rep to Work",
+      label: "Go live",
       description: step4Status === "locked"
-        ? "Complete all previous steps first."
-        : `Activate ${hiredRepName || "your Rep"} by setting the go-live mode to Training or Production.`,
+        ? `First ${goLiveMissing.join(" and ")}.`
+        : `Put ${hiredRepName || "your reps"} to work by setting each channel's Mode to Training or Production.`,
       icon: Rocket,
       complete: step4Complete,
       locked: step4Status === "locked",
+      optional: false,
       action: () => {
         if (step4Status === "locked") return;
         setSelectedAgentId("agent-alpha");
@@ -294,26 +290,29 @@ function SetupProgress() {
     },
   ];
 
-  const completedCount = steps.filter((s) => s.complete).length;
+  // Progress tracks only the essential (non-optional) steps.
+  const essentialSteps = steps.filter((s) => !s.optional);
+  const completedCount = essentialSteps.filter((s) => s.complete).length;
+  const essentialTotal = essentialSteps.length;
 
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Get Started</h2>
-          <p className="text-sm text-gray-500">Complete these steps to activate your AI Support Rep.</p>
+          <p className="text-sm text-gray-500">Connect a channel and create an AI rep to go live — importing policies is optional.</p>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar — counts essential steps only */}
         <div className="mb-8">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <span>{completedCount} of {steps.length} completed</span>
-            <span>{Math.round((completedCount / steps.length) * 100)}%</span>
+            <span>{completedCount} of {essentialTotal} essentials</span>
+            <span>{Math.round((completedCount / essentialTotal) * 100)}%</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / steps.length) * 100}%` }}
+              style={{ width: `${(completedCount / essentialTotal) * 100}%` }}
             />
           </div>
         </div>
@@ -377,6 +376,9 @@ function SetupProgress() {
                     {step.complete && (
                       <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] h-5">Done</Badge>
                     )}
+                    {!step.complete && step.optional && (
+                      <Badge className="bg-gray-100 text-gray-500 border-gray-200 text-[10px] h-5">Optional</Badge>
+                    )}
                   </div>
                   <p className={cn(
                     "text-xs mt-0.5",
@@ -392,6 +394,131 @@ function SetupProgress() {
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   CHANNEL OVERVIEW PANEL — post-setup "配置后效果"
+   Shows each connected channel's Mode + which reps staff it.
+   ================================================================ */
+const MODE_BADGE: Record<ChannelMode, { label: string; cls: string }> = {
+  production: { label: "Production", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  training: { label: "Training", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  off: { label: "Off", cls: "bg-gray-100 text-gray-500 border-gray-200" },
+};
+
+function ChannelOverviewPanel() {
+  const {
+    liveChatConnected, liveChatMode,
+    emailChannelConnected, emailChannelAddress, emailMode,
+    zendeskConnected, zendesk, zendeskMode,
+    channelReps, reps, primaryChannel,
+    goToChannelSettings,
+  } = useApp();
+
+  const repById = (id: string) => reps.find((r) => r.id === id);
+
+  const rows: {
+    key: ChannelKey;
+    icon: typeof MessageSquare;
+    name: string;
+    sub: string;
+    connected: boolean;
+    mode: ChannelMode;
+  }[] = [
+    { key: "chat", icon: MessageSquare, name: "Support Chat", sub: "Live widget", connected: liveChatConnected, mode: liveChatMode },
+    { key: "email", icon: Mail, name: "Email", sub: emailChannelAddress || "Shared mailbox", connected: emailChannelConnected, mode: emailMode },
+    { key: "zendesk", icon: Ticket, name: "Zendesk", sub: zendesk?.subdomain ? `${zendesk.subdomain}.zendesk.com` : "Ticketing", connected: zendeskConnected, mode: zendeskMode },
+  ];
+
+  const openSettings = () => goToChannelSettings(primaryChannel ?? "chat");
+
+  return (
+    <div className="bg-white border border-border rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Sliders size={15} className="text-[#6c47ff]" />
+        <p className="text-[13px] font-semibold">Channel overview</p>
+        <span className="text-[11px] text-muted-foreground">Live configuration</span>
+        <button
+          onClick={openSettings}
+          className="ml-auto text-[12px] text-[#6c47ff] hover:text-[#5a3ad9] font-medium inline-flex items-center gap-1"
+        >
+          Manage channels <ArrowRight size={12} />
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {rows.map((row) => {
+          const Icon = row.icon;
+          const staff = (channelReps[row.key] ?? []).map(repById).filter(Boolean);
+          const isPrimary =
+            (primaryChannel === "chat" && row.key === "chat") ||
+            (primaryChannel === "email" && row.key === "email") ||
+            (primaryChannel === "zendesk" && row.key === "zendesk");
+          return (
+            <button
+              key={row.key}
+              type="button"
+              onClick={() => goToChannelSettings(row.key)}
+              className={cn(
+                "w-full text-left flex items-center gap-3 rounded-lg border p-3 transition-colors hover:border-[#6c47ff]/40 hover:bg-[#faf9ff]",
+                row.connected ? "border-gray-200" : "border-dashed border-gray-200 opacity-60"
+              )}
+            >
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                row.connected ? "bg-[#f3f0ff] text-[#6c47ff]" : "bg-gray-100 text-gray-400"
+              )}>
+                <Icon size={15} />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] font-semibold text-foreground truncate">{row.name}</span>
+                  {isPrimary && (
+                    <span className="text-[9px] font-bold tracking-wide px-1.5 py-px rounded bg-indigo-50 text-indigo-600 border border-indigo-200">
+                      PRIMARY
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground truncate">{row.sub}</p>
+              </div>
+
+              {!row.connected ? (
+                <span className="text-[11px] text-gray-400">Not connected</span>
+              ) : (
+                <>
+                  <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", MODE_BADGE[row.mode].cls)}>
+                    {MODE_BADGE[row.mode].label}
+                  </span>
+                  <div className="flex items-center min-w-[112px] justify-end">
+                    {staff.length === 0 ? (
+                      <span className="text-[11px] text-amber-600">⚠ No rep</span>
+                    ) : (
+                      <div className="flex items-center -space-x-1.5">
+                        {staff.map((rep) => (
+                          <div
+                            key={rep!.id}
+                            title={rep!.name}
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white"
+                            style={{ background: rep!.color }}
+                          >
+                            {rep!.name.charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                        <span className="text-[11px] text-muted-foreground ml-2.5">
+                          {staff.length === 1 ? staff[0]!.name : `${staff.length} reps`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -445,6 +572,11 @@ function TeamLeadView() {
 
       {/* Content — conversational flow */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+
+        {/* ── Channel Overview ── */}
+        <div className="max-w-[640px] ml-11">
+          <ChannelOverviewPanel />
+        </div>
 
         {/* ── Message 1: Daily Digest ── */}
         <div className="flex gap-3 items-start">
@@ -571,10 +703,10 @@ function TeamLeadView() {
    ================================================================ */
 function RepView({ agentId }: { agentId: string }) {
   const {
-    agentsData, hiredRepName, goLiveMode, setGoLiveMode,
-    zendeskConnected, zendesk,
+    agentsData, hiredRepName, agentMode, setAllChannelModes,
+    zendeskConnected, zendesk, anyChannelConnected,
     showGoLiveGuide, setShowGoLiveGuide,
-    setShowSettings, setSettingsSection,
+    goToChannelSettings,
   } = useApp();
   const agent = agentsData.find((a) => a.id === agentId) || agentsData[1];
   const [profileOpen, setProfileOpen] = useState(false);
@@ -586,7 +718,7 @@ function RepView({ agentId }: { agentId: string }) {
   const [sidebarTicketId, setSidebarTicketId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const zdOk = zendeskConnected;
+  const zdOk = anyChannelConnected;
 
   const handleSendChat = useCallback(() => {
     if (!inputValue.trim()) return;
@@ -609,7 +741,7 @@ function RepView({ agentId }: { agentId: string }) {
     training: { label: "Training", color: "bg-blue-50 border-blue-200 text-blue-700", dot: "bg-blue-500" },
     off: { label: "Off", color: "bg-gray-50 border-gray-200 text-gray-600", dot: "bg-gray-400" },
   };
-  const currentMode = modeConfig[goLiveMode];
+  const currentMode = modeConfig[agentMode];
 
   // Get transition warning message based on from → to
   const getTransitionMessage = (from: string, to: string): string | null => {
@@ -626,8 +758,8 @@ function RepView({ agentId }: { agentId: string }) {
 
   const handleModeClick = (mode: "production" | "training" | "off") => {
     if ((mode === "production" || mode === "training") && !zdOk) return;
-    if (mode === goLiveMode) return;
-    const msg = getTransitionMessage(goLiveMode, mode);
+    if (mode === agentMode) return;
+    const msg = getTransitionMessage(agentMode, mode);
     if (msg) {
       setPendingMode(mode);
       setShowModeDropdown(false);
@@ -637,11 +769,12 @@ function RepView({ agentId }: { agentId: string }) {
   };
 
   const confirmModeChange = (mode: "production" | "training" | "off") => {
-    setGoLiveMode(mode);
+    // Bulk action — set every connected channel to this mode. agentMode then derives from channels.
+    setAllChannelModes(mode);
     setShowModeDropdown(false);
     setPendingMode(null);
     if (showGoLiveGuide) setShowGoLiveGuide(false);
-    toast.success(`Mode changed to ${modeConfig[mode].label}`);
+    toast.success(`All connected channels set to ${modeConfig[mode].label}`);
   };
 
   const handleResolve = (id: string) => {
@@ -710,7 +843,7 @@ function RepView({ agentId }: { agentId: string }) {
                     onClick={() => handleModeClick("production")}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2",
-                      goLiveMode === "production" ? "bg-green-50 text-green-700" : "hover:bg-gray-50 text-gray-700",
+                      agentMode === "production" ? "bg-green-50 text-green-700" : "hover:bg-gray-50 text-gray-700",
                       !zdOk && "opacity-50 cursor-not-allowed"
                     )}
                     disabled={!zdOk}
@@ -725,7 +858,7 @@ function RepView({ agentId }: { agentId: string }) {
                     onClick={() => handleModeClick("training")}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2",
-                      goLiveMode === "training" ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50 text-gray-700",
+                      agentMode === "training" ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50 text-gray-700",
                       !zdOk && "opacity-50 cursor-not-allowed"
                     )}
                     disabled={!zdOk}
@@ -740,7 +873,7 @@ function RepView({ agentId }: { agentId: string }) {
                     onClick={() => handleModeClick("off")}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2",
-                      goLiveMode === "off" ? "bg-gray-100 text-gray-600" : "hover:bg-gray-50 text-gray-700"
+                      agentMode === "off" ? "bg-gray-100 text-gray-600" : "hover:bg-gray-50 text-gray-700"
                     )}
                   >
                     <div className="w-2 h-2 rounded-full bg-gray-400" />
@@ -753,8 +886,8 @@ function RepView({ agentId }: { agentId: string }) {
                 {!zdOk && (
                   <div className="px-3 py-2 border-t border-gray-100 bg-amber-50">
                     <p className="text-[10px] text-amber-700">
-                      Ticketing system connection required for Training and Production modes.
-                      <button onClick={() => { setShowModeDropdown(false); setSettingsSection("ticketing"); setShowSettings(true); }} className="text-indigo-600 font-medium ml-1 hover:underline">
+                      Connect a channel to enable Training and Production modes.
+                      <button onClick={() => { setShowModeDropdown(false); goToChannelSettings("chat"); }} className="text-indigo-600 font-medium ml-1 hover:underline">
                         Complete setup →
                       </button>
                     </p>
@@ -926,7 +1059,7 @@ function RepView({ agentId }: { agentId: string }) {
               Switch to {pendingMode ? modeConfig[pendingMode].label : ""} mode?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[13px]">
-              {pendingMode && getTransitionMessage(goLiveMode, pendingMode)}
+              {pendingMode && getTransitionMessage(agentMode, pendingMode)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -947,19 +1080,18 @@ function RepView({ agentId }: { agentId: string }) {
 /* ================================================================
    NORMAL VIEW — Agent sidebar + main content
    ================================================================ */
-function NormalView() {
+function NormalView({ onOpenSettings }: { onOpenSettings: () => void }) {
   const {
     selectedAgentId, setSelectedAgentId,
     agentsData, hiredRepName,
-    setShowSettings,
     zendeskConnected,
-    goLiveMode,
+    agentMode,
     setupFullyComplete,
   } = useApp();
   const nonLeadAgents = agentsData.filter((a) => !a.isTeamLead);
   const teamLead = agentsData.find((a) => a.id === "team-lead")!;
 
-  const modeDotColor = goLiveMode === "production" ? "bg-green-500" : goLiveMode === "training" ? "bg-blue-500" : "bg-gray-400";
+  const modeDotColor = agentMode === "production" ? "bg-green-500" : agentMode === "training" ? "bg-blue-500" : "bg-gray-400";
 
   return (
     <div className="flex-1 flex h-full">
@@ -997,7 +1129,7 @@ function NormalView() {
                 !setupFullyComplete && "opacity-40 cursor-not-allowed",
               )}
               style={{ background: agent.color }}
-              title={setupFullyComplete ? `${hiredRepName || "AI Rep"} (${goLiveMode})` : "Complete setup first"}
+              title={setupFullyComplete ? `${hiredRepName || "AI Rep"} (${agentMode})` : "Complete setup first"}
             >
               {hiredRepName ? hiredRepName.slice(0, 2).toUpperCase() : agent.initials}
               <span className={cn(
@@ -1012,7 +1144,7 @@ function NormalView() {
 
         {/* Settings button at bottom */}
         <button
-          onClick={() => setShowSettings(true)}
+          onClick={onOpenSettings}
           className="w-10 h-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground transition-colors mt-2"
           title="Settings"
         >
@@ -1030,11 +1162,31 @@ function NormalView() {
   );
 }
 
-/* MAIN AGENTS PAGE */
+/* MAIN AGENTS PAGE — [Operations | Settings] sub-tabs */
+type ManagerTab = "operations" | "settings";
+
+const MANAGER_TABS: SubTabItem<ManagerTab>[] = [
+  { id: "operations", label: "Operations", icon: Bot },
+  { id: "settings", label: "Settings", icon: Sliders },
+];
+
 export default function AgentsPage() {
+  const { managerTab: tab, setManagerTab: setTab } = useApp();
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <NormalView />
+      <SubTabBar tabs={MANAGER_TABS} active={tab} onChange={setTab} />
+      {tab === "operations" ? (
+        <div className="flex-1 min-h-0 overflow-hidden flex">
+          <NormalView onOpenSettings={() => setTab("settings")} />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            <ConfigureAgentSection />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

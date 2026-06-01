@@ -1,563 +1,501 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PRD — Support Agent & Sales Agent 功能更新</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anker × Seel AI 智能客服组件 — 产品需求文档 v1.0</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --anker: #0066CC;
+    --seel:  #7C3AED;
+    --dark:  #1E293B;
+    --mid:   #475569;
+    --border:#E2E8F0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    font-size: 14px; line-height: 1.7; color: #111827;
-    background: #f9fafb; padding: 0 0 80px;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+    font-size: 15px; line-height: 1.75; color: var(--dark);
+    background: #F8FAFC;
   }
-  /* Header */
-  .header {
-    background: #fff; border-bottom: 1px solid #e5e7eb;
-    padding: 20px 0; position: sticky; top: 0; z-index: 100;
+
+  /* ── 顶部栏 ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 0 40px; height: 56px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
   }
-  .header-inner {
-    max-width: 900px; margin: 0 auto; padding: 0 32px;
-    display: flex; align-items: center; justify-content: space-between;
+  .topbar-brand { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .topbar-brand .a { color: var(--anker); }
+  .topbar-brand .x { color: var(--mid); font-weight: 400; }
+  .topbar-brand .s { color: var(--seel); }
+  .topbar-tag {
+    font-size: 11px; font-weight: 600;
+    background: #FEF3C7; color: #92400E;
+    padding: 2px 8px; border-radius: 99px;
   }
-  .header-title { font-size: 15px; font-weight: 700; color: #111827; }
-  .meta { display: flex; gap: 10px; flex-wrap: wrap; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600;
+  .topbar-nav { margin-left: auto; display: flex; gap: 4px; }
+  .topbar-nav a {
+    font-size: 13px; color: var(--mid); text-decoration: none;
+    padding: 5px 12px; border-radius: 6px; font-weight: 500;
+    transition: background .15s, color .15s;
   }
-  .badge-purple { background: #f0edff; color: #6c47ff; }
-  .badge-gray   { background: #f3f4f6; color: #6b7280; }
-  .badge-amber  { background: #fffbeb; color: #92400e; }
-  /* Layout */
-  .container { max-width: 900px; margin: 0 auto; padding: 0 32px; }
-  /* TOC */
-  .toc {
-    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-    padding: 20px 24px; margin: 28px 0; display: grid;
-    grid-template-columns: 1fr 1fr; gap: 4px 32px;
+  .topbar-nav a:hover { background: #F1F5F9; color: var(--dark); }
+  .topbar-nav a.active { background: #EFF6FF; color: var(--anker); font-weight: 600; }
+
+  /* ── 布局 ── */
+  .layout { display: flex; max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── 侧边栏 ── */
+  .sidebar {
+    width: 210px; flex-shrink: 0; position: sticky; top: 56px;
+    height: calc(100vh - 56px); overflow-y: auto; padding: 32px 0;
   }
-  .toc-title { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; grid-column: 1/-1; }
-  .toc a { font-size: 13px; color: #6c47ff; text-decoration: none; display: block; padding: 2px 0; }
-  .toc a:hover { text-decoration: underline; }
-  /* Section card */
-  .section {
-    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-    margin-bottom: 20px; overflow: hidden;
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--mid); padding: 0 16px 8px; text-transform: uppercase; }
+  .nav-link {
+    display: block; padding: 5px 16px; font-size: 13px; color: var(--mid);
+    text-decoration: none; border-left: 2px solid transparent;
+    transition: all .15s; line-height: 1.5;
   }
-  .section-header {
-    padding: 16px 24px; border-bottom: 1px solid #f3f4f6;
-    display: flex; align-items: center; gap: 10px;
+  .nav-link:hover { color: var(--anker); border-left-color: var(--anker); background: #EFF6FF; }
+  .nav-link.active { color: var(--anker); border-left-color: var(--anker); font-weight: 600; background: #EFF6FF; }
+  .nav-sub { padding-left: 28px; font-size: 12.5px; }
+
+  /* ── 主内容 ── */
+  .main { flex: 1; min-width: 0; padding: 40px 0 80px 48px; }
+
+  /* ── 封面 ── */
+  .cover {
+    background: linear-gradient(135deg, #0A1628 0%, #1a2744 50%, #2D1D6B 100%);
+    border-radius: 16px; padding: 64px 56px; margin-bottom: 56px;
+    color: #fff; position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(124,58,237,.25) 0%, transparent 60%);
+  }
+  .cover-badge {
+    position: relative;
+    display: inline-block; font-size: 12px; font-weight: 600;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    color: rgba(255,255,255,.85); padding: 4px 12px; border-radius: 99px; margin-bottom: 28px;
+  }
+  .cover-title { position: relative; font-size: 42px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 8px; }
+  .cover-title .a { color: #60A5FA; }
+  .cover-title .x { color: rgba(255,255,255,.4); font-weight: 300; margin: 0 4px; }
+  .cover-title .s { color: #C4B5FD; }
+  .cover-sub { position: relative; font-size: 19px; color: rgba(255,255,255,.7); margin-bottom: 36px; }
+  .cover-meta { position: relative; display: flex; gap: 32px; flex-wrap: wrap; }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .cover-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .cover-meta-value { font-size: 15px; font-weight: 600; color: #fff; }
+
+  /* ── 章节 ── */
+  .section { margin-bottom: 56px; scroll-margin-top: 76px; }
+  .section-title {
+    font-size: 24px; font-weight: 700; color: var(--dark);
+    padding-bottom: 12px; border-bottom: 2px solid var(--border);
+    margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
   }
   .section-num {
-    width: 26px; height: 26px; border-radius: 8px; background: #6c47ff;
-    color: #fff; font-size: 12px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; shrink: 0;
+    width: 36px; height: 36px; border-radius: 8px; background: var(--anker);
+    color: #fff; font-size: 14px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .section-num.green  { background: #10b981; }
-  .section-num.orange { background: #f59e0b; }
-  .section-num.blue   { background: #3b82f6; }
-  .section-title { font-size: 15px; font-weight: 700; color: #111827; }
-  .section-sub   { font-size: 12px; color: #6b7280; margin-top: 1px; }
-  .section-body  { padding: 20px 24px; }
-  /* Sub-section */
-  h3 { font-size: 13px; font-weight: 700; color: #374151; margin: 20px 0 8px; padding-top: 4px; }
-  h3:first-child { margin-top: 0; }
-  h4 { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 6px; }
-  p  { font-size: 13px; color: #374151; margin-bottom: 8px; }
-  /* Table */
-  .table-wrap { overflow-x: auto; margin: 10px 0 16px; border-radius: 8px; border: 1px solid #e5e7eb; }
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  thead tr { background: #f9fafb; }
-  th { padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-  td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }
+  .subsection { margin: 28px 0; }
+  .subsection-title { font-size: 17px; font-weight: 700; color: var(--anker); margin-bottom: 14px; }
+  .sub2-title { font-size: 15px; font-weight: 700; color: var(--dark); margin: 20px 0 10px; }
+
+  p { color: var(--mid); line-height: 1.8; margin-bottom: 12px; }
+
+  /* ── 表格 ── */
+  .tbl-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    background: var(--anker); color: #fff; text-align: left;
+    padding: 10px 16px; font-weight: 600; font-size: 13px;
+  }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child  { border-radius: 0 8px 0 0; }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--dark); vertical-align: top; line-height: 1.6; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafafa; }
-  code { font-family: "SF Mono", Monaco, monospace; font-size: 11px; background: #f3f4f6; color: #6c47ff; padding: 1px 5px; border-radius: 4px; }
-  /* Callout */
+  tr:nth-child(even) td { background: #F8FAFC; }
+  td strong { color: var(--dark); }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px;
+    border-radius: 99px; margin-right: 4px;
+  }
+  .tag-blue   { background: #DBEAFE; color: #1D4ED8; }
+  .tag-purple { background: #EDE9FE; color: #6D28D9; }
+  .tag-green  { background: #DCFCE7; color: #15803D; }
+  .tag-orange { background: #FEF3C7; color: #92400E; }
+  .tag-red    { background: #FEE2E2; color: #DC2626; }
+  .prio-1   { font-weight: 700; color: #DC2626; }
+  .prio-low { color: var(--mid); }
+
+  /* ── 提示框 ── */
   .callout {
-    display: flex; gap: 10px; padding: 10px 14px; border-radius: 8px; margin: 10px 0;
-    font-size: 12.5px; line-height: 1.6;
+    background: #F5F3FF; border-left: 4px solid var(--seel);
+    border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 16px 0 24px;
+    font-size: 13.5px; line-height: 1.7; color: var(--dark);
   }
-  .callout-note    { background: #f0edff; border-left: 3px solid #6c47ff; color: #4c1d95; }
-  .callout-warning { background: #fffbeb; border-left: 3px solid #f59e0b; color: #78350f; }
-  .callout-tip     { background: #f0fdf4; border-left: 3px solid #10b981; color: #065f46; }
-  /* List */
-  ul, ol { padding-left: 20px; margin-bottom: 10px; }
-  li { font-size: 13px; color: #374151; margin-bottom: 4px; }
-  li strong { color: #111827; }
-  /* Color dots */
-  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
-  /* KPI grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
-  .kpi-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
-  .kpi-label { font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-  .kpi-value { font-size: 20px; font-weight: 800; color: #111827; }
-  /* Divider */
-  hr { border: none; border-top: 1px solid #f3f4f6; margin: 16px 0; }
-  /* Demo section */
-  .demo-header {
-    background: linear-gradient(135deg, #6c47ff 0%, #8b5cf6 100%);
-    color: #fff; padding: 20px 24px; border-radius: 12px 12px 0 0;
+  .callout code {
+    display: block; font-family: 'SF Mono', 'Fira Mono', monospace;
+    font-size: 12.5px; color: var(--seel); margin-top: 8px; word-break: break-all;
+    background: rgba(124,58,237,.07); padding: 6px 10px; border-radius: 4px;
   }
-  .demo-header h2 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-  .demo-header p  { font-size: 13px; opacity: .85; }
-  .demo-link {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
-    background: rgba(255,255,255,.2); color: #fff; text-decoration: none;
-    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-    border: 1px solid rgba(255,255,255,.3);
+
+  /* ── 列表 ── */
+  ul.prd-list, ol.prd-list { padding-left: 0; margin: 10px 0 16px; list-style: none; }
+  ul.prd-list li, ol.prd-list li {
+    position: relative; padding: 5px 0 5px 22px; font-size: 14px; color: var(--mid); line-height: 1.7;
+    counter-increment: prd-counter;
   }
-  .demo-link:hover { background: rgba(255,255,255,.3); }
-  .intent-tag {
-    display: inline-block; background: #f3f4f6; color: #374151;
-    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-right: 6px;
+  ul.prd-list li::before { content: '•'; position: absolute; left: 6px; color: var(--anker); font-weight: 700; }
+  ol.prd-list { counter-reset: prd-counter; }
+  ol.prd-list li::before { content: counter(prd-counter) '.'; position: absolute; left: 0; color: var(--anker); font-weight: 700; font-size: 13px; }
+
+  /* ── 快捷芯片 ── */
+  .chip-groups { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0 20px; }
+  .chip-group { flex: 1; min-width: 240px; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .chip-group-label { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+  .chip-group.blue .chip-group-label { color: var(--anker); }
+  .chip-group.purple .chip-group-label { color: var(--seel); }
+  .chip-group .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12.5px; padding: 4px 10px; border-radius: 99px; font-weight: 500; }
+  .chip.blue { background: #DBEAFE; color: #1D4ED8; }
+  .chip.purple { background: #EDE9FE; color: #6D28D9; }
+
+  /* ── 回到顶部 ── */
+  #btt {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--anker); color: #fff; border: none;
+    font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,102,204,.35);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s;
   }
-  .q-list { list-style: none; padding: 0; }
-  .q-list li {
-    padding: 9px 14px; border-bottom: 1px solid #f3f4f6;
-    font-size: 13px; color: #374151; display: flex; gap: 10px; align-items: flex-start;
-  }
-  .q-list li:last-child { border-bottom: none; }
-  .q-num { font-size: 11px; font-weight: 700; color: #9ca3af; min-width: 22px; margin-top: 1px; }
-  .highlight-row td { background: #fffbeb !important; font-weight: 600; }
-  /* Intent section */
-  .intent-section { margin-bottom: 8px; }
-  .intent-title {
-    font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase;
-    letter-spacing: .07em; padding: 8px 14px; background: #f9fafb;
-    border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px;
+  #btt:hover { transform: translateY(-2px); }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 0 60px; }
+    .topbar { padding: 0 16px; }
+    .cover { padding: 36px 24px; }
+    .cover-title { font-size: 28px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Sticky header -->
-<div class="header">
-  <div class="header-inner">
-    <div class="header-title">PRD — Support Agent &amp; Sales Agent 功能更新</div>
-    <div class="meta">
-      <span class="badge badge-purple">v1.0</span>
-      <span class="badge badge-gray">2026-05-14</span>
-      <span class="badge badge-amber">待研发评审</span>
-    </div>
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="a">ANKER</span><span class="x">×</span><span class="s">seel</span>
   </div>
+  <span class="topbar-tag">PRD v1.0</span>
+  <nav class="topbar-nav">
+    <a href="hub.html">总览</a>
+    <a href="prd.html" class="active">PRD</a>
+    <a href="tech.html">技术方案</a>
+    <a href="anker_seel_api_demo_v2.html">Demo</a>
+  </nav>
 </div>
 
-<div class="container">
+<div class="layout">
+  <nav class="sidebar">
+    <div style="margin-bottom:24px">
+      <div class="nav-label">目录</div>
+      <a class="nav-link active" href="#overview">1. 项目概述</a>
+      <a class="nav-link nav-sub" href="#value">1.1 核心价值</a>
+      <a class="nav-link" href="#stories">2. 用户故事</a>
+      <a class="nav-link" href="#functional">3. 功能需求</a>
+      <a class="nav-link nav-sub" href="#two-mode">3.1 双模式流程</a>
+      <a class="nav-link nav-sub" href="#intent">3.2 意图识别</a>
+      <a class="nav-link nav-sub" href="#claim-flow">3.3 理赔流程</a>
+      <a class="nav-link nav-sub" href="#data">3.4 数据传递</a>
+      <a class="nav-link nav-sub" href="#chips">3.5 快捷芯片</a>
+    </div>
+  </nav>
 
-  <!-- TOC -->
-  <div class="toc">
-    <div class="toc-title">目录</div>
-    <a href="#background">一、背景</a>
-    <a href="#sales-intro">三、Sales Agent — 介绍页</a>
-    <a href="#support-performance">二、Support Agent — Performance</a>
-    <a href="#sales-analytics">三、Sales Agent — Analytics</a>
-    <a href="#support-conversations">二、Support Agent — Conversations</a>
-    <a href="#sales-orders">三、Sales Agent — 订单详情</a>
-    <a href="#nonfunc">四、非功能需求</a>
-    <a href="#design">五、设计规范</a>
-    <a href="#"></a>
-  </div>
+  <main class="main">
 
-  <!-- 一、背景 -->
-  <div class="section" id="background">
-    <div class="section-header">
-      <div class="section-num">一</div>
-      <div>
-        <div class="section-title">背景</div>
+    <!-- 封面 -->
+    <div class="cover">
+      <div class="cover-badge">产品需求文档</div>
+      <div class="cover-title">
+        <span class="a">ANKER</span><span class="x">×</span><span class="s">SEEL</span>
+      </div>
+      <div class="cover-sub">AI 智能客服集成方案</div>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v1.0</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026年5月</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">草稿</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">保密级别</span><span class="cover-meta-value">机密</span></div>
       </div>
     </div>
-    <div class="section-body">
-      <p>本次迭代围绕商家后台两个核心模块（Support Agent、Sales Agent）的数据可视化与交互体验进行升级，目标是让商家能够更清晰地感知 AI 的服务效果和销售价值。</p>
-    </div>
-  </div>
 
-  <!-- 二、Support Agent -->
-  <div class="section" id="support-performance">
-    <div class="section-header">
-      <div class="section-num">二</div>
-      <div>
-        <div class="section-title">Support Agent</div>
-        <div class="section-sub">Performance Dashboard &amp; Conversations</div>
+    <!-- 1. 项目概述 -->
+    <div class="section" id="overview">
+      <div class="section-title"><span class="section-num">1</span> 项目概述</div>
+      <p>Anker × Seel AI 智能客服组件是 Anker 官网内的智能客服对话界面。当客户咨询涉及 Seel 包裹保障相关内容时，组件调用 Seel 接口获取回答，或在需要发起理赔时，携带订单数据引导用户跳转至 Seel 理赔中心（RC）。</p>
+      <p>识别到 Seel 相关意图后，自动路由至两种模式：<strong>咨询模式</strong>——调用 Seel 接口，直接在聊天框内回答保障政策问题；<strong>理赔模式</strong>——核验客户保单后，跳转至 Seel RC 并自动预填表单，消除手动录入。</p>
+
+      <div class="subsection" id="value">
+        <div class="subsection-title">1.1 核心价值</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:140px">利益相关方</th><th>核心收益</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Anker</strong></td><td>自动处理重复性 Seel 客服问题，降低人工坐席工作量与运营成本</td></tr>
+              <tr><td><strong>Seel</strong></td><td>提升 RC 曝光率，在客户最需要时呈现保障价值</td></tr>
+              <tr><td><strong>用户</strong></td><td>即时获取准确答案，无需致电客服；秒级完成理赔发起，零手动录入</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="section-body">
 
-      <h3>2.1 Performance — Dashboard 更新</h3>
-      <p>重新设计 Performance 仪表盘，提升数据可读性，新增 AI 自动摘要功能。</p>
-
-      <h4>2.1.1 KPI 指标栏</h4>
-      <p>展示 5 个核心指标卡片，每张卡片包含：当前值 + 与上期环比趋势。</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>指标</th><th>定义</th><th>正向方向</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Total Tickets</strong></td><td>选定周期内 AI 处理的总工单数</td><td>增加 ↑</td></tr>
-            <tr><td><strong>Resolution Rate</strong></td><td>AI 独立闭环工单数 / 总工单数</td><td>增加 ↑</td></tr>
-            <tr><td><strong>Escalation Rate</strong></td><td>转人工工单数 / 总工单数</td><td>降低 ↓</td></tr>
-            <tr><td><strong>Sentiment Improvement Rate</strong></td><td>Exit 情绪得分 &gt; Incoming 情绪得分的对话占比</td><td>增加 ↑</td></tr>
-            <tr><td><strong>Avg. Turns</strong></td><td>每条对话平均轮次（AI + 用户消息之和）/ 2</td><td>降低 ↓</td></tr>
-          </tbody>
-        </table>
+    <!-- 2. 用户故事 -->
+    <div class="section" id="stories">
+      <div class="section-title"><span class="section-num">2</span> 用户故事</div>
+      <div class="subsection">
+        <div class="subsection-title">3.1 消费者故事</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:70px">编号</th><th>用户故事</th><th>验收标准</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>US-01</strong></td>
+                <td>作为消费者，我希望知道我的订单是否受 Seel 保障，以便了解我的权益。</td>
+                <td>机器人在 2 秒内确认保障状态、保单号及保障类型。</td>
+              </tr>
+              <tr>
+                <td><strong>US-02</strong></td>
+                <td>作为消费者，我希望了解 Seel 保什么、不保什么，以便设定合理预期。</td>
+                <td>机器人准确列举保障事项（丢失、盗窃、损坏、延误）及免责条款。</td>
+              </tr>
+              <tr>
+                <td><strong>US-03</strong></td>
+                <td>作为消费者，我希望了解 Seel 保障的有效期限。</td>
+                <td>机器人告知保障窗口：购买日起至预计送达日后 30 天。</td>
+              </tr>
+              <tr>
+                <td><strong>US-04</strong></td>
+                <td>作为消费者，我希望对丢失、损坏或延误的包裹便捷发起理赔。</td>
+                <td>机器人跳转 RC 并自动预填邮箱与订单号，无需手动录入。</td>
+              </tr>
+              <tr>
+                <td><strong>US-05</strong></td>
+                <td>作为消费者，我希望了解理赔的处理时效。</td>
+                <td>机器人告知：24小时审核 → 24–48小时审批 → 3–5个工作日结案。</td>
+              </tr>
+              <tr>
+                <td><strong>US-06</strong></td>
+                <td>作为消费者，我希望查询已提交理赔的处理进度。</td>
+                <td>机器人说明在 resolve.seel.com 查询的方式，并确认邮件通知节点。</td>
+              </tr>
+              <tr>
+                <td><strong>US-07</strong></td>
+                <td>作为消费者，我希望知道理赔结果是退款还是补发商品。</td>
+                <td>机器人说明审批通过后两种方式均可选择，由消费者决定。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="callout callout-note">情绪得分量表：-2（Furious）/ -1（Negative）/ 0（Neutral）/ +1（Positive）/ +2（Satisfied）</div>
-
-      <h4>2.1.2 Resolution Rate 趋势图</h4>
-      <ul>
-        <li>图表类型：Area Chart（面积图）</li>
-        <li>X 轴：日期；Y 轴：Resolution Rate（%）</li>
-        <li>时间范围：与顶部筛选器联动，支持 Last 7 / 30 / 90 / 180 days</li>
-      </ul>
-
-      <h4>2.1.3 Sentiment Distribution（情绪分布）</h4>
-      <p>用两个环形图（Donut Chart）并排展示对话入口情绪（Entry）与出口情绪（Exit）的分布对比。</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>字段</th><th>说明</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Incoming Sentiment</strong></td><td>对话开始时用户的情绪分类（售前多为 Neutral）</td></tr>
-            <tr><td><strong>Exit Sentiment</strong></td><td>对话结束时用户的情绪分类（AI 介入后改善）</td></tr>
-            <tr><td><strong>圆环中心数字</strong></td><td>当前周期的平均情绪得分（-2 ～ +2），正值绿色，负值橙色</td></tr>
-            <tr><td><strong>图例</strong></td><td>每种情绪的颜色 + 名称 + 百分比，列于环形图下方</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>情绪</th><th>颜色</th><th>色值</th></tr></thead>
-          <tbody>
-            <tr><td>Satisfied</td><td><span class="dot" style="background:#10b981"></span>绿色</td><td><code>#10b981</code></td></tr>
-            <tr><td>Positive</td><td><span class="dot" style="background:#14b8a6"></span>青色</td><td><code>#14b8a6</code></td></tr>
-            <tr><td>Neutral</td><td><span class="dot" style="background:#94a3b8"></span>灰色</td><td><code>#94a3b8</code></td></tr>
-            <tr><td>Negative</td><td><span class="dot" style="background:#f97316"></span>橙色</td><td><code>#f97316</code></td></tr>
-            <tr><td>Furious</td><td><span class="dot" style="background:#ef4444"></span>红色</td><td><code>#ef4444</code></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4>2.1.4 Contact Reason 表格</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>列名</th><th>定义</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Intent</strong></td><td>工单意图分类，如 WISMO、Cancellation、Refund 等</td></tr>
-            <tr><td><strong>Volume</strong></td><td>该意图的工单总量，附 mini bar 可视化占比</td></tr>
-            <tr><td><strong>Resolution Rate</strong></td><td>该意图的 AI 独立闭环率，附颜色编码（绿/黄/红）</td></tr>
-            <tr><td><strong>Sentiment Change</strong></td><td>该意图对话的平均情绪变化值（Exit - Entry），正值绿色，负值红色</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4>2.1.5 AI Summary（AI 自动摘要）</h4>
-      <ul>
-        <li>进入 Dashboard 后<strong>自动生成</strong>，无需手动触发</li>
-        <li>切换时间范围或 Channel 筛选时<strong>自动重新生成</strong></li>
-        <li>支持折叠/展开（Collapse），无 Regenerate 按钮</li>
-        <li>生成过程展示 loading 动画（约 2 秒）</li>
-      </ul>
-
-      <h4>输出结构（三栏卡片）</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>区块</th><th>颜色</th><th>内容</th></tr></thead>
-          <tbody>
-            <tr><td>✅ <strong>What's Working</strong></td><td>绿色</td><td>resolution_rate 最高意图 + 趋势正向信号 + 体量类正向信号，各 1 条，必须含具体数字</td></tr>
-            <tr><td>⚠️ <strong>Needs Attention</strong></td><td>橙色</td><td>resolution_rate 最低意图 + escalation 结构归因（定位 2-3 个高 escalation intent）+ entry sentiment 前置触发分析</td></tr>
-            <tr><td>💡 <strong>Recommendations</strong></td><td>紫色</td><td>三条可落地建议，每条对应 Needs Attention 一个痛点，形成"问题→动作"闭环，第三条必须可供商家向上汇报 AI 价值</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4>AI Summary Prompt</h4>
-      <div class="callout callout-note" style="margin-bottom:12px;">
-        以下 prompt 用于后端调用 LLM 生成 AI Summary 内容，输入数据由系统在请求时动态填充。
-      </div>
-      <pre style="background:#f8f7ff;border:1px solid #e0d9ff;border-radius:10px;padding:18px 20px;font-size:11.5px;line-height:1.75;color:#1e1b4b;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-family:'SF Mono',Monaco,monospace;">你是 Seel AI Support Agent 的业绩分析师。基于以下数据，为商家生成一份
-Dashboard AI Summary，渲染到三栏（What's Working / Needs Attention /
-Recommendations）。请严格遵循以下原则。
-
-<span style="color:#6c47ff;font-weight:700;"># 输入数据</span>
-- 时间窗口：{date_range}
-- 渠道：{channels}
-- 核心指标：total_tickets, resolution_rate, escalation_rate,
-  sentiment_improvement_rate, avg_turns（含与上一周期 delta）
-- 意图分布（Contact Reason）：每个 intent 的 volume / resolution_rate /
-  sentiment_change
-- 情绪分布：incoming vs exit 的 positive / neutral / negative / furious 占比
-- Resolution 趋势曲线（按日）
-
-<span style="color:#6c47ff;font-weight:700;"># 输出结构</span>
-
-<span style="font-weight:700;">## 1. 顶部摘要段（2-3 句）</span>
-- 第一句：本期总量 + 解决率 + 平均轮次（带主语"your AI Support Agent"）
-- 第二句：情绪改善率 + 一句话定性（"de-escalate and resolve effectively"）
-- 第三句：一个需要警示的指标（如 escalation rate vs benchmark），用
-  高亮色（绿/橙/红）标注数字
-- 数字用 &lt;strong&gt; 包裹，benchmark 对比写明 pp 差异
-
-<span style="font-weight:700;">## 2. What's Working（绿色卡）</span>
-- 锁定 resolution_rate 最高的 1 个 intent，给出具体数值
-- 给出一个趋势性正向信号（如"resolution rate trending +X% vs previous period"）
-- 给出一个体量类正向信号（如"[Intent] is the highest-volume contact reason
-  — the agent is absorbing the bulk of repetitive inquiries successfully"）
-- 共 3 个 bullet，每个 1-2 句，必须带具体数字
-
-<span style="font-weight:700;">## 3. Needs Attention（橙色卡）</span>
-- 锁定 resolution_rate 最低的 1 个 intent，标注数值，给出业务含义
-  （"consider expanding the playbook for this intent"）
-- 拆解 escalation 的结构原因：定位到 2-3 个高 escalation 的 intent
-  （如 Complaint / Refund），写明"driven primarily by ..."
-- 用 entry sentiment 解释一个"前置触发"问题（如 Furious/Negative
-  entry 占比 → early-stage tone detection could route faster）
-- 严禁笼统的"加强培训 / 优化流程"，必须结构化归因到具体 intent / 情绪 / 路径
-
-<span style="font-weight:700;">## 4. Recommendations（紫色卡）</span>
-- 三条建议，每条对应上一栏的一个痛点，形成"问题→动作"闭环：
-  1. 针对低解决率 intent → "Strengthen [Intent] playbook with more
-     resolution paths to improve the X% rate"
-  2. 针对高体量 intent → 主动预防型动作（如"Add proactive [X] messaging
-     to reduce [Intent] volume — this alone could free up significant
-     agent capacity"）
-  3. 把正向数据包装成商家可对外引用的价值点（如"Exit sentiment of
-     +X vs entry of -Y shows a strong uplift — highlight this in
-     merchant reporting to demonstrate AI value"）
-- 每条建议必须可在 2 周内落地，禁止空泛词
-
-<span style="color:#6c47ff;font-weight:700;"># 风格约束</span>
-1. <strong>结构归因，而非能力归因</strong>：把 escalation / not_resolved 拆成
-   "意图×情绪×路径"的结构原因，不要写"AI 能力不足"。
-2. <strong>数字优先</strong>：每个 bullet 至少出现一个具体数字（百分比 / pp / 倍数）。
-3. <strong>去模板化</strong>：不同商家的 Summary 读起来必须不同——具体 intent 名、
-   具体百分比、具体高频意图必须替换，不能留占位符或通用形容词。
-4. <strong>正向数据要"可被商家转述"</strong>：Recommendations 第三条要让商家能
-   直接拿去给老板汇报，体现 AI 价值。
-5. <strong>语气</strong>：分析师视角，克制、可被引用、不夸张；不用 emoji；不用
-   "amazing / great job"等口语化褒奖。
-6. <strong>长度</strong>：摘要段 ≤ 80 词；每张卡 3 个 bullet，每 bullet 1-2 句。
-
-<span style="color:#6c47ff;font-weight:700;"># 输出格式</span>
-返回 JSON：
-{
-  "summary": "...",
-  "whats_working": ["...", "...", "..."],
-  "needs_attention": ["...", "...", "..."],
-  "recommendations": ["...", "...", "..."]
-}</pre>
-
-      <hr id="support-conversations" />
-
-      <h3>2.2 Conversations — 对话记录更新</h3>
-      <p>提供完整的对话记录列表，支持多维度筛选与排序，方便商家复盘 AI 处理质量。</p>
-
-      <h4>2.2.1 筛选条件</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>筛选项</th><th>可选值</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Outcome</strong></td><td>All / Resolved / Escalated / Handling</td></tr>
-            <tr><td><strong>Intent</strong></td><td>All / WISMO / Cancellation / Address Change / Refund / Complaint</td></tr>
-            <tr><td><strong>Incoming Sentiment</strong></td><td>All / Satisfied / Positive / Neutral / Negative / Furious</td></tr>
-            <tr><td><strong>Exit Sentiment</strong></td><td>All / Satisfied / Positive / Neutral / Negative / Furious</td></tr>
-            <tr><td><strong>搜索框</strong></td><td>按 Ticket ID / 客户名 / 邮箱 / 对话摘要全文检索</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4>2.2.2 列表字段</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>列名</th><th>定义</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Ticket ID</strong></td><td>工单唯一标识</td></tr>
-            <tr><td><strong>Customer</strong></td><td>客户姓名 + 邮箱</td></tr>
-            <tr><td><strong>Intent</strong></td><td>意图分类</td></tr>
-            <tr><td><strong>Incoming Sentiment</strong></td><td>入口情绪标签（带颜色）</td></tr>
-            <tr><td><strong>Exit Sentiment</strong></td><td>出口情绪标签（带颜色）</td></tr>
-            <tr><td><strong>Outcome</strong></td><td>处理结果：Resolved / Escalated / Handling</td></tr>
-            <tr><td><strong>Mode</strong></td><td>运行模式：Training / Production</td></tr>
-            <tr><td><strong>Turns</strong></td><td>对话轮次</td></tr>
-            <tr><td><strong>Time</strong></td><td>对话发生时间</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <ul>
-        <li>支持按所有列排序（点击列头切换升/降序）</li>
-        <li>点击任意行展开对话详情侧边栏（Conversation Log Sidebar）</li>
-      </ul>
-
-    </div>
-  </div>
-
-  <!-- 三、Sales Agent -->
-  <div class="section" id="sales-intro">
-    <div class="section-header">
-      <div class="section-num green">三</div>
-      <div>
-        <div class="section-title">Sales Agent</div>
-        <div class="section-sub">Introduction Page · Analytics · 订单详情面板</div>
+      <div class="subsection">
+        <div class="subsection-title">3.2 商家 / 内部故事</div>
+        <ul class="prd-list">
+          <li>作为 Anker 客服负责人，我希望重复性 Seel 问答由 AI 自动处理，让坐席专注于复杂问题。</li>
+          <li>作为 Seel 运营负责人，我希望客户被引导至 RC 时订单数据已预填，提升理赔完成率。</li>
+          <li>作为产品团队，我希望 v1 以轻量嵌入方式交付，不依赖额外后端基础设施。</li>
+        </ul>
       </div>
     </div>
-    <div class="section-body">
 
-      <h3>3.1 Introduction Page（产品介绍页）更新</h3>
-      <p>商家首次进入 Sales Agent 时展示产品介绍弹窗，帮助理解核心价值。双栏布局：左侧营销内容 + 右侧数据预览。</p>
+    <!-- 4. 功能需求 -->
+    <div class="section" id="functional">
+      <div class="section-title"><span class="section-num">3</span> 功能需求</div>
 
-      <h4>左侧内容</h4>
-      <ul>
-        <li>NEW 标签 + 副标题"Now available for your store"</li>
-        <li>主标题：AI Sales Agent</li>
-        <li><strong>Plug-and-Play Setup</strong> — 无需工程接入，连接 touchpoint 即可看到归因收入</li>
-        <li><strong>Flexible Product Strategy</strong> — 可自定义各 touchpoint 推荐策略（新品/畅销/精选）</li>
-        <li><strong>Cross-Touchpoint Attribution</strong> — 追踪每次互动带来的成交来源</li>
-        <li>底部 CTA："Ready to grow revenue? <strong>Get started</strong> and explore your analytics."</li>
-      </ul>
+      <div class="subsection" id="two-mode">
+        <div class="subsection-title">3.1 双模式对话流程</div>
 
-      <h4>右侧数据预览</h4>
-      <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Attributed Sales</div><div class="kpi-value">$42,259</div></div>
-        <div class="kpi-card"><div class="kpi-label">Converted Orders</div><div class="kpi-value">607</div></div>
-        <div class="kpi-card"><div class="kpi-label">CTR</div><div class="kpi-value">4.4%</div></div>
-        <div class="kpi-card"><div class="kpi-label">AOV</div><div class="kpi-value">$105.09</div></div>
+        <div class="sub2-title">模式一 — 咨询（直接回答）</div>
+        <p>以下话题由机器人在对话框内直接回答，不发生页面跳转。</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:200px">问题类型</th><th>机器人回答内容</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Seel 保什么？</strong></td><td>列举：包裹丢失、盗窃、运输损坏、重大延误，并附简要说明。</td></tr>
+              <tr><td><strong>我的订单有保障吗？</strong></td><td>确认保障状态、保单号及当前有效的保障类型。</td></tr>
+              <tr><td><strong>什么情况不保？</strong></td><td>列举免责条款：买家反悔、制造质量问题、正常磨损、超出30天申请等。</td></tr>
+              <tr><td><strong>保障期限是多久？</strong></td><td>从购买日起至预计送达日后 30 天。</td></tr>
+              <tr><td><strong>怎么申请理赔？</strong></td><td>说明 4 步操作流程，提供 RC 链接供用户跳转。</td></tr>
+              <tr><td><strong>怎么查理赔进度？</strong></td><td>引导至 resolve.seel.com 登录查询，说明邮件通知节点。</td></tr>
+              <tr><td><strong>要多久处理完？</strong></td><td>24小时审核 → 24–48小时审批 → 3–5个工作日结案。</td></tr>
+              <tr><td><strong>退款还是补发？</strong></td><td>审批通过后两种方式均可，由消费者自行选择。</td></tr>
+              <tr><td><strong>如何联系 Seel？</strong></td><td>提供 support@seel.com 及 resolve.seel.com。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sub2-title">模式二 — 理赔（跳转 RC）</div>
+        <p>以下情况触发理赔流程，引导用户跳转至 Seel 理赔中心：</p>
+        <ul class="prd-list">
+          <li>包裹未到达（丢失 / 盗窃场景）</li>
+          <li>商品到货时已损坏（运输损坏场景）</li>
+          <li>订单严重延误（延误 / 在途丢失场景）</li>
+          <li>明确的理赔操作意图："我要申请理赔"、"发起理赔"、"提交理赔申请"等</li>
+        </ul>
       </div>
 
-      <hr id="sales-analytics" />
-
-      <h3>3.2 Analytics — 指标更新</h3>
-
-      <h4>3.2.1 筛选器</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>筛选项</th><th>可选值</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Time Range</strong></td><td>Last 7 days / Last 14 days / Last 30 days</td></tr>
-            <tr><td><strong>Touchpoint</strong></td><td>All touchpoints / 单个 touchpoint</td></tr>
-          </tbody>
-        </table>
+      <div class="subsection" id="intent">
+        <div class="subsection-title">3.2 意图识别优先级</div>
+        <p><strong>理赔行动意图优先于咨询意图检测</strong>，防止误判——例如"我要申请理赔"应触发 RC 跳转，而非返回操作说明。</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:90px">优先级</th><th style="width:180px">意图类别</th><th>触发示例</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="prio-1">1 — 最高</span></td>
+                <td><span class="tag tag-red">理赔行动</span></td>
+                <td>"没收到"、"包裹丢失"、"到货损坏"、"碎了"、"延误"、"我要申请理赔"、"发起理赔"</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="tag tag-orange">理赔进度查询</span></td>
+                <td>"理赔进度"、"查理赔"、"理赔状态"、"申请到哪了"</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="tag tag-blue">免责条款</span></td>
+                <td>"不保什么"、"免责"、"不在保障范围"、"不涵盖"</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="tag tag-blue">退款 / 补发</span></td>
+                <td>"退款"、"补发"、"赔偿"、"退钱"</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="tag tag-blue">联系支持</span></td>
+                <td>"联系"、"找 Seel"、"发邮件"、"转人工"</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><span class="tag tag-blue">处理时效</span></td>
+                <td>"多久"、"什么时候"、"多长时间"</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><span class="tag tag-blue">保障范围</span></td>
+                <td>"保什么"、"保障内容"、"涵盖哪些"</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><span class="tag tag-blue">订单保障状态</span></td>
+                <td>"我的订单有保障吗"、"有没有 Seel"</td>
+              </tr>
+              <tr>
+                <td><span class="prio-low">9</span></td>
+                <td><span class="tag tag-blue">操作指引</span></td>
+                <td>"怎么申请"、"如何理赔"、"理赔流程"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <h4>3.2.2 KPI 卡片（4 个）</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>指标</th><th>定义</th><th>计算方式</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Attributed Sales</strong></td><td>AI 推荐带来的成交金额，<strong>仅统计推荐商品的价值</strong></td><td>Σ attributedSales × 时间系数</td></tr>
-            <tr><td><strong>Converted Orders</strong></td><td>经 AI 推荐后完成转化的订单数</td><td>Σ ordersInfluenced × 时间系数，取整</td></tr>
-            <tr><td><strong>CTR</strong></td><td>用户点击 AI 推荐的比例</td><td>各 touchpoint CTR 算术平均值</td></tr>
-            <tr><td><strong>AOV</strong></td><td>包含 AI 推荐商品的订单平均客单价</td><td>各 touchpoint actualAov 算术平均值</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="callout callout-warning"><strong>注：</strong> Attributed Sales 只统计推荐商品本身的价值，不含订单整体金额，以确保归因数据的准确性。AOV 统计的是包含推荐商品的完整订单客单价。</div>
-
-      <h4>3.2.3 Sales Trend 图表</h4>
-      <ul>
-        <li>图表类型：Stacked Bar Chart（堆叠柱状图）</li>
-        <li>X 轴：日期；Y 轴：当日归因销售额（$）</li>
-        <li>标题与图例在同一行（左侧标题，右侧图例）</li>
-      </ul>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Touchpoint</th><th>颜色</th><th>色值</th></tr></thead>
-          <tbody>
-            <tr><td>Resolution Center</td><td><span class="dot" style="background:#6c47ff"></span>紫色</td><td><code>#6c47ff</code></td></tr>
-            <tr><td>WFP Confirmation Email</td><td><span class="dot" style="background:#f59e0b"></span>橙色</td><td><code>#f59e0b</code></td></tr>
-            <tr><td>Support Chat</td><td><span class="dot" style="background:#10b981"></span>绿色</td><td><code>#10b981</code></td></tr>
-            <tr><td>Search Bar</td><td><span class="dot" style="background:#3b82f6"></span>蓝色</td><td><code>#3b82f6</code></td></tr>
-          </tbody>
-        </table>
+      <div class="subsection" id="claim-flow">
+        <div class="subsection-title">3.3 理赔引导流程</div>
+        <ol class="prd-list">
+          <li>用户发送理赔类消息（手动输入或点击快捷芯片）。</li>
+          <li>机器人回复："正在查询您的订单……"（约 1 秒延迟，拟人化效果）。</li>
+          <li>机器人回复："正在核验您的 Seel 保单……"（约 1.4 秒延迟）。</li>
+          <li>机器人确认保障状态，展示 RC 跳转链接"🔗 resolve.seel.com"。</li>
+          <li>用户点击链接后，聊天面板关闭，页面跳转至 RC。</li>
+          <li>RC 页面自动预填用户邮箱及订单号，打字机动画逐字呈现，直观确认数据已传递。</li>
+          <li>用户点击"下一步"，在 Seel 平台完成剩余理赔流程。</li>
+        </ol>
       </div>
 
-      <h4>3.2.4 Performance Breakdown 表格</h4>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>列名</th><th>定义</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Touchpoint</strong></td><td>渠道名称</td></tr>
-            <tr><td><strong>Attributed Sales</strong></td><td>该渠道的归因销售额，附环比变化</td></tr>
-            <tr><td><strong>Converted Orders</strong></td><td>该渠道完成转化的订单数</td></tr>
-            <tr><td><strong>CTR</strong></td><td>点击率（点击推荐 / 展示次数）</td></tr>
-            <tr><td><strong>Clicks</strong></td><td>用户点击推荐商品的总次数</td></tr>
-            <tr><td><strong>Impressions</strong></td><td>推荐商品的展示总次数</td></tr>
-          </tbody>
-        </table>
+      <div class="subsection" id="data">
+        <div class="subsection-title">3.4 Anker 向 Seel RC 传递的数据</div>
+        <p>Anker 将订单相关信息通过 URL 参数传递给 RC 页面，RC 读取后自动预填对应表单字段，用户无需重复录入。</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>字段</th><th>数据来源</th><th>示例值</th></tr></thead>
+            <tbody>
+              <tr><td><strong>邮箱地址</strong></td><td>Anker 登录用户账户</td><td>sarah.johnson@gmail.com</td></tr>
+              <tr><td><strong>订单号</strong></td><td>Anker 订单 ID</td><td>ANK-2024-78432</td></tr>
+              <tr><td><strong>保单号</strong></td><td>与订单绑定的 Seel 保单</td><td>SL-78432</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <strong>RC 跳转链接示例：</strong>
+          <code>https://resolve.seel.com/?email=sarah.johnson%40gmail.com&amp;order=ANK-2024-78432&amp;policyId=SL-78432</code>
+        </div>
       </div>
 
-      <hr id="sales-orders" />
-
-      <h3>3.3 Touchpoint 订单详情面板</h3>
-      <p>点击 Performance Breakdown 表格中的任意行，右侧滑出订单详情面板（Slide-over），展示该 touchpoint 的具体转化订单。</p>
-
-      <h4>面板结构</h4>
-      <ul>
-        <li><strong>头部：</strong>Touchpoint 名称 + 副标题（转化订单数 + 归因销售额）</li>
-        <li><strong>数据条：</strong>CTR、AOV 两个快速指标</li>
-      </ul>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>字段</th><th>说明</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Order ID</strong></td><td>订单号（紫色高亮）</td></tr>
-            <tr><td><strong>Status</strong></td><td>Fulfilled / Pending / Refunded（颜色标签）</td></tr>
-            <tr><td><strong>Customer</strong></td><td>客户姓名 + 邮箱</td></tr>
-            <tr><td><strong>Items</strong></td><td>商品列表，<strong>AI 推荐商品高亮显示</strong>（紫色背景 + ✦ 图标 + "Recommended"标签）</td></tr>
-            <tr><td><strong>Date &amp; Channel</strong></td><td>下单时间 + 渠道</td></tr>
-            <tr><td><strong>Total</strong></td><td>订单总金额</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="callout callout-note">AI 推荐商品高亮规则：订单中与该 touchpoint 推荐商品名称匹配的 item，使用紫色背景 <code>#f0edff</code>、紫色字体、Sparkles 图标及"Recommended"角标进行标注。</div>
-
-    </div>
-  </div>
-
-  <!-- 四、非功能需求 -->
-  <div class="section" id="nonfunc">
-    <div class="section-header">
-      <div class="section-num orange">四</div>
-      <div><div class="section-title">非功能需求</div></div>
-    </div>
-    <div class="section-body">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>项目</th><th>要求</th></tr></thead>
-          <tbody>
-            <tr><td><strong>响应式</strong></td><td>支持 1280px 以上宽屏，最小兼容 1024px</td></tr>
-            <tr><td><strong>时间筛选联动</strong></td><td>所有图表、KPI、表格数据随时间筛选器实时更新</td></tr>
-            <tr><td><strong>加载状态</strong></td><td>AI Summary 生成过程展示 loading 动画，防止用户误操作</td></tr>
-            <tr><td><strong>空状态</strong></td><td>无数据时展示友好提示，不显示空图表或空表格</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- 五、设计规范 -->
-  <div class="section" id="design">
-    <div class="section-header">
-      <div class="section-num blue">五</div>
-      <div><div class="section-title">设计规范</div></div>
-    </div>
-    <div class="section-body">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>规范项</th><th>定义</th></tr></thead>
-          <tbody>
-            <tr><td><strong>主色</strong></td><td><span class="dot" style="background:#6c47ff"></span><code>#6c47ff</code>（紫色，品牌色）</td></tr>
-            <tr><td><strong>正向趋势</strong></td><td><span class="dot" style="background:#10b981"></span><code>#10b981</code> Emerald</td></tr>
-            <tr><td><strong>负向趋势</strong></td><td><span class="dot" style="background:#ef4444"></span><code>#ef4444</code> Red</td></tr>
-            <tr><td><strong>警示色</strong></td><td><span class="dot" style="background:#f97316"></span><code>#f97316</code> Orange</td></tr>
-            <tr><td><strong>字号体系</strong></td><td>标题 13–15px / 正文 12px / 辅助信息 10–11px</td></tr>
-            <tr><td><strong>卡片圆角</strong></td><td><code>rounded-xl</code>（12px）</td></tr>
-            <tr><td><strong>分隔线</strong></td><td><code>border-border/40</code>（半透明）</td></tr>
-          </tbody>
-        </table>
+      <div class="subsection" id="chips">
+        <div class="subsection-title">3.5 快捷芯片</div>
+        <p>组件提供两组预设快捷芯片，引导用户快速进入对应模式：</p>
+        <div class="chip-groups">
+          <div class="chip-group blue">
+            <div class="chip-group-label">咨询</div>
+            <div class="chips">
+              <span class="chip blue">Seel 保什么？</span>
+              <span class="chip blue">我的订单有保障吗？</span>
+              <span class="chip blue">什么情况不保？</span>
+              <span class="chip blue">保障期限是多久？</span>
+              <span class="chip blue">怎么申请理赔？</span>
+              <span class="chip blue">查理赔进度</span>
+              <span class="chip blue">要多久处理完？</span>
+              <span class="chip blue">退款还是补发？</span>
+              <span class="chip blue">如何联系 Seel？</span>
+            </div>
+          </div>
+          <div class="chip-group purple">
+            <div class="chip-group-label">理赔</div>
+            <div class="chips">
+              <span class="chip purple">包裹未到达</span>
+              <span class="chip purple">商品到货已损坏</span>
+              <span class="chip purple">订单严重延误</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
 
-</div><!-- /container -->
+  </main>
+</div>
+
+<button id="btt" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<script>
+  const sections = document.querySelectorAll('.section[id]');
+  const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+  navLinks.forEach(l => l.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(l.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+</script>
 </body>
 </html>

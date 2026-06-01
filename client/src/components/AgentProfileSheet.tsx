@@ -59,8 +59,8 @@ export default function AgentProfileSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const {
-    hiredRepName, repPersonality, repPermissions, goLiveMode,
-    setShowSettings,
+    hiredRepName, repPersonality, repPermissions, agentMode,
+    goToManagerSettings,
   } = useApp();
   const [activeTab, setActiveTab] = useState<"overview" | "permissions" | "history">("overview");
 
@@ -69,7 +69,7 @@ export default function AgentProfileSheet({
 
   const handleEditInSettings = () => {
     onOpenChange(false);
-    setTimeout(() => setShowSettings(true), 200);
+    setTimeout(() => goToManagerSettings(), 200);
   };
 
   const tabs = [
@@ -103,11 +103,11 @@ export default function AgentProfileSheet({
             {!agent.isTeamLead && (
               <Badge variant="outline" className={cn(
                 "text-[10px] font-medium",
-                goLiveMode === "production"
+                agentMode === "production"
                   ? "border-emerald-200 text-emerald-700 bg-emerald-50"
                   : "border-amber-200 text-amber-700 bg-amber-50"
               )}>
-                {goLiveMode === "production" ? "Production" : "Training"}
+                {agentMode === "production" ? "Production" : "Training"}
               </Badge>
             )}
           </div>
@@ -159,11 +159,11 @@ export default function AgentProfileSheet({
                     <span className="text-[12px] text-muted-foreground">Mode</span>
                     <Badge variant="outline" className={cn(
                       "text-[10px]",
-                      goLiveMode === "production"
+                      agentMode === "production"
                         ? "border-emerald-200 text-emerald-700 bg-emerald-50"
                         : "border-amber-200 text-amber-700 bg-amber-50"
                     )}>
-                      {goLiveMode === "production" ? "Production" : "Training"}
+                      {agentMode === "production" ? "Production" : "Training"}
                     </Badge>
                   </div>
                   <div className="flex justify-between">

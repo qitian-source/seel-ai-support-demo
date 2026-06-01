@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   X, Brain, MessageSquare, Search, ArrowRight,
-  Play, CheckCircle, XCircle, Shield, User, Bot,
+  Play, CheckCircle, XCircle, Shield, User, Bot, BookOpen,
 } from "lucide-react";
 
 /* ── Public API ── */
@@ -253,9 +253,17 @@ function UnifiedConvoDetail({ convo }: { convo: ConversationLog }) {
           </div>
         ) : (
           <div className="space-y-2.5">
-            {convo.thread.map((msg, i) => (
-              <ThreadMessageView key={i} msg={msg} />
-            ))}
+            {(() => {
+              let replyIdx = 0;
+              return convo.thread.map((msg, i) => {
+                let matchedRules: string[] | undefined;
+                if (msg.from === "agent" && msg.type !== "internal-note") {
+                  matchedRules = convo.reasoning[replyIdx]?.ruleRouting.matchedRules;
+                  replyIdx++;
+                }
+                return <ThreadMessageView key={i} msg={msg} matchedRules={matchedRules} />;
+              });
+            })()}
           </div>
         )}
       </div>
@@ -346,7 +354,7 @@ function ReasoningTurnView({ turn }: { turn: ReasoningTurn }) {
 }
 
 /* ── Thread Message ── */
-function ThreadMessageView({ msg }: { msg: { from: string; type: string; author: string; text: string; time: string; channel: string } }) {
+function ThreadMessageView({ msg, matchedRules }: { msg: { from: string; type: string; author: string; text: string; time: string; channel: string }; matchedRules?: string[] }) {
   const isSystem = msg.from === "system";
   const isCustomer = msg.from === "customer";
   const isInternal = msg.type === "internal-note";
@@ -381,6 +389,17 @@ function ThreadMessageView({ msg }: { msg: { from: string; type: string; author:
         <span className="text-[10px] text-muted-foreground ml-auto">{msg.time} · {msg.channel}</span>
       </div>
       <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+      {matchedRules && matchedRules.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-[#e0d8ff] flex items-center gap-1.5 flex-wrap">
+          <BookOpen size={11} className="text-[#6c47ff] shrink-0" />
+          <span className="text-[10px] text-muted-foreground">Based on:</span>
+          {matchedRules.map((rule, i) => (
+            <Badge key={i} variant="outline" className="text-[10px] h-5 font-medium border-[#d8ccff] text-[#6c47ff] bg-[#f5f1ff]">
+              {rule}
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

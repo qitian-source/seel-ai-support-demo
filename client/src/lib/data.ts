@@ -121,6 +121,7 @@ export interface Rule {
   enabled: boolean;
   description: string;
   content: string;
+  module?: string;
   source: string;
   sourceDocId?: string;
   lastUpdated: string;
@@ -129,6 +130,14 @@ export interface Rule {
 }
 
 // --- DOCUMENT ---
+export interface ParsedTopic {
+  topic: string;
+  rules: string[];
+}
+export interface ParsedModule {
+  module: string;
+  topics: ParsedTopic[];
+}
 export interface Document {
   id: string;
   name: string;
@@ -138,6 +147,7 @@ export interface Document {
   status: "Processed" | "Processing" | "Error";
   inUse: boolean;
   extractedRules: string;
+  parsed?: ParsedModule[];   // structured parse result: module → topic → rules
 }
 
 // --- PERFORMANCE ---
@@ -316,6 +326,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "When a customer asks about order status, look up the order in Shopify and provide tracking information.",
     content: "When a customer asks about order status or shipping:\n1. Look up the order in Shopify using order ID or customer email\n2. Retrieve tracking information from the carrier API\n3. Reply with: order status, tracking number, carrier name, estimated delivery date\n4. If the package is delayed beyond the estimated date, apologize and offer to escalate\n5. If no tracking info is available, explain the order is being processed and provide expected ship date",
+    module: "Delivery",
     source: "Document",
     sourceDocId: "doc-1",
     lastUpdated: "Mar 24, 2026",
@@ -331,6 +342,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "Handle refund requests for delivered items within the return window.",
     content: "When a customer requests a refund:\n1. Verify the order is within the 30-day return window\n2. Check if the item has been returned or is a damaged item (no return required)\n3. If refund amount ≤ agent refund cap, process the refund\n4. If refund amount > cap, escalate to L2 with full context\n5. For VIP customers, skip store credit offer and process direct refund\n6. Confirm refund method and timeline (5-7 business days)",
+    module: "Refunds",
     source: "Document",
     sourceDocId: "doc-2",
     lastUpdated: "Mar 24, 2026",
@@ -345,6 +357,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "Cancel orders that have not yet been fulfilled and issue full refund.",
     content: "When a customer requests order cancellation:\n1. Look up the order in Shopify\n2. Verify the order status is 'Unfulfilled' or 'Processing'\n3. If unfulfilled: cancel the order and issue a full refund to original payment method\n4. If already shipped: inform customer the order cannot be cancelled and offer return instructions\n5. Confirm cancellation and refund details to customer",
+    module: "Order Management",
     source: "Document",
     sourceDocId: "doc-1",
     lastUpdated: "Mar 24, 2026",
@@ -359,6 +372,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "Update shipping address for orders not yet dispatched.",
     content: "When a customer requests an address change:\n1. Look up the order in Shopify\n2. Verify the order has not been dispatched\n3. If pre-dispatch: update the shipping address in Shopify\n4. If already dispatched: inform customer the address cannot be changed and suggest contacting the carrier\n5. Confirm the updated address to the customer",
+    module: "Order Management",
     source: "Document",
     sourceDocId: "doc-1",
     lastUpdated: "Mar 24, 2026",
@@ -373,6 +387,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "Special handling rules for VIP customers including priority routing and direct refunds.",
     content: "For customers tagged as VIP (or 5+ orders, or LTV > $500):\n1. Always prioritize their tickets\n2. Skip store credit offer — process direct refund\n3. Use empathetic, personalized tone\n4. If complaint: escalate immediately to L2\n5. Proactively offer compensation (discount code) for any inconvenience",
+    module: "Customer Tiers",
     source: "Manager edit",
     sourceDocId: "doc-1",
     lastUpdated: "Mar 25, 2026",
@@ -388,6 +403,7 @@ export const rules: Rule[] = [
     enabled: true,
     description: "Escalate when customer sentiment is frustrated or angry.",
     content: "Escalate to human agent when:\n1. Customer sentiment is detected as 'angry' or 'threatening'\n2. Customer explicitly requests a human agent\n3. Customer mentions legal action, lawyer, or trading standards\n4. 3 consecutive turns without resolution\n5. When escalating: leave Internal Note with handoff summary, sentiment analysis, and suggested reply",
+    module: "Escalation Triggers",
     source: "Document",
     sourceDocId: "doc-3",
     lastUpdated: "Mar 24, 2026",
@@ -402,11 +418,404 @@ export const rules: Rule[] = [
     enabled: false,
     description: "Handle Seel protection plan claims for damaged or lost items.",
     content: "When a customer has a Seel protection plan and reports damage or loss:\n1. Verify the Seel protection status via Seel API\n2. If covered: file an insurance claim through Seel\n3. Inform customer of the claim process and expected timeline\n4. If not covered: explain the protection plan terms and offer alternative solutions",
+    module: "Protection",
     source: "Team Lead",
     lastUpdated: "Mar 26, 2026",
     stats: { used: 23, avgCsat: 4.4, deflection: 78 },
     versionHistory: [
       { version: 1, timestamp: "Mar 26, 2026", source: "Team Lead", diff: "Created from Team Lead proposal" },
+    ],
+  },
+
+  // ---------- DELIVERY ----------
+  {
+    id: "r8",
+    name: "Delivery Delay — Late Shipment",
+    enabled: true,
+    description: "Handle complaints when a package is delayed beyond the promised delivery window.",
+    content: "When a customer reports a late delivery:\n1. Look up the order and pull live tracking from the carrier\n2. If still in transit and within carrier's grace period, share the updated ETA and reassure\n3. If delayed beyond the promised window by 2+ days, apologize and offer a goodwill gesture (discount code within cap)\n4. If a guaranteed/expedited service was paid for, offer to refund the shipping upgrade\n5. If tracking has not updated for 5+ days, treat as a potential lost parcel (see Lost in Transit)",
+    module: "Delivery",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 276, avgCsat: 4.4, deflection: 90 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r9",
+    name: "Marked Delivered — Not Received",
+    enabled: true,
+    description: "Customer reports the carrier marked the parcel delivered but it was not received.",
+    content: "When tracking shows 'delivered' but the customer has not received the parcel:\n1. Confirm the delivery address on file is correct\n2. Ask the customer to check with neighbors, household members, reception/concierge, and safe-drop locations\n3. Advise waiting 24 hours, as carriers sometimes mark early\n4. If still missing after 24h, open a carrier investigation and treat as lost\n5. Reship or refund per the lost-parcel policy; do not require the customer to file a police report",
+    module: "Delivery",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 134, avgCsat: 4.3, deflection: 82 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r10",
+    name: "Lost in Transit",
+    enabled: true,
+    description: "Resolve parcels confirmed lost by the carrier or with no tracking movement.",
+    content: "When a parcel is lost in transit:\n1. Confirm tracking has stalled for 5+ business days (domestic) or 10+ (international)\n2. File a lost-parcel claim with the carrier in parallel\n3. Offer the customer their choice of a free reshipment or a full refund\n4. For high-value orders above the agent cap, escalate for approval before reshipping\n5. Confirm the resolution and provide a new tracking number if reshipping",
+    module: "Delivery",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 98, avgCsat: 4.5, deflection: 86 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r11",
+    name: "Return to Sender (RTS)",
+    enabled: true,
+    description: "Handle parcels returned to the warehouse due to bad address or refused delivery.",
+    content: "When a parcel is returned to sender:\n1. Identify the RTS reason (incorrect/incomplete address, refused, uncollected)\n2. Contact the customer to confirm the correct delivery address\n3. If the customer still wants the order, reship to the corrected address\n4. If the customer no longer wants it, process a refund once the parcel is received back at the warehouse\n5. Waive any reshipping fee when the error was on our side",
+    module: "Delivery",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 71, avgCsat: 4.4, deflection: 84 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+
+  // ---------- ORDER ISSUES (UNBOXING) ----------
+  {
+    id: "r12",
+    name: "Missing Item — Short Shipment",
+    enabled: true,
+    description: "Customer received the parcel but one or more ordered items are missing.",
+    content: "When a customer reports a missing item:\n1. Compare the order line items against what the customer received\n2. Check whether the order shipped in multiple parcels with separate tracking\n3. If a second parcel is in transit, share its tracking and ETA\n4. If genuinely short-shipped, reship the missing item at no cost (or refund if out of stock)\n5. For frequently-missing high-value items, leave an internal note for the fulfillment team",
+    module: "Order Issues",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 156, avgCsat: 4.5, deflection: 88 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r13",
+    name: "Wrong Item Received",
+    enabled: true,
+    description: "Customer received a different product than what was ordered.",
+    content: "When a customer received the wrong item:\n1. Ask for a photo of the item received and its packing slip/SKU\n2. Confirm the discrepancy against the order\n3. Reship the correct item immediately at no cost\n4. Provide a prepaid return label for the incorrect item; do not hold the reshipment pending its return\n5. For low-value items, let the customer keep or donate the wrong item instead of returning",
+    module: "Order Issues",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 112, avgCsat: 4.6, deflection: 87 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r14",
+    name: "Damaged or Faulty Item",
+    enabled: true,
+    description: "Customer received a broken, defective, or faulty product.",
+    content: "When a customer reports a damaged or faulty item:\n1. Request photos or a short video of the damage/fault\n2. Confirm the issue is a defect, not normal wear or misuse\n3. Offer the customer's choice of replacement or full refund\n4. For items under the return-not-required threshold, do not ask the customer to ship it back\n5. For potential safety defects, escalate to the brand/quality team with an internal note",
+    module: "Order Issues",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 143, avgCsat: 4.4, deflection: 83 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r15",
+    name: "Incomplete Set / Bundle",
+    enabled: true,
+    description: "A multi-piece set or bundle arrived with components missing.",
+    content: "When a set or bundle is incomplete:\n1. Identify which components of the set are missing\n2. Confirm whether the bundle ships as one SKU or separate components\n3. Reship the missing components at no cost\n4. If a component is out of stock, offer a partial refund proportional to the missing pieces\n5. Confirm the resolution and timeline to the customer",
+    module: "Order Issues",
+    source: "Document",
+    sourceDocId: "doc-1",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 47, avgCsat: 4.5, deflection: 85 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+
+  // ---------- RETURNS ----------
+  {
+    id: "r16",
+    name: "How to Return — Instructions",
+    enabled: true,
+    description: "Provide return instructions, policy window, and a return label.",
+    content: "When a customer asks how to return an item:\n1. State the return window (30 days from delivery) and condition requirements\n2. Generate or link the prepaid return label and return address\n3. Explain how to pack the item and where to drop it off\n4. Set expectations: refund issued within 5–7 business days after the warehouse receives the return\n5. Flag any non-returnable items (final sale, personalized, hygiene) up front",
+    module: "Returns",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 389, avgCsat: 4.7, deflection: 95 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r17",
+    name: "Return Eligibility",
+    enabled: true,
+    description: "Determine whether an item qualifies for return.",
+    content: "When assessing return eligibility:\n1. Confirm the item is within the 30-day return window\n2. Confirm the item is unused, with tags/packaging where required\n3. Reject returns for final-sale, personalized, perishable, or hygiene-sealed items unless faulty\n4. For faulty items, eligibility rules are waived (see Damaged or Faulty Item)\n5. If outside the window but close, an agent may approve a goodwill exception within policy",
+    module: "Returns",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 201, avgCsat: 4.4, deflection: 89 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r18",
+    name: "Return Lost or Delayed (RLOD)",
+    enabled: true,
+    description: "Customer shipped a return but the warehouse has not logged it.",
+    content: "When a customer's return is lost or delayed:\n1. Ask for the return tracking number and proof of postage\n2. Verify the return is genuinely in transit or stalled, not yet scanned at the warehouse\n3. If the carrier scan confirms it was shipped, process the refund without waiting for warehouse receipt\n4. If no proof of postage exists, open a trace and set expectations\n5. Never penalize the customer for warehouse intake delays",
+    module: "Returns",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 64, avgCsat: 4.3, deflection: 80 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+
+  // ---------- REFUNDS ----------
+  {
+    id: "r19",
+    name: "Refund Not Received — Timeline",
+    enabled: true,
+    description: "Customer says they have not received a refund that was issued.",
+    content: "When a customer cannot find their refund:\n1. Confirm the refund was issued and note the date and original payment method\n2. Explain refunds post to the original payment method within 5–7 business days; bank posting time is outside our control\n3. Ask the customer to check the statement of the original card/account, including pending transactions\n4. If beyond 7 business days, provide the refund reference/ARN for the bank to trace\n5. If the refund failed at the gateway, reissue via an alternative method",
+    module: "Refunds",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 188, avgCsat: 4.3, deflection: 84 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r20",
+    name: "Refund Amount Discrepancy",
+    enabled: true,
+    description: "Customer was refunded less than expected.",
+    content: "When a customer disputes the refunded amount:\n1. Break down the refund: item price, tax, shipping, and any discounts applied at purchase\n2. Confirm whether original shipping is refundable per policy (refundable only for our errors or faulty items)\n3. If a promo discount was applied, the refund reflects the discounted price paid\n4. If a genuine shortfall is found, refund the difference promptly\n5. Provide a clear itemized explanation to the customer",
+    module: "Refunds",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 97, avgCsat: 4.2, deflection: 82 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+  {
+    id: "r21",
+    name: "Failed Refund — Reissue",
+    enabled: true,
+    description: "A refund failed because the original payment method is closed or expired.",
+    content: "When a refund fails at the payment gateway:\n1. Identify the failure reason (expired/closed card, declined credit)\n2. Confirm the customer's identity and order ownership before reissuing\n3. Offer reissue to an alternative method: another card on file, original gift card, or store credit\n4. Never request full card numbers in chat; direct the customer to a secure update flow\n5. Confirm the new refund timeline once reissued",
+    module: "Refunds",
+    source: "Document",
+    sourceDocId: "doc-2",
+    lastUpdated: "Mar 24, 2026",
+    stats: { used: 41, avgCsat: 4.1, deflection: 78 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 24, 2026", source: "Document", diff: "Initial extraction from SOP" },
+    ],
+  },
+
+  // ---------- PAYMENTS & PROMOTIONS ----------
+  {
+    id: "r22",
+    name: "Payment Failure at Checkout",
+    enabled: true,
+    description: "Customer's payment was declined or failed during checkout.",
+    content: "When a customer reports a failed payment:\n1. Explain common causes: insufficient funds, bank fraud hold, incorrect card details, or address mismatch (AVS)\n2. Suggest verifying card details and billing address, or contacting their bank to approve\n3. Recommend an alternative payment method if available\n4. Confirm whether any pending authorization will auto-release (typically 3–5 business days)\n5. Never ask for or store full card numbers in the conversation",
+    module: "Payments & Promotions",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 132, avgCsat: 4.3, deflection: 86 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from common payment FAQs" },
+    ],
+  },
+  {
+    id: "r23",
+    name: "Promo Code Not Working",
+    enabled: true,
+    description: "A discount or promo code was rejected at checkout.",
+    content: "When a promo code is rejected:\n1. Check the code's validity: expiry date, minimum spend, eligible products, and first-order-only conditions\n2. Confirm codes cannot be stacked unless explicitly allowed\n3. If the code is valid and the error is on our side, apply the discount manually or refund the difference\n4. If the customer missed the window narrowly, an agent may honor it as goodwill within cap\n5. Explain clearly why a code did not apply",
+    module: "Payments & Promotions",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 88, avgCsat: 4.4, deflection: 88 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from common payment FAQs" },
+    ],
+  },
+  {
+    id: "r24",
+    name: "Duplicate Charge",
+    enabled: true,
+    description: "Customer was charged more than once for a single order.",
+    content: "When a customer reports a duplicate charge:\n1. Distinguish a true duplicate charge from a temporary pre-authorization hold\n2. Explain that pending authorizations auto-release within 3–5 business days\n3. If two settled charges exist for one order, refund the duplicate immediately\n4. Provide the refund reference and timeline\n5. Apologize and offer a goodwill gesture for genuine double-billing",
+    module: "Payments & Promotions",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 53, avgCsat: 4.3, deflection: 84 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from common payment FAQs" },
+    ],
+  },
+  {
+    id: "r25",
+    name: "Price Adjustment / Price Match",
+    enabled: true,
+    description: "Customer requests a refund of the difference after a price drop.",
+    content: "When a customer requests a price adjustment:\n1. Confirm the purchase is within the price-adjustment window (e.g., 14 days)\n2. Verify the lower price is a genuine current price, not a flash/clearance excluded by policy\n3. If eligible, refund the difference to the original payment method\n4. Exclude items already bought with a promo that beat the new price\n5. Decline politely and explain when outside the window or excluded",
+    module: "Payments & Promotions",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 38, avgCsat: 4.2, deflection: 80 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from common payment FAQs" },
+    ],
+  },
+
+  // ---------- ACCOUNT & SUBSCRIPTION ----------
+  {
+    id: "r26",
+    name: "Login & Password Reset",
+    enabled: true,
+    description: "Help a customer who cannot sign in to their account.",
+    content: "When a customer cannot log in:\n1. Guide them to the self-service 'Forgot password' reset flow — never set or read a password for them\n2. Advise checking spam/junk for the reset email and allowing a few minutes for delivery\n3. Confirm they are using the email associated with the order\n4. If the account is locked, explain the lockout will clear automatically or trigger a secure unlock\n5. Do not disclose whether an email is registered to unverified parties",
+    module: "Account & Subscription",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 76, avgCsat: 4.5, deflection: 93 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from account FAQs" },
+    ],
+  },
+  {
+    id: "r27",
+    name: "Subscription Management",
+    enabled: true,
+    description: "Handle pause, skip, frequency change, or cancellation of a subscription.",
+    content: "When a customer wants to manage a subscription:\n1. Verify the subscription and next billing date on the account\n2. Action the request: pause, skip the next shipment, change frequency, or cancel\n3. If a charge already processed for the upcoming cycle, explain whether it can still be stopped\n4. Confirm there are no cancellation penalties and summarize the change\n5. Offer a pause or discount as a save before a full cancellation",
+    module: "Account & Subscription",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 64, avgCsat: 4.4, deflection: 90 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from account FAQs" },
+    ],
+  },
+  {
+    id: "r28",
+    name: "Marketing Unsubscribe",
+    enabled: true,
+    description: "Customer requests to stop receiving marketing emails or SMS.",
+    content: "When a customer asks to unsubscribe from marketing:\n1. Action the opt-out immediately for the requested channel (email and/or SMS)\n2. Clarify that transactional messages (order, shipping, refund) will still be sent\n3. Confirm the change and the time it may take to fully propagate\n4. Do not require a reason, but capture it if volunteered\n5. Honor data/privacy requests by routing them to the GDPR/privacy process",
+    module: "Account & Subscription",
+    source: "Manager edit",
+    lastUpdated: "Mar 25, 2026",
+    stats: { used: 42, avgCsat: 4.6, deflection: 96 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 25, 2026", source: "Manager edit", diff: "Created from account FAQs" },
+    ],
+  },
+
+  // ---------- PRODUCT ----------
+  {
+    id: "r29",
+    name: "Product Availability & Restock",
+    enabled: true,
+    description: "Answer stock, back-in-stock, and restock-timing questions.",
+    content: "When a customer asks about availability:\n1. Look up the product and variant (size/color) stock in Shopify\n2. If in stock, confirm availability and current lead time\n3. If out of stock, share the expected restock date when known, otherwise say it is unconfirmed\n4. Offer the back-in-stock notification sign-up\n5. Suggest closely comparable in-stock alternatives where appropriate",
+    module: "Product",
+    source: "Manager edit",
+    lastUpdated: "Mar 27, 2026",
+    stats: { used: 119, avgCsat: 4.5, deflection: 91 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 27, 2026", source: "Manager edit", diff: "Created to cover pre-sales product questions" },
+    ],
+  },
+  {
+    id: "r30",
+    name: "Sizing & Fit Guidance",
+    enabled: true,
+    description: "Help customers choose the right size or understand fit.",
+    content: "When a customer asks about sizing or fit:\n1. Reference the product's size chart and measurement guide\n2. Ask for the customer's measurements or usual size if needed\n3. Note fit characteristics from the product data (runs small/large, slim/relaxed)\n4. Recommend a size and mention the easy-returns policy to reduce purchase risk\n5. Avoid guaranteeing fit; frame as guidance based on available data",
+    module: "Product",
+    source: "Manager edit",
+    lastUpdated: "Mar 27, 2026",
+    stats: { used: 93, avgCsat: 4.4, deflection: 89 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 27, 2026", source: "Manager edit", diff: "Created to cover pre-sales product questions" },
+    ],
+  },
+  {
+    id: "r31",
+    name: "Product Specs & Compatibility",
+    enabled: true,
+    description: "Answer questions about specifications, materials, and compatibility.",
+    content: "When a customer asks about product specs or compatibility:\n1. Pull specifications from the product catalog (materials, dimensions, technical specs)\n2. Answer compatibility questions using documented supported models/standards only\n3. If a detail is not documented, say so rather than guessing\n4. Link to the spec sheet or manual when available\n5. For complex technical questions beyond the catalog, escalate to the brand/product team",
+    module: "Product",
+    source: "Manager edit",
+    lastUpdated: "Mar 27, 2026",
+    stats: { used: 71, avgCsat: 4.3, deflection: 85 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 27, 2026", source: "Manager edit", diff: "Created to cover pre-sales product questions" },
+    ],
+  },
+  {
+    id: "r32",
+    name: "Care & Usage Instructions",
+    enabled: true,
+    description: "Provide care, cleaning, assembly, or usage guidance.",
+    content: "When a customer asks how to use or care for a product:\n1. Reference the documented care/usage instructions for the specific item\n2. Provide washing, storage, assembly, or operating steps as applicable\n3. Warn about actions that void the warranty or damage the product\n4. Link to the full manual or care guide when available\n5. If guidance is missing, escalate to the brand team rather than improvising",
+    module: "Product",
+    source: "Manager edit",
+    lastUpdated: "Mar 27, 2026",
+    stats: { used: 58, avgCsat: 4.5, deflection: 90 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 27, 2026", source: "Manager edit", diff: "Created to cover pre-sales product questions" },
+    ],
+  },
+  {
+    id: "r33",
+    name: "Product Authenticity & Warranty",
+    enabled: true,
+    description: "Address authenticity concerns and warranty claims.",
+    content: "When a customer raises authenticity or warranty questions:\n1. Reassure that products are sourced directly from the brand/authorized suppliers\n2. For authenticity doubts, ask for photos and verify batch/serial details where applicable\n3. State the warranty period and what it covers for the item\n4. For valid warranty claims, offer repair, replacement, or refund per the warranty terms\n5. Escalate suspected counterfeit or safety issues to the brand team with an internal note",
+    module: "Product",
+    source: "Manager edit",
+    lastUpdated: "Mar 27, 2026",
+    stats: { used: 34, avgCsat: 4.4, deflection: 82 },
+    versionHistory: [
+      { version: 1, timestamp: "Mar 27, 2026", source: "Manager edit", diff: "Created to cover pre-sales product questions" },
     ],
   },
 ];
@@ -415,10 +824,97 @@ export const rules: Rule[] = [
 // DOCUMENTS
 // ============================================================
 export const documents: Document[] = [
-  { id: "doc-1", name: "CS_Playbook_2025.pdf", type: "PDF", size: "2.4 MB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "18 prompt rules, 8 guardrails, 6 actions" },
-  { id: "doc-2", name: "Refund_Policy_v3.docx", type: "DOC", size: "890 KB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "4 guardrails, 3 actions" },
-  { id: "doc-3", name: "Escalation_Matrix.pdf", type: "PDF", size: "1.1 MB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "8 escalation triggers" },
-  { id: "doc-4", name: "FAQ_International_Shipping.txt", type: "TXT", size: "45 KB", uploadedAt: "Mar 26, 2026", status: "Processed", inUse: true, extractedRules: "3 knowledge entries" },
+  {
+    id: "doc-1", name: "CS_Playbook_2025.pdf", type: "PDF", size: "2.4 MB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "18 prompt rules, 8 guardrails, 6 actions",
+    parsed: [
+      {
+        module: "Order Management",
+        topics: [
+          { topic: "Order Tracking (WISMO)", rules: [
+            "Look up the order in Shopify by order ID or customer email.",
+            "Reply with order status, tracking number, carrier, and estimated delivery date.",
+            "If the package is delayed beyond the ETA, apologize and offer to escalate.",
+          ] },
+          { topic: "Order Cancellation", rules: [
+            "Cancel only when order status is Unfulfilled or Processing.",
+            "Issue a full refund to the original payment method on cancellation.",
+            "If already shipped, provide return instructions instead.",
+          ] },
+          { topic: "Address Change", rules: [
+            "Update the shipping address only before dispatch.",
+            "If already dispatched, advise contacting the carrier.",
+          ] },
+        ],
+      },
+      {
+        module: "Customer Tiers",
+        topics: [
+          { topic: "VIP Handling", rules: [
+            "Prioritize tickets for VIP customers (5+ orders or LTV > $500).",
+            "Skip store-credit offer and process a direct refund.",
+            "Escalate any VIP complaint to L2 immediately.",
+          ] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "doc-2", name: "Refund_Policy_v3.docx", type: "DOC", size: "890 KB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "4 guardrails, 3 actions",
+    parsed: [
+      {
+        module: "Refunds",
+        topics: [
+          { topic: "Eligibility", rules: [
+            "Verify the order is within the 30-day return window.",
+            "Damaged items qualify without requiring a return.",
+          ] },
+          { topic: "Processing & Limits", rules: [
+            "Process refunds at or below the agent refund cap automatically.",
+            "Escalate refunds above the cap to L2 with full context.",
+            "Confirm refund method and 5–7 business-day timeline.",
+          ] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "doc-3", name: "Escalation_Matrix.pdf", type: "PDF", size: "1.1 MB", uploadedAt: "Mar 24, 2026", status: "Processed", inUse: true, extractedRules: "8 escalation triggers",
+    parsed: [
+      {
+        module: "Escalation Triggers",
+        topics: [
+          { topic: "Sentiment", rules: [
+            "Escalate when sentiment is detected as angry or threatening.",
+            "Escalate after 3 consecutive turns without resolution.",
+          ] },
+          { topic: "Explicit Requests", rules: [
+            "Escalate when the customer explicitly asks for a human agent.",
+            "Escalate when legal action, a lawyer, or trading standards are mentioned.",
+          ] },
+          { topic: "Handoff", rules: [
+            "Leave an internal note with handoff summary, sentiment, and suggested reply.",
+          ] },
+        ],
+      },
+    ],
+  },
+  {
+    id: "doc-4", name: "FAQ_International_Shipping.txt", type: "TXT", size: "45 KB", uploadedAt: "Mar 26, 2026", status: "Processed", inUse: true, extractedRules: "3 knowledge entries",
+    parsed: [
+      {
+        module: "International Shipping",
+        topics: [
+          { topic: "Duties & Taxes", rules: [
+            "Inform customers that import duties and taxes are their responsibility.",
+          ] },
+          { topic: "Delivery Times", rules: [
+            "Quote 7–14 business days for standard international delivery.",
+            "Advise that customs clearance may add delays beyond our control.",
+          ] },
+        ],
+      },
+    ],
+  },
   { id: "doc-5", name: "Holiday_Returns_Update.pdf", type: "PDF", size: "320 KB", uploadedAt: "Mar 27, 2026", status: "Processing", inUse: false, extractedRules: "" },
 ];
 
@@ -1587,6 +2083,16 @@ DJI美国客服团队`,
   },
 ];
 
+/* ============================================================
+ * ZENDESK TICKETS — same shape as EmailThread (Zendesk's status
+ * model is literally new/open/pending/solved), so the Zendesk
+ * ops inbox reuses the Email Inbox UI. Derived from emailThreads
+ * with Zendesk-style ticket IDs so the demo has rich content.
+ * ============================================================ */
+export const zendeskTickets: EmailThread[] = emailThreads
+  .slice(0, 8)
+  .map((t, i) => ({ ...t, id: `${10250 + i}` }));
+
 // ============================================================
 // ONBOARDING STEPS
 // ============================================================
@@ -1757,71 +2263,97 @@ export interface SalesOrder {
   channel: string;
 }
 
-export interface SalesTouchpointRow {
-  touchpoint: string;
-  attributedSales: number;
-  salesDelta: number;
-  ordersInfluenced: number;
-  ctr: number;
-  aov: number;        // Avg. Item Value — attributed product only
-  actualAov: number;  // Avg. Order Value — full basket
-  clicks: number;
-  impressions: number;
-  orders: SalesOrder[];
+/* Touchpoint / "mode" definitions — shared keys, labels and chart colors */
+export interface SalesModeDef {
+  key: string;
+  label: string;
+  color: string;
+}
+export const SALES_MODES: SalesModeDef[] = [
+  { key: "resolutionCenter", label: "Resolution Center", color: "#6c47ff" },
+  { key: "policyEmail",      label: "Policy Email",      color: "#f59e0b" },
+  { key: "liveChat",         label: "Live Chat",         color: "#10b981" },
+  { key: "searchBar",        label: "Search Bar",        color: "#3b82f6" },
+];
+
+/* Per-touchpoint static metadata. Per-period metrics are derived from salesDaily. */
+export interface SalesTouchpointMeta {
+  key: string;
+  label: string;
+  salesDelta: number;       // illustrative period-over-period revenue lift (%)
+  orders: SalesOrder[];     // sample converted orders for the slide-over
 }
 
+export interface SalesDayMetrics {
+  impressions: number;
+  clicks: number;
+  orders: number;
+  revenue: number;
+}
 export interface SalesDailyPoint {
   date: string;
-  total: number;
-  resolutionCenter: number;
-  wfpEmail: number;
-  supportAgent: number;
-  searchBar: number;
+  byMode: Record<string, SalesDayMetrics>;
 }
 
+const MODE_DAILY_PARAMS: Record<string, { imprShare: number; ctr: number; cvr: number; aov: number; phase: number }> = {
+  resolutionCenter: { imprShare: 0.30, ctr: 0.043, cvr: 0.080, aov: 68.3, phase: 0.0 },
+  policyEmail:      { imprShare: 0.27, ctr: 0.043, cvr: 0.080, aov: 69.2, phase: 1.1 },
+  liveChat:         { imprShare: 0.24, ctr: 0.044, cvr: 0.082, aov: 70.1, phase: 2.2 },
+  searchBar:        { imprShare: 0.19, ctr: 0.045, cvr: 0.083, aov: 71.2, phase: 3.3 },
+};
+
 function makeSalesDaily(): SalesDailyPoint[] {
-  const seed = [1240, 1380, 1290, 1450, 1520, 1410, 1330, 1480, 1390, 1550,
-                1310, 1420, 1360, 1500, 1590, 1460, 1380, 1610, 1530, 1440,
-                1370, 1490, 1560, 1420, 1480, 1640, 1510, 1380, 1450, 1320];
-  return seed.map((total, i) => {
-    const d = new Date("2026-04-08");
-    d.setDate(d.getDate() + i);
-    return {
-      date: d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" }),
-      total,
-      resolutionCenter: Math.round(total * 0.27),
-      wfpEmail: Math.round(total * 0.26),
-      supportAgent: Math.round(total * 0.24),
-      searchBar: Math.round(total * 0.23),
-    };
-  });
+  const N = 180;                       // enough history for period-over-period deltas up to 90d
+  const end = new Date("2026-05-28");  // series ends yesterday (today is 2026-05-29)
+  const points: SalesDailyPoint[] = [];
+  for (let i = N - 1; i >= 0; i--) {
+    const d = new Date(end);
+    d.setDate(d.getDate() - i);
+    const idx = N - 1 - i;
+    const weekly = 1 + 0.18 * Math.sin((idx / 7) * Math.PI * 2);
+    const growth = 1 + idx * 0.0016;   // slow upward trend → mostly positive deltas
+    const noise  = 1 + 0.06 * Math.sin(idx * 1.7);
+    const totalImpr = 1500 * weekly * growth * noise;
+    const byMode: Record<string, SalesDayMetrics> = {};
+    for (const m of SALES_MODES) {
+      const p = MODE_DAILY_PARAMS[m.key];
+      const mNoise = 1 + 0.05 * Math.sin(idx * 0.9 + p.phase);
+      const impressions = Math.max(1, Math.round(totalImpr * p.imprShare * mNoise));
+      const clicks  = Math.round(impressions * p.ctr);
+      const orders  = Math.round(clicks * p.cvr);
+      const revenue = Math.round(orders * p.aov * 100) / 100;
+      byMode[m.key] = { impressions, clicks, orders, revenue };
+    }
+    points.push({ date: d.toLocaleDateString("en-US", { month: "numeric", day: "numeric" }), byMode });
+  }
+  return points;
 }
 export const salesDaily: SalesDailyPoint[] = makeSalesDaily();
 
 const sampleOrders: Record<string, SalesOrder[]> = {
-  "Seel Resolution Center": [
-    { id: "ORD-10421", customer: "Emma Wilson", email: "emma@example.com", items: [{ name: "Wireless Earbuds Pro", qty: 1, price: "$79.99" }, { name: "Phone Case", qty: 2, price: "$12.99" }], recommendedItem: "Wireless Earbuds Pro", total: "$105.97", date: "May 3, 2026", status: "fulfilled", touchpoint: "Seel Resolution Center", channel: "Web" },
-    { id: "ORD-10398", customer: "James Chen", email: "jchen@example.com", items: [{ name: "Smart Watch Band", qty: 1, price: "$34.99" }], recommendedItem: "Smart Watch Band", total: "$34.99", date: "May 2, 2026", status: "fulfilled", touchpoint: "Seel Resolution Center", channel: "Web" },
-    { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Seel Resolution Center", channel: "Mobile" },
+  resolutionCenter: [
+    { id: "ORD-10421", customer: "Emma Wilson", email: "emma@example.com", items: [{ name: "Wireless Earbuds Pro", qty: 1, price: "$79.99" }, { name: "Phone Case", qty: 2, price: "$12.99" }], recommendedItem: "Wireless Earbuds Pro", total: "$105.97", date: "May 3, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web" },
+    { id: "ORD-10398", customer: "James Chen", email: "jchen@example.com", items: [{ name: "Smart Watch Band", qty: 1, price: "$34.99" }], recommendedItem: "Smart Watch Band", total: "$34.99", date: "May 2, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web" },
+    { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Resolution Center", channel: "Mobile" },
   ],
-  "WFP Policy Email": [
-    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "WFP Policy Email", channel: "Email" },
-    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "WFP Policy Email", channel: "Email" },
+  policyEmail: [
+    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email" },
+    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email" },
   ],
-  "Support Agent": [
-    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Support Agent", channel: "Chat" },
-    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Support Agent", channel: "Chat" },
-    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Support Agent", channel: "Chat" },
+  liveChat: [
+    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat" },
+    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat" },
+    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Live Chat", channel: "Chat" },
   ],
-  "Search Bar": [
+  searchBar: [
     { id: "ORD-10466", customer: "Olivia Davis", email: "o.davis@example.com", items: [{ name: "Bluetooth Speaker", qty: 1, price: "$69.99" }], recommendedItem: "Bluetooth Speaker", total: "$69.99", date: "May 6, 2026", status: "fulfilled", touchpoint: "Search Bar", channel: "Web" },
     { id: "ORD-10448", customer: "Lucas Martinez", email: "lucas.m@example.com", items: [{ name: "Ring Light Kit", qty: 1, price: "$79.99" }, { name: "Phone Tripod", qty: 1, price: "$24.99" }], recommendedItem: "Ring Light Kit", total: "$104.98", date: "May 4, 2026", status: "pending", touchpoint: "Search Bar", channel: "Mobile" },
   ],
 };
 
-export const salesTouchpoints: SalesTouchpointRow[] = [
-  { touchpoint: "Seel Resolution Center", attributedSales: 11611.80, salesDelta: 24.1,  ordersInfluenced: 170, ctr: 4.3, aov: 68.30, actualAov: 106.45, clicks: 2118, impressions: 49368, orders: sampleOrders["Seel Resolution Center"] },
-  { touchpoint: "WFP Policy Email",        attributedSales: 10870.50, salesDelta: 43.0,  ordersInfluenced: 157, ctr: 4.3, aov: 69.24, actualAov: 103.80, clicks: 1950, impressions: 44916, orders: sampleOrders["WFP Policy Email"] },
-  { touchpoint: "Support Agent",           attributedSales: 10234.20, salesDelta: 70.2,  ordersInfluenced: 146, ctr: 4.4, aov: 70.10, actualAov: 108.20, clicks: 1782, impressions: 40464, orders: sampleOrders["Support Agent"] },
-  { touchpoint: "Search Bar",              attributedSales:  9542.95, salesDelta: 103.7, ordersInfluenced: 134, ctr: 4.5, aov: 71.22, actualAov: 101.90, clicks: 1607, impressions: 35808, orders: sampleOrders["Search Bar"] },
+export const salesTouchpoints: SalesTouchpointMeta[] = [
+  { key: "resolutionCenter", label: "Resolution Center", salesDelta: 24.1,  orders: sampleOrders.resolutionCenter },
+  { key: "policyEmail",      label: "Policy Email",      salesDelta: 43.0,  orders: sampleOrders.policyEmail },
+  { key: "liveChat",         label: "Live Chat",         salesDelta: 70.2,  orders: sampleOrders.liveChat },
+  { key: "searchBar",        label: "Search Bar",        salesDelta: 103.7, orders: sampleOrders.searchBar },
 ];

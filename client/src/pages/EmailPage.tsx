@@ -8,9 +8,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   emailThreads, type EmailThread, type EmailStatus, type EmailType,
-  type OperationMode, type EmailAttachment,
+  type EmailAttachment,
 } from "@/lib/data";
-import { useApp } from "@/contexts/AppContext";
+import { useApp, type ChannelMode } from "@/contexts/AppContext";
+import SubTabBar from "@/components/SubTabBar";
+import { ChannelsSection } from "@/components/SetupSettings";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +20,7 @@ import {
   AlertTriangle, Sparkles, Copy, RotateCcw,
   Inbox, User, Zap, Shield, X, ChevronDown,
   Mail, Check, Eye, EyeOff, Languages,
-  GraduationCap, Bolt, Tag, Users,
+  GraduationCap, Bolt, Tag, Users, PauseCircle,
   Bold, Image, Palette, ChevronRight, ChevronLeft,
   ArrowRight, Settings, Paperclip, FileText, XCircle,
   Underline, List, ListOrdered, Link, Search, Pencil, Lock,
@@ -38,9 +40,10 @@ const STATUS_OPTIONS: { value: EmailStatus; label: string; cls: string; dot: str
   { value: "solved",  label: "Solved",  cls: "bg-green-50 text-green-700 border-green-200", dot: "bg-green-500" },
 ];
 
-const MODE_CONFIG: Record<OperationMode, {
+const MODE_CONFIG: Record<ChannelMode, {
   label: string; tagCls: string; bannerCls: string; replyCls: string; msgsBg: string; icon: React.FC<{ size?: number }>;
 }> = {
+  off:        { label: "Off",        tagCls: "bg-gray-500 text-white",          bannerCls: "bg-gray-50 border-gray-200 text-gray-600",       replyCls: "bg-gray-50 border-gray-200",      msgsBg: "bg-gray-50/40",  icon: PauseCircle },
   training:   { label: "Training",   tagCls: "bg-amber-400 text-white",         bannerCls: "bg-amber-50 border-amber-200 text-amber-700",    replyCls: "bg-amber-50 border-amber-200",    msgsBg: "bg-amber-50/40", icon: GraduationCap },
   production: { label: "Production", tagCls: "bg-blue-600 text-white",           bannerCls: "bg-blue-50 border-blue-200 text-blue-700",       replyCls: "bg-blue-50 border-blue-200",      msgsBg: "bg-blue-50/30",  icon: Bolt },
 };
@@ -197,7 +200,7 @@ function EmailTypeBadge({ type }: { type: EmailType }) {
   );
 }
 
-function ModeBadge({ mode }: { mode: OperationMode }) {
+function ModeBadge({ mode }: { mode: ChannelMode }) {
   const cfg = MODE_CONFIG[mode];
   const Icon = cfg.icon;
   return (
@@ -218,16 +221,17 @@ const TYPE_TABS: { value: EmailType | "all"; label: string }[] = [
 ];
 
 
-function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart, onCompose, isComposing }: {
+function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, width, onResizeStart, onCompose, isComposing, kind = "email" }: {
   threads: EmailThread[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-  globalMode: OperationMode;
+  globalMode: ChannelMode;
   onOpenSettings: () => void;
   width: number;
   onResizeStart: (e: React.MouseEvent) => void;
   onCompose: () => void;
   isComposing: boolean;
+  kind?: "email" | "zendesk";
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<EmailType | "all">("all");
@@ -312,7 +316,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
                 : "bg-[#f0ebff] text-[#3b1fa8] shadow-md hover:shadow-lg hover:bg-[#e5dcff] active:shadow-sm"
             )}>
             <Pencil size={15} strokeWidth={2} className="shrink-0" />
-            Compose
+            {kind === "zendesk" ? "New ticket" : "Compose"}
           </button>
         </div>
 
@@ -324,7 +328,7 @@ function EmailList({ threads, selectedId, onSelect, globalMode, onOpenSettings, 
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search emails…"
+              placeholder={kind === "zendesk" ? "Search tickets…" : "Search emails…"}
               className="w-full pl-8 pr-7 py-1.5 text-[12px] rounded-xl border border-border bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#6c47ff]/40 focus:border-[#6c47ff]/50 focus:bg-white transition-all"
             />
             {searchQuery && (
@@ -632,7 +636,7 @@ function FormatToolbar({ textareaRef, value, onChange, onAttach }: {
 function ComposeView({ onSend, onClose, globalMode, showList, onToggleList }: {
   onSend: (to: string, subject: string, body: string) => void;
   onClose: () => void;
-  globalMode: OperationMode;
+  globalMode: ChannelMode;
   showList: boolean;
   onToggleList: () => void;
 }) {
@@ -744,16 +748,17 @@ function ComposeView({ onSend, onClose, globalMode, showList, onToggleList }: {
 
 // ── Thread View ────────────────────────────────────────────────
 
-function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, showList, showInfo, onToggleList, onToggleInfo }: {
+function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, showList, showInfo, onToggleList, onToggleInfo, inboxLabel = INBOX_EMAIL }: {
   thread: EmailThread;
   onSend: (text: string, isInternal?: boolean) => void;
   onStatusChange: (s: EmailStatus) => void;
   onGoNext: () => void;
-  globalMode: OperationMode;
+  globalMode: ChannelMode;
   showList: boolean;
   showInfo: boolean;
   onToggleList: () => void;
   onToggleInfo: () => void;
+  inboxLabel?: string;
 }) {
   const [draft, setDraft] = useState("");
   const [isInternalNote, setIsInternalNote] = useState(false);
@@ -860,6 +865,13 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
       </div>
 
       {/* Mode banner */}
+      {mode === "off" && (
+        <div className="px-4 py-1.5 bg-gray-50 border-b border-gray-200 flex items-center gap-2 shrink-0">
+          <PauseCircle size={11} className="text-gray-500 shrink-0" />
+          <span className="text-[11px] text-gray-600 font-medium">Off</span>
+          <span className="text-[11px] text-gray-400">— AI is paused for this channel. Replies are handled manually.</span>
+        </div>
+      )}
       {mode === "production" && (
         <div className="px-4 py-1.5 bg-blue-50 border-b border-blue-100 flex items-center gap-2 shrink-0">
           <Bolt size={11} className="text-blue-600 shrink-0" />
@@ -908,7 +920,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
                   {isCustomer ? <User size={11} /> : msgIsInternal ? <Lock size={9} /> : "AI"}
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">{msg.authorName}</span>
-                {!isCustomer && !msgIsInternal && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {INBOX_EMAIL}</span>}
+                {!isCustomer && !msgIsInternal && <span className={cn("text-[11px]", mode === "production" ? "text-blue-500" : "text-amber-600")}>via {inboxLabel}</span>}
                 {/* Right cluster: time + copy + translate (always shown) */}
                 <div className="ml-auto flex items-center gap-1.5 shrink-0">
                   <span className="text-[11px] text-gray-400">{fullDate(msg.timestamp)}</span>
@@ -979,7 +991,13 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
           );
         })}
 
-        {/* Inline AI Draft */}
+        {/* Inline AI Draft — hidden when the channel is off */}
+        {mode === "off" ? (
+          <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-3.5 text-[12px] text-gray-500 flex items-center gap-2">
+            <PauseCircle size={14} className="text-gray-400 shrink-0" />
+            AI is off for this channel — no draft is generated. Switch Email to Training or Production in Settings → Channels.
+          </div>
+        ) : (
         <div className={cn("rounded-xl border p-3.5 text-[13px] leading-relaxed", modeCfg.replyCls)}>
           <div className="flex items-center gap-2 mb-2">
             <div className={cn("w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] font-bold shrink-0",
@@ -1034,6 +1052,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
             </div>
           )}
         </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -1182,7 +1201,7 @@ function ThreadView({ thread, onSend, onStatusChange, onGoNext, globalMode, show
 
 function TicketInfoPanel({ thread, globalMode, onUpdateCustomerNote, allThreads, onSelectThread }: {
   thread: EmailThread;
-  globalMode: OperationMode;
+  globalMode: ChannelMode;
   onUpdateCustomerNote: (note: string) => void;
   allThreads: EmailThread[];
   onSelectThread: (id: string) => void;
@@ -1417,9 +1436,22 @@ function EmailSyncModal({ onClose }: { onClose: () => void }) {
 
 // ── Main Page ──────────────────────────────────────────────────
 
-export default function EmailPage() {
-  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode: mode } = useApp();
-  const [threads, setThreads] = useState<EmailThread[]>(emailThreads);
+export function EmailInboxView({
+  source,
+  mode: modeProp,
+  kind = "email",
+  inboxLabel = INBOX_EMAIL,
+  onOpenChannelSettings,
+}: {
+  source?: EmailThread[];
+  mode?: ChannelMode;
+  kind?: "email" | "zendesk";
+  inboxLabel?: string;
+  onOpenChannelSettings?: () => void;
+} = {}) {
+  const { openEmailSyncModal, setOpenEmailSyncModal, emailMode } = useApp();
+  const mode = modeProp ?? emailMode;
+  const [threads, setThreads] = useState<EmailThread[]>(source ?? emailThreads);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isComposing, setIsComposing] = useState(false);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
@@ -1451,8 +1483,8 @@ export default function EmailPage() {
   }, []);
 
   useEffect(() => {
-    if (openEmailSyncModal) { setShowSyncSettings(true); setOpenEmailSyncModal(false); }
-  }, [openEmailSyncModal, setOpenEmailSyncModal]);
+    if (kind === "email" && openEmailSyncModal) { setShowSyncSettings(true); setOpenEmailSyncModal(false); }
+  }, [kind, openEmailSyncModal, setOpenEmailSyncModal]);
 
   const selectedThread = threads.find(t => t.id === selectedId) ?? null;
 
@@ -1475,7 +1507,7 @@ export default function EmailPage() {
     if (!selectedId) return;
     const newMsg = {
       id: `msg-${Date.now()}`, from: "agent" as const,
-      authorName: CURRENT_USER, authorEmail: INBOX_EMAIL,
+      authorName: CURRENT_USER, authorEmail: inboxLabel,
       content: text, timestamp: "Just now",
       ...(isInternal ? { isInternal: true } : {}),
     };
@@ -1530,7 +1562,7 @@ export default function EmailPage() {
         id: `msg-${Date.now()}`,
         from: "agent",
         authorName: CURRENT_USER,
-        authorEmail: INBOX_EMAIL,
+        authorEmail: inboxLabel,
         content: body,
         timestamp: "Just now",
       }],
@@ -1543,7 +1575,7 @@ export default function EmailPage() {
 
   return (
     <>
-      {showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
+      {kind === "email" && showSyncSettings && <EmailSyncModal onClose={() => setShowSyncSettings(false)} />}
 
       <div className="flex flex-col h-full overflow-hidden">
 
@@ -1554,11 +1586,12 @@ export default function EmailPage() {
               selectedId={isComposing ? null : selectedId}
               onSelect={handleSelect}
               globalMode={mode}
-              onOpenSettings={() => setShowSyncSettings(true)}
+              onOpenSettings={kind === "zendesk" ? (onOpenChannelSettings ?? (() => {})) : (() => setShowSyncSettings(true))}
               width={listWidth}
               onResizeStart={handleResizeStart}
               onCompose={handleCompose}
               isComposing={isComposing}
+              kind={kind}
             />
           )}
           {isComposing ? (
@@ -1581,6 +1614,7 @@ export default function EmailPage() {
                 showInfo={showInfo}
                 onToggleList={() => setShowList(v => !v)}
                 onToggleInfo={() => setShowInfo(v => !v)}
+                inboxLabel={inboxLabel}
               />
               {showInfo && (
                 <TicketInfoPanel
@@ -1598,5 +1632,44 @@ export default function EmailPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/* ================================================================
+   EmailPage — [Inbox | Settings] wrapper (操作 / 基础设置)
+   ================================================================ */
+export default function EmailPage() {
+  const { emailChannelConnected, channelSettingsIntent, setChannelSettingsIntent } = useApp();
+  const [tab, setTab] = useState<"inbox" | "settings">(emailChannelConnected ? "inbox" : "settings");
+
+  useEffect(() => {
+    if (channelSettingsIntent === "email") {
+      setTab("settings");
+      setChannelSettingsIntent(null);
+    }
+  }, [channelSettingsIntent, setChannelSettingsIntent]);
+
+  return (
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <SubTabBar
+        tabs={[
+          { id: "inbox", label: "Inbox", icon: Inbox },
+          { id: "settings", label: "Settings", icon: Settings },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
+      {tab === "inbox" ? (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <EmailInboxView />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl mx-auto">
+            <ChannelsSection only="email" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

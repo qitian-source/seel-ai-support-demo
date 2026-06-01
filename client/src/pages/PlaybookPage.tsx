@@ -20,7 +20,6 @@ import {
   BookOpen, FileText, Upload, Search, Clock,
   ChevronRight, ChevronDown, X, Trash2, History,
   Plus, ThumbsUp, ThumbsDown, Sparkles, PenLine,
-  MoreHorizontal,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -74,15 +73,62 @@ export default function PlaybookPage() {
 // RULES VIEW
 // ============================================================
 function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void }) {
-  const { rulesData, topicsData, updateTopic, setupFullyComplete } = useApp();
+  const { rulesData, topicsData, updateTopic, setupFullyComplete, addRule, docsData } = useApp();
+
+  const sourceLabelFor = (r: Rule) => {
+    if (r.sourceDocId) {
+      const doc = docsData.find((d) => d.id === r.sourceDocId);
+      if (doc) return doc.name;
+    }
+    if (r.source === "Team Lead") return "Team Lead proposal";
+    if (r.source === "Manager edit") return "Manager edit";
+    if (r.source === "Document") return "Uploaded document";
+    return r.source;
+  };
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarTicketId, setSidebarTicketId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [showNewRule, setShowNewRule] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<string>("All");
+  const [reviewTopicId, setReviewTopicId] = useState<string | null>(null);
 
-  const filteredRules = rulesData.filter((r) =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const moduleOf = (r: Rule) => r.module || "Uncategorized";
+  const modules = Array.from(new Set(rulesData.map(moduleOf)));
+
+  const filteredRules = rulesData
+    .filter((r) => selectedModule === "All" || moduleOf(r) === selectedModule)
+    .filter((r) =>
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.content.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .slice()
+    .sort((a, b) => {
+      const ta = new Date(a.lastUpdated).getTime();
+      const tb = new Date(b.lastUpdated).getTime();
+      return sortOrder === "newest" ? tb - ta : ta - tb;
+    });
+
+  const handleCreateRule = (name: string, content: string, module: string) => {
+    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const newRule: Rule = {
+      id: `rule-${Date.now()}`,
+      name,
+      enabled: true,
+      description: "",
+      content,
+      module: module || "Uncategorized",
+      source: "Manager edit",
+      lastUpdated: today,
+      stats: { used: 0, avgCsat: 0, deflection: 0 },
+      versionHistory: [
+        { version: 1, timestamp: today, source: "Manager edit", diff: "Rule created manually." },
+      ],
+    };
+    addRule(newRule);
+    setShowNewRule(false);
+    toast.success("Rule created");
+  };
 
   // Setup-stage proposals: only show NEW RULE (not RULE UPDATE) when setup is NOT complete
   const pendingTopics = !setupFullyComplete
@@ -92,7 +138,7 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-3 flex items-center justify-between">
+      <div className="px-5 py-3 flex items-center gap-3">
         <div className="relative flex-1 max-w-[260px]">
           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
           <Input
@@ -103,26 +149,67 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
           />
         </div>
         <span className="text-[12px] text-muted-foreground">{rulesData.length} rules</span>
+        <div className="ml-auto flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5">
+                <Clock size={13} />
+                {sortOrder === "newest" ? "Newest first" : "Oldest first"}
+                <ChevronDown size={12} className="text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuItem className="text-[12px]" onClick={() => setSortOrder("newest")}>
+                Newest first
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-[12px]" onClick={() => setSortOrder("oldest")}>
+                Oldest first
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" className="h-8 text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={() => setShowNewRule(true)}>
+            <Plus size={12} className="mr-1" /> New Rule
+          </Button>
+        </div>
+      </div>
+
+      {/* Module filter tabs */}
+      <div className="px-5 pb-2 flex items-center gap-1.5 flex-wrap">
+        {["All", ...modules].map((mod) => {
+          const count = mod === "All" ? rulesData.length : rulesData.filter((r) => moduleOf(r) === mod).length;
+          const active = selectedModule === mod;
+          return (
+            <button
+              key={mod}
+              onClick={() => setSelectedModule(mod)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors border",
+                active
+                  ? "bg-[#6c47ff] text-white border-[#6c47ff]"
+                  : "bg-white text-muted-foreground border-border hover:text-foreground hover:border-[#6c47ff]/40"
+              )}
+            >
+              {mod}
+              <span className={cn("ml-1.5 text-[11px]", active ? "text-white/70" : "text-muted-foreground/60")}>{count}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
-        {/* Setup-stage Proposal Cards (same style as AgentsPage ProposalCard) */}
+        {/* Setup-stage proposals — single-line reminder, click to review */}
         {pendingTopics.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-              <p className="text-[12px] text-muted-foreground">{pendingTopics.length} proposal{pendingTopics.length > 1 ? "s" : ""} need your review</p>
-            </div>
-            {pendingTopics.map((topic) => (
-              <PlaybookProposalCard
-                key={topic.id}
-                topic={topic}
-                onAccept={() => { updateTopic(topic.id, { status: "accepted" }); toast.success("Proposal accepted"); }}
-                onReject={() => { updateTopic(topic.id, { status: "rejected" }); toast.success("Proposal rejected"); }}
-                onTicketClick={(id) => setSidebarTicketId(id)}
-              />
-            ))}
-          </div>
+          <button
+            onClick={() => setReviewTopicId(pendingTopics[0].id)}
+            className="w-full rounded-xl border border-amber-200 bg-amber-50/50 px-4 py-2.5 flex items-center gap-2 text-left hover:bg-amber-100/40 transition-colors"
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+            <p className="text-[12px] font-medium text-amber-800 flex-1">
+              {pendingTopics.length} proposal{pendingTopics.length > 1 ? "s" : ""} need your review
+            </p>
+            <span className="text-[11px] text-[#6c47ff] font-medium shrink-0">Review</span>
+            <ChevronRight size={14} className="text-amber-500/70 shrink-0" />
+          </button>
         )}
 
         {/* Simplified Rule cards — compact single card with dividers */}
@@ -139,10 +226,22 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
               onClick={() => setSelectedRuleId(rule.id)}
             >
               <div className="flex-1 min-w-0">
-                <h4 className="text-[13px] font-medium text-foreground">{rule.name}</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-[13px] font-medium text-foreground">{rule.name}</h4>
+                  <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-muted-foreground/80 border-border/70 bg-muted/30 shrink-0">
+                    {moduleOf(rule)}
+                  </Badge>
+                </div>
                 <p className="text-[12px] text-muted-foreground line-clamp-1 mt-0.5">
                   {rule.content.slice(0, 120)}{rule.content.length > 120 ? "…" : ""}
                 </p>
+                <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-muted-foreground/70">
+                  <FileText size={11} className="shrink-0" />
+                  <span className="truncate">{sourceLabelFor(rule)}</span>
+                  <span className="text-muted-foreground/40">·</span>
+                  <Clock size={11} className="shrink-0" />
+                  <span className="shrink-0">Updated {rule.lastUpdated}</span>
+                </div>
               </div>
               <ChevronRight size={14} className="text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -167,137 +266,287 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
       {sidebarTicketId && (
         <ConversationLogSidebar ticketId={sidebarTicketId} onClose={() => setSidebarTicketId(null)} />
       )}
+
+      {/* New Rule Dialog */}
+      <NewRuleDialog open={showNewRule} onOpenChange={setShowNewRule} onCreate={handleCreateRule} modules={modules} defaultModule={selectedModule !== "All" ? selectedModule : modules[0]} />
+
+      {/* Proposal Review Sheet — editable content, Accept → Save */}
+      {reviewTopicId && (
+        <ProposalReviewSheet
+          topicId={reviewTopicId}
+          open={!!reviewTopicId}
+          onOpenChange={(open) => !open && setReviewTopicId(null)}
+          onTicketClick={(id) => setSidebarTicketId(id)}
+        />
+      )}
     </div>
   );
 }
 
 // ============================================================
-// PLAYBOOK PROPOSAL CARD (mirrors AgentsPage ProposalCard style)
+// NEW RULE DIALOG — manual rule creation
 // ============================================================
-function PlaybookProposalCard({ topic, onAccept, onReject, onTicketClick }: {
-  topic: Topic;
-  onAccept: () => void;
-  onReject: () => void;
-  onTicketClick: (ticketId: string) => void;
+function NewRuleDialog({ open, onOpenChange, onCreate, modules, defaultModule }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreate: (name: string, content: string, module: string) => void;
+  modules: string[];
+  defaultModule?: string;
 }) {
-  const { docsData } = useApp();
-  const [ruleExpanded, setRuleExpanded] = useState(false);
-  const [newRuleExpanded, setNewRuleExpanded] = useState(false);
-  const isUpdate = !!topic.currentRuleContent;
-  const sourceDoc = topic.sourceDocId ? docsData.find(d => d.id === topic.sourceDocId) : null;
+  const [name, setName] = useState("");
+  const [content, setContent] = useState("");
+  const [module, setModule] = useState(defaultModule || modules[0] || "Uncategorized");
+
+  useEffect(() => {
+    if (open) setModule(defaultModule || modules[0] || "Uncategorized");
+  }, [open, defaultModule, modules]);
+
+  const handleSubmit = () => {
+    if (!name.trim() || !content.trim()) {
+      toast.error("Please fill in both name and content.");
+      return;
+    }
+    onCreate(name.trim(), content.trim(), module);
+    setName("");
+    setContent("");
+  };
 
   return (
-    <div className="bg-white border border-border rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 flex items-center gap-2">
-        <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider shrink-0 py-0 h-5 border-[#6c47ff] text-[#6c47ff] bg-[#f0edff]">
-          {topic.badge}
-        </Badge>
-        <span className="text-[13px] font-medium text-foreground flex-1">{topic.title}</span>
-        {topic.status === "pending" && (
-          <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-        )}
-      </div>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setName(""); setContent(""); } onOpenChange(o); }}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle className="text-[15px]">New Rule</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[12px] font-medium text-foreground mb-1 block">Name</label>
+            <Input
+              placeholder="e.g., Return Window Policy"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div>
+            <label className="text-[12px] font-medium text-foreground mb-1 block">Module</label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between h-9 text-[13px] font-normal">
+                  {module}
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                {modules.map((m) => (
+                  <DropdownMenuItem key={m} className="text-[13px]" onClick={() => setModule(m)}>
+                    {m}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div>
+            <label className="text-[12px] font-medium text-foreground mb-1 block">Content</label>
+            <Textarea
+              placeholder="Describe the rule the AI Rep should follow..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="text-[13px] min-h-[160px] resize-none"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" className="text-[12px]" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button className="text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={handleSubmit}>
+            Create Rule
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-      {/* Body */}
-      <div className="px-4 pb-4 pt-3 border-t border-border/50">
-        {/* What changed */}
-        {topic.ruleContent && isUpdate && (
-          <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-3 mb-3 relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-lg" />
-            <p className="text-[10px] font-semibold text-amber-700 mb-1.5 uppercase tracking-wider pl-2">What Changed</p>
-            <p className={cn(
-              "text-[12px] text-foreground leading-relaxed whitespace-pre-wrap pl-2",
-              !ruleExpanded && "line-clamp-3"
-            )}>
-              {topic.ruleContent}
-            </p>
-            {topic.ruleContent.split("\n").length > 3 && !ruleExpanded && (
-              <button onClick={() => setRuleExpanded(true)} className="text-[11px] text-[#6c47ff] hover:text-[#5a3ad9] font-medium mt-1 pl-2">
-                Show full rule
-              </button>
+// ============================================================
+// PROPOSAL REVIEW SHEET — review → edit → save (commits a live rule)
+// ============================================================
+function ProposalReviewSheet({ topicId, open, onOpenChange, onTicketClick }: {
+  topicId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onTicketClick: (ticketId: string) => void;
+}) {
+  const { topicsData, docsData, updateTopic, addRule } = useApp();
+  const topic = topicsData.find((t) => t.id === topicId);
+  const [phase, setPhase] = useState<"review" | "edit">("review");
+  const [editContent, setEditContent] = useState("");
+
+  useEffect(() => {
+    if (open && topic) {
+      setPhase("review");
+      setEditContent(topic.ruleContent || topic.newRuleContent || "");
+    }
+  }, [open, topicId]);
+
+  if (!topic) return null;
+
+  const sourceDoc = topic.sourceDocId ? docsData.find((d) => d.id === topic.sourceDocId) : null;
+
+  const handleSave = () => {
+    const body = editContent.trim();
+    if (!body) {
+      toast.error("Rule content cannot be empty.");
+      return;
+    }
+    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const newRule: Rule = {
+      id: `rule-${Date.now()}`,
+      name: topic.title,
+      enabled: true,
+      description: topic.summary || "",
+      content: body,
+      module: "Uncategorized",
+      source: "Team Lead",
+      sourceDocId: topic.sourceDocId,
+      lastUpdated: today,
+      stats: { used: 0, avgCsat: 0, deflection: 0 },
+      versionHistory: [
+        { version: 1, timestamp: today, source: "Team Lead", diff: "Rule accepted from proposal." },
+      ],
+    };
+    addRule(newRule);
+    updateTopic(topicId, { status: "accepted" });
+    toast.success("Rule accepted and live");
+    onOpenChange(false);
+  };
+
+  const handleReject = () => {
+    updateTopic(topicId, { status: "rejected" });
+    toast("Proposal rejected");
+    onOpenChange(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[520px] sm:max-w-[520px] p-0 flex flex-col gap-0">
+        <SheetHeader className="px-5 py-4 border-b border-border">
+          <div className="flex items-start justify-between gap-3 pr-6">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider shrink-0 py-0 h-5 border-[#6c47ff] text-[#6c47ff] bg-[#f0edff]">
+                  {topic.badge}
+                </Badge>
+                <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Needs review
+                </span>
+              </div>
+              <SheetTitle className="text-[15px] leading-snug text-left">{topic.title}</SheetTitle>
+            </div>
+            {phase === "review" && (
+              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 shrink-0" onClick={() => setPhase("edit")}>
+                <PenLine size={12} /> Edit
+              </Button>
             )}
           </div>
-        )}
+        </SheetHeader>
 
-        {/* New Rule (for new rules, not updates) */}
-        {topic.ruleContent && !isUpdate && (
-          <div className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-lg p-3 mb-3">
-            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">New Rule</p>
-            <p className={cn(
-              "text-[12px] text-foreground leading-relaxed whitespace-pre-wrap",
-              !ruleExpanded && "line-clamp-3"
-            )}>
-              {topic.ruleContent}
-            </p>
-            {topic.ruleContent.split("\n").length > 3 && !ruleExpanded && (
-              <button onClick={() => setRuleExpanded(true)} className="text-[11px] text-[#6c47ff] hover:text-[#5a3ad9] font-medium mt-1">
-                Show full rule
-              </button>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Rule content — read-only in review, editable in edit */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {phase === "edit" ? "Edit rule before saving" : "Proposed rule"}
+              </p>
+              {phase === "edit" && (
+                <span className="text-[10px] text-[#6c47ff] font-medium flex items-center gap-1">
+                  <PenLine size={11} /> Editing
+                </span>
+              )}
+            </div>
+            {phase === "edit" ? (
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="text-[12px] min-h-[200px] resize-none leading-relaxed"
+                autoFocus
+              />
+            ) : (
+              <div className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-lg p-3">
+                <p className="text-[12px] text-foreground leading-relaxed whitespace-pre-wrap">
+                  {topic.ruleContent || topic.newRuleContent}
+                </p>
+              </div>
             )}
           </div>
-        )}
 
-        {/* New Rule (result after update) */}
-        {topic.newRuleContent && (
-          <div className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-lg p-3 mb-3">
-            <p className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">New Rule</p>
-            <p className={cn(
-              "text-[12px] text-foreground leading-relaxed whitespace-pre-wrap",
-              !newRuleExpanded && "line-clamp-3"
-            )}>
-              {topic.newRuleContent}
-            </p>
-            {topic.newRuleContent.split("\n").length > 3 && !newRuleExpanded && (
-              <button onClick={() => setNewRuleExpanded(true)} className="text-[11px] text-[#6c47ff] hover:text-[#5a3ad9] font-medium mt-1">
-                Show full rule
-              </button>
-            )}
-          </div>
-        )}
+          {/* Source */}
+          {sourceDoc ? (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <FileText size={12} className="text-muted-foreground/60" />
+              <span>Source:</span>
+              <span className="text-foreground font-medium">{sourceDoc.name}</span>
+            </div>
+          ) : topic.sourceTickets.length > 0 && (
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+              <span>Source: {topic.sourceTickets.length} tickets</span>
+              <span>&middot;</span>
+              {topic.sourceTickets.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => onTicketClick(t)}
+                  className="text-[11px] text-[#6c47ff] hover:text-[#5a3ad9] underline underline-offset-2 font-medium"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {/* Source — document for NEW RULE, tickets for RULE UPDATE (Team Lead) */}
-        {sourceDoc ? (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-3">
-            <FileText size={10} className="text-muted-foreground/60" />
-            <span>Source:</span>
-            <span className="text-foreground font-medium">{sourceDoc.name}</span>
-          </div>
-        ) : topic.sourceTickets.length > 0 && (
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-3 flex-wrap">
-            <span>Source: {topic.sourceTickets.length} tickets</span>
-            <span>&middot;</span>
-            {topic.sourceTickets.map((t) => (
-              <button
-                key={t}
-                onClick={() => onTicketClick(t)}
-                className="text-[10px] text-[#6c47ff] hover:text-[#5a3ad9] underline underline-offset-2 font-medium"
+        {/* Footer actions */}
+        <div className={cn(
+          "px-5 py-3 border-t border-border flex items-center gap-2 bg-white",
+          phase === "edit" && "justify-end"
+        )}>
+          {phase === "review" ? (
+            <>
+              <Button
+                size="sm"
+                className="h-8 text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white"
+                onClick={() => setPhase("edit")}
               >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Action buttons */}
-        {topic.status === "pending" && (
-          <div className="flex gap-2">
-            <Button size="sm" className="h-7 text-[11px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={onAccept}>
-              <ThumbsUp size={11} className="mr-1" /> Accept
-            </Button>
-            <Button size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground" onClick={onReject}>
-              <ThumbsDown size={11} className="mr-1" /> Reject
-            </Button>
-          </div>
-        )}
-        {topic.status === "accepted" && (
-          <Badge className="bg-green-50 text-green-700 border-green-200 text-[10px]">Accepted</Badge>
-        )}
-        {topic.status === "rejected" && (
-          <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px]">Rejected</Badge>
-        )}
-      </div>
-    </div>
+                <ThumbsUp size={12} className="mr-1" /> Accept
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-[12px] text-muted-foreground"
+                onClick={handleReject}
+              >
+                <ThumbsDown size={12} className="mr-1" /> Reject
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-[12px]"
+                onClick={() => setPhase("review")}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white"
+                onClick={handleSave}
+              >
+                Save & make live
+              </Button>
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -305,9 +554,58 @@ function PlaybookProposalCard({ topic, onAccept, onReject, onTicketClick }: {
 // RULE DETAIL SHEET — Read-only, single view, config history
 // ============================================================
 function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { ruleId: string; open: boolean; onOpenChange: (open: boolean) => void; onNavigateToDoc?: (docId: string) => void }) {
-  const { rulesData, docsData } = useApp();
+  const { rulesData, docsData, updateRule, removeRule } = useApp();
   const rule = rulesData.find((r) => r.id === ruleId);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editModule, setEditModule] = useState("");
+
+  const allModules = Array.from(new Set(rulesData.map((r) => r.module || "Uncategorized")));
+
+  const startEdit = () => {
+    if (!rule) return;
+    setEditName(rule.name);
+    setEditContent(rule.content);
+    setEditModule(rule.module || "Uncategorized");
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (!rule) return;
+    if (!editName.trim() || !editContent.trim()) {
+      toast.error("Name and content cannot be empty.");
+      return;
+    }
+    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const nextVersion = (rule.versionHistory[0]?.version ?? 0) + 1;
+    const changes: string[] = [];
+    if (editName.trim() !== rule.name) changes.push("name");
+    if (editContent.trim() !== rule.content) changes.push("content");
+    if (editModule !== (rule.module || "Uncategorized")) changes.push("module");
+    const diff = changes.length ? `Edited rule ${changes.join(", ")}.` : "Rule reviewed (no content change).";
+    updateRule(rule.id, {
+      name: editName.trim(),
+      content: editContent.trim(),
+      module: editModule,
+      source: "Manager edit",
+      lastUpdated: today,
+      versionHistory: [
+        { version: nextVersion, timestamp: today, source: "Manager edit", diff },
+        ...rule.versionHistory,
+      ],
+    });
+    setIsEditing(false);
+    toast.success("Rule updated");
+  };
+
+  const handleDelete = () => {
+    if (!rule) return;
+    removeRule(rule.id);
+    onOpenChange(false);
+    toast.success("Rule deleted");
+  };
 
   if (!rule) return null;
 
@@ -361,17 +659,98 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[480px] sm:max-w-[480px] p-0 flex flex-col">
         <SheetHeader className="px-5 pt-4 pb-3 border-b border-border">
-          <SheetTitle className="text-[16px]">{rule.name}</SheetTitle>
-          <span className="text-[11px] text-muted-foreground mt-1">Updated {rule.lastUpdated}</span>
+          <div className="flex items-start justify-between gap-3 pr-6">
+            <div className="min-w-0 flex-1">
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-[15px] font-medium h-9"
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-[12px] font-normal gap-1.5">
+                        {editModule}
+                        <ChevronDown size={13} className="text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {allModules.map((m) => (
+                        <DropdownMenuItem key={m} className="text-[12px]" onClick={() => setEditModule(m)}>
+                          {m}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <SheetTitle className="text-[16px]">{rule.name}</SheetTitle>
+                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground/80 border-border/70 bg-muted/30">
+                    {rule.module || "Uncategorized"}
+                  </Badge>
+                </div>
+              )}
+              <span className="text-[11px] text-muted-foreground mt-1 block">Updated {rule.lastUpdated}</span>
+            </div>
+            {!isEditing && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={startEdit}>
+                  <PenLine size={12} /> Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-red-600"
+                  onClick={handleDelete}
+                >
+                  <Trash2 size={13} />
+                </Button>
+              </div>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           {/* CONTENT */}
           <div>
             <SectionHeader>Content</SectionHeader>
-            <p className="text-[13px] text-foreground leading-[1.8] whitespace-pre-wrap">
-              {rule.content}
-            </p>
+            {isEditing ? (
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="text-[13px] min-h-[200px] leading-[1.8] resize-none"
+              />
+            ) : (
+              <p className="text-[13px] text-foreground leading-[1.8] whitespace-pre-wrap">
+                {rule.content}
+              </p>
+            )}
+          </div>
+
+          {/* SOURCE */}
+          <div className="border-t border-border/60 pt-5">
+            <SectionHeader>Source</SectionHeader>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-[12.5px]">
+                <FileText size={13} className="text-muted-foreground/70 shrink-0" />
+                {rule.source === "Document" && rule.sourceDocId && docsData.find((d) => d.id === rule.sourceDocId) ? (
+                  <button
+                    onClick={() => onNavigateToDoc?.(rule.sourceDocId!)}
+                    className="text-[#6c47ff] hover:text-[#5a3ad9] hover:underline font-medium text-left"
+                  >
+                    {sourceLabel(rule.source)}
+                  </button>
+                ) : (
+                  <span className="text-foreground/90 font-medium">{sourceLabel(rule.source)}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+                <Clock size={13} className="text-muted-foreground/70 shrink-0" />
+                <span>Last updated {rule.lastUpdated}</span>
+              </div>
+            </div>
           </div>
 
           {/* ACTIONS */}
@@ -473,6 +852,17 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
             )}
           </div>
         </div>
+
+        {isEditing && (
+          <div className="px-5 py-3 border-t border-border flex justify-end gap-2 bg-white">
+            <Button variant="outline" size="sm" className="h-8 text-[12px]" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" className="h-8 text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={handleSave}>
+              Save changes
+            </Button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
@@ -490,6 +880,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [processing, setProcessing] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
   const filteredDocs = docsData.filter((d) =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -532,6 +923,22 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
         status: "Processed",
         inUse: true,
         extractedRules: `${ruleNames.length} rules extracted`,
+        parsed: [
+          {
+            module: "Returns & Refunds",
+            topics: [
+              { topic: "Return Window", rules: ["Accept returns within 30 days of delivery for unused items in original packaging."] },
+              { topic: "Refund Processing", rules: ["Issue refunds to the original payment method within 5–7 business days of receiving the returned item."] },
+            ],
+          },
+          {
+            module: "Shipping & Protection",
+            topics: [
+              { topic: "Seel Protection Claims", rules: ["Verify the order has active Seel protection, then file a claim and confirm the resolution timeline with the customer."] },
+              { topic: "Shipping Delays", rules: ["Offer compensation when a shipment is delayed beyond the promised delivery window."] },
+            ],
+          },
+        ],
       });
       setSopUploaded(true);
       setExtractedRuleNames(ruleNames);
@@ -576,6 +983,14 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
         status: "Processed",
         inUse: true,
         extractedRules: `${ruleNames.length} rule extracted`,
+        parsed: [
+          {
+            module: "Custom Policy",
+            topics: [
+              { topic: title, rules: ["Custom policy rule extracted from manual input."] },
+            ],
+          },
+        ],
       });
       setSopUploaded(true);
       setExtractedRuleNames(ruleNames);
@@ -660,7 +1075,14 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
         {/* Compact document list — single card with dividers */}
         <div className="border border-border rounded-xl bg-white overflow-hidden divide-y divide-border/60">
           {filteredDocs.map((doc) => (
-            <div key={doc.id} className="px-4 py-3 flex items-center gap-3">
+            <div
+              key={doc.id}
+              className={cn(
+                "px-4 py-3 flex items-center gap-3 group transition-colors",
+                doc.status === "Processed" ? "cursor-pointer hover:bg-[#f8f8f8]" : ""
+              )}
+              onClick={() => { if (doc.status === "Processed") setSelectedDocId(doc.id); }}
+            >
               <div className={cn(
                 "w-8 h-8 rounded-md flex items-center justify-center text-white text-[9px] font-bold shrink-0 opacity-75",
                 doc.type === "PDF" ? "bg-red-400" : doc.type === "DOCX" || doc.type === "DOC" ? "bg-blue-400" : doc.type === "PPTX" ? "bg-orange-400" : "bg-gray-400"
@@ -682,7 +1104,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
                   <span>{doc.uploadedAt}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
                 {/* Error state: show Retry button */}
                 {doc.status === "Error" && (
                   <button
@@ -710,21 +1132,15 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
                     />
                   </label>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground shrink-0">
-                      <MoreHorizontal size={14} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600 text-[12px]"
-                      onClick={() => { removeDocument(doc.id); toast.success("Document removed"); }}
-                    >
-                      <Trash2 size={12} className="mr-1.5" /> Remove
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-red-600 shrink-0"
+                  onClick={() => { removeDocument(doc.id); toast.success("Document removed"); }}
+                  aria-label="Remove document"
+                >
+                  <Trash2 size={14} />
+                </Button>
               </div>
             </div>
           ))}
@@ -738,7 +1154,86 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
         onUploadFile={(name, size) => { setShowAddDialog(false); handleUploadFile(name, size); }}
         onManualInput={(title, content) => { setShowAddDialog(false); handleManualInput(title, content); }}
       />
+
+      {/* Document Detail Sheet — parsed module → topic → rules */}
+      {selectedDocId && (
+        <DocumentDetailSheet
+          docId={selectedDocId}
+          open={!!selectedDocId}
+          onOpenChange={(open) => !open && setSelectedDocId(null)}
+        />
+      )}
     </div>
+  );
+}
+
+// ============================================================
+// DOCUMENT DETAIL SHEET — parsed module → topic → rule content
+// ============================================================
+function DocumentDetailSheet({ docId, open, onOpenChange }: {
+  docId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { docsData } = useApp();
+  const doc = docsData.find((d) => d.id === docId);
+  if (!doc) return null;
+
+  const modules = doc.parsed ?? [];
+  const ruleCount = modules.reduce((acc, m) => acc + m.topics.reduce((a, t) => a + t.rules.length, 0), 0);
+
+  const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+    <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.08em] mb-2.5">{children}</p>
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[480px] sm:max-w-[480px] p-0 flex flex-col">
+        <SheetHeader className="px-5 pt-4 pb-3 border-b border-border">
+          <SheetTitle className="text-[16px] flex items-center gap-2">
+            <FileText size={16} className="text-muted-foreground shrink-0" />
+            <span className="truncate">{doc.name}</span>
+          </SheetTitle>
+          <span className="text-[11px] text-muted-foreground mt-1">
+            {doc.size} · Uploaded {doc.uploadedAt}
+            {modules.length > 0 && ` · ${modules.length} module${modules.length > 1 ? "s" : ""} · ${ruleCount} rule${ruleCount > 1 ? "s" : ""}`}
+          </span>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          {modules.length === 0 ? (
+            <div className="text-[13px] text-muted-foreground py-8 text-center">
+              No parsed content available for this document yet.
+            </div>
+          ) : (
+            <div className="space-y-7">
+              {modules.map((mod, mi) => (
+                <div key={mi}>
+                  <SectionHeader>{mod.module}</SectionHeader>
+                  <div className="space-y-4">
+                    {mod.topics.map((topic, ti) => (
+                      <div key={ti} className="border border-border/70 rounded-lg overflow-hidden">
+                        <div className="px-3.5 py-2.5 bg-muted/30 border-b border-border/60">
+                          <h4 className="text-[13px] font-medium text-foreground">{topic.topic}</h4>
+                        </div>
+                        <ul className="divide-y divide-border/50">
+                          {topic.rules.map((r, ri) => (
+                            <li key={ri} className="px-3.5 py-2.5 flex items-start gap-2.5">
+                              <span className="mt-1.5 w-1 h-1 rounded-full bg-[#6c47ff] shrink-0" />
+                              <p className="text-[12.5px] text-foreground/90 leading-relaxed">{r}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

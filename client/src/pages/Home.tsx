@@ -8,18 +8,22 @@ import AgentsPage from "@/pages/AgentsPage";
 import PlaybookPage from "@/pages/PlaybookPage";
 import PerformancePage from "@/pages/PerformancePage";
 import EmailPage from "@/pages/EmailPage";
+import LiveWidgetPage from "@/pages/LiveWidgetPage";
+import ZendeskPage from "@/pages/ZendeskPage";
 import SalesAgentPage from "@/pages/SalesAgentPage";
+import VocAgentPage from "@/pages/VocAgentPage";
 import BillingPage from "@/pages/BillingPage";
-import SetupSettings from "@/components/SetupSettings";
+import SettingsPage from "@/pages/SettingsPage";
 import OrgMenu from "@/components/OrgMenu";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Settings } from "lucide-react";
 
 const aiSupportTabs = [
-  { id: "agents" as const, label: "Agents" },
+  { id: "agents" as const, label: "AI Manager" },
   { id: "playbook" as const, label: "Playbook" },
+  { id: "live-widget" as const, label: "Live Widget" },
   { id: "email" as const, label: "Email Inbox", badge: true },
+  { id: "zendesk" as const, label: "Zendesk" },
   { id: "performance" as const, label: "Performance" },
 ];
 
@@ -30,24 +34,24 @@ const salesAgentTabs = [
 export default function Home() {
   const {
     mainTab, setMainTab,
-    showSettings, setShowSettings,
     playbookDeepLink, setPlaybookDeepLink,
   } = useApp();
 
   const isSalesAgent = mainTab === "sales-agent";
+  const isVocAgent = mainTab === "voc-agent";
   const isBilling = mainTab === "billing";
 
   /* Handle tab switch — consume playbookDeepLink */
   const handleTabSwitch = (tabId: typeof mainTab) => {
     setMainTab(tabId);
-    if (showSettings) setShowSettings(false);
     if (tabId !== "playbook" && playbookDeepLink) {
       setPlaybookDeepLink(null);
     }
   };
 
-  const activeTabs = isSalesAgent ? salesAgentTabs : aiSupportTabs;
-  const pageTitle = isSalesAgent ? "Sales Agent" : "Support agent";
+  const vocAgentTabs = [{ id: "voc-agent" as const, label: "Insights" }];
+  const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : aiSupportTabs;
+  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : "Support agent";
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -75,7 +79,7 @@ export default function Home() {
                       onClick={() => handleTabSwitch(tab.id)}
                       className={cn(
                         "px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-[1px] flex items-center gap-1.5",
-                        mainTab === tab.id && !showSettings
+                        mainTab === tab.id
                           ? "border-[#6c47ff] text-[#6c47ff]"
                           : "border-transparent text-muted-foreground hover:text-foreground"
                       )}
@@ -88,39 +92,36 @@ export default function Home() {
                       )}
                     </button>
                   ))}
+                  {/* Global Settings — pinned far right */}
+                  {!isSalesAgent && !isVocAgent && (
+                    <button
+                      onClick={() => handleTabSwitch("settings")}
+                      className={cn(
+                        "ml-auto px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-[1px] flex items-center gap-1.5",
+                        mainTab === "settings"
+                          ? "border-[#6c47ff] text-[#6c47ff]"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-hidden bg-[#fafafa]">
-              {showSettings ? (
-                <div className="flex-1 h-full overflow-y-auto p-6">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
-                        <p className="text-sm text-gray-500 mt-1">Manage ticketing system integration and agent configuration.</p>
-                      </div>
-                      <button
-                        onClick={() => setShowSettings(false)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                      >
-                        <X size={18} />
-                      </button>
-                    </div>
-                    <SetupSettings />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {mainTab === "agents"      && <AgentsPage />}
-                  {mainTab === "playbook"    && <PlaybookPage />}
-                  {mainTab === "performance" && <PerformancePage />}
-                  {mainTab === "email"       && <EmailPage />}
-                  {mainTab === "sales-agent" && <SalesAgentPage />}
-                </>
-              )}
+              {mainTab === "agents"       && <AgentsPage />}
+              {mainTab === "playbook"     && <PlaybookPage />}
+              {mainTab === "live-widget"  && <LiveWidgetPage />}
+              {mainTab === "performance"  && <PerformancePage />}
+              {mainTab === "email"        && <EmailPage />}
+              {mainTab === "zendesk"      && <ZendeskPage />}
+              {mainTab === "settings"     && <SettingsPage />}
+              {mainTab === "sales-agent"  && <SalesAgentPage />}
+              {mainTab === "voc-agent"    && <VocAgentPage />}
             </div>
           </>
         )}

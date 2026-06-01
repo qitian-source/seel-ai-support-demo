@@ -6,7 +6,7 @@ import { useApp } from "@/contexts/AppContext";
 import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
   Puzzle, Star, Bot, Grid3X3, Bell, Settings,
-  Headphones, TrendingUp, UserSquare2,
+  Headphones, TrendingUp, UserSquare2, Megaphone, ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -20,8 +20,13 @@ const mainNav = [
   { icon: Puzzle,      label: "Integrations", tab: null, disabled: true },
   { icon: Star,        label: "Reviews",      tab: null, disabled: true },
   { icon: Bot,         label: "Conversation",  tab: null, disabled: true },
-  { icon: Headphones,  label: "Support agent", tab: "agents" as const, disabled: false },
-  { icon: TrendingUp,  label: "Sales agent",  tab: "sales-agent" as const, disabled: false },
+];
+
+const workforceNav = [
+  { icon: Headphones,     label: "Support agent", tab: "agents" as const,      disabled: false },
+  { icon: TrendingUp,     label: "Sales agent",   tab: "sales-agent" as const, disabled: false },
+  { icon: Megaphone,      label: "VOC agent",     tab: "voc-agent" as const,   disabled: false },
+  { icon: ClipboardCheck, label: "Review agent",  tab: null,                   disabled: true },
 ];
 
 const customizeNav = [
@@ -30,8 +35,48 @@ const customizeNav = [
   { icon: Bell,        label: "Notifications",    disabled: true },
 ];
 
+type NavItem = {
+  icon: typeof Home;
+  label: string;
+  tab: "agents" | "sales-agent" | "voc-agent" | null;
+  disabled: boolean;
+};
+
 export default function Sidebar() {
   const { mainTab, setMainTab } = useApp();
+
+  const renderNavItem = (item: NavItem) => {
+    const supportAgentTabs = ["agents", "playbook", "performance", "email"];
+    const isActive = item.label === "Support agent"
+      ? supportAgentTabs.includes(mainTab)
+      : item.tab
+        ? mainTab === item.tab
+        : false;
+
+    return (
+      <button
+        key={item.label}
+        onClick={() => {
+          if (item.tab) {
+            setMainTab(item.tab);
+          } else if (item.disabled) {
+            toast("Feature coming soon", { description: `${item.label} is not available in this demo.` });
+          }
+        }}
+        className={cn(
+          "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors",
+          isActive
+            ? "bg-[#f0edff] text-[#6c47ff]"
+            : item.disabled
+              ? "text-[#8c9196] hover:bg-[#f1f2f3] cursor-default"
+              : "text-[#6d7175] hover:bg-[#f1f2f3]"
+        )}
+      >
+        <item.icon size={16} strokeWidth={1.8} />
+        {item.label}
+      </button>
+    );
+  };
 
   return (
     <aside className="w-[220px] shrink-0 border-r border-border bg-[#fafafa] flex flex-col h-screen sticky top-0">
@@ -47,37 +92,15 @@ export default function Sidebar() {
 
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2">
-        {mainNav.map((item) => {
-          const supportAgentTabs = ["agents", "playbook", "performance", "email"];
-          const isActive = item.label === "Support agent"
-            ? supportAgentTabs.includes(mainTab)
-            : item.tab
-              ? mainTab === item.tab
-              : false;
-          return (
-            <button
-              key={item.label}
-              onClick={() => {
-                if (item.tab) {
-                  setMainTab(item.tab);
-                } else if (item.disabled) {
-                  toast("Feature coming soon", { description: `${item.label} is not available in this demo.` });
-                }
-              }}
-              className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors",
-                isActive
-                  ? "bg-[#f0edff] text-[#6c47ff]"
-                  : item.disabled
-                    ? "text-[#8c9196] hover:bg-[#f1f2f3] cursor-default"
-                    : "text-[#6d7175] hover:bg-[#f1f2f3]"
-              )}
-            >
-              <item.icon size={16} strokeWidth={1.8} />
-              {item.label}
-            </button>
-          );
-        })}
+        {mainNav.map((item) => renderNavItem(item))}
+
+        {/* Workforce section */}
+        <div className="mt-4 mb-1 px-3">
+          <span className="text-[11px] font-semibold text-[#8c9196] uppercase tracking-wider">
+            Workforce
+          </span>
+        </div>
+        {workforceNav.map((item) => renderNavItem(item))}
 
         {/* Customize section */}
         <div className="mt-4 mb-1 px-3">

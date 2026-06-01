@@ -1,51 +1,74 @@
 /*
  * SalesAgentPage — Sales Agent analytics with touchpoints & strategies
- * Analytics tab: bar chart (Sales trend) + performance breakdown table
- * Row click → Order Details slide-over panel
+ * Analytics tab redesigned around the full funnel: Mode filter →
+ * 6 KPI cards → Daily Trend (composed) + Conversion Funnel → Mode Breakdown → table.
+ * Metrics are aggregated from salesDaily for the selected time range + modes.
+ * Row click → Order Details slide-over panel.
  */
 import { useState, useMemo } from "react";
-import { salesDaily, salesTouchpoints, type SalesTouchpointRow, type SalesOrder } from "@/lib/data";
+import {
+  salesDaily, salesTouchpoints, SALES_MODES,
+  type SalesDailyPoint, type SalesOrder,
+} from "@/lib/data";
 import SalesAgentBanner from "@/components/SalesAgentBanner";
 import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePicker";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, X, Info, Calendar, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, X, Info, Sparkles } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer,
 } from "recharts";
 
 type AgentSubTab = "touchpoints" | "strategies" | "analytics";
 type TimeRange = "yesterday" | "7d" | "30d" | "90d" | "custom";
-type TouchpointFilter = "all" | string;
 
-const TIME_SCALE: Record<string, number> = { "yesterday": 1 / 30, "7d": 7 / 30, "30d": 1, "90d": 3, "custom": 1 };
+const DAYS_MAP: Record<TimeRange, number> = { yesterday: 1, "7d": 7, "30d": 30, "90d": 90, custom: 30 };
 
-function computeKPIs(tpFilter: string, timeRange: string) {
-  const scale = TIME_SCALE[timeRange] ?? 1;
-  const rows = tpFilter === "all" ? salesTouchpoints : salesTouchpoints.filter((r) => r.touchpoint === tpFilter);
-  const totalSales   = rows.reduce((s, r) => s + r.attributedSales, 0) * scale;
-  const totalOrders  = Math.round(rows.reduce((s, r) => s + r.ordersInfluenced, 0) * scale);
-  const avgCTR       = rows.reduce((s, r) => s + r.ctr, 0) / rows.length;
-  const avgItemAov   = rows.reduce((s, r) => s + r.aov, 0) / rows.length;
-  const avgActualAov = rows.reduce((s, r) => s + r.actualAov, 0) / rows.length;
-  const avgDelta     = rows.reduce((s, r) => s + r.salesDelta, 0) / rows.length;
-  return [
-    { label: "Attributed Sales",   value: `$${totalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, delta: `+${avgDelta.toFixed(1)}%`, positive: true },
-    { label: "Converted Orders",   value: String(totalOrders), delta: "+8.8%", positive: true },
-    { label: "CTR",                value: `${avgCTR.toFixed(1)}%`, delta: "+14.2%", positive: true },
-    { label: "AOV",   value: `$${avgActualAov.toFixed(2)}`, delta: "+18.7%", positive: true },
-  ];
+/* Series colors (also used in the legend / breakdown) */
+const C = { impressions: "#6c47ff", clicks: "#06b6d4", orders: "#f59e0b", revenue: "#10b981" };
+
+/* ── Aggregation helpers ── */
+interface Totals { impressions: number; clicks: number; orders: number; revenue: number; }
+const emptyTotals = (): Totals => ({ impressions: 0, clicks: 0, orders: 0, revenue: 0 });
+
+function sumModes(point: SalesDailyPoint, keys: string[]): Totals {
+  const t = emptyTotals();
+  for (const k of keys) {
+    const m = point.byMode[k];
+    if (!m) continue;
+    t.impressions += m.impressions; t.clicks += m.clicks; t.orders += m.orders; t.revenue += m.revenue;
+  }
+  return t;
+}
+function aggregate(points: SalesDailyPoint[], keys: string[]): Totals {
+  const t = emptyTotals();
+  for (const p of points) {
+    const s = sumModes(p, keys);
+    t.impressions += s.impressions; t.clicks += s.clicks; t.orders += s.orders; t.revenue += s.revenue;
+  }
+  return t;
+}
+const ctrOf = (t: Totals) => (t.impressions ? (t.clicks / t.impressions) * 100 : 0);
+const cvrOf = (t: Totals) => (t.clicks ? (t.orders / t.clicks) * 100 : 0);
+const rpmOf = (t: Totals) => (t.impressions ? (t.revenue / t.impressions) * 1000 : 0);
+
+function pctDelta(curV: number, prevV: number): { delta: string; positive: boolean } | null {
+  if (!prevV) return null;
+  const d = ((curV - prevV) / prevV) * 100;
+  return { delta: `${d >= 0 ? "+" : ""}${d.toFixed(1)}%`, positive: d >= 0 };
 }
 
-/* ── Chart colors per touchpoint ── */
-const TP_COLORS: Record<string, string> = {
-  resolutionCenter: "#6c47ff",
-  wfpEmail:         "#f59e0b",
-  supportAgent:     "#10b981",
-  searchBar:        "#3b82f6",
-};
+const usd = (v: number, dp = 2) => `$${v.toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp })}`;
+
+/* View-model row for table + slide-over */
+interface ModeRow {
+  key: string; label: string; color: string;
+  impressions: number; clicks: number; orders: number; revenue: number;
+  ctr: number; cvr: number; rpm: number;
+  salesDelta: number; sampleOrders: SalesOrder[];
+}
 
 /* ── Order status badge ── */
 function StatusBadge({ status }: { status: SalesOrder["status"] }) {
@@ -62,43 +85,32 @@ function StatusBadge({ status }: { status: SalesOrder["status"] }) {
 }
 
 /* ── Order Details Slide-over ── */
-function OrderDetailsPanel({
-  row,
-  onClose,
-}: {
-  row: SalesTouchpointRow | null;
-  onClose: () => void;
-}) {
+function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () => void }) {
   if (!row) return null;
+  const stats = [
+    { label: "CTR", value: `${row.ctr.toFixed(2)}%` },
+    { label: "CVR", value: `${row.cvr.toFixed(2)}%` },
+    { label: "RPM", value: usd(row.rpm) },
+  ];
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-
-      {/* Panel */}
       <div className="fixed right-0 top-0 h-full w-[480px] bg-white shadow-2xl z-50 flex flex-col overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
-            <h2 className="text-[14px] font-semibold text-foreground">{row.touchpoint}</h2>
+            <h2 className="text-[14px] font-semibold text-foreground">{row.label}</h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              {row.ordersInfluenced} converted orders · ${row.attributedSales.toLocaleString("en-US", { minimumFractionDigits: 2 })} attributed
+              {row.orders.toLocaleString()} converted orders · {usd(row.revenue)} revenue
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground transition-colors"
-          >
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground transition-colors">
             <X size={16} />
           </button>
         </div>
 
         {/* Stats strip */}
-        <div className="grid grid-cols-2 gap-0 border-b border-border">
-          {[
-            { label: "CTR", value: `${row.ctr}%` },
-            { label: "AOV", value: `$${row.actualAov.toFixed(2)}` },
-          ].map((s) => (
+        <div className="grid grid-cols-3 gap-0 border-b border-border">
+          {stats.map((s) => (
             <div key={s.label} className="px-5 py-3 border-r last:border-r-0 border-border">
               <div className="text-[10px] text-muted-foreground">{s.label}</div>
               <div className="text-[15px] font-semibold text-foreground mt-0.5">{s.value}</div>
@@ -110,36 +122,26 @@ function OrderDetailsPanel({
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[12px] font-semibold text-foreground">Converted Orders</h3>
-            <span className="text-[11px] text-muted-foreground">{row.orders.length} shown</span>
+            <span className="text-[11px] text-muted-foreground">{row.sampleOrders.length} shown</span>
           </div>
           <div className="space-y-3">
-            {row.orders.map((order) => (
+            {row.sampleOrders.map((order) => (
               <div key={order.id} className="border border-border rounded-lg p-3.5 hover:bg-muted/20 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-[12px] font-mono font-medium text-[#6c47ff]">{order.id}</span>
                   <StatusBadge status={order.status} />
                   <span className="text-[11px] text-muted-foreground ml-1">{order.email}</span>
                 </div>
-
-                {/* Items */}
                 <div className="bg-muted/30 rounded-md px-3 py-2 space-y-1 mb-2">
                   {order.items.map((item, idx) => {
                     const isRecommended = item.name === order.recommendedItem;
                     return (
-                      <div
-                        key={idx}
-                        className={cn(
-                          "flex items-center justify-between text-[11px] rounded px-2 py-1 -mx-2",
-                          isRecommended ? "bg-[#f0edff]" : ""
-                        )}
-                      >
+                      <div key={idx} className={cn("flex items-center justify-between text-[11px] rounded px-2 py-1 -mx-2", isRecommended ? "bg-[#f0edff]" : "")}>
                         <span className={cn("flex items-center gap-1.5", isRecommended ? "text-[#6c47ff] font-medium" : "text-foreground")}>
                           {isRecommended && <Sparkles size={10} className="text-[#6c47ff] shrink-0" />}
                           {item.name} ×{item.qty}
                           {isRecommended && (
-                            <span className="text-[9px] font-semibold tracking-wide bg-[#6c47ff] text-white px-1.5 py-0.5 rounded-full">
-                              Recommended
-                            </span>
+                            <span className="text-[9px] font-semibold tracking-wide bg-[#6c47ff] text-white px-1.5 py-0.5 rounded-full">Recommended</span>
                           )}
                         </span>
                         <span className={cn("tabular-nums", isRecommended ? "text-[#6c47ff] font-medium" : "text-muted-foreground")}>{item.price}</span>
@@ -147,7 +149,6 @@ function OrderDetailsPanel({
                     );
                   })}
                 </div>
-
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-muted-foreground">{order.date} · {order.channel}</span>
                   <span className="font-semibold text-foreground">{order.total}</span>
@@ -155,10 +156,9 @@ function OrderDetailsPanel({
               </div>
             ))}
           </div>
-
-          {row.orders.length < row.ordersInfluenced && (
+          {row.sampleOrders.length < row.orders && (
             <p className="text-center text-[11px] text-muted-foreground mt-4">
-              Showing {row.orders.length} of {row.ordersInfluenced} orders
+              Showing {row.sampleOrders.length} of {row.orders.toLocaleString()} orders
             </p>
           )}
         </div>
@@ -171,123 +171,153 @@ function OrderDetailsPanel({
 function AnalyticsTab() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
-  const [tpFilter, setTpFilter] = useState<TouchpointFilter>("all");
-  const [selectedRow, setSelectedRow] = useState<SalesTouchpointRow | null>(null);
+  const [selKeys, setSelKeys] = useState<string[]>(SALES_MODES.map((m) => m.key));
+  const [selectedRow, setSelectedRow] = useState<ModeRow | null>(null);
 
-  const daysMap: Record<TimeRange, number> = { "yesterday": 1, "7d": 7, "30d": 30, "90d": 90, "custom": 30 };
-  const chartData = salesDaily.slice(-daysMap[timeRange]);
-  const kpis = useMemo(() => computeKPIs(tpFilter, timeRange), [tpFilter, timeRange]);
+  function toggleMode(key: string) {
+    setSelKeys((prev) =>
+      prev.includes(key)
+        ? (prev.length === 1 ? prev : prev.filter((k) => k !== key)) // keep at least one
+        : [...prev, key]
+    );
+  }
 
-  const filteredTouchpoints = useMemo(
-    () => tpFilter === "all" ? salesTouchpoints : salesTouchpoints.filter((r) => r.touchpoint === tpFilter),
-    [tpFilter]
+  const days = DAYS_MAP[timeRange];
+  const cur  = useMemo(() => salesDaily.slice(-days), [days]);
+  const prev = useMemo(() => salesDaily.slice(-days * 2, -days), [days]);
+
+  const curAgg  = useMemo(() => aggregate(cur, selKeys), [cur, selKeys]);
+  const prevAgg = useMemo(() => aggregate(prev, selKeys), [prev, selKeys]);
+
+  const kpis = useMemo(() => [
+    { label: "Impressions", value: curAgg.impressions.toLocaleString(), d: pctDelta(curAgg.impressions, prevAgg.impressions) },
+    { label: "Clicks",      value: curAgg.clicks.toLocaleString(),      d: pctDelta(curAgg.clicks, prevAgg.clicks) },
+    { label: "CTR",         value: `${ctrOf(curAgg).toFixed(2)}%`,      d: pctDelta(ctrOf(curAgg), ctrOf(prevAgg)) },
+    { label: "Orders",      value: curAgg.orders.toLocaleString(),      d: pctDelta(curAgg.orders, prevAgg.orders) },
+    { label: "CVR",         value: `${cvrOf(curAgg).toFixed(2)}%`,      d: pctDelta(cvrOf(curAgg), cvrOf(prevAgg)) },
+    { label: "Revenue",     value: usd(curAgg.revenue),                 d: pctDelta(curAgg.revenue, prevAgg.revenue) },
+  ], [curAgg, prevAgg]);
+
+  const chartData = useMemo(
+    () => cur.map((p) => ({ date: p.date, ...sumModes(p, selKeys) })),
+    [cur, selKeys]
   );
+
+  const modeRows: ModeRow[] = useMemo(
+    () => SALES_MODES.filter((m) => selKeys.includes(m.key)).map((m) => {
+      const agg = aggregate(cur, [m.key]);
+      const meta = salesTouchpoints.find((s) => s.key === m.key)!;
+      return {
+        key: m.key, label: m.label, color: m.color,
+        ...agg, ctr: ctrOf(agg), cvr: cvrOf(agg), rpm: rpmOf(agg),
+        salesDelta: meta.salesDelta, sampleOrders: meta.orders,
+      };
+    }),
+    [cur, selKeys]
+  );
+
+  const tooltipLabels: Record<string, string> = {
+    impressions: "Impressions", clicks: "Clicks", orders: "Orders", revenue: "Revenue",
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[1100px] mx-auto px-6 py-5">
+      <div className="max-w-[1240px] mx-auto px-6 py-5">
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-5">
-          <span className="text-[12px] text-muted-foreground">Time range</span>
-          <TimeRangePicker
-            value={timeRange as TimeRangeValue}
-            customRange={customRange}
-            onChange={(v, custom) => {
-              setTimeRange(v as TimeRange);
-              if (custom) setCustomRange(custom);
-            }}
-          />
-          <Select value={tpFilter} onValueChange={(v) => setTpFilter(v as TouchpointFilter)}>
-            <SelectTrigger className="h-7 text-[12px] min-w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All touchpoints</SelectItem>
-              {salesTouchpoints.map((r) => (
-                <SelectItem key={r.touchpoint} value={r.touchpoint}>{r.touchpoint}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4 mb-5 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted-foreground">Time range</span>
+            <TimeRangePicker
+              value={timeRange as TimeRangeValue}
+              customRange={customRange}
+              onChange={(v, custom) => { setTimeRange(v as TimeRange); if (custom) setCustomRange(custom); }}
+            />
+          </div>
+          <div className="h-5 w-px bg-border" />
+          <div className="flex items-center gap-1">
+            <span className="text-[12px] text-muted-foreground mr-1.5">Modes</span>
+            {SALES_MODES.map((m) => (
+              <label key={m.key} className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted/40 cursor-pointer select-none">
+                <Checkbox
+                  checked={selKeys.includes(m.key)}
+                  onCheckedChange={() => toggleMode(m.key)}
+                  className="size-3.5"
+                />
+                <span className="text-[12px] text-foreground">{m.label}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
           {kpis.map((k) => (
             <Card key={k.label}>
               <CardContent className="pt-4 pb-3 px-4">
                 <div className="flex items-start justify-between">
-                  <span className="text-[11px] text-muted-foreground leading-tight max-w-[140px]">{k.label}</span>
+                  <span className="text-[11px] text-muted-foreground leading-tight">{k.label}</span>
                   <Info size={12} className="text-muted-foreground/40 mt-0.5 shrink-0" />
                 </div>
-                <div className="mt-2 text-[24px] font-bold text-foreground tabular-nums leading-none">{k.value}</div>
-                <div className={cn("flex items-center gap-1 mt-1.5 text-[11px] font-medium", k.positive ? "text-emerald-600" : "text-red-500")}>
-                  {k.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                  <span>{k.delta}</span>
-                </div>
+                <div className="mt-2 text-[20px] font-bold text-foreground tabular-nums leading-none">{k.value}</div>
+                {k.d && (
+                  <div className={cn("flex items-center gap-1 mt-1.5 text-[11px] font-medium", k.d.positive ? "text-emerald-600" : "text-red-500")}>
+                    {k.d.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    <span>{k.d.delta}</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Sales Trend Bar Chart */}
-        <Card className="mb-5">
-          <CardHeader className="pb-3 flex-row items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-[13px] font-semibold">Sales trend</CardTitle>
-              <Info size={13} className="text-muted-foreground/40" />
-            </div>
-            {/* Legend */}
-            <div className="flex items-center gap-4 flex-wrap">
-              {[
-                { key: "resolutionCenter", label: "Resolution Center", color: TP_COLORS.resolutionCenter },
-                { key: "wfpEmail",         label: "WFP Confirmation Email", color: TP_COLORS.wfpEmail },
-                { key: "supportAgent",     label: "Support Chat", color: TP_COLORS.supportAgent },
-                { key: "searchBar",        label: "Search Bar", color: TP_COLORS.searchBar },
-              ].map((s) => (
-                <span key={s.key} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: s.color }} />
-                  {s.label}
-                </span>
-              ))}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }} barSize={tpFilter === "all" ? 6 : 14}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} interval={Math.floor(chartData.length / 8)} />
-                  <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                  <RechartsTooltip
-                    contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
-                    formatter={(value: number, name: string) => {
-                      const labelMap: Record<string, string> = {
-                        resolutionCenter: "Resolution Center",
-                        wfpEmail: "WFP Email",
-                        supportAgent: "Support Agent",
-                        searchBar: "Search Bar",
-                      };
-                      return [`$${value.toLocaleString()}`, labelMap[name] || name];
-                    }}
-                  />
-                  {(tpFilter === "all" || tpFilter === "Seel Resolution Center") && (
-                    <Bar dataKey="resolutionCenter" stackId="a" fill={TP_COLORS.resolutionCenter} radius={tpFilter !== "all" ? [3, 3, 0, 0] : undefined} />
-                  )}
-                  {(tpFilter === "all" || tpFilter === "WFP Policy Email") && (
-                    <Bar dataKey="wfpEmail" stackId="a" fill={TP_COLORS.wfpEmail} />
-                  )}
-                  {(tpFilter === "all" || tpFilter === "Support Agent") && (
-                    <Bar dataKey="supportAgent" stackId="a" fill={TP_COLORS.supportAgent} />
-                  )}
-                  {(tpFilter === "all" || tpFilter === "Search Bar") && (
-                    <Bar dataKey="searchBar" stackId="a" fill={TP_COLORS.searchBar} radius={[3, 3, 0, 0]} />
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Daily Trend */}
+        <div className="mb-5">
+          <Card>
+            <CardHeader className="pb-3 flex-row items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-[13px] font-semibold">Daily trend</CardTitle>
+                <Info size={13} className="text-muted-foreground/40" />
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                {[
+                  { label: "Impressions", color: C.impressions },
+                  { label: "Clicks",      color: C.clicks },
+                  { label: "Orders",      color: C.orders },
+                  { label: "Revenue",     color: C.revenue },
+                ].map((s) => (
+                  <span key={s.label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: s.color }} />
+                    {s.label}
+                  </span>
+                ))}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(chartData.length / 8))} />
+                    <YAxis yAxisId="left" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <RechartsTooltip
+                      contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
+                      formatter={(value: number, name: string) => {
+                        const v = name === "revenue" ? usd(value) : value.toLocaleString();
+                        return [v, tooltipLabels[name] || name];
+                      }}
+                    />
+                    <Bar yAxisId="left" dataKey="impressions" fill={C.impressions} radius={[2, 2, 0, 0]} maxBarSize={18} opacity={0.85} />
+                    <Line yAxisId="left" type="monotone" dataKey="revenue" stroke={C.revenue} strokeWidth={2} strokeDasharray="4 3" dot={false} />
+                    <Line yAxisId="right" type="monotone" dataKey="clicks" stroke={C.clicks} strokeWidth={2} dot={false} />
+                    <Line yAxisId="right" type="monotone" dataKey="orders" stroke={C.orders} strokeWidth={2} dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Performance Breakdown Table */}
         <Card>
@@ -295,7 +325,7 @@ function AnalyticsTab() {
             <div>
               <CardTitle className="text-[13px] font-semibold">Performance breakdown</CardTitle>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Attributed Sales counts only the recommended product value. Click a row to see converted orders.
+                Revenue counts only the recommended product value. Click a row to see converted orders.
               </p>
             </div>
           </CardHeader>
@@ -305,39 +335,31 @@ function AnalyticsTab() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-2.5 px-4 text-[11px] font-medium text-muted-foreground">Touchpoint</th>
-                    <th className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
-                      Attributed Sales <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
-                    </th>
-                    <th className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
-                      Converted Orders <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
-                    </th>
-                    <th className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
-                      CTR <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
-                    </th>
-                    <th className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
-                      Clicks <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
-                    </th>
-                    <th className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
-                      Impressions <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
-                    </th>
+                    {["Impressions", "Clicks", "CTR", "Orders", "CVR", "Revenue", "RPM"].map((h) => (
+                      <th key={h} className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
+                        {h} <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTouchpoints.map((row) => (
+                  {modeRows.map((row) => (
                     <tr
-                      key={row.touchpoint}
+                      key={row.key}
                       onClick={() => setSelectedRow(row)}
                       className="border-b border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 font-medium text-foreground">{row.touchpoint}</td>
+                      <td className="py-3 px-4 font-medium text-foreground">{row.label}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.impressions.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.clicks.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.ctr.toFixed(2)}%</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.orders.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.cvr.toFixed(2)}%</td>
                       <td className="py-3 px-4 text-right tabular-nums">
-                        ${row.attributedSales.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        {usd(row.revenue)}
                         <span className="ml-1.5 text-[10px] text-emerald-600 font-medium">(+{row.salesDelta}%)</span>
                       </td>
-                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.ordersInfluenced}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.ctr}%</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.clicks.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{row.impressions.toLocaleString()}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{usd(row.rpm)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -349,7 +371,6 @@ function AnalyticsTab() {
         <div className="h-6" />
       </div>
 
-      {/* Order details panel */}
       <OrderDetailsPanel row={selectedRow} onClose={() => setSelectedRow(null)} />
     </div>
   );

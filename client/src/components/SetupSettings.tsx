@@ -1,11 +1,11 @@
 /*
- * SetupSettings — Settings-only component (no wizard mode)
- * Round 7: Pure settings view with two sections: Ticketing System + Configure Agent
- *          Supports settingsSection deep-link for "ticketing" or "agent"
- *          First-time config shows "Hire Rep" instead of "Save Changes"
- *          Zendesk sub-steps: progressive disclosure (hide later steps if earlier not done)
+ * SetupSettings — channel + agent settings building blocks.
+ * Exposes named sections (ChannelsSection, ConfigureAgentSection, etc.) that the
+ * per-channel pages (Live Widget / Email / Zendesk) and AI Manager embed in their
+ * Settings sub-tabs. First-time agent config shows "Hire Rep" instead of "Save Changes".
+ * Zendesk sub-steps: progressive disclosure (hide later steps if earlier not done).
  */
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +17,12 @@ import {
   Globe, Bot, Shield, ExternalLink, Mail,
   MessageSquare, Smartphone, Tag, Users, UserCheck,
   Info, ChevronDown, HelpCircle, Eye, EyeOff, Plus,
-  GraduationCap, Bolt, Sliders,
+  Bolt, Sliders, Star,
+  Copy, Webhook, Ticket, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FlagRule } from "@/lib/data";
+import LiveChatWidgetCustomizer from "@/components/LiveChatWidgetCustomizer";
 
 /* ================================================================
    TOOLTIP — lightweight hover tooltip
@@ -67,9 +69,20 @@ const PERSONALITY_EXAMPLES: Record<string, { description: string; sample: string
    Progressive disclosure: hide later sub-steps if earlier not done
    ================================================================ */
 function TicketingSystemSection() {
-  const { zendesk, setZendesk, zendeskConnected } = useApp();
+  const { zendesk, setZendesk, zendeskConnected, setAsyncBackbone, primaryChannel, setPrimaryChannel } = useApp();
   const [demoBranch, setDemoBranch] = useState<"success" | "error">("success");
 
+  const sub = zendesk.subdomain.trim() || "your-subdomain";
+  const callbackUrl = `https://api.seel.ai/v1/zendesk/${sub}/inbound`;
+
+  const copy = (text: string, label: string) => {
+    navigator.clipboard?.writeText(text).then(
+      () => toast.success(`${label} copied`),
+      () => toast.error("Copy failed — please copy manually"),
+    );
+  };
+
+  /* Step 1 — subdomain / authorize */
   const handleAuthorize = () => {
     if (!zendesk.subdomain.trim()) {
       setZendesk({ authError: "Please enter your Zendesk subdomain" });
@@ -78,73 +91,82 @@ function TicketingSystemSection() {
     setZendesk({ authStatus: "loading", authError: "" });
     setTimeout(() => {
       if (demoBranch === "success") {
-        setZendesk({
-          authStatus: "success", authError: "",
-          availableSeats: [
-            { id: "seat-1", name: "Seel AI Agent", email: "seel-ai@" + zendesk.subdomain + ".zendesk.com" },
-            { id: "seat-2", name: "Support Bot", email: "bot@" + zendesk.subdomain + ".zendesk.com" },
-            { id: "seat-3", name: "CS Automation", email: "cs-auto@" + zendesk.subdomain + ".zendesk.com" },
-          ],
-        });
-        toast.success("Zendesk API authorized successfully");
+        setZendesk({ authStatus: "success", authError: "" });
+        toast.success("Zendesk subdomain verified");
       } else {
         setZendesk({
           authStatus: "error",
-          authError: "Unable to connect. Please check your subdomain and ensure API access is enabled in Zendesk Admin → Apps and integrations → APIs.",
+          authError: "Unable to reach this subdomain. Double-check the spelling — it's the part before .zendesk.com.",
         });
-      }
-    }, 1500);
-  };
-
-  const handleBindSeat = () => {
-    if (!zendesk.selectedSeat) {
-      setZendesk({ seatError: "Please select an agent seat" });
-      return;
-    }
-    setZendesk({ seatStatus: "loading", seatError: "" });
-    setTimeout(() => {
-      if (demoBranch === "success") {
-        setZendesk({ seatStatus: "verified", seatError: "" });
-        toast.success("Agent seat bound successfully");
-      } else {
-        setZendesk({ seatStatus: "error", seatError: "This seat does not have the required permissions." });
       }
     }, 1200);
   };
 
-  const handleVerifyConnection = () => {
+  /* Step 2 — create agent seat (People → Team → Team members) */
+  const handleVerifySeat = () => {
+    setZendesk({ seatStatus: "loading", seatError: "" });
+    setTimeout(() => {
+      if (demoBranch === "success") {
+        setZendesk({
+          seatStatus: "verified",
+          seatError: "",
+          availableSeats: [
+            { id: "seat-1", name: "Support Agent (AI)", email: `support-ai@${sub}.zendesk.com` },
+          ],
+          selectedSeat: "seat-1",
+        });
+        toast.success("Agent seat detected");
+      } else {
+        setZendesk({ seatStatus: "error", seatError: "No matching agent seat found. Create a team member with the email support-ai@" + sub + ".zendesk.com and assign the Agent role." });
+      }
+    }, 1200);
+  };
+
+  /* Step 3 — create webhook (Apps and integrations → Webhooks) */
+  const handleVerifyWebhook = () => {
+    setZendesk({ webhookStatus: "loading", webhookError: "" });
+    setTimeout(() => {
+      if (demoBranch === "success") {
+        setZendesk({ webhookStatus: "verified", webhookError: "" });
+        toast.success("Webhook reachable");
+      } else {
+        setZendesk({ webhookStatus: "error", webhookError: "No webhook is pointing at the callback URL yet. Create one under Apps and integrations → Webhooks." });
+      }
+    }, 1200);
+  };
+
+  /* Step 4 — create trigger (Objects and rules → Business rules → Triggers) */
+  const handleVerifyTrigger = () => {
     setZendesk({ triggerStatus: "loading", triggerError: "" });
     setTimeout(() => {
       if (demoBranch === "success") {
         setZendesk({ triggerStatus: "verified", triggerError: "" });
-        toast.success("Connection verified");
+        toast.success("Trigger detected");
       } else {
-        setZendesk({
-          triggerStatus: "error",
-          triggerError: "No ticket received yet. Please assign a test ticket to the AI Agent seat in Zendesk and try again.",
-        });
+        setZendesk({ triggerStatus: "error", triggerError: "No active trigger is calling the webhook. Add one under Objects and rules → Business rules → Triggers." });
       }
     }, 1200);
   };
 
-  const handleRefreshSeats = () => {
-    setZendesk({ seatStatus: "loading" });
+  /* Step 5 — verify via test ticket */
+  const handleVerifyConnection = () => {
+    setZendesk({ verifyStatus: "loading", verifyError: "" });
     setTimeout(() => {
-      setZendesk({
-        seatStatus: "idle",
-        availableSeats: [
-          { id: "seat-1", name: "Seel AI Agent", email: "seel-ai@" + zendesk.subdomain + ".zendesk.com" },
-          { id: "seat-2", name: "Support Bot", email: "bot@" + zendesk.subdomain + ".zendesk.com" },
-          { id: "seat-3", name: "CS Automation", email: "cs-auto@" + zendesk.subdomain + ".zendesk.com" },
-          { id: "seat-4", name: "New Agent", email: "new@" + zendesk.subdomain + ".zendesk.com" },
-        ],
-      });
-      toast.success("Seat list refreshed");
-    }, 1000);
+      if (demoBranch === "success") {
+        setZendesk({ verifyStatus: "verified", verifyError: "" });
+        setAsyncBackbone("zendesk");
+        if (!primaryChannel) setPrimaryChannel("zendesk");
+        toast.success("Connection verified");
+      } else {
+        setZendesk({ verifyStatus: "error", verifyError: "No test ticket received. Create a ticket in Zendesk and assign it to the agent seat, then verify again." });
+      }
+    }, 1200);
   };
 
   const showStep2 = zendesk.authStatus === "success";
   const showStep3 = zendesk.seatStatus === "verified";
+  const showStep4 = zendesk.webhookStatus === "verified";
+  const showStep5 = zendesk.triggerStatus === "verified";
 
   function SubStepStatus({ done }: { done: boolean }) {
     return done ? (
@@ -154,13 +176,42 @@ function TicketingSystemSection() {
     ) : null;
   }
 
+  function StepHeader({ n, icon: Icon, title, done, path }: { n: number; icon: typeof Webhook; title: string; done: boolean; path?: string }) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold", done ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600")}>{n}</span>
+          <Icon className="w-3.5 h-3.5 text-gray-400" />
+          <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+          <SubStepStatus done={done} />
+        </div>
+        {path && (
+          <p className="ml-7 text-[11px] text-gray-400">
+            In Zendesk: <span className="font-medium text-gray-500">{path}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  function CopyField({ value, label }: { value: string; label: string }) {
+    return (
+      <div className="flex items-center gap-2 max-w-md">
+        <code className="flex-1 text-[11px] bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-gray-700 truncate">{value}</code>
+        <button onClick={() => copy(value, label)} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shrink-0" title={`Copy ${label}`}>
+          <Copy className="w-3.5 h-3.5 text-gray-500" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {/* Integration note */}
       <div className="flex items-center gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
         <Info className="w-4 h-4 text-gray-400 shrink-0" />
         <p className="text-xs text-gray-600 flex-1">
-          Currently supports <strong>Zendesk</strong> integration. More ticketing systems coming soon.
+          This mirrors the official <strong>Connecting Support Agent to Zendesk</strong> guide — five steps, all configured inside your Zendesk Admin Center.
         </p>
       </div>
 
@@ -170,7 +221,11 @@ function TicketingSystemSection() {
         <p className="text-xs text-blue-700 flex-1">
           Need help? Follow our step-by-step guide to connect Zendesk.
         </p>
-        <a href="#" className="text-xs text-blue-600 font-medium hover:underline flex items-center gap-1 shrink-0">
+        <a
+          href="https://kover2618.zendesk.com/hc/en-us/articles/48957103339419-Connecting-Support-Agent-to-Zendesk"
+          target="_blank" rel="noreferrer"
+          className="text-xs text-blue-600 font-medium hover:underline flex items-center gap-1 shrink-0"
+        >
           View Setup Guide <ExternalLink className="w-3 h-3" />
         </a>
       </div>
@@ -184,15 +239,11 @@ function TicketingSystemSection() {
 
       {/* Vertical sub-steps */}
       <div className="space-y-4">
-        {/* Sub-step 1: Authorize API */}
+        {/* Step 1: Subdomain */}
         <div className={`rounded-lg border p-4 space-y-3 ${zendesk.authStatus === "success" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
-          <div className="flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">1</span>
-            <h3 className="text-sm font-semibold text-gray-800">Authorize Zendesk API</h3>
-            <SubStepStatus done={zendesk.authStatus === "success"} />
-          </div>
+          <StepHeader n={1} icon={Globe} title="Connect your Zendesk subdomain" done={zendesk.authStatus === "success"} />
           <p className="text-xs text-gray-500 ml-7">
-            Enter your Zendesk subdomain to authorize API access. <code className="text-[11px] bg-gray-100 px-1 py-0.5 rounded">https://<strong>your-subdomain</strong>.zendesk.com</code>
+            Enter the subdomain of your Zendesk account. <code className="text-[11px] bg-gray-100 px-1 py-0.5 rounded">https://<strong>your-subdomain</strong>.zendesk.com</code>
           </p>
           {zendesk.authStatus !== "success" && (
             <div className="ml-7 space-y-2">
@@ -217,69 +268,94 @@ function TicketingSystemSection() {
           )}
         </div>
 
-        {/* Sub-step 2: Bind Agent Seat — only show if step 1 done */}
+        {/* Step 2: Create agent seat */}
         {showStep2 && (
           <div className={`rounded-lg border p-4 space-y-3 ${zendesk.seatStatus === "verified" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">2</span>
-              <h3 className="text-sm font-semibold text-gray-800">Bind Agent Seat</h3>
-              <SubStepStatus done={zendesk.seatStatus === "verified"} />
-            </div>
-            <p className="text-xs text-gray-500 ml-7">Select which Zendesk agent seat the AI Rep will use.</p>
+            <StepHeader n={2} icon={Users} title="Create an agent seat" done={zendesk.seatStatus === "verified"} path="People → Team → Team members" />
+            <p className="text-xs text-gray-500 ml-7">
+              Add a new team member with the <strong>Agent</strong> role using the email below, then click Verify so we can detect the seat.
+            </p>
             <div className="ml-7 space-y-2">
-              <div className="flex items-center gap-2 max-w-sm">
-                <select
-                  value={zendesk.selectedSeat}
-                  onChange={(e) => setZendesk({ selectedSeat: e.target.value, seatError: "" })}
-                  className="flex-1 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                  disabled={zendesk.seatStatus === "verified"}
-                >
-                  <option value="">Select an agent seat...</option>
-                  {zendesk.availableSeats.map((seat) => (
-                    <option key={seat.id} value={seat.id}>{seat.name} ({seat.email})</option>
-                  ))}
-                </select>
-                <button onClick={handleRefreshSeats} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors" title="Refresh seats">
-                  <RefreshCw className={`w-3.5 h-3.5 text-gray-500 ${zendesk.seatStatus === "loading" ? "animate-spin" : ""}`} />
-                </button>
-              </div>
+              <CopyField value={`support-ai@${sub}.zendesk.com`} label="Agent email" />
               {zendesk.seatError && <p className="text-xs text-red-600">{zendesk.seatError}</p>}
               {zendesk.seatStatus !== "verified" && (
-                <Button size="sm" onClick={handleBindSeat} disabled={zendesk.seatStatus === "loading" || !zendesk.selectedSeat}>
-                  {zendesk.seatStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Binding...</> : "Bind Seat"}
+                <Button size="sm" onClick={handleVerifySeat} disabled={zendesk.seatStatus === "loading"}>
+                  {zendesk.seatStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Verifying...</> : "Verify seat"}
                 </Button>
               )}
               {zendesk.seatStatus === "verified" && (
-                <p className="text-xs text-green-700">Seat bound: <strong>{zendesk.availableSeats.find(s => s.id === zendesk.selectedSeat)?.name}</strong></p>
+                <p className="text-xs text-green-700">Seat detected: <strong>{zendesk.availableSeats.find(s => s.id === zendesk.selectedSeat)?.name || "Support Agent (AI)"}</strong></p>
               )}
             </div>
           </div>
         )}
 
-        {/* Sub-step 3: Verify Connection — only show if step 2 done */}
+        {/* Step 3: Create webhook */}
         {showStep3 && (
-          <div className={`rounded-lg border p-4 space-y-3 ${zendesk.triggerStatus === "verified" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
-            <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">3</span>
-              <h3 className="text-sm font-semibold text-gray-800">Verify Connection</h3>
-              <SubStepStatus done={zendesk.triggerStatus === "verified"} />
-            </div>
+          <div className={`rounded-lg border p-4 space-y-3 ${zendesk.webhookStatus === "verified" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
+            <StepHeader n={3} icon={Webhook} title="Create a webhook" done={zendesk.webhookStatus === "verified"} path="Apps and integrations → Webhooks → Actions → Create webhook" />
             <p className="text-xs text-gray-500 ml-7">
-              Assign a test ticket to <strong>{zendesk.availableSeats.find(s => s.id === zendesk.selectedSeat)?.name || "the AI Agent"}</strong> in your Zendesk dashboard, then click Verify below.
+              Create a webhook that sends requests to this callback URL. Set the request method to <strong>POST</strong> and format to <strong>JSON</strong>.
             </p>
             <div className="ml-7 space-y-2">
-              <div className="flex items-center gap-2">
-                <a href="#" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                  Open Zendesk Dashboard <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
+              <p className="text-[11px] font-medium text-gray-500">Endpoint URL</p>
+              <CopyField value={callbackUrl} label="Callback URL" />
+              {zendesk.webhookError && <p className="text-xs text-red-600">{zendesk.webhookError}</p>}
+              {zendesk.webhookStatus !== "verified" && (
+                <Button size="sm" onClick={handleVerifyWebhook} disabled={zendesk.webhookStatus === "loading"}>
+                  {zendesk.webhookStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Verifying...</> : "Verify webhook"}
+                </Button>
+              )}
+              {zendesk.webhookStatus === "verified" && (
+                <p className="text-xs text-green-700">Webhook reachable — requests are arriving at the callback URL.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Create trigger */}
+        {showStep4 && (
+          <div className={`rounded-lg border p-4 space-y-3 ${zendesk.triggerStatus === "verified" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
+            <StepHeader n={4} icon={Bolt} title="Create a trigger" done={zendesk.triggerStatus === "verified"} path="Objects and rules → Business rules → Triggers → Add trigger" />
+            <p className="text-xs text-gray-500 ml-7">
+              Add a trigger that fires on <strong>Ticket is Created</strong> and runs the action <strong>Notify active webhook</strong>, selecting the webhook from step 3.
+            </p>
+            <div className="ml-7 space-y-2">
               {zendesk.triggerError && <p className="text-xs text-red-600">{zendesk.triggerError}</p>}
               {zendesk.triggerStatus !== "verified" && (
-                <Button size="sm" onClick={handleVerifyConnection} disabled={zendesk.triggerStatus === "loading"}>
-                  {zendesk.triggerStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Verifying...</> : "Verify"}
+                <Button size="sm" onClick={handleVerifyTrigger} disabled={zendesk.triggerStatus === "loading"}>
+                  {zendesk.triggerStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Verifying...</> : "Verify trigger"}
                 </Button>
               )}
               {zendesk.triggerStatus === "verified" && (
+                <p className="text-xs text-green-700">Trigger detected and active.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Verify with test ticket */}
+        {showStep5 && (
+          <div className={`rounded-lg border p-4 space-y-3 ${zendesk.verifyStatus === "verified" ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
+            <StepHeader n={5} icon={Ticket} title="Verify with a test ticket" done={zendesk.verifyStatus === "verified"} />
+            <p className="text-xs text-gray-500 ml-7">
+              Create a test ticket in Zendesk and assign it to <strong>{zendesk.availableSeats.find(s => s.id === zendesk.selectedSeat)?.name || "the agent seat"}</strong>, then click Verify below.
+            </p>
+            <div className="ml-7 space-y-2">
+              <a
+                href={`https://${sub}.zendesk.com/agent/tickets`}
+                target="_blank" rel="noreferrer"
+                className="text-xs text-blue-600 hover:underline flex items-center gap-1 w-fit"
+              >
+                Open Zendesk Dashboard <ExternalLink className="w-3 h-3" />
+              </a>
+              {zendesk.verifyError && <p className="text-xs text-red-600">{zendesk.verifyError}</p>}
+              {zendesk.verifyStatus !== "verified" && (
+                <Button size="sm" onClick={handleVerifyConnection} disabled={zendesk.verifyStatus === "loading"}>
+                  {zendesk.verifyStatus === "loading" ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Verifying...</> : "Verify"}
+                </Button>
+              )}
+              {zendesk.verifyStatus === "verified" && (
                 <p className="text-xs text-green-700">Connection verified — test ticket received successfully.</p>
               )}
             </div>
@@ -291,8 +367,670 @@ function TicketingSystemSection() {
       {zendeskConnected && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
           <Check className="w-4 h-4 text-green-600 shrink-0" />
-          <p className="text-sm text-green-800 font-medium">Ticketing system connected and verified.</p>
+          <p className="text-sm text-green-800 font-medium">Zendesk connected and verified across all five steps.</p>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   Shared written-reply config — reused by Email + Zendesk.
+   Persona & tone live in Agent Config; this only controls how
+   written replies are signed off and handed off to a human.
+   ================================================================ */
+type ChannelMode = "off" | "training" | "production";
+
+/** Visual metadata for each channel mode — shared by the dropdown trigger and menu. */
+const MODE_META: Record<ChannelMode, { label: string; dot: string; pill: string }> = {
+  off:        { label: "Off",        dot: "bg-gray-400",    pill: "bg-gray-100 text-gray-600 border-gray-200" },
+  training:   { label: "Training",   dot: "bg-amber-500",   pill: "bg-amber-50 text-amber-700 border-amber-200" },
+  production: { label: "Production", dot: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+};
+
+/** Compact mode selector used by EVERY channel (chat / email / zendesk).
+ *  A single pill showing the current mode that opens an Off / Training / Production menu. */
+function ChannelModeDropdown({
+  mode, setMode, surface,
+}: {
+  mode: ChannelMode;
+  setMode: (m: ChannelMode) => void;
+  surface: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const order: ChannelMode[] = ["off", "training", "production"];
+  const meta = MODE_META[mode];
+  const select = (m: ChannelMode) => {
+    setMode(m);
+    setOpen(false);
+    if (m === "off") toast(`${surface} paused`);
+    else toast.success(`${surface} switched to ${MODE_META[m].label}`);
+  };
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className={cn(
+          "flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-[12px] font-medium transition-colors",
+          meta.pill,
+        )}
+      >
+        <span className={cn("w-1.5 h-1.5 rounded-full", meta.dot)} />
+        {meta.label}
+        <ChevronDown className="w-3 h-3 opacity-60" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-lg border border-gray-200 bg-white shadow-lg py-1">
+            {order.map((m) => (
+              <button
+                key={m}
+                onClick={(e) => { e.stopPropagation(); select(m); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-gray-700 hover:bg-gray-50"
+              >
+                <span className={cn("w-1.5 h-1.5 rounded-full", MODE_META[m].dot)} />
+                <span className="flex-1 text-left">{MODE_META[m].label}</span>
+                {mode === m && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Detail-panel mode block: label + current-mode description on the left, dropdown on the right.
+ *  Lives inside each channel's expanded detail (NOT the card header). */
+function ChannelModeRow({
+  channel, mode, setMode, surface, descriptions,
+}: {
+  channel: OverrideChannel;
+  mode: ChannelMode;
+  setMode: (m: ChannelMode) => void;
+  surface: string;
+  descriptions?: Record<ChannelMode, string>;
+}) {
+  const { channelReps } = useApp();
+  const assignedCount = channelReps[channel]?.length ?? 0;
+  const defaults: Record<ChannelMode, string> = {
+    off: `${surface} replies are paused — nothing is drafted or sent.`,
+    training: "AI drafts replies for human review. Nothing reaches the customer.",
+    production: "AI delivers eligible replies autonomously. Flagged tickets wait for a human.",
+  };
+  const copy = descriptions ?? defaults;
+  /* Going live = sending your reps to work on this channel. Block it with 0 reps assigned. */
+  const guardedSetMode = (m: ChannelMode) => {
+    if (m !== "off" && assignedCount === 0) {
+      toast.error(`Assign at least one AI rep to ${surface} before going live.`);
+      return;
+    }
+    setMode(m);
+  };
+  return (
+    <div className="rounded-lg border border-gray-200 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold text-gray-700">Mode</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{copy[mode]}</p>
+        </div>
+        <ChannelModeDropdown mode={mode} setMode={guardedSetMode} surface={surface} />
+      </div>
+      {mode !== "off" && assignedCount === 0 && (
+        <p className="text-[11px] text-amber-600">⚠ No AI rep is assigned — this channel is live but won't reply. Assign a rep below.</p>
+      )}
+    </div>
+  );
+}
+
+/* Channel reply/escalation config — direct per-channel settings (no agent inheritance).
+   includeSignoff is true for written channels (Email / Zendesk); chat has no sign-off. */
+type OverrideChannel = "email" | "zendesk" | "chat";
+function ChannelReplyOverrideBlock({ channel, surface, includeSignoff = false }: { channel: OverrideChannel; surface: string; includeSignoff?: boolean }) {
+  const { channelReply, setChannelReply, handoff } = useApp();
+  const cfg = channelReply[channel];
+  const seats = handoff.availableHandoffSeats;
+
+  return (
+    <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+      <div className="flex items-center gap-1.5">
+        <p className="text-xs font-semibold text-gray-700">{includeSignoff ? "Written reply & escalation" : "Escalation"}</p>
+        <Tooltip text={`These settings apply only to ${surface}. Each channel is configured independently.`}>
+          <HelpCircle className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 cursor-help" />
+        </Tooltip>
+      </div>
+
+      {includeSignoff && (
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-1 block">Reply sign-off</label>
+          <textarea
+            value={cfg.signoff}
+            onChange={(e) => setChannelReply(channel, { signoff: e.target.value })}
+            rows={2}
+            className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            placeholder={"Best regards,\nThe Support Team"}
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="text-xs font-medium text-gray-700 mb-1 block">Escalation handoff</label>
+        <p className="text-[11px] text-gray-400 mb-1.5">{`When a ${surface.toLowerCase()} conversation needs a human, hand it to:`}</p>
+        <select
+          value={cfg.escalationSeat}
+          onChange={(e) => setChannelReply(channel, { escalationSeat: e.target.value })}
+          className="w-full sm:max-w-sm h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        >
+          <option value="">Select a teammate…</option>
+          {seats.map((s) => (
+            <option key={s.id} value={s.id}>{s.name} — {s.email}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+/* Assigned reps — pick which AI reps serve this channel (a channel can have many).
+   Each rep brings its OWN persona/permissions (edited in Agent Config); this is also
+   where you choose who's on duty for the surface. Replaces the old single-rep PersonaHint. */
+function AssignedRepsBlock({ channel, surface }: { channel: OverrideChannel; surface: string }) {
+  const { reps, channelReps, setChannelReps, goToManagerSettings } = useApp();
+  const assigned = channelReps[channel] ?? [];
+  const toggle = (id: string) => {
+    const next = assigned.includes(id) ? assigned.filter((x) => x !== id) : [...assigned, id];
+    setChannelReps(channel, next);
+  };
+  const assignedReps = reps.filter((r) => assigned.includes(r.id));
+  return (
+    <div className="rounded-lg border border-gray-200 p-3 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Bot className="w-3.5 h-3.5 text-gray-500" />
+        <p className="text-xs font-semibold text-gray-700">AI reps on {surface}</p>
+        <Tooltip text="Choose which AI reps answer on this channel. Each rep replies with its own persona & permissions — edit those in Agent Config.">
+          <HelpCircle className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 cursor-help" />
+        </Tooltip>
+        <button onClick={() => goToManagerSettings()} className="ml-auto text-[11px] font-medium text-indigo-600 hover:underline">Manage personas →</button>
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {reps.map((rep) => {
+          const on = assigned.includes(rep.id);
+          return (
+            <button
+              key={rep.id}
+              onClick={() => toggle(rep.id)}
+              className={cn(
+                "flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full border text-xs font-medium transition-colors",
+                on ? "bg-indigo-50 border-indigo-300 text-indigo-700" : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+              )}
+            >
+              <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold" style={{ background: rep.color }}>
+                {(rep.name || "?").slice(0, 2).toUpperCase()}
+              </span>
+              {rep.name || "Unnamed"}
+              {on && <Check className="w-3 h-3 text-indigo-600" />}
+            </button>
+          );
+        })}
+      </div>
+      {assigned.length === 0 ? (
+        <p className="text-[11px] text-amber-600">No rep assigned — {surface} can't go live until you assign at least one.</p>
+      ) : (
+        <p className="text-[11px] text-gray-400">
+          {assignedReps.length === 1
+            ? <><strong className="text-gray-500">{assignedReps[0].name}</strong> replies on {surface} using its own persona & permissions.</>
+            : <>{assignedReps.length} reps share {surface}, each replying with its own persona & permissions.</>}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   SECTION 1B — Channels (chat-first connection layer)
+   Three channel cards in demand order: Support Chat > Email > Zendesk
+   Single-primary-channel model. Connect ANY channel to finish step 1.
+   ================================================================ */
+type ChannelId = "chat" | "email" | "zendesk";
+
+export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
+  const {
+    liveChatConnected, setLiveChatConnected,
+    liveChatMode, setLiveChatMode,
+    emailChannelConnected, setEmailChannelConnected,
+    emailChannelAddress, setEmailChannelAddress,
+    emailMode, setEmailMode,
+    zendeskConnected,
+    zendeskMode, setZendeskMode,
+    asyncBackbone, setAsyncBackbone,
+    primaryChannel, setPrimaryChannel,
+  } = useApp();
+
+  const [chatConnecting, setChatConnecting] = useState(false);
+  const [emailConnecting, setEmailConnecting] = useState(false);
+  const [expanded, setExpanded] = useState<Record<ChannelId, boolean>>({
+    // When embedded as a single-channel page (only=…), keep that card open.
+    chat: only ? only === "chat" : !liveChatConnected,
+    email: only === "email",
+    zendesk: only === "zendesk",
+  });
+  /* Email mailbox form (local — credentials are never persisted) */
+  const [mailboxPassword, setMailboxPassword] = useState("");
+  const [showMailboxPassword, setShowMailboxPassword] = useState(false);
+  const [mailboxAdvanced, setMailboxAdvanced] = useState(false);
+  const [mailboxServerType, setMailboxServerType] = useState("IMAP");
+  const [mailboxError, setMailboxError] = useState("");
+  const [widgetOpen, setWidgetOpen] = useState(false);
+
+  const isConnected: Record<ChannelId, boolean> = {
+    chat: liveChatConnected,
+    email: emailChannelConnected,
+    zendesk: zendeskConnected,
+  };
+  const connectedCount = Object.values(isConnected).filter(Boolean).length;
+
+  const toggle = (id: ChannelId) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
+
+  const handleConnectChat = () => {
+    setChatConnecting(true);
+    setTimeout(() => {
+      setLiveChatConnected(true);
+      setLiveChatMode("training");
+      if (!primaryChannel) setPrimaryChannel("chat");
+      setChatConnecting(false);
+      setExpanded((p) => ({ ...p, chat: true }));
+      toast.success("Live chat widget installed on seel-demo.myshopify.com");
+    }, 1200);
+  };
+
+  const handleConnectEmail = () => {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(emailChannelAddress.trim())) {
+      setMailboxError("Please enter a valid email address.");
+      return;
+    }
+    if (!emailChannelConnected && !mailboxPassword.trim()) {
+      setMailboxError("Please enter your password or app password.");
+      return;
+    }
+    setMailboxError("");
+    setEmailConnecting(true);
+    setTimeout(() => {
+      setEmailChannelConnected(true);
+      setEmailMode("training");
+      setAsyncBackbone("email");
+      if (!primaryChannel) setPrimaryChannel("email");
+      setEmailConnecting(false);
+      setExpanded((p) => ({ ...p, email: true }));
+      toast.success("Support inbox connected");
+    }, 1200);
+  };
+
+  /* ── Connected pill / Set-as-primary control ── */
+  function StatusControls({ id }: { id: ChannelId }) {
+    if (!isConnected[id]) return null;
+    const isPrimary = primaryChannel === id;
+    return (
+      <div className="flex items-center gap-2">
+        {isPrimary ? (
+          <Badge className="h-5 px-1.5 text-[10px] gap-1 bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-100">
+            <Star className="w-2.5 h-2.5 fill-indigo-500 text-indigo-500" /> Primary
+          </Badge>
+        ) : connectedCount > 1 ? (
+          <button
+            onClick={() => { setPrimaryChannel(id); toast.success("Primary channel updated"); }}
+            className="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors"
+          >
+            Set as primary
+          </button>
+        ) : null}
+        <span className="flex items-center gap-1 text-[11px] font-medium text-green-700">
+          <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+            <Check className="w-2.5 h-2.5 text-green-600" />
+          </span>
+          Connected
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* ── Card 1: Live Widget (Recommended · Fastest) ── */}
+      {(!only || only === "chat") && (
+      <div className={cn(
+        "rounded-xl border overflow-hidden transition-colors",
+        liveChatConnected ? "border-gray-200" : "border-indigo-200 bg-indigo-50/20"
+      )}>
+        <div className="flex items-center justify-between p-4">
+          <button onClick={() => toggle("chat")} className="flex items-center gap-3 flex-1 text-left">
+            <div className="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+              <MessageSquare className="w-[18px] h-[18px] text-indigo-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-gray-800">Live Widget</p>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Real-time chat on your storefront</p>
+            </div>
+          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {liveChatConnected ? (
+              <StatusControls id="chat" />
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => toggle("chat")}>
+                {expanded.chat ? "Hide setup" : "Set up"}
+              </Button>
+            )}
+            <button onClick={() => toggle("chat")} className="p-1 text-gray-400 hover:text-gray-600">
+              <ChevronDown className={cn("w-4 h-4 transition-transform", expanded.chat ? "" : "-rotate-90")} />
+            </button>
+          </div>
+        </div>
+
+        {expanded.chat && (
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            {!liveChatConnected ? (
+              <div className="space-y-3">
+                <p className="text-xs text-gray-600">One-click install on <strong>seel-demo.myshopify.com</strong> — no code required.</p>
+                <Button size="sm" onClick={handleConnectChat} disabled={chatConnecting}>
+                  {chatConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Installing...</> : "Install widget"}
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Installed confirmation */}
+                <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg">
+                  <Check className="w-4 h-4 text-green-600 shrink-0" />
+                  <p className="text-xs text-green-800">Widget installed on <strong>seel-demo.myshopify.com</strong></p>
+                </div>
+
+                <ChannelModeRow
+                  channel="chat"
+                  mode={liveChatMode}
+                  setMode={setLiveChatMode}
+                  surface="Widget"
+                  descriptions={{
+                    off: "Widget is hidden from shoppers.",
+                    training: "Visible to your team only for testing — no replies reach shoppers.",
+                    production: "Live for all shoppers. Eligible chats are answered automatically.",
+                  }}
+                />
+
+                <AssignedRepsBlock channel="chat" surface="Live Widget" />
+
+                {/* Escalation — per-channel handoff teammate */}
+                <ChannelReplyOverrideBlock channel="chat" surface="Chat" />
+
+                {/* Customize */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Button
+                    variant="outline" size="sm" className="h-8 text-[12px] gap-1.5"
+                    onClick={() => setWidgetOpen(true)}
+                  >
+                    <Sliders className="w-3.5 h-3.5" /> Customize widget
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* ── Card 2: Email ── */}
+      {(!only || only === "email") && (
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-between p-4">
+          <button onClick={() => toggle("email")} className="flex items-center gap-3 flex-1 text-left">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+              <Mail className="w-[18px] h-[18px] text-gray-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-gray-800">Email</p>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Answer support emails from your own inbox</p>
+              {!emailChannelConnected && (
+                <p className={cn("text-[11px] mt-0.5", asyncBackbone === "zendesk" ? "text-amber-600" : "text-gray-400")}>
+                  {asyncBackbone === "zendesk"
+                    ? "Zendesk is your active written backbone — pick one"
+                    : "Written-ticket backbone · use Email or Zendesk, not both"}
+                </p>
+              )}
+            </div>
+          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {emailChannelConnected ? (
+              <StatusControls id="email" />
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => toggle("email")}>
+                {expanded.email ? "Hide setup" : "Set up"}
+              </Button>
+            )}
+            <button onClick={() => toggle("email")} className="p-1 text-gray-400 hover:text-gray-600">
+              <ChevronDown className={cn("w-4 h-4 transition-transform", expanded.email ? "" : "-rotate-90")} />
+            </button>
+          </div>
+        </div>
+
+        {expanded.email && (
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            {/* Connected confirmation + mode toggle + shared written block */}
+            {emailChannelConnected && (
+              <>
+                <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg">
+                  <Check className="w-4 h-4 text-green-600 shrink-0" />
+                  <p className="text-xs text-green-800 flex-1">
+                    Connected to <strong>{emailChannelAddress || "your mailbox"}</strong> · via IMAP / SMTP
+                  </p>
+                </div>
+
+                <ChannelModeRow channel="email" mode={emailMode} setMode={setEmailMode} surface="Email" />
+
+                <AssignedRepsBlock channel="email" surface="Email" />
+
+                <ChannelReplyOverrideBlock channel="email" surface="Email" includeSignoff />
+
+                <button
+                  onClick={() => { setEmailChannelConnected(false); if (asyncBackbone === "email") setAsyncBackbone(null); }}
+                  className="text-[11px] text-gray-400 hover:text-gray-600 underline underline-offset-2"
+                >
+                  Reconfigure mailbox
+                </button>
+              </>
+            )}
+
+            {/* Async-backbone guard — Email & Zendesk are mutually exclusive */}
+            {!emailChannelConnected && asyncBackbone === "zendesk" && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-800 space-y-1.5 flex-1">
+                  <p className="font-medium">Zendesk is your active async backbone.</p>
+                  <p>Email and Zendesk both handle written tickets. Running both would double-handle the same conversations — pick one async backbone.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Mailbox setup form */}
+            {!emailChannelConnected && asyncBackbone !== "zendesk" && (
+              <div className="space-y-4">
+                <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Mailbox</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">
+                      Email address <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="email"
+                      value={emailChannelAddress}
+                      onChange={(e) => { setEmailChannelAddress(e.target.value); setMailboxError(""); }}
+                      placeholder="support@your-store.com"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">
+                      Password / App password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showMailboxPassword ? "text" : "password"}
+                        value={mailboxPassword}
+                        onChange={(e) => { setMailboxPassword(e.target.value); setMailboxError(""); }}
+                        placeholder="••••••••"
+                        className="text-sm pr-9"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMailboxPassword((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showMailboxPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">For Gmail/Outlook, use an app password.</p>
+                  </div>
+                </div>
+
+                {/* Advanced toggle */}
+                <button
+                  onClick={() => setMailboxAdvanced((v) => !v)}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  {mailboxAdvanced ? "Hide Advanced" : "Show Advanced"}
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", mailboxAdvanced ? "" : "-rotate-90")} />
+                </button>
+
+                {mailboxAdvanced && (
+                  <div className="rounded-lg border border-gray-200 p-3 space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">Mailbox · IMAP / SMTP</p>
+                      <p className="text-[11px] text-gray-400">Manually configure the incoming and outgoing servers.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Server type</label>
+                        <select
+                          value={mailboxServerType}
+                          onChange={(e) => setMailboxServerType(e.target.value)}
+                          className="w-full h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                        >
+                          <option value="IMAP">IMAP</option>
+                          <option value="POP3">POP3</option>
+                          <option value="Exchange">Exchange</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Email account</label>
+                        <Input value={emailChannelAddress} readOnly placeholder="support@your-store.com" className="text-sm bg-gray-50" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Incoming server (host : port)</label>
+                        <Input placeholder="imap.gmail.com : 993" className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Outgoing server (host : port)</label>
+                        <Input placeholder="smtp.gmail.com : 587" className="text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {mailboxError && <p className="text-xs text-red-600">{mailboxError}</p>}
+
+                <Button size="sm" onClick={handleConnectEmail} disabled={emailConnecting}>
+                  {emailConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Connecting...</> : "Connect mailbox"}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* ── Card 3: Zendesk (Advanced) ── */}
+      {(!only || only === "zendesk") && (
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-between p-4">
+          <button onClick={() => toggle("zendesk")} className="flex items-center gap-3 flex-1 text-left">
+            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+              <Globe className="w-[18px] h-[18px] text-gray-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-gray-800">Zendesk</p>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Reply to tickets inside your Zendesk workspace</p>
+              {!zendeskConnected && (
+                <p className={cn("text-[11px] mt-0.5", asyncBackbone === "email" ? "text-amber-600" : "text-gray-400")}>
+                  {asyncBackbone === "email"
+                    ? "A direct mailbox is your active written backbone — pick one"
+                    : "Written-ticket backbone · use Email or Zendesk, not both"}
+                </p>
+              )}
+            </div>
+          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {zendeskConnected ? (
+              <StatusControls id="zendesk" />
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => toggle("zendesk")}>
+                {expanded.zendesk ? "Hide setup" : "Set up"}
+              </Button>
+            )}
+            <button onClick={() => toggle("zendesk")} className="p-1 text-gray-400 hover:text-gray-600">
+              <ChevronDown className={cn("w-4 h-4 transition-transform", expanded.zendesk ? "" : "-rotate-90")} />
+            </button>
+          </div>
+        </div>
+
+        {expanded.zendesk && (
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            {/* Async-backbone guard — Email & Zendesk are mutually exclusive */}
+            {!zendeskConnected && asyncBackbone === "email" ? (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-800 space-y-2 flex-1">
+                  <p className="font-medium">A direct mailbox is your active async backbone.</p>
+                  <p>Email and Zendesk both handle written tickets. Switch your written support to Zendesk to avoid double-handling the same conversations.</p>
+                  <Button
+                    size="sm" variant="outline"
+                    className="h-7 text-[11px] border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={() => {
+                      setEmailChannelConnected(false);
+                      setAsyncBackbone(null);
+                      if (primaryChannel === "email") setPrimaryChannel(null);
+                      toast("Disconnected mailbox — you can now set up Zendesk");
+                    }}
+                  >
+                    Disconnect mailbox &amp; switch to Zendesk
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <TicketingSystemSection />
+                {zendeskConnected && (
+                  <>
+                    <ChannelModeRow channel="zendesk" mode={zendeskMode} setMode={setZendeskMode} surface="Zendesk" />
+                    <AssignedRepsBlock channel="zendesk" surface="Zendesk" />
+                    <ChannelReplyOverrideBlock channel="zendesk" surface="Zendesk" includeSignoff />
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Live Chat Widget customizer overlay */}
+      {(!only || only === "chat") && (
+        <LiveChatWidgetCustomizer open={widgetOpen} onClose={() => setWidgetOpen(false)} />
       )}
     </div>
   );
@@ -304,22 +1042,17 @@ function TicketingSystemSection() {
    Multi-agent secondary nav at top
    First-time: "Hire Rep" button; subsequent: "Save Changes"
    ================================================================ */
-function ConfigureAgentSection() {
+export function ConfigureAgentSection() {
   const {
     repHired, setRepHired,
     hiredRepName, setHiredRepName,
     repPersonality, setRepPersonality,
     repCustomTone, setRepCustomTone,
     repPermissions, setRepPermissions,
-    channels, setChannels,
-    handoff, setHandoff,
+    handoff,
     discloseAI, setDiscloseAI,
-    emailSignoff, setEmailSignoff,
-    emailMode, setEmailMode,
-    emailFlagRules, setEmailFlagRules,
-    agentsData,
-    setMainTab,
-    setShowSettings,
+    reps, selectedRepId, setSelectedRepId, addRep, removeRep,
+    setMainTab, setManagerTab,
   } = useApp();
 
   const [showReadActions, setShowReadActions] = useState(false);
@@ -355,7 +1088,6 @@ function ConfigureAgentSection() {
     );
   };
 
-  const nonLeadAgents = agentsData.filter(a => !a.isTeamLead);
   const isFirstHire = !repHired;
 
   const handleSave = () => {
@@ -370,8 +1102,8 @@ function ConfigureAgentSection() {
     if (isFirstHire) {
       setRepHired(true);
       toast.success(`${hiredRepName} has been hired!`);
-      setShowSettings(false);
       setMainTab("agents");
+      setManagerTab("operations");
     } else {
       toast.success("Agent configuration saved");
     }
@@ -420,20 +1152,43 @@ function ConfigureAgentSection() {
 
   return (
     <div className="space-y-6">
-      {/* ── Multi-agent secondary nav ── */}
-      <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg">
-        {nonLeadAgents.map((agent) => (
-          <button
-            key={agent.id}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-medium"
-          >
-            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ background: agent.color }}>
-              {hiredRepName ? hiredRepName.slice(0, 2).toUpperCase() : agent.initials}
+      {/* ── Multi-rep secondary nav ── */}
+      <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg flex-wrap">
+        {reps.map((rep) => {
+          const isActive = rep.id === selectedRepId;
+          return (
+            <div
+              key={rep.id}
+              className={cn(
+                "flex items-center gap-2 pl-2 pr-1.5 py-1.5 rounded-lg border text-sm font-medium transition-colors",
+                isActive ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+              )}
+            >
+              <button onClick={() => setSelectedRepId(rep.id)} className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ background: rep.color }}>
+                  {(rep.name || "?").slice(0, 2).toUpperCase()}
+                </div>
+                {rep.name || "Unnamed"}
+              </button>
+              {reps.length > 1 && (
+                <button
+                  onClick={() => removeRep(rep.id)}
+                  className="text-gray-300 hover:text-rose-500 transition-colors"
+                  title="Remove rep"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            {hiredRepName || agent.name}
-          </button>
-        ))}
-
+          );
+        })}
+        <button
+          onClick={addRep}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          新增 Rep
+        </button>
       </div>
 
       {/* ── Identity ── */}
@@ -560,275 +1315,18 @@ function ConfigureAgentSection() {
         </div>
       </div>
 
-      <div className="border-t border-gray-100" />
-
-      {/* ── Channels & Escalation ── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-gray-600" />
-          <h3 className="text-sm font-semibold text-gray-800">Channels & Escalation</h3>
-        </div>
-
-        <div className="ml-6 space-y-4">
-          {/* Email Channel */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex items-center justify-between p-3 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-gray-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-800">Email</p>
-                  <p className="text-xs text-gray-500">Handle email tickets</p>
-                </div>
-              </div>
-              <Switch checked={channels.email} onCheckedChange={(v) => setChannels({ email: v })} />
-            </div>
-
-            {channels.email && (
-              <div className="p-4 border-t border-gray-200 space-y-4">
-                {/* Email Sign-off */}
-                <div>
-                  <label className="text-xs font-medium text-gray-700 mb-1 block">Sending Sign-off</label>
-                  <p className="text-xs text-gray-400 mb-2">The closing signature appended to every email reply.</p>
-                  <textarea
-                    value={emailSignoff}
-                    onChange={(e) => setEmailSignoff(e.target.value)}
-                    className="w-full max-w-md text-sm p-2 border border-gray-200 rounded-lg resize-none h-16 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Best regards,\nThe Support Team"
-                  />
-                </div>
-
-                <div className="border-t border-gray-100" />
-
-                {/* ── AI Operation Mode ── */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sliders className="w-3.5 h-3.5 text-gray-500" />
-                    <p className="text-xs font-semibold text-gray-700">AI Operation Mode</p>
-                  </div>
-                  <p className="text-xs text-gray-400 mb-3">Control how the AI handles incoming email tickets.</p>
-                  <div className="flex rounded-lg border border-gray-200 overflow-hidden w-fit">
-                    <button
-                      onClick={() => { setEmailMode("training"); toast.success("Switched to Training Mode"); }}
-                      className={cn("flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium transition-colors",
-                        emailMode === "training" ? "bg-amber-500 text-white" : "text-gray-500 hover:bg-gray-50 bg-white")}
-                    >
-                      <GraduationCap size={13} />Training
-                    </button>
-                    <button
-                      onClick={() => { setEmailMode("production"); toast.success("Switched to Production Mode"); }}
-                      className={cn("flex items-center gap-1.5 px-4 py-2 text-[12px] font-medium transition-colors border-l border-gray-200",
-                        emailMode === "production" ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-50 bg-white")}
-                    >
-                      <Bolt size={13} />Production
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-2">
-                    {emailMode === "training"
-                      ? "AI drafts replies for human review. No emails sent automatically."
-                      : "AI auto-sends eligible emails. Flagged tickets require human review."}
-                  </p>
-                </div>
-
-                {/* ── Flag Rules (Production only) ── */}
-                {emailMode === "production" && (
-                  <div>
-                    <div className="border-t border-gray-100 my-3" />
-                    <div className="flex items-center gap-2 mb-1">
-                      <Shield className="w-3.5 h-3.5 text-gray-500" />
-                      <p className="text-xs font-semibold text-gray-700">Flag Rules</p>
-                    </div>
-                    <p className="text-xs text-gray-400 mb-3">Emails matching any enabled rule are held for human review.</p>
-                    <div className="space-y-2">
-                      {emailFlagRules.map((rule: FlagRule) => (
-                        <div key={rule.id} className={cn("rounded-lg border p-3 transition-colors",
-                          rule.enabled ? "border-indigo-200 bg-indigo-50/50" : "border-gray-200 bg-white")}>
-                          <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                              <div className="text-[12px] font-semibold text-gray-800">{rule.label}</div>
-                              <div className="text-[11px] text-gray-500 mt-0.5">{rule.description}</div>
-                            </div>
-                            <button
-                              onClick={() => setEmailFlagRules(emailFlagRules.map((r: FlagRule) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r))}
-                              className={cn("shrink-0 w-9 rounded-full relative transition-colors mt-0.5", rule.enabled ? "bg-indigo-600" : "bg-gray-200")}
-                              style={{ height: "20px" }}>
-                              <div className={cn("absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform", rule.enabled ? "translate-x-4" : "translate-x-0.5")} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t border-gray-100" />
-
-                {/* Escalation Handoff for Email — all flat, no tabs */}
-                <div>
-                  <p className="text-xs font-medium text-gray-600 uppercase tracking-wider mb-3">Escalation Handoff</p>
-                  <p className="text-xs text-gray-400 mb-4">Configure how escalated email tickets are handled.</p>
-
-                  {/* Assign to Group */}
-                  <div className="space-y-2 mb-5">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-gray-500" />
-                      <h4 className="text-xs font-semibold text-gray-700">Assign to Group</h4>
-                    </div>
-                    <select
-                      value={handoff.selectedGroup}
-                      onChange={(e) => setHandoff({ selectedGroup: e.target.value })}
-                      className="w-full max-w-sm h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    >
-                      <option value="">Select a group...</option>
-                      {handoff.availableGroups.map((g) => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Assign to Person */}
-                  <div className="space-y-2 mb-5">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-3.5 h-3.5 text-gray-500" />
-                      <h4 className="text-xs font-semibold text-gray-700">Assign to Person</h4>
-                    </div>
-                    <select
-                      value={handoff.selectedHandoffSeat}
-                      onChange={(e) => setHandoff({ selectedHandoffSeat: e.target.value })}
-                      className="w-full max-w-sm h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    >
-                      <option value="">Select a person...</option>
-                      {handoff.availableHandoffSeats.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.email})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Add Tag */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5 text-gray-500" />
-                      <h4 className="text-xs font-semibold text-gray-700">Add Tag</h4>
-                    </div>
-                    <Input
-                      value={handoff.handoffTag}
-                      onChange={(e) => setHandoff({ handoffTag: e.target.value })}
-                      placeholder="e.g., escalated, needs-review"
-                      className="max-w-sm text-sm"
-                    />
-                    <div className="flex items-center gap-2 mt-2">
-                      <Switch checked={handoff.autoSetPriority} onCheckedChange={(v) => setHandoff({ autoSetPriority: v })} />
-                      <span className="text-xs text-gray-600">Auto-set priority on escalation</span>
-                    </div>
-                    {handoff.autoSetPriority && (
-                      <div className="flex gap-2 mt-2">
-                        {(["normal", "high", "urgent"] as const).map((p) => (
-                          <button
-                            key={p}
-                            onClick={() => setHandoff({ priority: p })}
-                            className={`px-3 py-1 rounded-lg border text-xs font-medium transition-colors capitalize ${
-                              handoff.priority === p
-                                ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Live Chat — coming soon */}
-          <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 opacity-60">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Live Chat</p>
-                <p className="text-xs text-gray-400">Handle live chat conversations</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-xs text-gray-400 border-gray-300">Coming soon</Badge>
-          </div>
-
-          {/* SMS — coming soon */}
-          <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 opacity-60">
-            <div className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">SMS</p>
-                <p className="text-xs text-gray-400">Handle SMS messages</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-xs text-gray-400 border-gray-300">Coming soon</Badge>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
+      {/* Footer — first hire commits the rep (gates onboarding); afterwards edits auto-save */}
       <div className="flex items-center justify-end pt-4 border-t border-gray-200">
-        <Button onClick={handleSave} size="sm">
-          {isFirstHire ? `Hire ${hiredRepName || "Rep"}` : "Save Changes"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/* ================================================================
-   MAIN EXPORT — SetupSettings (two-tab layout)
-   Tab 1: Ticketing System | Tab 2: Agent Config
-   ================================================================ */
-type SettingsTab = "ticketing" | "agent";
-
-export default function SetupSettings() {
-  const { settingsSection, zendeskConnected } = useApp();
-  const [activeTab, setActiveTab] = useState<SettingsTab>(
-    settingsSection === "agent" ? "agent" : "ticketing"
-  );
-
-  useEffect(() => {
-    if (settingsSection === "agent") setActiveTab("agent");
-    else if (settingsSection === "ticketing") setActiveTab("ticketing");
-  }, [settingsSection]);
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 border-b border-gray-200 mb-6">
-        <button
-          onClick={() => setActiveTab("ticketing")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
-            activeTab === "ticketing"
-              ? "border-[#6c47ff] text-[#6c47ff]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Globe className="w-4 h-4" />
-          Ticketing System
-          {zendeskConnected && (
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("agent")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
-            activeTab === "agent"
-              ? "border-[#6c47ff] text-[#6c47ff]"
-              : "border-transparent text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          <Bot className="w-4 h-4" />
-          Agent Config
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="flex-1 overflow-y-auto">
-        {activeTab === "ticketing" ? <TicketingSystemSection /> : <ConfigureAgentSection />}
+        {isFirstHire ? (
+          <Button onClick={handleSave} size="sm">
+            Hire {hiredRepName || "Rep"}
+          </Button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-[12px] text-gray-400">
+            <Check className="w-3.5 h-3.5 text-emerald-500" />
+            Changes save automatically
+          </span>
+        )}
       </div>
     </div>
   );
