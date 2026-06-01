@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seel AI Support — 完整产品需求文档 (PRD) v2.0</title>
+<style>
+  :root {
+    --brand:#6c47ff; --brand-d:#5a3ad9;
+    --dark:#1E293B; --mid:#475569; --soft:#64748B;
+    --border:#E2E8F0; --bg:#F8FAFC;
+    --ok:#16A34A; --warn:#B45309; --info:#0369A1; --danger:#DC2626;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif; font-size:15px; line-height:1.75; color:var(--dark); background:var(--bg); }
+
+  .topbar { position:sticky; top:0; z-index:100; background:#fff; border-bottom:1px solid var(--border); padding:0 40px; height:56px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .topbar-brand { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; color:var(--dark); }
+  .topbar-brand .dot { width:10px; height:10px; border-radius:3px; background:var(--brand); }
+  .topbar-tag { font-size:11px; font-weight:600; background:#f0edff; color:var(--brand); padding:2px 8px; border-radius:99px; }
+  .topbar-date { margin-left:auto; font-size:12px; color:var(--soft); }
+
+  .layout { display:flex; max-width:1180px; margin:0 auto; padding:0 20px; }
+  .sidebar { width:236px; flex-shrink:0; position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto; padding:28px 0; }
+  .sidebar::-webkit-scrollbar { width:3px; }
+  .sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .nav-label { font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--soft); padding:14px 16px 6px; text-transform:uppercase; }
+  .nav-link { display:block; padding:5px 16px; font-size:13px; color:var(--mid); text-decoration:none; border-left:2px solid transparent; transition:all .15s; line-height:1.5; }
+  .nav-link:hover { color:var(--brand); border-left-color:var(--brand); background:#faf9ff; }
+
+  .main { flex:1; min-width:0; padding:40px 0 96px 48px; }
+
+  .cover { background:linear-gradient(135deg,#1b1340 0%,#34246e 55%,#6c47ff 135%); border-radius:16px; padding:60px 50px; margin-bottom:48px; color:#fff; position:relative; overflow:hidden; }
+  .cover::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 75% 25%,rgba(124,58,237,.35) 0%,transparent 60%); }
+  .cover-badge { position:relative; display:inline-block; font-size:12px; font-weight:600; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.88); padding:4px 12px; border-radius:99px; margin-bottom:22px; }
+  .cover-title { position:relative; font-size:40px; font-weight:800; letter-spacing:-.02em; line-height:1.12; margin-bottom:12px; }
+  .cover-sub { position:relative; font-size:17px; color:rgba(255,255,255,.74); margin-bottom:32px; max-width:660px; }
+  .cover-meta { position:relative; display:flex; gap:30px; flex-wrap:wrap; }
+  .cover-meta-item { display:flex; flex-direction:column; gap:2px; }
+  .cover-meta-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.5); }
+  .cover-meta-value { font-size:14px; font-weight:600; color:#fff; }
+
+  .section { margin-bottom:52px; scroll-margin-top:76px; }
+  .section-title { font-size:23px; font-weight:700; color:var(--dark); padding-bottom:12px; border-bottom:2px solid var(--border); margin-bottom:22px; display:flex; align-items:center; gap:12px; }
+  .section-num { width:34px; height:34px; border-radius:8px; background:var(--brand); color:#fff; font-size:14px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .subsection-title { font-size:17px; font-weight:700; color:var(--brand-d); margin:26px 0 12px; }
+  .sub2-title { font-size:15px; font-weight:700; color:var(--dark); margin:20px 0 10px; }
+  p { color:var(--mid); line-height:1.8; margin-bottom:12px; }
+  ul,ol { margin:8px 0 16px 0; padding-left:22px; color:var(--mid); }
+  li { margin-bottom:6px; line-height:1.7; }
+  strong { color:var(--dark); }
+  code { font-family:'SF Mono',Menlo,Consolas,monospace; font-size:12.5px; background:#f1f0fa; color:var(--brand-d); padding:1px 6px; border-radius:4px; white-space:nowrap; }
+
+  .callout { border-left:3px solid var(--brand); background:#faf9ff; border-radius:0 10px 10px 0; padding:14px 18px; margin:16px 0 22px; font-size:14px; color:var(--mid); }
+  .callout.warn { border-color:var(--warn); background:#fffaf2; }
+  .callout.info { border-color:var(--info); background:#f1f8fd; }
+
+  .tbl-wrap { overflow-x:auto; margin:14px 0 22px; border-radius:8px; border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; background:#fff; }
+  th { background:var(--brand); color:#fff; text-align:left; padding:10px 14px; font-weight:600; font-size:12.5px; }
+  td { padding:9px 14px; border-top:1px solid var(--border); color:var(--mid); vertical-align:top; }
+  tr:nth-child(even) td { background:#fafafb; }
+
+  .pill { display:inline-block; font-size:11px; font-weight:600; padding:1px 8px; border-radius:99px; }
+  .pill.b { background:#f0edff; color:var(--brand); }
+  .pill.g { background:#dcfce7; color:var(--ok); }
+  .pill.a { background:#fef3c7; color:var(--warn); }
+  .pill.r { background:#fee2e2; color:var(--danger); }
+  .pill.s { background:#f1f5f9; color:var(--soft); }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0 22px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:16px 0 22px; }
+  .ic { border:1px solid var(--border); border-radius:10px; padding:16px 18px; background:#fff; }
+  .ic h4 { font-size:14px; font-weight:700; color:var(--dark); margin-bottom:6px; }
+  .ic p { font-size:13px; margin-bottom:0; }
+
+  /* flow */
+  .flow { display:flex; align-items:stretch; background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:16px 0 22px; }
+  .flow-step { flex:1; padding:18px 16px; text-align:center; border-right:1px solid var(--border); }
+  .flow-step:last-child { border-right:none; }
+  .flow-step-num { width:24px; height:24px; border-radius:50%; font-size:12px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; background:var(--brand); color:#fff; margin-bottom:8px; }
+  .flow-step-title { font-size:13px; font-weight:700; color:var(--dark); margin-bottom:4px; }
+  .flow-step-desc { font-size:12px; color:var(--mid); line-height:1.5; }
+
+  footer { max-width:1180px; margin:0 auto; padding:24px 68px 48px; font-size:12px; color:#94A3B8; border-top:1px solid var(--border); }
+
+  @media (max-width:880px){ .sidebar{display:none;} .main{padding-left:0;} .grid2,.grid3{grid-template-columns:1fr;} .flow{flex-direction:column;} .flow-step{border-right:none;border-bottom:1px solid var(--border);} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand"><span class="dot"></span>Seel AI Support</div>
+  <span class="topbar-tag">产品需求文档</span>
+  <span class="topbar-date">PRD v2.0 · 2026-06-01</span>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-label">概览</div>
+    <a class="nav-link" href="#doc">0 · 文档信息</a>
+    <a class="nav-link" href="#overview">1 · 产品概述</a>
+    <a class="nav-link" href="#users">2 · 目标用户与角色</a>
+    <a class="nav-link" href="#positioning">3 · 产品定位与理念</a>
+    <a class="nav-link" href="#ia">4 · 信息架构与导航</a>
+    <a class="nav-link" href="#concepts">5 · 核心概念与数据模型</a>
+    <div class="nav-label">功能需求</div>
+    <a class="nav-link" href="#f-onboarding">6.1 · Onboarding 引导</a>
+    <a class="nav-link" href="#f-manager">6.2 · AI Manager</a>
+    <a class="nav-link" href="#f-channels">6.3 · 渠道运营</a>
+    <a class="nav-link" href="#f-playbook">6.4 · Playbook</a>
+    <a class="nav-link" href="#f-performance">6.5 · Performance</a>
+    <a class="nav-link" href="#f-settings">6.6 · Settings</a>
+    <a class="nav-link" href="#f-other">6.7 · Sales / VOC</a>
+    <div class="nav-label">机制与规范</div>
+    <a class="nav-link" href="#flows">7 · 关键用户流程</a>
+    <a class="nav-link" href="#modes">8 · 模式与状态机</a>
+    <a class="nav-link" href="#perms">9 · 权限与安全</a>
+    <a class="nav-link" href="#metrics">10 · 指标体系</a>
+    <a class="nav-link" href="#design">11 · 设计规范</a>
+    <a class="nav-link" href="#roadmap">12 · 里程碑与未决项</a>
+  </aside>
+
+  <main class="main">
+
+    <div class="cover">
+      <div class="cover-badge">Product Requirements Document · 内部 Demo</div>
+      <div class="cover-title">Seel AI Support<br>完整产品需求文档</div>
+      <div class="cover-sub">面向电商商家的 AI 客服「数字员工」管理平台 —— 以 AI Manager 为中枢，带商家完成接入、配置、上线，并在日常中持续 review 表现、迭代规则。</div>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><span class="cover-meta-label">产品</span><span class="cover-meta-value">Seel AI Support v2</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">文档版本</span><span class="cover-meta-value">PRD v2.0</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-01</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">形态</span><span class="cover-meta-value">前端交互 Demo</span></div>
+      </div>
+    </div>
+
+    <!-- 0 文档信息 -->
+    <section class="section" id="doc">
+      <div class="section-title"><span class="section-num">0</span>文档信息</div>
+      <div class="tbl-wrap"><table>
+        <tr><th style="width:160px">项</th><th>内容</th></tr>
+        <tr><td>文档目的</td><td>定义 Seel AI Support v2 的产品范围、信息架构、功能需求与交互规范，作为评审与开发对齐基线。</td></tr>
+        <tr><td>产品形态</td><td>纯前端交互 Demo（React 19 + TypeScript + Vite + Tailwind v4），无真实后端；所有数据为 mock，集中在 AppContext 与 lib/data.ts。</td></tr>
+        <tr><td>读者</td><td>产品、设计、研发、销售/解决方案团队（用于向潜在商家演示）。</td></tr>
+        <tr><td>状态</td><td>持续迭代中（Demo 已可端到端走通）。</td></tr>
+      </table></div>
+      <div class="callout info">本 PRD 基于当前代码库真实实现整理，描述的是 Demo 已落地的产品形态；标注「未来」的为规划方向，非现状。</div>
+    </section>
+
+    <!-- 1 概述 -->
+    <section class="section" id="overview">
+      <div class="section-title"><span class="section-num">1</span>产品概述</div>
+      <div class="subsection-title">1.1 背景</div>
+      <p>电商商家面对的客服咨询高度同质化（物流查询 WISMO、退款、退货、地址修改、保障理赔等），却需要大量人力承接。传统工单系统只是「记录」工具，无法主动解决问题。Seel AI Support 的目标是把 AI 客服包装为一个可被「雇佣、培训、上岗、考核」的<strong>数字员工</strong>，让商家像管理团队一样管理 AI。</p>
+
+      <div class="subsection-title">1.2 产品愿景</div>
+      <p>让每个商家都能在数分钟内「招聘」一名 AI 客服，把它接入现有渠道（在线聊天、邮箱、Zendesk），用自己的 SOP 文档「培训」它，安排它「上岗」（Training / Production），并通过 AI Manager 持续掌握表现、审批规则迭代——把客服从成本中心转为可规模化的自动化能力。</p>
+
+      <div class="subsection-title">1.3 产品目标</div>
+      <div class="grid3">
+        <div class="ic"><h4>快速上线</h4><p>引导式 Onboarding，最快连一个渠道 + 建一个 Rep 即可上线，政策导入可选。</p></div>
+        <div class="ic"><h4>可信可控</h4><p>Training/Production 双模式、读写权限、Guardrail、是否披露 AI 身份，全程可控。</p></div>
+        <div class="ic"><h4>持续进化</h4><p>从真实工单中提炼规则提案，由人审批后沉淀进 Playbook，越用越准。</p></div>
+      </div>
+
+      <div class="subsection-title">1.4 范围与非目标</div>
+      <div class="grid2">
+        <div class="ic"><h4>范围内（In Scope）</h4><p>多渠道接入与运营、数字员工配置与上岗、Playbook 规则/文档管理、表现看板与会话分析、引导式 Onboarding。</p></div>
+        <div class="ic"><h4>非目标（Out of Scope）</h4><p>真实后端/接口、支付与计费实际扣款、跨租户管理、AI 模型训练本身；Sales / VOC Agent 为同平台兄弟产品，仅做概览。</p></div>
+      </div>
+    </section>
+
+    <!-- 2 users -->
+    <section class="section" id="users">
+      <div class="section-title"><span class="section-num">2</span>目标用户与角色</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th style="width:150px">角色</th><th>描述</th><th>核心诉求</th></tr></thead>
+        <tbody>
+          <tr><td><strong>商家 / 客服负责人</strong></td><td>平台真实使用者，配置并管理 AI 数字员工。</td><td>快速上线、可控、看得懂表现、能持续优化。</td></tr>
+          <tr><td><strong>AI Manager（Alex）</strong>　<span class="pill b">系统角色</span></td><td>产品内的「Team Lead」数字角色，带商家走 Onboarding、推送日报与规则提案、回答提问。</td><td>把复杂配置转为对话式引导。</td></tr>
+          <tr><td><strong>AI Rep（如 Ava / Max）</strong>　<span class="pill b">系统角色</span></td><td>实际承接对话的数字客服，可多名，各有名字/人设/权限，按渠道分配。</td><td>按 SOP 准确回答、合规执行动作、必要时升级。</td></tr>
+          <tr><td><strong>人工坐席</strong></td><td>承接 AI 升级（handoff）的真人。</td><td>清晰的升级上下文与交接说明。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 3 positioning -->
+    <section class="section" id="positioning">
+      <div class="section-title"><span class="section-num">3</span>产品定位与核心理念</div>
+      <p>核心心智模型：<strong>AI Manager = 数字员工的管理中枢（Workforce Hub）</strong>。它贯穿数字员工的完整生命周期：</p>
+      <div class="flow">
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-title">招聘 / 接入</div><div class="flow-step-desc">连接渠道、创建 AI Rep</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-title">培训</div><div class="flow-step-desc">导入 SOP，沉淀 Playbook 规则</div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-title">上岗</div><div class="flow-step-desc">设定 Training / Production 模式</div></div>
+        <div class="flow-step"><div class="flow-step-num">4</div><div class="flow-step-title">考核 / 迭代</div><div class="flow-step-desc">看日报、审批规则提案</div></div>
+      </div>
+      <div class="callout">设计原则：① 对话式引导优于表单堆砌；② 高频内容（会话、Playbook）入口浅，低频配置（Settings）收纳深；③ 每个上线动作都需明确的人类确认与可回退说明。</div>
+    </section>
+
+    <!-- 4 IA -->
+    <section class="section" id="ia">
+      <div class="section-title"><span class="section-num">4</span>信息架构与导航</div>
+      <div class="subsection-title">4.1 顶部 Tab（Support Agent 视图）</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th style="width:140px">Tab</th><th>页面</th><th>定位</th><th>子标签</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AI Manager</strong></td><td>AgentsPage</td><td>数字员工中枢：Onboarding / 日报 / 提案 / 升级队列</td><td>—（按状态切换视图）</td></tr>
+          <tr><td><strong>Playbook</strong></td><td>PlaybookPage</td><td>规则与知识库</td><td>Rules / Documents</td></tr>
+          <tr><td><strong>Live Widget</strong></td><td>LiveWidgetPage</td><td>在线聊天渠道</td><td>Conversations / Settings</td></tr>
+          <tr><td><strong>Email Inbox</strong> <span class="pill a">badge</span></td><td>EmailPage</td><td>邮件渠道收件箱</td><td>3 栏布局 + Settings</td></tr>
+          <tr><td><strong>Zendesk</strong></td><td>ZendeskPage</td><td>Zendesk 工单运营</td><td>Tickets / Settings</td></tr>
+          <tr><td><strong>Performance</strong></td><td>PerformancePage</td><td>表现看板与会话分析</td><td>Dashboard / Conversations</td></tr>
+          <tr><td><strong>Settings</strong> <span class="pill s">右上角</span></td><td>SettingsPage</td><td>全局设置中枢</td><td>Channels / Rep Config</td></tr>
+        </tbody>
+      </table></div>
+      <p>另有 <strong>Sales Agent</strong>（Analytics）与 <strong>VOC Agent</strong>（Insights）作为兄弟数字员工，通过左侧 WORKFORCE 分组切换。</p>
+
+      <div class="subsection-title">4.2 左侧栏分组</div>
+      <ul>
+        <li><strong>主导航</strong>（占位，disabled）：Home · Analytics · Orders · Issues · Protection · Integrations · Reviews</li>
+        <li><strong>WORKFORCE</strong>：<code>Conversation</code>（首项，占位）· <strong>Support agent</strong> · <strong>Sales agent</strong> · <strong>VOC agent</strong> · Review agent（占位）</li>
+        <li><strong>CUSTOMIZE</strong>（占位）：Widgets · Customer Portal · Notifications</li>
+      </ul>
+      <div class="callout info">Settings 中心采用「Channels（连接跳板）+ Rep Config（数字员工配置）」两个子标签；各渠道的细化设置由各自渠道页的 Settings 子标签承载，Settings 通过深链跳转过去。</div>
+    </section>
+
+    <!-- 5 concepts -->
+    <section class="section" id="concepts">
+      <div class="section-title"><span class="section-num">5</span>核心概念与数据模型</div>
+
+      <div class="subsection-title">5.1 渠道（Channel）与模式（Mode）</div>
+      <p>三类渠道：<code>chat</code>（Live Widget）/ <code>email</code>（Email Inbox）/ <code>zendesk</code>。每个渠道独立维护连接状态与运行模式 <code>ChannelMode</code>：</p>
+      <div class="grid3">
+        <div class="ic"><h4><span class="pill s">Off</span> 关闭</h4><p>已连接但 AI 不工作。</p></div>
+        <div class="ic"><h4><span class="pill a">Training</span> 培训</h4><p>AI 只写内部草稿/备注，不直接回客户。</p></div>
+        <div class="ic"><h4><span class="pill g">Production</span> 生产</h4><p>AI 直接回复客户。</p></div>
+      </div>
+      <p>派生状态：<code>anyChannelConnected</code> / <code>anyChannelLive</code> / <code>isAgentLive</code>（任一 Production）/ <code>agentMode</code>（取最高档）。<code>setAllChannelModes()</code> 可批量置档。Email 与 Zendesk 互斥为异步主干（<code>asyncBackbone</code>）。</p>
+
+      <div class="subsection-title">5.2 数字员工（AI Rep）</div>
+      <p>多 Rep 注册表 <code>reps: AiRep[]</code>，每个含 id / name / color / personality / customTone / permissions / discloseAI。通过 <code>channelReps: Record&lt;ChannelKey, string[]&gt;</code> 把 Rep 分配到渠道（一个渠道可多 Rep，一个 Rep 可跨渠道）。<code>primaryChannel</code> 标记主渠道。</p>
+
+      <div class="subsection-title">5.3 Playbook：规则 / 文档 / 主题</div>
+      <ul>
+        <li><strong>Rule</strong>：name / module / content / source / stats（used、avgCsat、deflection）/ versionHistory（配置历史）。</li>
+        <li><strong>Document</strong>：上传的 SOP，解析为 modules → topics → rules 的层级结构，可启用/禁用。</li>
+        <li><strong>Topic（提案）</strong>：type = proposal / question；含 badge（NEW RULE / RULE UPDATE）、currentRule/newRule、来源工单、status（pending/accepted/rejected）。</li>
+      </ul>
+
+      <div class="subsection-title">5.4 会话日志（ConversationLog）</div>
+      <p>记录完整对话与 AI 推理链（reasoning：上下文补全 → 规则路由 → 知识检索 → 动作执行 → Guardrail 校验 → 输出），并标注 intent、entry/exit sentiment、outcome、mode、channel、turns、duration、handoffNotes 等。是 Performance 与各渠道 Conversations 列表的统一数据源。</p>
+
+      <div class="subsection-title">5.5 Onboarding 完成度（派生）</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th style="width:60px">步骤</th><th>含义</th><th>完成判定</th><th>必要性</th></tr></thead>
+        <tbody>
+          <tr><td>Step 1</td><td>连接渠道</td><td>三渠道任一 connected</td><td><span class="pill r">必需</span></td></tr>
+          <tr><td>Step 2</td><td>导入政策</td><td>存在 Processed 且含 extractedRules 的文档</td><td><span class="pill s">可选</span></td></tr>
+          <tr><td>Step 3</td><td>创建 AI Rep</td><td>repHired</td><td><span class="pill r">必需</span></td></tr>
+          <tr><td>Step 4</td><td>上线</td><td>任一连接渠道处于 Training/Production</td><td><span class="pill r">必需</span></td></tr>
+        </tbody>
+      </table></div>
+      <p>进度条仅统计 essentials（1/3/4），Step 4 在 1&amp;3 完成前锁定（<code>step4Status</code>）。全部完成 → <code>setupFullyComplete</code>，AI Manager 从引导视图切换为日常运营视图。</p>
+    </section>
+
+    <!-- 6.1 onboarding -->
+    <section class="section" id="f-onboarding">
+      <div class="section-title"><span class="section-num">6.1</span>功能 · Onboarding 引导</div>
+      <p>未完成配置时，AI Manager 渲染居中的「Get Started」引导卡，含 4 步：</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th style="width:200px">步骤</th><th>文案/描述</th><th>跳转目标</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Connect a channel</strong></td><td>连接 Support Chat / Email / Zendesk，并指定各渠道由哪些 Rep 应答。</td><td>Settings → Channels 渠道选择列表</td></tr>
+          <tr><td><strong>Create an AI rep</strong></td><td>新建一个或多个 Rep，各有名字、人设与权限。</td><td>Settings → Rep Config</td></tr>
+          <tr><td><strong>Import Policies (optional)</strong></td><td>上传 SOP 提升回答准确率；随时可做，非上线必需。</td><td>Playbook → Documents</td></tr>
+          <tr><td><strong>Go live</strong></td><td>把各渠道 Mode 设为 Training 或 Production，让 Rep 上岗（1&amp;3 完成前锁定）。</td><td>主渠道 Settings + 上线引导气泡</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>Demo 控制：</strong>「Reset Documents」清空文档；「Complete All Steps」一键完成（连好三渠道、建 2 个 Rep、导入文档、完成分配）。进度条展示「N of 3 essentials」。</p>
+    </section>
+
+    <!-- 6.2 manager -->
+    <section class="section" id="f-manager">
+      <div class="section-title"><span class="section-num">6.2</span>功能 · AI Manager（运营中枢）</div>
+      <div class="subsection-title">6.2.1 Team Lead 视图（Alex）</div>
+      <p>配置完成后呈现对话式信息流：</p>
+      <ul>
+        <li><strong>Channel Overview Panel</strong>：三渠道概览行（连接状态、地址/子域名、模式徽标、已分配 Rep 头像 / 「No rep」告警），点击进各渠道设置。</li>
+        <li><strong>Daily Digest（日报）</strong>：3 个统计卡（处理工单数、自动解决率、升级率，含趋势）+「View full dashboard」链接 + 待审提案数提示。</li>
+        <li><strong>Proposal Cards（规则提案）</strong>：每条来自真实工单的规则新增/更新建议，展示「What Changed」「New Rule」「来源工单」（可点开会话侧栏），Accept / Reject。</li>
+        <li><strong>自由问答</strong>：可向 Alex 提问，自动回复（Demo 模拟）。</li>
+      </ul>
+      <div class="subsection-title">6.2.2 Rep 视图</div>
+      <ul>
+        <li>头部含 Rep 头像/名称 + 「Go Live Mode」下拉（Production / Training / Off）+ Profile。</li>
+        <li><strong>升级队列（Escalation Feed）</strong>：需要人工关注的工单以对话卡呈现，工单号可跳 Zendesk，支持「Resolve」；已解决项置灰。空态显示「All caught up」。</li>
+        <li><strong>模式切换确认</strong>：有副作用时弹确认（例如 Production→Off 提示「3 个进行中工单将转人工」）。无连接渠道时禁用 Training/Production。</li>
+      </ul>
+      <div class="callout">AI Manager 现为「纯操作」页面——所有配置（人设、权限、渠道连接）已迁移至全局 Settings，保持职责单一。</div>
+    </section>
+
+    <!-- 6.3 channels -->
+    <section class="section" id="f-channels">
+      <div class="section-title"><span class="section-num">6.3</span>功能 · 渠道运营</div>
+      <div class="subsection-title">6.3.1 Live Widget（在线聊天）</div>
+      <p>子标签：<strong>Conversations</strong>（复用 <code>ConversationsView</code>，锁定 Live Chat Widget，展示不可移除的渠道上下文标签）/ <strong>Settings</strong>（连接表单、外观定制、聊天升级配置）。</p>
+      <div class="subsection-title">6.3.2 Email Inbox</div>
+      <p>三栏布局：左（线程列表 + 状态筛选 New/Open/Pending/Solved + 搜索）｜中（线程详情 + AI 草稿，按模式着色：Off 灰 / Training 琥珀 / Production 蓝，可采纳/重生成）｜右（客户/意图/情绪/订单信息 + 升级）。支持基于发件人/关键词/情绪的 Flag Rules 自动标记。</p>
+      <div class="subsection-title">6.3.3 Zendesk</div>
+      <p>子标签：<strong>Tickets</strong>（复用邮件式工单视图）/ <strong>Settings</strong>（5 步引导式连接：授权 → 选坐席 → Webhook → Trigger → 校验，每步带状态与错误反馈）。</p>
+    </section>
+
+    <!-- 6.4 playbook -->
+    <section class="section" id="f-playbook">
+      <div class="section-title"><span class="section-num">6.4</span>功能 · Playbook（规则与知识库）</div>
+      <div class="subsection-title">Rules 子标签</div>
+      <ul>
+        <li>搜索 + 排序（Newest/Oldest）+「New Rule」；按 module 过滤标签（含计数）。</li>
+        <li>规则卡列表（名称 + module 徽标 + 内容预览 + 来源 + 更新时间），点开 <strong>RuleDetailSheet</strong>。</li>
+        <li>详情含：Content（可编辑）、Source、自动提取的 Actions、Stats（used / avgCsat / deflection）、<strong>Config History</strong>（版本时间线与 diff）。</li>
+        <li>未完成 Onboarding 时顶部出现「N proposal(s) 待审」入口。</li>
+      </ul>
+      <div class="subsection-title">Documents 子标签</div>
+      <ul>
+        <li>空态：拖拽上传区（支持 PDF/PPTX/DOCX/TXT/CSV/XLS），自动提取规则。</li>
+        <li>列表：文件类型徽标、大小/时间/状态（Processing/Error+Retry）、In use / Disabled 开关、删除。</li>
+        <li><strong>AddDocumentDialog</strong>：上传文件 / 手动输入 两个标签页。</li>
+        <li><strong>DocumentDetailSheet</strong>：按 modules → topics → rules 层级展示解析结果。</li>
+      </ul>
+    </section>
+
+    <!-- 6.5 performance -->
+    <section class="section" id="f-performance">
+      <div class="section-title"><span class="section-num">6.5</span>功能 · Performance（表现看板）</div>
+      <div class="subsection-title">Dashboard 子标签</div>
+      <p>顶部筛选：Time Range（Yesterday / 7d / 30d / 90d / Custom）+ Channel（All / chat / email / zendesk）。</p>
+      <ul>
+        <li><strong>KPI 卡</strong>：Total Tickets (156, +12)、Resolution Rate (68%, +4%)、Escalation Rate (32%, −4%)、Sentiment Improvement (54%, +6.2%)、Avg. Turns (4.5, −0.3)。</li>
+        <li><strong>图表</strong>：Resolution Rate 趋势（面积图）、Sentiment Flow（柱+双线，进/出情绪）、Sentiment Distribution（进/出双环形，Satisfied→Furious 五档）。</li>
+        <li><strong>Contact Reason 表</strong>：Intent / Volume（条）/ Resolution Rate / Sentiment Change，按量排序、可下钻。</li>
+        <li><strong>AI Summary</strong>：随筛选变化自动生成自然语言摘要（含生成态）。</li>
+      </ul>
+      <div class="subsection-title">Conversations 子标签</div>
+      <p>复用 <code>ConversationsView</code>（全渠道）：状态分段（All/Resolved/Escalated/Handling）、搜索、多维筛选（渠道/时间/结果/意图/情绪/模式）、排序，点开会话可见完整推理链侧栏。</p>
+    </section>
+
+    <!-- 6.6 settings -->
+    <section class="section" id="f-settings">
+      <div class="section-title"><span class="section-num">6.6</span>功能 · Settings（全局设置）</div>
+      <div class="subsection-title">Channels 子标签</div>
+      <p>三张渠道跳板卡（Live Widget / Email Inbox / Zendesk），各显状态徽标（Live / Training / Connected / Not connected），点击深链至对应渠道页的 Settings 子标签。</p>
+      <div class="subsection-title">Rep Config 子标签</div>
+      <p>内联托管 <code>ConfigureAgentSection</code>：选择/新增 Rep；编辑名字、人设（Friendly / Professional / Casual / Customize+自定义语气）、读写权限（含锁定项与 Guardrail）、是否披露 AI；并按渠道勾选分配该 Rep。</p>
+    </section>
+
+    <!-- 6.7 other -->
+    <section class="section" id="f-other">
+      <div class="section-title"><span class="section-num">6.7</span>功能 · Sales Agent / VOC Agent（兄弟产品概览）</div>
+      <div class="grid2">
+        <div class="ic"><h4>Sales Agent</h4><p>Analytics 标签：Time Range + 渠道模式多选；6 个 KPI（Impressions / Clicks / CTR / Orders / CVR / Revenue）；日趋势（柱+三线）；触点表现表，行可展开订单详情（含推荐商品高亮）。Touchpoints / Strategies 标签为 coming soon。</p></div>
+        <div class="ic"><h4>VOC Agent</h4><p>「Ask Me Anything」输入 + 左侧工具栏（Overview/Trends/AI/Geo/Report）；品牌 Dashboard 卡（关键词、竞品、时间范围、导出）+ Market Insight Overview（全局摘要、增长引擎，术语可回填提问）。</p></div>
+      </div>
+    </section>
+
+    <!-- 7 flows -->
+    <section class="section" id="flows">
+      <div class="section-title"><span class="section-num">7</span>关键用户流程</div>
+      <div class="subsection-title">7.1 首次接入到上线</div>
+      <ol>
+        <li>AI Manager「Get Started」→ Connect a channel → Settings/Channels 选渠道并连接。</li>
+        <li>Create an AI rep → Settings/Rep Config 建 Rep、设人设/权限、分配渠道。</li>
+        <li>（可选）Import Policies → Playbook/Documents 上传 SOP，自动提炼规则。</li>
+        <li>Go live → 设渠道 Mode（建议先 Training 观察，再切 Production）→ <code>setupFullyComplete</code>。</li>
+      </ol>
+      <div class="subsection-title">7.2 日常运营闭环</div>
+      <ol>
+        <li>AI Manager 看 Daily Digest，掌握当日量与解决/升级率。</li>
+        <li>审批 Proposal（接受则规则沉淀进 Playbook，越用越准）。</li>
+        <li>处理 Rep 升级队列中需人工介入的工单。</li>
+        <li>到 Performance 下钻 intent / sentiment / 会话推理链，发现优化点。</li>
+      </ol>
+    </section>
+
+    <!-- 8 modes -->
+    <section class="section" id="modes">
+      <div class="section-title"><span class="section-num">8</span>模式与状态机</div>
+      <p>模式切换需明确确认，并提示副作用（可回退/影响进行中工单）：</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>From → To</th><th>提示</th></tr></thead>
+        <tbody>
+          <tr><td>Production → Off</td><td>有 3 个进行中工单，将被重新分配给人工坐席。</td></tr>
+          <tr><td>Production → Training</td><td>进行中工单仍以 Production 完成；新工单走 Training。</td></tr>
+          <tr><td>Training → Production</td><td>Rep 将开始直接回复客户。</td></tr>
+          <tr><td>Off → Production</td><td>Rep 将立即开始直接回复客户。</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout warn">无任何渠道连接时，Training / Production 不可选，引导用户先完成接入。</div>
+    </section>
+
+    <!-- 9 perms -->
+    <section class="section" id="perms">
+      <div class="section-title"><span class="section-num">9</span>权限与安全模型</div>
+      <ul>
+        <li><strong>读权限（Read Actions）</strong>：查订单、查物流、查客户、查商品、查 Seel 保障、读工单历史、查退货状态等；多为默认开启、部分锁定。</li>
+        <li><strong>写权限（Write Actions）</strong>：回复、升级、取消订单、改地址、提 Seel 理赔、发起退货、退款、加内部备注等；含 Guardrail 约束，部分默认禁用，需显式开启。</li>
+        <li><strong>披露 AI 身份（Disclose AI）</strong>：可配置 Rep 是否向客户表明 AI 身份。</li>
+        <li><strong>升级与交接（Handoff）</strong>：可配置升级分组、坐席、标签、是否自动置优先级，附交接说明。</li>
+      </ul>
+      <div class="callout info">所有「写」类与上线类动作遵循「人类确认 + 可回退说明」原则，降低自动化风险。</div>
+    </section>
+
+    <!-- 10 metrics -->
+    <section class="section" id="metrics">
+      <div class="section-title"><span class="section-num">10</span>指标体系</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>指标</th><th>含义</th><th>出现位置</th></tr></thead>
+        <tbody>
+          <tr><td>Total Tickets</td><td>处理工单总量</td><td>Performance KPI / Daily Digest</td></tr>
+          <tr><td>Resolution Rate</td><td>自动解决率</td><td>KPI / 趋势面积图 / Digest</td></tr>
+          <tr><td>Escalation Rate</td><td>升级率（越低越好）</td><td>KPI / Digest</td></tr>
+          <tr><td>Sentiment Improvement</td><td>进/出情绪改善率</td><td>KPI / Sentiment Flow / 分布环形</td></tr>
+          <tr><td>Avg. Turns</td><td>平均对话轮次</td><td>KPI</td></tr>
+          <tr><td>Per-Intent Volume / Resolution / Sentiment Δ</td><td>按联系原因拆解</td><td>Contact Reason 表</td></tr>
+          <tr><td>Rule Stats（used / avgCsat / deflection）</td><td>规则使用与效果</td><td>Playbook RuleDetail</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 11 design -->
+    <section class="section" id="design">
+      <div class="section-title"><span class="section-num">11</span>设计规范</div>
+      <div class="grid2">
+        <div class="ic"><h4>品牌与中性色</h4><p>品牌主色 <code>#6c47ff</code>（hover <code>#5a3ad9</code>）；背景 <code>#fafafa</code>；边框 <code>#e5e7eb</code>；次要文字 <code>#6d7175</code>。</p></div>
+        <div class="ic"><h4>模式色</h4><p>Production = emerald；Training = amber；Off = gray。贯穿模式徽标与下拉。</p></div>
+      </div>
+      <div class="ic"><h4>情绪色（五档）</h4><p>Satisfied <code>#10b981</code> · Positive <code>#14b8a6</code> · Neutral <code>#94a3b8</code> · Negative <code>#f97316</code> · Furious <code>#ef4444</code>。</p></div>
+      <p>组件层面统一使用共享 <code>SubTabBar</code>（active 态品牌色下划线）、shadcn/ui（Radix）与 Recharts；会话列表统一走 <code>ConversationsView</code>。</p>
+    </section>
+
+    <!-- 12 roadmap -->
+    <section class="section" id="roadmap">
+      <div class="section-title"><span class="section-num">12</span>里程碑与未决项</div>
+      <div class="subsection-title">已交付（Demo）</div>
+      <ul>
+        <li>六渠道/页面导航骨架 + 全局 Settings 中枢（Channels / Rep Config）。</li>
+        <li>渠道层模式统一（off/training/production）、多 Rep 与按渠道分配。</li>
+        <li>Zendesk 5 步引导连接、Email 三栏收件箱、Live Widget 会话复用。</li>
+        <li>Playbook 规则/文档/提案、Performance 看板与会话推理链、引导式 Onboarding。</li>
+      </ul>
+      <div class="subsection-title">未来方向（规划）</div>
+      <ul>
+        <li>Review Agent、Widgets/Customer Portal/Notifications 等占位模块落地。</li>
+        <li>真实后端与接口、计费闭环、跨租户与团队权限。</li>
+        <li>Sales / VOC Agent 的 Touchpoints / Strategies 深化。</li>
+      </ul>
+      <div class="callout">本 Demo 当前 <code>tsc</code> 存在 3 个历史遗留类型告警（与本 PRD 涉及功能无关），不影响运行与演示。</div>
+    </section>
+
+  </main>
+</div>
+
+<footer>© 2026 Seel Inc. · Seel AI Support v2 · 完整产品需求文档 (PRD v2.0) · 内部 Demo 文档，仅供评审使用</footer>
+</body>
+</html>
