@@ -100,6 +100,7 @@
     <div class="nav-label">概览</div>
     <a class="nav-link" href="#doc">0 · 文档信息</a>
     <a class="nav-link" href="#overview">1 · 产品概述</a>
+    <a class="nav-link" href="#scope">1.5 · 本次迭代上线范围</a>
     <a class="nav-link" href="#users">2 · 目标用户与角色</a>
     <a class="nav-link" href="#positioning">3 · 产品定位与理念</a>
     <a class="nav-link" href="#ia">4 · 信息架构与导航</a>
@@ -169,6 +170,55 @@
         <div class="ic"><h4>范围内（In Scope）</h4><p>多渠道接入与运营、数字员工配置与上岗、Playbook 规则/文档管理、表现看板与会话分析、引导式 Onboarding。</p></div>
         <div class="ic"><h4>非目标（Out of Scope）</h4><p>真实后端/接口、支付与计费实际扣款、跨租户管理、AI 模型训练本身；Sales / VOC Agent 为同平台兄弟产品，仅做概览。</p></div>
       </div>
+    </section>
+
+    <!-- 1.5 本次迭代上线范围 -->
+    <section class="section" id="scope">
+      <div class="section-title"><span class="section-num">1.5</span>本次迭代上线范围（v2.0）</div>
+      <p>本次迭代 = 导航重构提交 <code>3f661cb</code> + 本次会话打磨 <code>25f9f0d</code>。以下为<strong>本次迭代新上线</strong>的功能，按域分组；标签区分提交来源。文档其余章节描述的是产品整体形态，本节用于划清「本次新增」边界。</p>
+      <p style="margin-bottom:18px"><span class="pill b">3f661cb</span> 导航重构主提交 &nbsp;·&nbsp; <span class="pill g">本次会话</span> 25f9f0d 打磨</p>
+
+      <div class="sub2-title">A · 信息架构与导航</div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> 重构为 6 个功能顶部 Tab（AI Manager / Playbook / Live Widget / Email Inbox / Zendesk / Performance）+ 共享 <code>SubTabBar</code>，每页自带 Operations / Settings 子标签。</li>
+        <li><span class="pill b">3f661cb</span> 新增右上角<strong>全局 Settings 中枢</strong>，深链进各功能设置并显示实时状态徽标；移除旧的全局 Settings overlay。</li>
+        <li><span class="pill g">本次会话</span> 侧边栏 <code>Conversation</code> 移入 WORKFORCE 分组首位。</li>
+      </ul>
+
+      <div class="sub2-title">B · 渠道与模式</div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> 渠道模式统一为单一 <code>ChannelMode</code>（off / training / production）。</li>
+        <li><span class="pill b">3f661cb</span> Zendesk 工单收件箱复用参数化的 <code>EmailInboxView</code>；渠道未连接时默认落到 Settings。</li>
+        <li><span class="pill g">本次会话</span> 抽出 <code>ConversationsView</code>，Live Widget → Conversations 展示锁定该渠道的会话表；Performance 复用同组件。</li>
+      </ul>
+
+      <div class="sub2-title">C · 数字员工配置</div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> 多 Rep 注册表 + 按渠道分配（per-channel overrides）；<code>LiveChatWidgetCustomizer</code> 聊天组件外观/升级定制。</li>
+        <li><span class="pill b">3f661cb</span> AI Manager 吸收 Agent Config 为其 Settings 子标签 → <span class="pill g">本次会话</span> 进一步迁出为全局 Settings 的 <strong>Rep Config</strong> 子标签，AI Manager 回归纯操作。</li>
+      </ul>
+
+      <div class="sub2-title">D · Playbook / 规则　<span class="pill a">本节重点</span></div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> <strong>规则全生命周期</strong>：新建（<code>NewRuleDialog</code>）、编辑、删除；状态文案 "Rule created / updated / deleted / accepted and live"。</li>
+        <li><span class="pill b">3f661cb</span> <strong>提案审批流</strong>：<code>ProposalReviewSheet</code> 把来自工单的规则提案（Team Lead proposal）审批后落地为 live 规则，支持「Edit rule before saving」。</li>
+        <li><span class="pill b">3f661cb</span> <strong>文档解析模型</strong>：新增 <code>ParsedModule</code> / <code>ParsedTopic</code>，文档解析为 modules → topics → rules；<code>DocumentDetailSheet</code> 展示解析结果。</li>
+        <li><span class="pill b">3f661cb</span> 规则<strong>来源</strong>区分（Team Lead proposal / Manager edit / Uploaded document）+ 列表排序（Newest/Oldest）与 module 过滤；示例 module：Refund Processing、Return Window、Seel Protection Claims、Shipping Delays。</li>
+      </ul>
+
+      <div class="sub2-title">E · Onboarding</div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> 引导步骤通过 <code>goToChannelSettings</code> / <code>goToManagerSettings</code> 深链跳转。</li>
+        <li><span class="pill g">本次会话</span> Connect a channel → Settings/Channels 渠道选择列表；步骤改名 "Import Policies (optional)" 并移除重复徽标。</li>
+      </ul>
+
+      <div class="sub2-title">F · 兄弟数字员工 & 其他</div>
+      <ul>
+        <li><span class="pill b">3f661cb</span> 新增 <strong>Sales Agent</strong> 页面（Analytics + KPI + 日趋势 + 触点表）与 <strong>VOC Agent</strong> 页面（Ask Me Anything + Market Insight）。</li>
+        <li><span class="pill b">3f661cb</span> 新增 <code>LanguageSwitcher</code>；<code>data.ts</code> 扩充销售数据、<code>zendeskTickets</code>、解析模型与 production-mode 案例。</li>
+      </ul>
+
+      <div class="callout">注：本次两次推送中的 <code>1a43351</code>、<code>ce81a61</code> 为 PRD 文档页，不属于产品功能。</div>
     </section>
 
     <!-- 2 users -->
