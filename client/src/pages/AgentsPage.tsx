@@ -13,15 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import {
   Send, User, Crown, ChevronDown,
   ThumbsUp, ThumbsDown,
-  Bot, Settings, Plus, MessageSquare,
+  Bot, Plus, MessageSquare,
   FileText, UserPlus, Rocket,
   CheckCircle2, Lock, ArrowRight, Inbox, ExternalLink,
   Mail, Ticket, Sliders,
 } from "lucide-react";
 import AgentProfileSheet from "@/components/AgentProfileSheet";
 import ConversationLogSidebar from "@/components/ConversationLogSidebar";
-import SubTabBar, { type SubTabItem } from "@/components/SubTabBar";
-import { ConfigureAgentSection } from "@/components/SetupSettings";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -222,9 +220,9 @@ function ProposalCard({ topic, onAccept, onReject, onTicketClick }: {
 function SetupProgress() {
   const {
     step1Complete, step2Complete, step3Complete, step4Complete, step4Status,
-    goToChannelSettings, goToManagerSettings,
+    goToChannelSettings, goToManagerSettings, primaryChannel,
     setMainTab, setPlaybookDeepLink,
-    setSelectedAgentId, setShowGoLiveGuide, goLiveGuideShown, setGoLiveGuideShown,
+    setShowGoLiveGuide, goLiveGuideShown, setGoLiveGuideShown,
     hiredRepName, resetDocuments, completeSetupDemo,
   } = useApp();
 
@@ -242,7 +240,9 @@ function SetupProgress() {
       complete: step1Complete,
       locked: false,
       optional: false,
-      action: () => goToChannelSettings("chat"),
+      // Land on the global Settings → Channels picker so the merchant chooses
+      // which channel to connect (Settings defaults to the Channels sub-tab).
+      action: () => setMainTab("settings"),
     },
     {
       id: 2,
@@ -256,7 +256,7 @@ function SetupProgress() {
     },
     {
       id: 3,
-      label: "Import Policies",
+      label: "Import Policies (optional)",
       description: step2Complete
         ? "Your SOP documents are imported — the AI is using your support rules."
         : "Upload your SOP documents to boost answer accuracy. You can do this anytime — it's not required to go live.",
@@ -281,7 +281,9 @@ function SetupProgress() {
       optional: false,
       action: () => {
         if (step4Status === "locked") return;
-        setSelectedAgentId("agent-alpha");
+        // Mode (Training / Production) is set per-channel — send the merchant to
+        // the primary channel's settings to flip it live.
+        goToChannelSettings(primaryChannel ?? "chat");
         if (!goLiveGuideShown) {
           setShowGoLiveGuide(true);
           setGoLiveGuideShown(true);
@@ -375,9 +377,6 @@ function SetupProgress() {
                     </span>
                     {step.complete && (
                       <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] h-5">Done</Badge>
-                    )}
-                    {!step.complete && step.optional && (
-                      <Badge className="bg-gray-100 text-gray-500 border-gray-200 text-[10px] h-5">Optional</Badge>
                     )}
                   </div>
                   <p className={cn(
@@ -1080,113 +1079,25 @@ function RepView({ agentId }: { agentId: string }) {
 /* ================================================================
    NORMAL VIEW — Agent sidebar + main content
    ================================================================ */
-function NormalView({ onOpenSettings }: { onOpenSettings: () => void }) {
-  const {
-    selectedAgentId, setSelectedAgentId,
-    agentsData, hiredRepName,
-    zendeskConnected,
-    agentMode,
-    setupFullyComplete,
-  } = useApp();
-  const nonLeadAgents = agentsData.filter((a) => !a.isTeamLead);
-  const teamLead = agentsData.find((a) => a.id === "team-lead")!;
+function NormalView() {
+  const { setupFullyComplete } = useApp();
 
-  const modeDotColor = agentMode === "production" ? "bg-green-500" : agentMode === "training" ? "bg-blue-500" : "bg-gray-400";
-
+  // AI Manager is the "workforce" hub — the Team Lead (Alex) walks the merchant
+  // through onboarding, then surfaces daily performance and rule proposals.
   return (
     <div className="flex-1 flex h-full">
-      {/* Agent sidebar */}
-      <div className="w-[60px] border-r border-border bg-[#fafafa] flex flex-col items-center py-3">
-        <div className="flex flex-col items-center gap-2 flex-1">
-          {/* Team Lead */}
-          <button
-            onClick={() => setSelectedAgentId("team-lead")}
-            className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold transition-all",
-              selectedAgentId === "team-lead" && "ring-2 ring-[#6c47ff] ring-offset-2"
-            )}
-            style={{ background: teamLead.color }}
-            title="Alex (Team Lead)"
-          >
-            <Crown size={16} />
-          </button>
-          <div className="w-6 border-t border-border my-1" />
-
-          {/* Rep agents */}
-          {nonLeadAgents.map((agent) => (
-            <button
-              key={agent.id}
-              onClick={() => {
-                if (!setupFullyComplete) {
-                  toast.info("Complete setup first to access your AI Rep.");
-                  return;
-                }
-                setSelectedAgentId(agent.id);
-              }}
-              className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold transition-all relative",
-                selectedAgentId === agent.id && "ring-2 ring-[#6c47ff] ring-offset-2",
-                !setupFullyComplete && "opacity-40 cursor-not-allowed",
-              )}
-              style={{ background: agent.color }}
-              title={setupFullyComplete ? `${hiredRepName || "AI Rep"} (${agentMode})` : "Complete setup first"}
-            >
-              {hiredRepName ? hiredRepName.slice(0, 2).toUpperCase() : agent.initials}
-              <span className={cn(
-                "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white",
-                !setupFullyComplete ? "bg-gray-400" : modeDotColor
-              )} />
-            </button>
-          ))}
-
-
-        </div>
-
-        {/* Settings button at bottom */}
-        <button
-          onClick={onOpenSettings}
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground transition-colors mt-2"
-          title="Settings"
-        >
-          <Settings size={18} />
-        </button>
-      </div>
-
-      {/* Main content */}
-      {selectedAgentId === "team-lead" ? (
-        setupFullyComplete ? <TeamLeadView /> : <SetupProgress />
-      ) : (
-        <RepView agentId={selectedAgentId} />
-      )}
+      {setupFullyComplete ? <TeamLeadView /> : <SetupProgress />}
     </div>
   );
 }
 
-/* MAIN AGENTS PAGE — [Operations | Settings] sub-tabs */
-type ManagerTab = "operations" | "settings";
-
-const MANAGER_TABS: SubTabItem<ManagerTab>[] = [
-  { id: "operations", label: "Operations", icon: Bot },
-  { id: "settings", label: "Settings", icon: Sliders },
-];
-
+/* MAIN AGENTS PAGE — Operations only (settings now live in the global Settings tab) */
 export default function AgentsPage() {
-  const { managerTab: tab, setManagerTab: setTab } = useApp();
-
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <SubTabBar tabs={MANAGER_TABS} active={tab} onChange={setTab} />
-      {tab === "operations" ? (
-        <div className="flex-1 min-h-0 overflow-hidden flex">
-          <NormalView onOpenSettings={() => setTab("settings")} />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
-            <ConfigureAgentSection />
-          </div>
-        </div>
-      )}
+      <div className="flex-1 min-h-0 overflow-hidden flex">
+        <NormalView />
+      </div>
     </div>
   );
 }

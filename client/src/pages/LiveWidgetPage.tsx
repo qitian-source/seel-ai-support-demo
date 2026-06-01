@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import SubTabBar, { type SubTabItem } from "@/components/SubTabBar";
 import { ChannelsSection } from "@/components/SetupSettings";
+import ConversationsView from "@/components/ConversationsView";
 import { MessageSquare, Settings } from "lucide-react";
 
 type LiveWidgetTab = "conversations" | "settings";
@@ -31,24 +32,17 @@ export default function LiveWidgetPage() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <SubTabBar tabs={TABS} active={tab} onChange={setTab} />
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto bg-[#fafafa]">
         {tab === "conversations" ? (
-          <PlaceholderBlock title="Live conversations" note="Real-time chat sessions handled by your AI reps will appear here." />
+          <div className="max-w-[1060px] mx-auto px-6 py-6">
+            <ConversationsView lockedChannel="Live Chat Widget" />
+          </div>
         ) : (
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto px-6 py-6">
             <ChannelsSection only="chat" />
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function PlaceholderBlock({ title, note }: { title: string; note: string }) {
-  return (
-    <div className="max-w-3xl mx-auto rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center">
-      <p className="text-sm font-semibold text-gray-700">{title}</p>
-      <p className="text-xs text-gray-400 mt-1.5">{note}</p>
     </div>
   );
 }

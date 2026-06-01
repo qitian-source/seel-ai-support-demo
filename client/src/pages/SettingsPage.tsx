@@ -1,20 +1,25 @@
 /*
  * SettingsPage — global Settings hub (top-tab, far right).
- * Doesn't own settings UI; it's a launcher that deep-links into each
- * function's own Settings module via context helpers.
- *   - AI Manager → goToManagerSettings()
- *   - Live Widget / Email / Zendesk → goToChannelSettings(channel)
+ * Split into two sub-tabs:
+ *   - Channels   → launcher list, deep-links into each channel's own
+ *                  Settings sub-tab via goToChannelSettings(channel)
+ *   - Rep Config → AI Manager agent config (ConfigureAgentSection) hosted
+ *                  inline (the AI Manager page is Operations-only)
  */
+import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
+import SubTabBar, { type SubTabItem } from "@/components/SubTabBar";
+import { ConfigureAgentSection } from "@/components/SetupSettings";
 import {
-  Sliders, MessageSquare, Mail, Ticket, ChevronRight,
+  Bot, MessageSquare, Mail, Ticket, ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
 type StatusTone = "live" | "training" | "ready" | "off";
+type SettingsTab = "channels" | "rep-config";
 
-interface SettingsEntry {
+interface ChannelEntry {
   key: string;
   icon: LucideIcon;
   title: string;
@@ -30,33 +35,37 @@ const TONE_CLS: Record<StatusTone, string> = {
   off: "bg-[#f3f4f6] text-[#6b7280]",
 };
 
+const SETTINGS_TABS: SubTabItem<SettingsTab>[] = [
+  { id: "channels", label: "Channels", icon: MessageSquare },
+  { id: "rep-config", label: "Rep Config", icon: Bot },
+];
+
 export default function SettingsPage() {
   const {
-    goToManagerSettings, goToChannelSettings,
-    reps,
+    goToChannelSettings,
     liveChatConnected, liveChatMode,
     emailChannelConnected, emailMode,
     zendeskConnected, zendeskMode,
+    agentSettingsIntent, setAgentSettingsIntent,
   } = useApp();
+  const [tab, setTab] = useState<SettingsTab>("channels");
 
-  const channelStatus = (connected: boolean, mode: string): SettingsEntry["status"] => {
+  /* Deep-link: "Edit persona" / onboarding "Create an AI rep" → Rep Config tab */
+  useEffect(() => {
+    if (agentSettingsIntent) {
+      setTab("rep-config");
+      setAgentSettingsIntent(false);
+    }
+  }, [agentSettingsIntent, setAgentSettingsIntent]);
+
+  const channelStatus = (connected: boolean, mode: string): ChannelEntry["status"] => {
     if (!connected) return { label: "Not connected", tone: "off" };
     if (mode === "production") return { label: "Live", tone: "live" };
     if (mode === "training") return { label: "Training", tone: "training" };
     return { label: "Connected", tone: "ready" };
   };
 
-  const repCount = reps.length;
-
-  const entries: SettingsEntry[] = [
-    {
-      key: "manager",
-      icon: Sliders,
-      title: "AI Manager",
-      desc: "Reps, personas, permissions & shared defaults",
-      status: { label: repCount === 1 ? "1 rep" : `${repCount} reps`, tone: repCount > 0 ? "ready" : "off" },
-      go: goToManagerSettings,
-    },
+  const channels: ChannelEntry[] = [
     {
       key: "chat",
       icon: MessageSquare,
@@ -84,43 +93,55 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-5">
-          <h2 className="text-[16px] font-bold text-foreground">Settings</h2>
-          <p className="text-[13px] text-muted-foreground mt-0.5">
-            One place to jump into each function's own settings module.
-          </p>
-        </div>
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <SubTabBar tabs={SETTINGS_TABS} active={tab} onChange={setTab} />
 
-        <div className="space-y-2.5">
-          {entries.map((e) => {
-            const Icon = e.icon;
-            return (
-              <button
-                key={e.key}
-                type="button"
-                onClick={e.go}
-                className="w-full text-left flex items-center gap-3.5 rounded-xl border border-border bg-white px-4 py-3.5 transition-colors hover:border-[#6c47ff]/40 hover:bg-[#faf9ff]"
-              >
-                <span className="shrink-0 w-9 h-9 rounded-lg bg-[#f0edff] flex items-center justify-center">
-                  <Icon className="w-[18px] h-[18px] text-[#6c47ff]" />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="flex items-center gap-2">
-                    <span className="text-[14px] font-semibold text-foreground">{e.title}</span>
-                    <span className={cn("text-[11px] font-medium px-1.5 py-0.5 rounded-full", TONE_CLS[e.status.tone])}>
-                      {e.status.label}
+      {tab === "channels" ? (
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-5">
+              <h2 className="text-[16px] font-bold text-foreground">Channels</h2>
+              <p className="text-[13px] text-muted-foreground mt-0.5">
+                Jump into each channel's own settings module.
+              </p>
+            </div>
+
+            <div className="space-y-2.5">
+              {channels.map((e) => {
+                const Icon = e.icon;
+                return (
+                  <button
+                    key={e.key}
+                    type="button"
+                    onClick={e.go}
+                    className="w-full text-left flex items-center gap-3.5 rounded-xl border border-border bg-white px-4 py-3.5 transition-colors hover:border-[#6c47ff]/40 hover:bg-[#faf9ff]"
+                  >
+                    <span className="shrink-0 w-9 h-9 rounded-lg bg-[#f0edff] flex items-center justify-center">
+                      <Icon className="w-[18px] h-[18px] text-[#6c47ff]" />
                     </span>
-                  </span>
-                  <span className="block text-[12px] text-muted-foreground mt-0.5 truncate">{e.desc}</span>
-                </span>
-                <ChevronRight className="shrink-0 w-4 h-4 text-muted-foreground" />
-              </button>
-            );
-          })}
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="text-[14px] font-semibold text-foreground">{e.title}</span>
+                        <span className={cn("text-[11px] font-medium px-1.5 py-0.5 rounded-full", TONE_CLS[e.status.tone])}>
+                          {e.status.label}
+                        </span>
+                      </span>
+                      <span className="block text-[12px] text-muted-foreground mt-0.5 truncate">{e.desc}</span>
+                    </span>
+                    <ChevronRight className="shrink-0 w-4 h-4 text-muted-foreground" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            <ConfigureAgentSection />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

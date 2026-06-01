@@ -206,8 +206,10 @@ interface AppState {
   setManagerTab: (t: "operations" | "settings") => void;
   channelSettingsIntent: ChannelKey | null;     // one-shot: open this channel page on its Settings sub-tab
   setChannelSettingsIntent: (c: ChannelKey | null) => void;
+  agentSettingsIntent: boolean;                  // one-shot: open the global Settings tab on the AI Manager (agent) view
+  setAgentSettingsIntent: (v: boolean) => void;
   goToChannelSettings: (c: ChannelKey) => void;  // navigate to a channel page's Settings sub-tab
-  goToManagerSettings: () => void;               // navigate to AI Manager → Settings (agent config)
+  goToManagerSettings: () => void;               // navigate to the global Settings tab → AI Manager (agent config)
 
   /* Email mode & flag rules (configured in Settings > Channels) */
   emailMode: ChannelMode;
@@ -438,14 +440,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* Settings overlay */
   const [managerTab, setManagerTab] = useState<"operations" | "settings">("operations");
   const [channelSettingsIntent, setChannelSettingsIntent] = useState<ChannelKey | null>(null);
+  const [agentSettingsIntent, setAgentSettingsIntent] = useState(false);
 
   const goToChannelSettings = useCallback((c: ChannelKey) => {
     setMainTab(c === "chat" ? "live-widget" : c === "email" ? "email" : "zendesk");
     setChannelSettingsIntent(c);
   }, []);
   const goToManagerSettings = useCallback(() => {
-    setMainTab("agents");
-    setManagerTab("settings");
+    setMainTab("settings");
+    setAgentSettingsIntent(true);
   }, []);
 
   /* Email mode & flag rules */
@@ -644,6 +647,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         channelReps, setChannelReps,
         managerTab, setManagerTab,
         channelSettingsIntent, setChannelSettingsIntent,
+        agentSettingsIntent, setAgentSettingsIntent,
         goToChannelSettings, goToManagerSettings,
         emailMode, setEmailMode,
         emailFlagRules, setEmailFlagRules,

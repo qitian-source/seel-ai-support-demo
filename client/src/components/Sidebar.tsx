@@ -19,10 +19,10 @@ const mainNav = [
   { icon: Shield,      label: "Protection",   tab: null, disabled: true },
   { icon: Puzzle,      label: "Integrations", tab: null, disabled: true },
   { icon: Star,        label: "Reviews",      tab: null, disabled: true },
-  { icon: Bot,         label: "Conversation",  tab: null, disabled: true },
 ];
 
 const workforceNav = [
+  { icon: Bot,            label: "Conversation",  tab: null,                   disabled: true },
   { icon: Headphones,     label: "Support agent", tab: "agents" as const,      disabled: false },
   { icon: TrendingUp,     label: "Sales agent",   tab: "sales-agent" as const, disabled: false },
   { icon: Megaphone,      label: "VOC agent",     tab: "voc-agent" as const,   disabled: false },
