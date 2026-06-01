@@ -119,6 +119,7 @@
   <!-- sidebar -->
   <aside class="sidebar">
     <div class="nav-label">目录</div>
+    <a class="nav-link" href="#changelog">更新记录 (Changelog)</a>
     <a class="nav-link" href="#overview">概述 · 迭代范围</a>
     <a class="nav-link" href="#u1">1 · 信息架构与导航重构</a>
     <a class="nav-link" href="#u2">2 · 渠道与模式</a>
@@ -144,6 +145,36 @@
         <div class="cover-meta-item"><span class="cover-meta-label">影响文件</span><span class="cover-meta-value">~20 个源文件</span></div>
       </div>
     </div>
+
+    <!-- changelog -->
+    <section class="section" id="changelog">
+      <div class="section-title">
+        <span class="pill g" style="font-size:13px;padding:3px 12px;">v2.0.1</span>
+        更新记录 · AI Manager 简化
+        <span style="font-size:13px;font-weight:500;color:var(--soft);margin-left:auto;">2026-06-01</span>
+      </div>
+
+      <div class="sub2-title">Changed</div>
+      <ul>
+        <li>AI Manager 上线门槛：<code>Go live</code> 与 setup 完成判定改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
+        <li>Onboarding <em>Get Started</em> 由 4 步精简为 3 步：连接渠道 → 导入政策（可选）→ 上线。</li>
+        <li>侧边栏 <em>Conversation</em> 移入 <strong>WORKFORCE</strong> 分组首位。</li>
+      </ul>
+
+      <div class="sub2-title">Removed</div>
+      <ul>
+        <li>AI Manager 引导中的「Create an AI rep」步骤及相关 rep 措辞。</li>
+        <li>迭代 PRD 中「兄弟数字员工 &amp; 其他」板块。</li>
+      </ul>
+
+      <div class="sub2-title">Unchanged（兼容性说明）</div>
+      <ul>
+        <li>全局 <strong>Settings → Rep Config</strong> 保持不变；rep 数据模型（<code>reps</code> / <code>channelReps</code> / <code>hiredRepName</code>）保留，仅不再从 AI Manager 暴露。</li>
+        <li>配置完成后仍进入与 AI 助手 Alex 的对话视图（Daily Digest + 渠道概览 + 聊天框）。</li>
+      </ul>
+
+      <div class="callout"><strong>技术备注：</strong>影响文件 <code>contexts/AppContext.tsx</code>（门槛逻辑）、<code>pages/AgentsPage.tsx</code>（引导/文案）、<code>components/Sidebar.tsx</code>（导航）。类型检查无新增错误（仅余 3 个历史遗留）。</div>
+    </section>
 
     <!-- overview -->
     <section class="section" id="overview">
