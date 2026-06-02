@@ -209,6 +209,8 @@ interface AppState {
   setManagerTab: (t: "operations" | "settings") => void;
   channelSettingsIntent: ChannelKey | null;     // one-shot: open this channel page on its Settings sub-tab
   setChannelSettingsIntent: (c: ChannelKey | null) => void;
+  channelConversationsIntent: ChannelKey | null; // one-shot: open this channel page on its Conversations/Inbox sub-tab
+  setChannelConversationsIntent: (c: ChannelKey | null) => void;
   agentSettingsIntent: boolean;                  // one-shot: open the global Settings tab on the AI Manager (agent) view
   setAgentSettingsIntent: (v: boolean) => void;
   goToChannelSettings: (c: ChannelKey) => void;  // navigate to a channel page's Settings sub-tab
@@ -444,6 +446,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* Settings overlay */
   const [managerTab, setManagerTab] = useState<"operations" | "settings">("operations");
   const [channelSettingsIntent, setChannelSettingsIntent] = useState<ChannelKey | null>(null);
+  const [channelConversationsIntent, setChannelConversationsIntent] = useState<ChannelKey | null>(null);
   const [agentSettingsIntent, setAgentSettingsIntent] = useState(false);
 
   const goToChannelSettings = useCallback((c: ChannelKey) => {
@@ -639,16 +642,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (justStep4) {
       // Land on whichever channel is connected so we never jump to a hidden tab.
       const dest = liveChatConnected
-        ? { tab: "live-widget" as const, label: "Live Widget" }
+        ? { tab: "live-widget" as const, key: "chat" as const, label: "Live Widget" }
         : zendeskConnected
-        ? { tab: "zendesk" as const, label: "Zendesk" }
+        ? { tab: "zendesk" as const, key: "zendesk" as const, label: "Zendesk" }
         : emailChannelConnected
-        ? { tab: "email" as const, label: "Email Inbox" }
-        : { tab: "agents" as const, label: "AI Manager" };
+        ? { tab: "email" as const, key: "email" as const, label: "Email Inbox" }
+        : { tab: "agents" as const, key: null, label: "AI Manager" };
       toast.success("You're live! Your AI is now handling conversations.", {
         description: `Jumping to ${dest.label} to watch live conversations.`,
       });
       setMainTab(dest.tab);
+      // Force the channel page onto its Conversations sub-tab — even when it was
+      // already mounted on Settings (the page's own default only applies on mount).
+      if (dest.key) setChannelConversationsIntent(dest.key);
       return;
     }
     if (justStep1) {
@@ -699,6 +705,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         channelReps, setChannelReps,
         managerTab, setManagerTab,
         channelSettingsIntent, setChannelSettingsIntent,
+        channelConversationsIntent, setChannelConversationsIntent,
         agentSettingsIntent, setAgentSettingsIntent,
         goToChannelSettings, goToManagerSettings,
         emailMode, setEmailMode,

@@ -1639,7 +1639,11 @@ export function EmailInboxView({
    EmailPage — [Inbox | Settings] wrapper (操作 / 基础设置)
    ================================================================ */
 export default function EmailPage() {
-  const { emailChannelConnected, channelSettingsIntent, setChannelSettingsIntent } = useApp();
+  const {
+    emailChannelConnected,
+    channelSettingsIntent, setChannelSettingsIntent,
+    channelConversationsIntent, setChannelConversationsIntent,
+  } = useApp();
   const [tab, setTab] = useState<"inbox" | "settings">(emailChannelConnected ? "inbox" : "settings");
 
   useEffect(() => {
@@ -1648,6 +1652,14 @@ export default function EmailPage() {
       setChannelSettingsIntent(null);
     }
   }, [channelSettingsIntent, setChannelSettingsIntent]);
+
+  // Honor a deep-link that asked to open the inbox (e.g. after going live).
+  useEffect(() => {
+    if (channelConversationsIntent === "email") {
+      setTab("inbox");
+      setChannelConversationsIntent(null);
+    }
+  }, [channelConversationsIntent, setChannelConversationsIntent]);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">

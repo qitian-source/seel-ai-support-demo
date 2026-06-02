@@ -17,7 +17,11 @@ const TABS: SubTabItem<LiveWidgetTab>[] = [
 ];
 
 export default function LiveWidgetPage() {
-  const { liveChatConnected, channelSettingsIntent, setChannelSettingsIntent } = useApp();
+  const {
+    liveChatConnected,
+    channelSettingsIntent, setChannelSettingsIntent,
+    channelConversationsIntent, setChannelConversationsIntent,
+  } = useApp();
   // Not connected → land on Settings (connect form); connected → land on operations.
   const [tab, setTab] = useState<LiveWidgetTab>(liveChatConnected ? "conversations" : "settings");
 
@@ -28,6 +32,15 @@ export default function LiveWidgetPage() {
       setChannelSettingsIntent(null);
     }
   }, [channelSettingsIntent, setChannelSettingsIntent]);
+
+  // Honor a deep-link that asked to open this channel's Conversations sub-tab
+  // (e.g. after going live, even if the page was already on Settings).
+  useEffect(() => {
+    if (channelConversationsIntent === "chat") {
+      setTab("conversations");
+      setChannelConversationsIntent(null);
+    }
+  }, [channelConversationsIntent, setChannelConversationsIntent]);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">

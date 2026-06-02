@@ -22,6 +22,7 @@ export default function ZendeskPage() {
   const {
     zendeskConnected,
     channelSettingsIntent, setChannelSettingsIntent,
+    channelConversationsIntent, setChannelConversationsIntent,
   } = useApp();
   // Not connected → land on Settings (connect form); connected → land on operations.
   const [tab, setTab] = useState<ZendeskTab>(zendeskConnected ? "conversations" : "settings");
@@ -33,6 +34,14 @@ export default function ZendeskPage() {
       setChannelSettingsIntent(null);
     }
   }, [channelSettingsIntent, setChannelSettingsIntent]);
+
+  // Honor a deep-link that asked to open this channel's Conversations sub-tab.
+  useEffect(() => {
+    if (channelConversationsIntent === "zendesk") {
+      setTab("conversations");
+      setChannelConversationsIntent(null);
+    }
+  }, [channelConversationsIntent, setChannelConversationsIntent]);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
