@@ -1,30 +1,32 @@
 /*
  * ZendeskPage — dedicated Zendesk channel page.
- * [Tickets | Settings] sub-tabs (操作 / 基础设置).
- * Phase 1: skeleton. Ticket inbox (Phase 3) + settings (Phase 2) migrated later.
+ * [Conversations | Settings] sub-tabs (操作 / 基础设置).
+ * Conversations reuses the shared ConversationsView (same as Live Widget),
+ * pinned to the Zendesk channel — surfaces conversation info, not raw tickets.
  */
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import SubTabBar, { type SubTabItem } from "@/components/SubTabBar";
 import { ChannelsSection } from "@/components/SetupSettings";
-import { EmailInboxView } from "@/pages/EmailPage";
-import { zendeskTickets } from "@/lib/data";
-import { Ticket, Settings } from "lucide-react";
+import ConversationsView from "@/components/ConversationsView";
+import { MessageSquare, Settings } from "lucide-react";
 
-type ZendeskTab = "tickets" | "settings";
+type ZendeskTab = "conversations" | "settings";
 
 const TABS: SubTabItem<ZendeskTab>[] = [
-  { id: "tickets", label: "Tickets", icon: Ticket },
+  { id: "conversations", label: "Conversations", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export default function ZendeskPage() {
   const {
-    zendeskConnected, zendeskMode, zendesk,
+    zendeskConnected,
     channelSettingsIntent, setChannelSettingsIntent,
   } = useApp();
-  const [tab, setTab] = useState<ZendeskTab>(zendeskConnected ? "tickets" : "settings");
+  // Not connected → land on Settings (connect form); connected → land on operations.
+  const [tab, setTab] = useState<ZendeskTab>(zendeskConnected ? "conversations" : "settings");
 
+  // Honor a deep-link that asked to open this channel's Settings sub-tab.
   useEffect(() => {
     if (channelSettingsIntent === "zendesk") {
       setTab("settings");
@@ -32,28 +34,20 @@ export default function ZendeskPage() {
     }
   }, [channelSettingsIntent, setChannelSettingsIntent]);
 
-  const inboxLabel = zendesk?.subdomain ? `${zendesk.subdomain}.zendesk.com` : "Zendesk";
-
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <SubTabBar tabs={TABS} active={tab} onChange={setTab} />
-      {tab === "tickets" ? (
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <EmailInboxView
-            source={zendeskTickets}
-            mode={zendeskMode}
-            kind="zendesk"
-            inboxLabel={inboxLabel}
-            onOpenChannelSettings={() => setTab("settings")}
-          />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto">
+      <div className="flex-1 overflow-y-auto bg-[#fafafa]">
+        {tab === "conversations" ? (
+          <div className="max-w-[1060px] mx-auto px-6 py-6">
+            <ConversationsView lockedChannel="Zendesk" />
+          </div>
+        ) : (
+          <div className="max-w-3xl mx-auto px-6 py-6">
             <ChannelsSection only="zendesk" />
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -18,15 +18,6 @@ import OrgMenu from "@/components/OrgMenu";
 import { cn } from "@/lib/utils";
 import { Settings } from "lucide-react";
 
-const aiSupportTabs = [
-  { id: "agents" as const, label: "AI Manager" },
-  { id: "playbook" as const, label: "Playbook" },
-  { id: "live-widget" as const, label: "Live Widget" },
-  { id: "email" as const, label: "Email Inbox", badge: true },
-  { id: "zendesk" as const, label: "Zendesk" },
-  { id: "performance" as const, label: "Performance" },
-];
-
 const salesAgentTabs = [
   { id: "sales-agent" as const, label: "Analytics" },
 ];
@@ -35,7 +26,19 @@ export default function Home() {
   const {
     mainTab, setMainTab,
     playbookDeepLink, setPlaybookDeepLink,
+    liveChatConnected, emailChannelConnected, zendeskConnected,
   } = useApp();
+
+  // Channel tabs only appear once that channel is connected — AI Manager,
+  // Playbook and Performance are always present.
+  const aiSupportTabs = [
+    { id: "agents" as const, label: "AI Manager" },
+    { id: "playbook" as const, label: "Playbook" },
+    ...(liveChatConnected ? [{ id: "live-widget" as const, label: "Live Widget" }] : []),
+    ...(emailChannelConnected ? [{ id: "email" as const, label: "Email Inbox", badge: true }] : []),
+    ...(zendeskConnected ? [{ id: "zendesk" as const, label: "Zendesk" }] : []),
+    { id: "performance" as const, label: "Performance" },
+  ];
 
   const isSalesAgent = mainTab === "sales-agent";
   const isVocAgent = mainTab === "voc-agent";

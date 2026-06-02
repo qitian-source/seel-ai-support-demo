@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Check, AlertTriangle, Loader2, RefreshCw,
@@ -391,18 +395,21 @@ const MODE_META: Record<ChannelMode, { label: string; dot: string; pill: string 
 /** Compact mode selector used by EVERY channel (chat / email / zendesk).
  *  A single pill showing the current mode that opens an Off / Training / Production menu. */
 function ChannelModeDropdown({
-  mode, setMode, surface,
+  mode, setMode, surface, beforeSelect,
 }: {
   mode: ChannelMode;
   setMode: (m: ChannelMode) => void;
   surface: string;
+  // Return false to abort the built-in apply (parent handles it, e.g. via a modal).
+  beforeSelect?: (m: ChannelMode) => boolean;
 }) {
   const [open, setOpen] = useState(false);
   const order: ChannelMode[] = ["off", "training", "production"];
   const meta = MODE_META[mode];
   const select = (m: ChannelMode) => {
-    setMode(m);
     setOpen(false);
+    if (beforeSelect && !beforeSelect(m)) return;
+    setMode(m);
     if (m === "off") toast(`${surface} paused`);
     else toast.success(`${surface} switched to ${MODE_META[m].label}`);
   };
@@ -452,14 +459,20 @@ function ChannelModeRow({
   surface: string;
   descriptions?: Record<ChannelMode, string>;
 }) {
-  const { channelReps } = useApp();
+  const { channelReps, liveChatRollout, setLiveChatRollout } = useApp();
   const assignedCount = channelReps[channel]?.length ?? 0;
+  const isChat = channel === "chat";
   const defaults: Record<ChannelMode, string> = {
     off: `${surface} replies are paused — nothing is drafted or sent.`,
     training: "AI drafts replies for human review. Nothing reaches the customer.",
     production: "AI delivers eligible replies autonomously. Flagged tickets wait for a human.",
   };
   const copy = descriptions ?? defaults;
+
+  // Rollout (灰度) confirm modal — Live Widget Production only.
+  const [showRollout, setShowRollout] = useState(false);
+  const [rolloutDraft, setRolloutDraft] = useState(liveChatRollout);
+
   /* Going live = sending your reps to work on this channel. Block it with 0 reps assigned. */
   const guardedSetMode = (m: ChannelMode) => {
     if (m !== "off" && assignedCount === 0) {
@@ -468,6 +481,29 @@ function ChannelModeRow({
     }
     setMode(m);
   };
+
+  // For Live Widget, choosing Production opens the gradual-rollout confirm modal
+  // instead of flipping live immediately.
+  const beforeSelect = (m: ChannelMode): boolean => {
+    if (isChat && m === "production") {
+      if (assignedCount === 0) {
+        toast.error(`Assign at least one AI rep to ${surface} before going live.`);
+        return false;
+      }
+      setRolloutDraft(liveChatRollout);
+      setShowRollout(true);
+      return false; // abort built-in apply; the modal confirms
+    }
+    return true;
+  };
+
+  const confirmGoLive = () => {
+    setLiveChatRollout(rolloutDraft);
+    setMode("production");
+    setShowRollout(false);
+    toast.success(`Widget is live to ${rolloutDraft}% of eligible visitors`);
+  };
+
   return (
     <div className="rounded-lg border border-gray-200 p-3 space-y-2">
       <div className="flex items-center justify-between gap-3">
@@ -475,11 +511,92 @@ function ChannelModeRow({
           <p className="text-xs font-semibold text-gray-700">Mode</p>
           <p className="text-[11px] text-gray-400 mt-0.5">{copy[mode]}</p>
         </div>
-        <ChannelModeDropdown mode={mode} setMode={guardedSetMode} surface={surface} />
+        <ChannelModeDropdown
+          mode={mode}
+          setMode={guardedSetMode}
+          surface={surface}
+          beforeSelect={isChat ? beforeSelect : undefined}
+        />
       </div>
+
+      {/* Prominent gradual-rollout (灰度) indicator — Live Widget in Production */}
+      {isChat && mode === "production" && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2.5">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold tabular-nums leading-none text-emerald-700">{liveChatRollout}%</span>
+            <div className="leading-tight">
+              <p className="text-xs font-semibold text-emerald-800">Gradual rollout</p>
+              <p className="text-[11px] text-emerald-700/70">Share of eligible visitors who see the widget</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-[11px] border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+            onClick={() => { setRolloutDraft(liveChatRollout); setShowRollout(true); }}
+          >
+            Adjust
+          </Button>
+        </div>
+      )}
+
       {mode !== "off" && assignedCount === 0 && (
         <p className="text-[11px] text-amber-600">⚠ No AI rep is assigned — this channel is live but won't reply. Assign a rep below.</p>
       )}
+
+      {/* Switch-to-Production confirm with gradual-rollout slider */}
+      <Dialog open={showRollout} onOpenChange={setShowRollout}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Switch to Production?</DialogTitle>
+            <DialogDescription>The widget will go live to real customers.</DialogDescription>
+          </DialogHeader>
+
+          <div className="py-1 space-y-5">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Rollout percentage</p>
+              <p className="text-xs text-gray-500 mt-0.5">Share of eligible visitors who see the widget.</p>
+            </div>
+
+            {/* Prominent % readout */}
+            <div className="flex items-end justify-center gap-0.5">
+              <span className="text-5xl font-bold tabular-nums leading-none text-[#6c47ff]">{rolloutDraft}</span>
+              <span className="text-2xl font-semibold text-[#6c47ff] mb-1">%</span>
+            </div>
+
+            <Slider
+              value={[rolloutDraft]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={(v) => setRolloutDraft(v[0])}
+            />
+
+            {/* Quick presets */}
+            <div className="flex items-center justify-center gap-2">
+              {[10, 25, 50, 100].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setRolloutDraft(p)}
+                  className={cn(
+                    "px-3 h-7 rounded-full border text-xs font-medium transition-colors",
+                    rolloutDraft === p
+                      ? "bg-[#6c47ff] text-white border-[#6c47ff]"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50",
+                  )}
+                >
+                  {p}%
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRollout(false)}>Cancel</Button>
+            <Button className="bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={confirmGoLive}>Go Live</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

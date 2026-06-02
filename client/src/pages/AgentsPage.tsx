@@ -239,6 +239,7 @@ function SetupProgress() {
       complete: step1Complete,
       locked: false,
       optional: false,
+      cta: "Manage channels",
       // Land on the global Settings → Channels picker so the merchant chooses
       // which channel to connect (Settings defaults to the Channels sub-tab).
       action: () => setMainTab("settings"),
@@ -253,6 +254,7 @@ function SetupProgress() {
       complete: step2Complete,
       locked: false,
       optional: true,
+      cta: "View parsed rules",
       action: () => {
         setPlaybookDeepLink("documents");
         setMainTab("playbook");
@@ -268,6 +270,7 @@ function SetupProgress() {
       complete: step4Complete,
       locked: step4Status === "locked",
       optional: false,
+      cta: undefined as string | undefined,
       action: () => {
         if (step4Status === "locked") return;
         // Mode (Training / Production) is set per-channel — send the merchant to
@@ -375,9 +378,14 @@ function SetupProgress() {
                     {step.description}
                   </p>
                 </div>
-                {!step.complete && !step.locked && (
+                {step.complete && step.cta ? (
+                  <span className="flex items-center gap-1 text-xs font-medium text-green-700 shrink-0">
+                    {step.cta}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                ) : !step.complete && !step.locked ? (
                   <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
-                )}
+                ) : null}
               </button>
             );
           })}

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from "react";
+import { toast } from "sonner";
 import {
   agents as defaultAgents,
   rules as defaultRules,
@@ -142,6 +143,8 @@ interface AppState {
   setLiveChatConnected: (v: boolean) => void;
   liveChatMode: ChannelMode;
   setLiveChatMode: (m: ChannelMode) => void;
+  liveChatRollout: number; // Production gradual-rollout % (share of eligible visitors)
+  setLiveChatRollout: (n: number) => void;
   emailChannelConnected: boolean;
   setEmailChannelConnected: (v: boolean) => void;
   emailChannelAddress: string;
@@ -343,6 +346,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* Channel connection layer */
   const [liveChatConnected, setLiveChatConnected] = useState(false);
   const [liveChatMode, setLiveChatMode] = useState<ChannelMode>("off");
+  const [liveChatRollout, setLiveChatRollout] = useState<number>(20);
   const [emailChannelConnected, setEmailChannelConnected] = useState(false);
   const [emailChannelAddress, setEmailChannelAddress] = useState("");
   const [zendeskMode, setZendeskMode] = useState<ChannelMode>("off");
@@ -616,6 +620,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const step4Status: SetupStepStatus = step1Complete ? (step4Complete ? "complete" : "pending") : "locked";
   const setupFullyComplete = step1Complete && step4Complete;
 
+  /* ── Onboarding step-completion watcher ──
+     When an onboarding step transitions to complete, surface an English toast
+     and auto-advance the merchant to the next destination. Refs hold the prior
+     value so we only fire on the false→true edge (not on initial mount). */
+  const prevStep1 = useRef(step1Complete);
+  const prevStep2 = useRef(step2Complete);
+  const prevStep4 = useRef(step4Complete);
+  useEffect(() => {
+    const justStep1 = !prevStep1.current && step1Complete;
+    const justStep2 = !prevStep2.current && step2Complete;
+    const justStep4 = !prevStep4.current && step4Complete;
+    prevStep1.current = step1Complete;
+    prevStep2.current = step2Complete;
+    prevStep4.current = step4Complete;
+
+    // Priority: going live wins (it ends the setup flow); otherwise advance the checklist.
+    if (justStep4) {
+      // Land on whichever channel is connected so we never jump to a hidden tab.
+      const dest = liveChatConnected
+        ? { tab: "live-widget" as const, label: "Live Widget" }
+        : zendeskConnected
+        ? { tab: "zendesk" as const, label: "Zendesk" }
+        : emailChannelConnected
+        ? { tab: "email" as const, label: "Email Inbox" }
+        : { tab: "agents" as const, label: "AI Manager" };
+      toast.success("You're live! Your AI is now handling conversations.", {
+        description: `Jumping to ${dest.label} to watch live conversations.`,
+      });
+      setMainTab(dest.tab);
+      return;
+    }
+    if (justStep1) {
+      toast.success("Channel connected — your AI can now start answering.", {
+        description: "Next: import policies (optional) or go live.",
+      });
+      setMainTab("agents");
+      return;
+    }
+    if (justStep2) {
+      toast.success("Policies imported — your AI is now using your support rules.", {
+        description: "Next: go live whenever you're ready.",
+      });
+      setMainTab("agents");
+    }
+  }, [step1Complete, step2Complete, step4Complete, liveChatConnected, zendeskConnected, emailChannelConnected]);
+
   return (
     <AppContext.Provider
       value={{
@@ -627,6 +677,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         chatWidget, setChatWidget,
         liveChatConnected, setLiveChatConnected,
         liveChatMode, setLiveChatMode,
+        liveChatRollout, setLiveChatRollout,
         emailChannelConnected, setEmailChannelConnected,
         emailChannelAddress, setEmailChannelAddress,
         zendeskMode, setZendeskMode,
