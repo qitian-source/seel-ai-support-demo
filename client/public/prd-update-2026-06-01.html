@@ -159,7 +159,8 @@
         <li>AI Manager 上线门槛：<code>Go live</code> 与 setup 完成判定改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
         <li>Onboarding <em>Get Started</em> 由 4 步精简为 3 步：连接渠道 → 导入政策（可选）→ 上线。</li>
         <li>侧边栏 <em>Conversation</em> 回归主导航、置于 <strong>Reviews 之下</strong>（不再放在 WORKFORCE 分组）；WORKFORCE 分组现以 Support agent 起始。</li>
-        <li><strong>Onboarding 引导增强</strong>：每步完成后给出英文 Toast 提示并<strong>自动跳转</strong>到下一步（上线后落到已连接渠道的会话页）；已完成的卡片新增跳转 CTA（<em>Manage channels</em> / <em>View parsed rules</em>）。</li>
+        <li><strong>Onboarding 引导增强</strong>：每步完成后给出英文 Toast 提示并<strong>自动跳转</strong>到下一步；已完成的卡片新增跳转 CTA（<em>Manage channels</em> / <em>View parsed rules</em>）。</li>
+        <li><strong>上线后直达会话明细页</strong>：<code>Go live</code> 完成后自动跳到已连接渠道的 <em>Conversations / Inbox</em> 子标签查看实时会话——即使当前停留在该渠道的 <em>Settings</em> 子标签也会强制切换（新增一次性意图 <code>channelConversationsIntent</code>）。</li>
         <li><strong>渠道 Tab 条件展示</strong>：<em>Live Widget / Email Inbox / Zendesk</em> 三个顶部 Tab 默认隐藏，<strong>连接对应渠道后才出现</strong>；AI Manager / Playbook / Performance 常驻。</li>
         <li><strong>Zendesk 会话页对齐 Live Widget</strong>：Tickets 子标签改为 <em>Conversations</em>，复用共享的 <code>ConversationsView</code>（锁定 <code>lockedChannel="Zendesk"</code>），点击行展开完整会话详情——与 Live Widget 一致。</li>
         <li><strong>Live Widget 灰度上线（Rollout）</strong>：切换到 <em>Production</em> 时弹出 <code>Switch to Production?</code> 确认框，可用滑块 + 预设（10/25/50/100%）选择<strong>灰度比例</strong>；上线后在 Mode 下方常驻显示当前灰度比例并可随时 <em>Adjust</em>。</li>
