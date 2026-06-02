@@ -149,16 +149,20 @@
     <!-- changelog -->
     <section class="section" id="changelog">
       <div class="section-title">
-        <span class="pill g" style="font-size:13px;padding:3px 12px;">v2.0.1</span>
-        更新记录 · AI Manager 简化
-        <span style="font-size:13px;font-weight:500;color:var(--soft);margin-left:auto;">2026-06-01</span>
+        <span class="pill g" style="font-size:13px;padding:3px 12px;">v2.0.2</span>
+        更新记录 · AI Manager 简化 + 渠道体验优化
+        <span style="font-size:13px;font-weight:500;color:var(--soft);margin-left:auto;">2026-06-02</span>
       </div>
 
       <div class="sub2-title">Changed</div>
       <ul>
         <li>AI Manager 上线门槛：<code>Go live</code> 与 setup 完成判定改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
         <li>Onboarding <em>Get Started</em> 由 4 步精简为 3 步：连接渠道 → 导入政策（可选）→ 上线。</li>
-        <li>侧边栏 <em>Conversation</em> 移入 <strong>WORKFORCE</strong> 分组首位。</li>
+        <li>侧边栏 <em>Conversation</em> 回归主导航、置于 <strong>Reviews 之下</strong>（不再放在 WORKFORCE 分组）；WORKFORCE 分组现以 Support agent 起始。</li>
+        <li><strong>Onboarding 引导增强</strong>：每步完成后给出英文 Toast 提示并<strong>自动跳转</strong>到下一步（上线后落到已连接渠道的会话页）；已完成的卡片新增跳转 CTA（<em>Manage channels</em> / <em>View parsed rules</em>）。</li>
+        <li><strong>渠道 Tab 条件展示</strong>：<em>Live Widget / Email Inbox / Zendesk</em> 三个顶部 Tab 默认隐藏，<strong>连接对应渠道后才出现</strong>；AI Manager / Playbook / Performance 常驻。</li>
+        <li><strong>Zendesk 会话页对齐 Live Widget</strong>：Tickets 子标签改为 <em>Conversations</em>，复用共享的 <code>ConversationsView</code>（锁定 <code>lockedChannel="Zendesk"</code>），点击行展开完整会话详情——与 Live Widget 一致。</li>
+        <li><strong>Live Widget 灰度上线（Rollout）</strong>：切换到 <em>Production</em> 时弹出 <code>Switch to Production?</code> 确认框，可用滑块 + 预设（10/25/50/100%）选择<strong>灰度比例</strong>；上线后在 Mode 下方常驻显示当前灰度比例并可随时 <em>Adjust</em>。</li>
         <li><strong>Playbook 规则</strong>：支持规则全生命周期（新建 / 编辑 / 删除），并新增工单提案审批流（<code>ProposalReviewSheet</code>）—— Team Lead 提案可审批后一键落地为 live 规则。</li>
         <li><strong>文档（Documents）</strong>：上传文档自动解析为 modules → topics → rules（<code>DocumentDetailSheet</code> 展示解析结果）；规则来源区分（Team Lead 提案 / Manager 编辑 / 上传文档），并支持排序与按 module 过滤。</li>
       </ul>
