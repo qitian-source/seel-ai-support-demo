@@ -100,6 +100,10 @@ export interface AiRep {
   customTone: string;
   permissions: ActionPermission[];
   discloseAI: boolean;
+  // Intents this rep specializes in. When ≥2 reps staff a channel, incoming
+  // conversations route by intent to the matching rep (fallback = first/primary
+  // assigned rep); mid-conversation topic shifts hand off automatically.
+  skills: string[];
 }
 
 /* ── Handoff config (reference data: available groups/seats) ── */
@@ -185,6 +189,7 @@ interface AppState {
   setSelectedRepId: (id: string) => void;
   addRep: () => void;
   removeRep: (id: string) => void;
+  updateRep: (id: string, updates: Partial<AiRep>) => void; // edit any rep (e.g. skills)
 
   /* Go-live state — DERIVED from per-channel modes (no global source of truth) */
   agentMode: ChannelMode;            // production if any connected channel is production; else training if any is training; else off
@@ -200,9 +205,13 @@ interface AppState {
   channelReply: Record<ChannelKey, ChannelReplyConfig>;
   setChannelReply: (key: ChannelKey, updates: Partial<ChannelReplyConfig>) => void;
 
-  /* ── Channel → rep assignment (a channel can run multiple reps) ── */
+  /* ── Channel → rep assignment (a channel can run multiple reps; first = primary) ── */
   channelReps: Record<ChannelKey, string[]>;
   setChannelReps: (key: ChannelKey, repIds: string[]) => void;
+
+  /* ── Intent routing: auto mid-conversation handoff toggle (per channel) ── */
+  channelHandoffEnabled: Record<ChannelKey, boolean>;
+  setChannelHandoff: (key: ChannelKey, v: boolean) => void;
 
   /* Per-page settings sub-tabs (post-restructure navigation) */
   managerTab: "operations" | "settings";       // AI Manager page sub-tab
@@ -376,6 +385,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setChannelRepsRaw((prev) => ({ ...prev, [key]: repIds }));
   }, []);
 
+  /* Auto mid-conversation handoff per channel (intent routing) */
+  const [channelHandoffEnabled, setChannelHandoffRaw] = useState<Record<ChannelKey, boolean>>({
+    email: true, zendesk: true, chat: true,
+  });
+  const setChannelHandoff = useCallback((key: ChannelKey, v: boolean) => {
+    setChannelHandoffRaw((prev) => ({ ...prev, [key]: v }));
+  }, []);
+
   const REP_COLORS = ["#6c47ff", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
   const [reps, setReps] = useState<AiRep[]>([
     {
@@ -383,6 +400,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       personality: "Friendly", customTone: "",
       permissions: [...defaultReadActions, ...defaultWriteActions],
       discloseAI: true,
+      skills: ["WISMO", "Cancellation", "Address Change", "Refund"],
     },
   ]);
   const [selectedRepId, setSelectedRepId] = useState("rep-ava");
@@ -401,6 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         personality: "Friendly", customTone: "",
         permissions: [...defaultReadActions, ...defaultWriteActions],
         discloseAI: true,
+        skills: [],
       };
       return [...prev, next];
     });
@@ -569,20 +588,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         personality: "Friendly", customTone: "",
         permissions: [...defaultReadActions, ...defaultWriteActions],
         discloseAI: true,
+        skills: ["WISMO", "Cancellation", "Address Change", "Refund"],
       },
       {
         id: "rep-max", name: "Max", color: "#0ea5e9",
         personality: "Professional", customTone: "",
         permissions: [...defaultReadActions, ...defaultWriteActions],
         discloseAI: true,
+        skills: ["Complaint", "Billing", "Technical"],
       },
     ]);
     setSelectedRepId("rep-ava");
     setRepHired(true);
 
-    // ── Step 4: Staff each channel (shows solo + shared coverage) ──
+    // ── Step 4: Staff each channel (shows shared coverage + intent routing) ──
     setChannelRepsRaw({
-      chat: ["rep-ava"],            // Ava handles live chat
+      chat: ["rep-ava", "rep-max"],  // both staff live chat — routed by intent
       email: ["rep-ava", "rep-max"], // both cover email
       zendesk: ["rep-max"],          // Max owns Zendesk tickets
     });
@@ -698,7 +719,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         repPersonality, setRepPersonality,
         repCustomTone, setRepCustomTone,
         repPermissions, setRepPermissions,
-        reps, selectedRepId, setSelectedRepId, addRep, removeRep,
+        reps, selectedRepId, setSelectedRepId, addRep, removeRep, updateRep,
+        channelHandoffEnabled, setChannelHandoff,
         agentMode, setAllChannelModes, anyChannelLive, isAgentLive,
         discloseAI, setDiscloseAI,
         channelReply, setChannelReply,
