@@ -982,9 +982,6 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
 
                 <AssignedRepsBlock channel="chat" surface="Live Widget" />
 
-                {/* Escalation — per-channel handoff teammate */}
-                <ChannelReplyOverrideBlock channel="chat" surface="Chat" />
-
                 {/* Customize */}
                 <div className="flex items-center gap-2 pt-1">
                   <Button
