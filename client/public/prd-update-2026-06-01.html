@@ -167,6 +167,8 @@
         <li><strong>Playbook 规则</strong>：支持规则全生命周期（新建 / 编辑 / 删除），并新增工单提案审批流（<code>ProposalReviewSheet</code>）—— Team Lead 提案可审批后一键落地为 live 规则。</li>
         <li><strong>文档（Documents）</strong>：上传文档自动解析为 modules → topics → rules（<code>DocumentDetailSheet</code> 展示解析结果）；规则来源区分（Team Lead 提案 / Manager 编辑 / 上传文档），并支持排序与按 module 过滤。</li>
         <li><strong>规则的时间规则（限时政策）</strong>：上传文档时若 AI 识别为<strong>限时政策</strong>（大促 / campaign，如 BFCM、11.11），自动弹出<strong>时间窗口设置</strong>（英文日期时间选择器 · Start / End）；<strong>该规则仅在所设时间窗口内对 AI 生效，窗口外自动暂停</strong>，文档上常驻显示生效窗口并可随时调整。</li>
+        <li><strong>Sales Agent · Converted Orders 会话溯源</strong>：每笔转化订单展示对应的<strong>会话 ID（<code>SC-xxxx</code>）</strong>，点击可侧滑查看完整销售会话（客户提问 → AI 推荐商品 → 下单），打通「订单 ↔ 会话」溯源。</li>
+        <li><strong>Live Widget 设置精简</strong>：移除渠道内的 <em>Escalation handoff</em>（人工转接坐席选择）模块；Email / Zendesk 的「Written reply &amp; escalation」配置保留不变。</li>
       </ul>
 
     </section>
@@ -196,7 +198,7 @@
         <li><span class="pill b">3f661cb</span> 重构为 <strong>6 个功能顶部 Tab</strong>（AI Manager / Playbook / Live Widget / Email Inbox / Zendesk / Performance），引入共享组件 <code>SubTabBar</code>，每页自带 Operations / Settings 子标签。</li>
         <li><span class="pill b">3f661cb</span> 新增右上角固定的<strong>全局 Settings 中枢</strong>：深链进各功能的设置模块（渠道 + AI Manager），并显示实时状态徽标；移除旧的全局 Settings overlay。</li>
         <li><span class="pill b">3f661cb</span> AI Manager 吸收 Agent Config 为其 Settings 子标签；渠道页在未连接时默认落到 Settings。</li>
-        <li><span class="pill g">25f9f0d</span> 侧边栏把 <code>Conversation</code> 从主导航组移入 <strong>WORKFORCE</strong> 分组首位（位于 Support / Sales / VOC / Review agent 之上），主导航组现止于 Reviews。</li>
+        <li><span class="pill g">25f9f0d</span> 侧边栏 <code>Conversation</code> 最终置于<strong>主导航组、Reviews 之下</strong>（本次迭代回退了早期「移入 WORKFORCE」的方案）；<strong>WORKFORCE</strong> 分组以 Support agent 起始（Support / Sales / VOC / Review agent）。</li>
       </ul>
     </section>
 
