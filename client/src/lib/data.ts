@@ -148,6 +148,8 @@ export interface Document {
   inUse: boolean;
   extractedRules: string;
   parsed?: ParsedModule[];   // structured parse result: module → topic → rules
+  campaign?: boolean;        // AI detected a time-limited (promo / campaign) policy
+  window?: { from: string; to: string }; // effective time window (datetime-local strings)
 }
 
 // --- PERFORMANCE ---

@@ -871,6 +871,27 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
 // ============================================================
 // DOCUMENTS VIEW
 // ============================================================
+/* AI heuristic: does this document look like a time-limited (promo / campaign) policy?
+   When it does, we prompt the merchant to set its active time window on upload. */
+const CAMPAIGN_KEYWORDS = [
+  "sale", "promo", "promotion", "campaign", "bfcm", "black friday", "cyber monday",
+  "holiday", "flash", "limited", "limited-time", "limited time", "clearance", "deal",
+  "singles day", "double 11", "11.11", "618", "big sale", "event",
+  "大促", "促销", "活动", "限时", "秒杀", "双11", "清仓", "节日",
+];
+function detectTimeBound(text: string): boolean {
+  const t = text.toLowerCase();
+  return CAMPAIGN_KEYWORDS.some((k) => t.includes(k));
+}
+/* "2026-05-20T00:00" → "May 20, 2026 00:00" */
+function fmtWindow(v: string): string {
+  if (!v) return "—";
+  const [d, time] = v.split("T");
+  const [y, m, day] = d.split("-").map(Number);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[(m || 1) - 1]} ${day}, ${y}${time ? ` ${time}` : ""}`;
+}
+
 function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
   const {
     docsData, addDocument, removeDocument, toggleDocInUse,
@@ -881,6 +902,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
   const [processing, setProcessing] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [windowDocId, setWindowDocId] = useState<string | null>(null); // doc awaiting time-window setup
 
   const filteredDocs = docsData.filter((d) =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -943,7 +965,6 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       setSopUploaded(true);
       setExtractedRuleNames(ruleNames);
       setProcessing(false);
-      onSwitchToRules();
 
       const newTopic: Topic = {
         id: `topic-doc-${Date.now()}`,
@@ -959,6 +980,17 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       toast.success(`${ruleNames.length} rules extracted`, {
         description: "Check the Rules tab for details.",
       });
+
+      // AI flagged a time-limited (campaign) policy → prompt for its active window.
+      if (detectTimeBound(name)) {
+        updateDocument(newDoc.id, { campaign: true });
+        setWindowDocId(newDoc.id);
+        toast.info("AI detected a time-limited policy", {
+          description: "Set when this campaign policy should be active.",
+        });
+      } else {
+        onSwitchToRules();
+      }
     }, 2500);
   };
 
@@ -995,7 +1027,6 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       setSopUploaded(true);
       setExtractedRuleNames(ruleNames);
       setProcessing(false);
-      onSwitchToRules();
 
       const newTopic: Topic = {
         id: `topic-doc-${Date.now()}`,
@@ -1009,6 +1040,17 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       };
       addTopic(newTopic);
       toast.success(`${ruleNames.length} rule extracted`);
+
+      // AI flagged a time-limited (campaign) policy → prompt for its active window.
+      if (detectTimeBound(`${title} ${content}`)) {
+        updateDocument(newDoc.id, { campaign: true });
+        setWindowDocId(newDoc.id);
+        toast.info("AI detected a time-limited policy", {
+          description: "Set when this campaign policy should be active.",
+        });
+      } else {
+        onSwitchToRules();
+      }
     }, 2500);
   };
 
@@ -1102,6 +1144,15 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
                   <span>{doc.size}</span>
                   <span>·</span>
                   <span>{doc.uploadedAt}</span>
+                  {doc.campaign && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setWindowDocId(doc.id); }}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-[#6c47ff]/30 bg-[#f0edff] text-[#6c47ff] text-[10px] font-medium hover:bg-[#e7e1ff] transition-colors"
+                    >
+                      <Clock size={10} />
+                      {doc.window ? `${fmtWindow(doc.window.from)} → ${fmtWindow(doc.window.to)}` : "Set active window"}
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1163,7 +1214,85 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
           onOpenChange={(open) => !open && setSelectedDocId(null)}
         />
       )}
+
+      {/* Time-window setup — AI detected a time-limited (campaign) policy */}
+      {windowDocId && (
+        <TimeWindowDialog docId={windowDocId} onClose={() => setWindowDocId(null)} />
+      )}
     </div>
+  );
+}
+
+// ============================================================
+// TIME WINDOW DIALOG — set the active window for a campaign / promo policy
+// ============================================================
+function TimeWindowDialog({ docId, onClose }: { docId: string; onClose: () => void }) {
+  const { docsData, updateDocument } = useApp();
+  const doc = docsData.find((d) => d.id === docId);
+  const [from, setFrom] = useState(doc?.window?.from ?? "");
+  const [to, setTo] = useState(doc?.window?.to ?? "");
+  if (!doc) return null;
+
+  const save = () => {
+    if (!from || !to) { toast.error("Please set both a start and end time."); return; }
+    if (from >= to) { toast.error("End time must be after the start time."); return; }
+    updateDocument(docId, { campaign: true, window: { from, to } });
+    toast.success("Active window saved", {
+      description: `${fmtWindow(from)} → ${fmtWindow(to)} · ${doc.name}`,
+    });
+    onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="text-[15px] flex items-center gap-2">
+            <Clock size={16} className="text-[#6c47ff]" />
+            Set the policy's active window
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-lg border border-[#6c47ff]/20 bg-[#f0edff] px-3 py-2.5">
+            <Sparkles size={14} className="text-[#6c47ff] mt-0.5 shrink-0" />
+            <p className="text-[12px] text-foreground leading-relaxed">
+              AI detected that <span className="font-medium">"{doc.name}"</span> is a <strong>time-limited policy</strong> (promotion / campaign).
+              Set when it should be active — the AI only applies it inside this window.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[12px] font-medium text-foreground mb-1 block">Starts</label>
+              <input
+                type="datetime-local"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="w-full h-9 px-2.5 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30"
+              />
+            </div>
+            <div>
+              <label className="text-[12px] font-medium text-foreground mb-1 block">Ends</label>
+              <input
+                type="datetime-local"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full h-9 px-2.5 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Outside this window the policy is paused automatically — useful for big sales (BFCM, 11.11) or specific campaigns.
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Skip for now</Button>
+          <Button className="bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={save}>Save window</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
