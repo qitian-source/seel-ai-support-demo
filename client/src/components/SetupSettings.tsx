@@ -6,7 +6,7 @@
  * Zendesk sub-steps: progressive disclosure (hide later steps if earlier not done).
  */
 import { useState, useMemo } from "react";
-import { useApp, type AiRep } from "@/contexts/AppContext";
+import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -697,114 +697,9 @@ function AssignedRepsBlock({ channel, surface }: { channel: OverrideChannel; sur
         <p className="text-[11px] text-gray-400">
           {assignedReps.length === 1
             ? <><strong className="text-gray-500">{assignedReps[0].name}</strong> replies on {surface} using its own persona & permissions.</>
-            : <>{assignedReps.length} reps share {surface} — incoming conversations are routed by intent.</>}
+            : <>{assignedReps.length} reps share {surface}, each replying with its own persona & permissions.</>}
         </p>
       )}
-
-      {/* Intent routing — configurable; only relevant when ≥2 reps staff the channel */}
-      {assigned.length >= 2 && <IntentRoutingPanel channel={channel} />}
-    </div>
-  );
-}
-
-/* Configurable intent-routing panel: edit each rep's skill tags, choose the
-   primary (fallback) rep, and toggle auto mid-conversation handoff. */
-const INTENT_CATALOG = ["WISMO", "Cancellation", "Address Change", "Refund", "Complaint", "Billing", "Technical"];
-
-function IntentRoutingPanel({ channel }: { channel: OverrideChannel }) {
-  const { reps, channelReps, setChannelReps, updateRep, channelHandoffEnabled, setChannelHandoff } = useApp();
-  const assigned = channelReps[channel] ?? [];
-  // Order by assignment (first = primary), not registry order.
-  const assignedReps = assigned.map((id) => reps.find((r) => r.id === id)).filter((r): r is AiRep => Boolean(r));
-  const [addMenuRep, setAddMenuRep] = useState<string | null>(null);
-  const handoff = channelHandoffEnabled[channel] ?? true;
-  const primaryName = assignedReps[0]?.name ?? "—";
-
-  const makePrimary = (id: string) => setChannelReps(channel, [id, ...assigned.filter((x) => x !== id)]);
-  const removeSkill = (rep: AiRep, skill: string) => updateRep(rep.id, { skills: rep.skills.filter((s) => s !== skill) });
-  const addSkill = (rep: AiRep, skill: string) => { updateRep(rep.id, { skills: [...rep.skills, skill] }); setAddMenuRep(null); };
-
-  return (
-    <div className="mt-1 rounded-lg border border-indigo-100 bg-indigo-50/40 p-2.5 space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold text-indigo-700">Intent routing</p>
-        <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer">
-          Auto handoff
-          <Switch checked={handoff} onCheckedChange={(v) => setChannelHandoff(channel, v)} className="scale-75 origin-right" />
-        </label>
-      </div>
-      <p className="text-[11px] text-gray-500">
-        Each conversation routes by intent to the matching rep.
-        {handoff ? " If the topic shifts mid-conversation, it hands off automatically." : " Mid-conversation handoff is off — the first-matched rep stays for the whole conversation."}
-      </p>
-
-      <div className="space-y-1.5 pt-0.5">
-        {assignedReps.map((rep, i) => {
-          const isPrimary = i === 0;
-          const remaining = INTENT_CATALOG.filter((intent) => !rep.skills.includes(intent));
-          return (
-            <div key={rep.id} className="flex items-start gap-1.5">
-              <span className="w-4 h-4 mt-0.5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: rep.color }}>
-                {(rep.name || "?").slice(0, 2).toUpperCase()}
-              </span>
-              <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-[11px] font-medium text-gray-700">{rep.name}</span>
-                {isPrimary ? (
-                  <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[9px] font-semibold">primary</span>
-                ) : (
-                  <button onClick={() => makePrimary(rep.id)} className="text-[9px] text-indigo-600 hover:underline">Make primary</button>
-                )}
-                <span className="text-[11px] text-gray-400">:</span>
-
-                {rep.skills.map((s) => (
-                  <span key={s} className="group flex items-center gap-0.5 pl-1.5 pr-1 py-0.5 rounded bg-white border border-gray-200 text-[10px] text-gray-600">
-                    {s}
-                    <button onClick={() => removeSkill(rep, s)} className="text-gray-300 hover:text-red-500" aria-label={`Remove ${s}`}>
-                      <X className="w-2.5 h-2.5" />
-                    </button>
-                  </span>
-                ))}
-
-                {/* Add intent */}
-                {remaining.length > 0 && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setAddMenuRep(addMenuRep === rep.id ? null : rep.id)}
-                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-dashed border-gray-300 text-[10px] text-gray-500 hover:border-indigo-300 hover:text-indigo-600"
-                    >
-                      <Plus className="w-2.5 h-2.5" /> intent
-                    </button>
-                    {addMenuRep === rep.id && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setAddMenuRep(null)} />
-                        <div className="absolute left-0 top-full mt-1 z-20 w-40 rounded-lg border border-gray-200 bg-white shadow-lg py-1">
-                          {remaining.map((intent) => (
-                            <button
-                              key={intent}
-                              onClick={() => addSkill(rep, intent)}
-                              className="block w-full px-3 py-1.5 text-left text-[11px] text-gray-700 hover:bg-gray-50"
-                            >
-                              {intent}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {rep.skills.length === 0 && (
-                  <span className="text-[10px] italic text-gray-400">no intents — fallback only</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="text-[10px] text-gray-400">
-        Unmatched intents go to <strong className="text-gray-500">{primaryName}</strong> (primary).
-      </p>
     </div>
   );
 }
