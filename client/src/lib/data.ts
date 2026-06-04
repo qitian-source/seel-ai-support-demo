@@ -2261,6 +2261,7 @@ export interface SalesOrder {
   status: "fulfilled" | "pending" | "refunded";
   touchpoint: string;
   channel: string;
+  conversationId: string;    // the sales conversation that drove this order
 }
 
 /* Touchpoint / "mode" definitions — shared keys, labels and chart colors */
@@ -2332,22 +2333,22 @@ export const salesDaily: SalesDailyPoint[] = makeSalesDaily();
 
 const sampleOrders: Record<string, SalesOrder[]> = {
   resolutionCenter: [
-    { id: "ORD-10421", customer: "Emma Wilson", email: "emma@example.com", items: [{ name: "Wireless Earbuds Pro", qty: 1, price: "$79.99" }, { name: "Phone Case", qty: 2, price: "$12.99" }], recommendedItem: "Wireless Earbuds Pro", total: "$105.97", date: "May 3, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web" },
-    { id: "ORD-10398", customer: "James Chen", email: "jchen@example.com", items: [{ name: "Smart Watch Band", qty: 1, price: "$34.99" }], recommendedItem: "Smart Watch Band", total: "$34.99", date: "May 2, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web" },
-    { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Resolution Center", channel: "Mobile" },
+    { id: "ORD-10421", customer: "Emma Wilson", email: "emma@example.com", items: [{ name: "Wireless Earbuds Pro", qty: 1, price: "$79.99" }, { name: "Phone Case", qty: 2, price: "$12.99" }], recommendedItem: "Wireless Earbuds Pro", total: "$105.97", date: "May 3, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web", conversationId: "SC-10421" },
+    { id: "ORD-10398", customer: "James Chen", email: "jchen@example.com", items: [{ name: "Smart Watch Band", qty: 1, price: "$34.99" }], recommendedItem: "Smart Watch Band", total: "$34.99", date: "May 2, 2026", status: "fulfilled", touchpoint: "Resolution Center", channel: "Web", conversationId: "SC-10398" },
+    { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Resolution Center", channel: "Mobile", conversationId: "SC-10375" },
   ],
   policyEmail: [
-    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email" },
-    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email" },
+    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email", conversationId: "SC-10440" },
+    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email", conversationId: "SC-10412" },
   ],
   liveChat: [
-    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat" },
-    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat" },
-    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Live Chat", channel: "Chat" },
+    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10455" },
+    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10431" },
+    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10388" },
   ],
   searchBar: [
-    { id: "ORD-10466", customer: "Olivia Davis", email: "o.davis@example.com", items: [{ name: "Bluetooth Speaker", qty: 1, price: "$69.99" }], recommendedItem: "Bluetooth Speaker", total: "$69.99", date: "May 6, 2026", status: "fulfilled", touchpoint: "Search Bar", channel: "Web" },
-    { id: "ORD-10448", customer: "Lucas Martinez", email: "lucas.m@example.com", items: [{ name: "Ring Light Kit", qty: 1, price: "$79.99" }, { name: "Phone Tripod", qty: 1, price: "$24.99" }], recommendedItem: "Ring Light Kit", total: "$104.98", date: "May 4, 2026", status: "pending", touchpoint: "Search Bar", channel: "Mobile" },
+    { id: "ORD-10466", customer: "Olivia Davis", email: "o.davis@example.com", items: [{ name: "Bluetooth Speaker", qty: 1, price: "$69.99" }], recommendedItem: "Bluetooth Speaker", total: "$69.99", date: "May 6, 2026", status: "fulfilled", touchpoint: "Search Bar", channel: "Web", conversationId: "SC-10466" },
+    { id: "ORD-10448", customer: "Lucas Martinez", email: "lucas.m@example.com", items: [{ name: "Ring Light Kit", qty: 1, price: "$79.99" }, { name: "Phone Tripod", qty: 1, price: "$24.99" }], recommendedItem: "Ring Light Kit", total: "$104.98", date: "May 4, 2026", status: "pending", touchpoint: "Search Bar", channel: "Mobile", conversationId: "SC-10448" },
   ],
 };
 

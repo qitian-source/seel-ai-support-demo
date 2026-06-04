@@ -15,7 +15,7 @@ import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePick
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, X, Info, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, X, Info, Sparkles, MessageSquare, ArrowRight } from "lucide-react";
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -86,6 +86,7 @@ function StatusBadge({ status }: { status: SalesOrder["status"] }) {
 
 /* ── Order Details Slide-over ── */
 function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () => void }) {
+  const [convOrder, setConvOrder] = useState<SalesOrder | null>(null);
   if (!row) return null;
   const stats = [
     { label: "CTR", value: `${row.ctr.toFixed(2)}%` },
@@ -153,6 +154,16 @@ function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () 
                   <span className="text-muted-foreground">{order.date} · {order.channel}</span>
                   <span className="font-semibold text-foreground">{order.total}</span>
                 </div>
+                {/* Conversation that drove this order — click to view the thread */}
+                <button
+                  onClick={() => setConvOrder(order)}
+                  className="mt-2 flex items-center gap-1.5 text-[11px] text-[#6c47ff] hover:underline"
+                >
+                  <MessageSquare size={12} />
+                  <span className="font-mono">{order.conversationId}</span>
+                  <span className="text-muted-foreground">· View conversation</span>
+                  <ArrowRight size={11} />
+                </button>
               </div>
             ))}
           </div>
@@ -161,6 +172,97 @@ function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () 
               Showing {row.sampleOrders.length} of {row.orders.toLocaleString()} orders
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Sales conversation thread for the clicked order */}
+      <SalesConversationPanel order={convOrder} onClose={() => setConvOrder(null)} />
+    </>
+  );
+}
+
+/* ── Sales conversation slide-over — the thread that drove a converted order ── */
+function buildSalesThread(order: SalesOrder): { from: "customer" | "agent" | "system"; text: string }[] {
+  const opener: Record<string, string> = {
+    "Resolution Center": `Hi, I was sorting out my recent order and wanted to ask about ${order.items[0]?.name ?? "a product"}.`,
+    "Policy Email": `Thanks for the email — while I'm here, is ${order.recommendedItem} a good fit for me?`,
+    "Live Chat": `Hey! I'm looking for ${order.recommendedItem} — is it in stock?`,
+    "Search Bar": `Searching for ${order.recommendedItem}… do you have it?`,
+  };
+  const firstMsg = opener[order.touchpoint] ?? `Hi, I'm interested in ${order.recommendedItem}.`;
+  return [
+    { from: "system", text: `Sales conversation started · ${order.touchpoint} · ${order.channel}` },
+    { from: "customer", text: firstMsg },
+    { from: "agent", text: `Great choice! ${order.recommendedItem} is one of our most-loved picks and pairs well with what you're viewing. I can add it to your cart now.` },
+    { from: "customer", text: `Sounds good, let's do it.` },
+    { from: "agent", text: `Done — I've added ${order.recommendedItem} to your cart. Your order total is ${order.total}.` },
+    { from: "system", text: `Order ${order.id} placed · ${order.total} · ${order.status}` },
+  ];
+}
+
+function SalesConversationPanel({ order, onClose }: { order: SalesOrder | null; onClose: () => void }) {
+  if (!order) return null;
+  const thread = buildSalesThread(order);
+  const meta: { label: string; value: string }[] = [
+    { label: "Conversation", value: order.conversationId },
+    { label: "Order", value: order.id },
+    { label: "Customer", value: `${order.customer} (${order.email})` },
+    { label: "Touchpoint", value: order.touchpoint },
+    { label: "Channel", value: order.channel },
+    { label: "Recommended", value: order.recommendedItem },
+    { label: "Total", value: order.total },
+    { label: "Date", value: order.date },
+  ];
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/30 z-[60]" onClick={onClose} />
+      <div className="fixed right-0 top-0 h-full w-[440px] bg-white shadow-2xl z-[70] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <h2 className="text-[14px] font-semibold text-foreground flex items-center gap-1.5">
+              <MessageSquare size={14} className="text-[#6c47ff]" />
+              Sales conversation
+              <span className="font-mono text-[12px] text-muted-foreground ml-1">{order.conversationId}</span>
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Recommended <span className="text-[#6c47ff] font-medium">{order.recommendedItem}</span> → order {order.id}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted/60 text-muted-foreground transition-colors">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Metadata grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-5 py-3 border-b border-border">
+          {meta.map((m) => (
+            <div key={m.label} className="min-w-0">
+              <div className="text-[10px] text-muted-foreground">{m.label}</div>
+              <div className="text-[11px] text-foreground truncate">{m.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Thread */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          {thread.map((msg, i) => {
+            if (msg.from === "system") {
+              return (
+                <div key={i} className="text-center">
+                  <span className="text-[10px] text-muted-foreground bg-muted/50 rounded-full px-2.5 py-1">{msg.text}</span>
+                </div>
+              );
+            }
+            const isCustomer = msg.from === "customer";
+            return (
+              <div key={i} className={cn("flex", isCustomer ? "justify-start" : "justify-end")}>
+                <div className={cn("max-w-[80%] rounded-lg px-3 py-2 text-[12px]", isCustomer ? "bg-muted/50 text-foreground" : "bg-[#f0edff] text-foreground")}>
+                  <div className={cn("text-[10px] font-medium mb-0.5", isCustomer ? "text-muted-foreground" : "text-[#6c47ff]")}>
+                    {isCustomer ? order.customer : "Sales Agent"}
+                  </div>
+                  {msg.text}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </>
