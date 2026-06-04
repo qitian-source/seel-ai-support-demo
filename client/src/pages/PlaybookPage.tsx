@@ -883,6 +883,57 @@ function detectTimeBound(text: string): boolean {
   const t = text.toLowerCase();
   return CAMPAIGN_KEYWORDS.some((k) => t.includes(k));
 }
+/* English date+time selector — built from <select>s so it always renders in
+   English regardless of the browser locale (native datetime-local follows the
+   OS locale and can't be forced to English). Value = "YYYY-MM-DDTHH:MM". */
+const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function EnglishDateTime({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  const year = m ? m[1] : "";
+  const month = m ? m[2] : "";
+  const day = m ? m[3] : "";
+  const hour = m ? m[4] : "";
+  const minute = m ? m[5] : "";
+
+  const compose = (p: { year?: string; month?: string; day?: string; hour?: string; minute?: string }) => {
+    const y = p.year ?? year, mo = p.month ?? month, d = p.day ?? day;
+    const h = p.hour ?? hour, mi = p.minute ?? minute;
+    if (!y || !mo || !d) { onChange(""); return; }
+    onChange(`${y}-${mo}-${d}T${h || "00"}:${mi || "00"}`);
+  };
+
+  const selCls = "h-9 px-2 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30";
+  const years = ["2026", "2027"];
+  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+  const minutes = ["00", "15", "30", "45"];
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <select value={month} onChange={(e) => compose({ month: e.target.value })} className={selCls}>
+        <option value="">Month</option>
+        {EN_MONTHS.map((label, i) => <option key={label} value={String(i + 1).padStart(2, "0")}>{label}</option>)}
+      </select>
+      <select value={day} onChange={(e) => compose({ day: e.target.value })} className={selCls}>
+        <option value="">Day</option>
+        {days.map((d) => <option key={d} value={d}>{Number(d)}</option>)}
+      </select>
+      <select value={year} onChange={(e) => compose({ year: e.target.value })} className={selCls}>
+        <option value="">Year</option>
+        {years.map((y) => <option key={y} value={y}>{y}</option>)}
+      </select>
+      <span className="text-muted-foreground text-[12px] px-0.5">at</span>
+      <select value={hour} onChange={(e) => compose({ hour: e.target.value })} className={selCls}>
+        {hours.map((h) => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span className="text-muted-foreground text-[12px]">:</span>
+      <select value={minute} onChange={(e) => compose({ minute: e.target.value })} className={selCls}>
+        {minutes.map((mi) => <option key={mi} value={mi}>{mi}</option>)}
+      </select>
+    </div>
+  );
+}
+
 /* "2026-05-20T00:00" → "May 20, 2026 00:00" */
 function fmtWindow(v: string): string {
   if (!v) return "—";
@@ -1262,24 +1313,14 @@ function TimeWindowDialog({ docId, onClose }: { docId: string; onClose: () => vo
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div>
               <label className="text-[12px] font-medium text-foreground mb-1 block">Starts</label>
-              <input
-                type="datetime-local"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-full h-9 px-2.5 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30"
-              />
+              <EnglishDateTime value={from} onChange={setFrom} />
             </div>
             <div>
               <label className="text-[12px] font-medium text-foreground mb-1 block">Ends</label>
-              <input
-                type="datetime-local"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-full h-9 px-2.5 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30"
-              />
+              <EnglishDateTime value={to} onChange={setTo} />
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground">

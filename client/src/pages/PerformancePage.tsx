@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, ChevronDown, Sparkles, Loader2, AlertTriangle, CheckCircle2, Lightbulb } from "lucide-react";
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area, BarChart, Bar, ComposedChart, Line,
   XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
 } from "recharts";
@@ -96,6 +96,7 @@ export default function PerformancePage() {
 
   const chartData = visibleDays.map((d) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    tickets: d.tickets,
     resolution: Math.round(d.autoResolutionRate),
     sentImprovement: Math.round(d.sentimentImprovementRate),
     entryScore: d.entrySentimentScore,
@@ -326,29 +327,28 @@ export default function PerformancePage() {
               {/* Charts — 2 side by side */}
               <div className="grid grid-cols-2 gap-4 mb-6">
 
-                {/* Resolution Rate trend */}
+                {/* Tickets volume (bars) + Resolution Rate trend (line) */}
                 <Card>
                   <CardHeader className="pb-1">
-                    <CardTitle className="text-[13px]">Resolution Rate</CardTitle>
+                    <CardTitle className="text-[13px]">Tickets & Resolution Rate</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[200px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="gRes" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
+                        <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false}
                             interval={Math.floor(chartData.length / 5)} />
-                          <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} unit="%" domain={[40, 80]} />
+                          {/* Left axis — ticket counts (bars) */}
+                          <YAxis yAxisId="left" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                          {/* Right axis — resolution rate % (line) */}
+                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} unit="%" domain={[40, 80]} />
                           <RechartsTooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
-                            formatter={(v: number) => [`${v}%`, "Resolution Rate"]} />
-                          <Area type="monotone" dataKey="resolution" stroke="#10b981" fill="url(#gRes)" strokeWidth={2} dot={false} />
-                        </AreaChart>
+                            formatter={(v: number, name: string) => name === "Resolution Rate" ? [`${v}%`, name] : [v, name]} />
+                          <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+                          <Bar yAxisId="left" dataKey="tickets" name="Tickets" fill="#c7b6ff" radius={[3, 3, 0, 0]} barSize={14} />
+                          <Line yAxisId="right" type="monotone" dataKey="resolution" name="Resolution Rate" stroke="#10b981" strokeWidth={2} dot={false} />
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
