@@ -141,15 +141,10 @@
     <div class="nav-label">目录</div>
     <a class="nav-link" href="#bg">1 · 背景与问题</a>
     <a class="nav-link" href="#goals">2 · 目标与非目标</a>
-    <a class="nav-link" href="#metrics">3 · 成功指标</a>
-    <a class="nav-link" href="#users">4 · 目标用户与场景</a>
-    <a class="nav-link" href="#req">5 · 功能需求与验收</a>
-    <a class="nav-link" href="#edge">6 · 边界与异常</a>
-    <a class="nav-link" href="#nfr">7 · 非功能需求</a>
-    <a class="nav-link" href="#analytics">8 · 埋点与数据</a>
-    <a class="nav-link" href="#risk">9 · 依赖 · 假设 · 风险</a>
-    <a class="nav-link" href="#rollout">10 · 发布计划</a>
-    <a class="nav-link" href="#glossary">11 · 术语表</a>
+    <a class="nav-link" href="#users">3 · 目标用户与场景</a>
+    <a class="nav-link" href="#req">4 · 功能需求与验收</a>
+    <a class="nav-link" href="#edge">5 · 边界与异常</a>
+    <a class="nav-link" href="#nfr">6 · 非功能需求</a>
     <a class="nav-link" href="#appx-tech">附录 A · 技术实现</a>
     <a class="nav-link" href="#appx-log">附录 B · 变更清单</a>
   </aside>
@@ -161,7 +156,7 @@
     <div class="cover">
       <div class="cover-badge">产品需求文档 · 内部评审</div>
       <div class="cover-title">Seel AI Support · 产品需求文档</div>
-      <div class="cover-sub">定位：<strong style="color:#fff">AI Manager = 数字员工管理中枢</strong>。让商家以最低门槛把 AI 数字员工部署到多渠道客服，并能可控上线、可运营规则、可溯源效果。本文从背景、目标、用户场景到功能需求与验收、指标与发布计划完整描述本期范围。</div>
+      <div class="cover-sub">定位：<strong style="color:#fff">AI Manager = 数字员工管理中枢</strong>。让商家以最低门槛把 AI 数字员工部署到多渠道客服，并能可控上线、可运营规则、可溯源效果。本文从背景、目标、用户场景到功能需求与验收完整描述本期范围。</div>
       <div class="cover-meta">
         <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.2</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">评审中 (Draft)</span></div>
@@ -204,30 +199,14 @@
           <ul style="margin-bottom:0">
             <li><strong>多 Rep 注册表 + 按渠道分配</strong>（per-channel overrides）—— 本期为单数字员工。</li>
             <li><strong>多人设意图路由 + 中途转接</strong>。</li>
-            <li>Performance <strong>复合图</strong>（Tickets × Resolution）—— 已实现，但本期不作为 PRD 承诺范围。</li>
-            <li>真实后端 / 账号体系 / 支付 / 真实 Zendesk Triggers 接入（Demo 用 mock 数据）。</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <!-- 3 metrics -->
-    <section class="section" id="metrics">
-      <div class="section-title"><span class="section-num">3</span>成功指标 (Success Metrics)</div>
-      <div class="kpi">
-        <div class="kpi-card"><div class="k-label">上线转化率</div><div class="k-target">≥ 70%</div><div class="k-note">连接渠道 → 完成 go-live</div></div>
-        <div class="kpi-card"><div class="k-label">Time-to-go-live</div><div class="k-target">≤ 5 min</div><div class="k-note">首次进入 → 上线</div></div>
-        <div class="kpi-card"><div class="k-label">自动解决率</div><div class="k-target">≥ 70%</div><div class="k-note">Resolution Rate</div></div>
-        <div class="kpi-card"><div class="k-label">灰度采用率</div><div class="k-target">观测</div><div class="k-note">production 渠道中设置了 rollout 的比例</div></div>
-        <div class="kpi-card"><div class="k-label">限时政策命中</div><div class="k-target">观测</div><div class="k-note">活动窗口内规则命中率</div></div>
-        <div class="kpi-card"><div class="k-label">会话溯源使用</div><div class="k-target">观测</div><div class="k-note">转化订单 → 查看会话点击率</div></div>
-      </div>
-      <div class="callout">副指标：onboarding 各步流失率、go-live 后会话页停留时长、规则提案审批通过率。指标埋点见 <a href="#analytics" style="color:var(--brand)">第 8 节</a>。</div>
-    </section>
-
-    <!-- 4 users -->
+    <!-- 3 users -->
     <section class="section" id="users">
-      <div class="section-title"><span class="section-num">4</span>目标用户与场景</div>
+      <div class="section-title"><span class="section-num">3</span>目标用户与场景</div>
       <div class="sub2-title">角色 (Personas)</div>
       <ul>
         <li><strong>商家管理员 / AI Manager</strong>：配置渠道、设定模式与灰度、上线、查看效果。</li>
@@ -246,7 +225,7 @@
 
     <!-- 5 functional requirements -->
     <section class="section" id="req">
-      <div class="section-title"><span class="section-num">5</span>功能需求与验收 <span class="pill focus">本节重点</span></div>
+      <div class="section-title"><span class="section-num">4</span>功能需求与验收 <span class="pill focus">本节重点</span></div>
       <p>下列需求以「功能域」组织；每条含描述与<strong>验收标准 (Acceptance Criteria)</strong>，供研发与 QA 对齐。技术实现细节见 <a href="#appx-tech" style="color:var(--brand)">附录 A</a>。</p>
 
       <!-- 5.1 -->
@@ -353,11 +332,25 @@
           </ul>
         </div>
       </div>
+
+      <!-- 4.8 -->
+      <div class="req">
+        <div class="req-id">FR-8 · Performance 复合图</div>
+        <h4>「Tickets &amp; Resolution Rate」复合图：工单量柱状图 + 解决率折线</h4>
+        <p>Performance Dashboard 将原单一面积图升级为复合图，同时呈现每日工单量与解决率趋势，便于关联「量」与「质」。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>图表为<strong>复合图</strong>：柱状图 = 每日 tickets 数量（左轴），折线 = 解决率趋势（右轴，%）。</li>
+            <li>含图例（Tickets / Resolution Rate），双 Y 轴刻度正确。</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
     <!-- 6 edge cases -->
     <section class="section" id="edge">
-      <div class="section-title"><span class="section-num">6</span>边界与异常 (Edge Cases)</div>
+      <div class="section-title"><span class="section-num">5</span>边界与异常 (Edge Cases)</div>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th style="width:230px">场景</th><th>预期行为</th></tr></thead>
@@ -371,12 +364,12 @@
           </tbody>
         </table>
       </div>
-      <div class="callout warn"><strong>待补充：</strong>限时政策的<strong>时区</strong>处理（按店铺时区 vs UTC）尚未定义，见 <a href="#risk" style="color:var(--brand)">第 9 节 · 未决问题</a>。</div>
+      <div class="callout warn"><strong>待补充：</strong>限时政策的<strong>时区</strong>处理（按店铺时区 vs UTC）与灰度<strong>下限</strong>（避免 0% 上线）尚未定义。</div>
     </section>
 
     <!-- 7 NFR -->
     <section class="section" id="nfr">
-      <div class="section-title"><span class="section-num">7</span>非功能需求 (NFR)</div>
+      <div class="section-title"><span class="section-num">6</span>非功能需求 (NFR)</div>
       <ul>
         <li><strong>国际化 (i18n)</strong>：面向用户的文案以英文为主；时间选择器采用自建英文日期时间控件，规避浏览器 locale 导致的本地化格式。</li>
         <li><strong>隐私与安全</strong>：邮箱连接密码<strong>仅存于组件本地状态</strong>，不写入全局状态、不持久化；Demo 不收集真实用户数据。</li>
@@ -384,75 +377,6 @@
         <li><strong>兼容性</strong>：现代 Chromium / Safari；预览基于 Vite dev server。</li>
         <li><strong>可访问性</strong>：交互控件应键盘可达（当前为待完善项，见风险）。</li>
       </ul>
-    </section>
-
-    <!-- 8 analytics -->
-    <section class="section" id="analytics">
-      <div class="section-title"><span class="section-num">8</span>埋点与数据 (Analytics)</div>
-      <p>为支撑第 3 节指标，规划以下关键事件（Demo 为 mock 数据，埋点为规划项）：</p>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th style="width:230px">事件</th><th>支撑指标</th></tr></thead>
-          <tbody>
-            <tr><td><code>channel_connected</code></td><td>上线转化率</td></tr>
-            <tr><td><code>setup_step_completed</code></td><td>onboarding 流失</td></tr>
-            <tr><td><code>go_live</code></td><td>上线转化率 / Time-to-go-live</td></tr>
-            <tr><td><code>rollout_set</code></td><td>灰度采用率</td></tr>
-            <tr><td><code>document_uploaded</code> / <code>policy_window_set</code></td><td>限时政策命中</td></tr>
-            <tr><td><code>rule_created</code> / <code>rule_proposal_approved</code></td><td>规则运营</td></tr>
-            <tr><td><code>conversation_opened</code> / <code>sales_conversation_viewed</code></td><td>会话溯源使用</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 9 risk -->
-    <section class="section" id="risk">
-      <div class="section-title"><span class="section-num">9</span>依赖 · 假设 · 风险</div>
-      <div class="sub2-title">依赖</div>
-      <ul>
-        <li>Seel 平台与 Shopify 店铺上下文；Zendesk 渠道的工单路由走 <strong>Zendesk Triggers</strong>（Seel 侧不接管，避免冲突）。</li>
-      </ul>
-      <div class="sub2-title">假设</div>
-      <ul>
-        <li>单店铺、<strong>单数字员工</strong>；本期数据为 mock，用于内部评审与演示。</li>
-      </ul>
-      <div class="sub2-title">风险与未决问题 (Open Questions)</div>
-      <ul>
-        <li>限时政策的<strong>时区</strong>口径（店铺时区 / UTC）未定。</li>
-        <li>灰度比例是否设下限（避免 0% 上线）。</li>
-        <li>可访问性（键盘 / 屏幕阅读器）尚未系统验证。</li>
-        <li>接入真实后端后的处理时序与失败态体验需再设计。</li>
-      </ul>
-    </section>
-
-    <!-- 10 rollout -->
-    <section class="section" id="rollout">
-      <div class="section-title"><span class="section-num">10</span>发布计划 (Rollout)</div>
-      <ul>
-        <li><strong>产品内灰度</strong>：Live Widget production 通过 Rollout 比例对真实访客分批放量。</li>
-        <li><strong>环境发布</strong>：Demo 环境（Vercel）→ 内部评审 → 后续生产。</li>
-        <li><strong>本期回退项</strong>：多 Rep 按渠道分配、多人设意图路由已回退（见 Non-Goals），不在本期交付。</li>
-      </ul>
-    </section>
-
-    <!-- 11 glossary -->
-    <section class="section" id="glossary">
-      <div class="section-title"><span class="section-num">11</span>术语表 (Glossary)</div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th style="width:190px">术语</th><th>含义</th></tr></thead>
-          <tbody>
-            <tr><td>AI 数字员工 (Rep)</td><td>承载人设与权限、代表商家回复客户的 AI 客服。</td></tr>
-            <tr><td>渠道 (Channel)</td><td>Live Widget（网页实时聊天）/ Email / Zendesk。</td></tr>
-            <tr><td>模式 (Mode)</td><td>off（暂停）/ training（仅草拟、不触达客户）/ production（自主回复）。</td></tr>
-            <tr><td>灰度 (Rollout)</td><td>Production 下让 AI 对部分访客生效的放量比例。</td></tr>
-            <tr><td>Touchpoint</td><td>销售场景下触发推荐的入口（Resolution Center / Policy Email / Live Chat / Search Bar）。</td></tr>
-            <tr><td>限时政策</td><td>仅在设定时间窗口内生效的规则（大促 / campaign）。</td></tr>
-            <tr><td>提案 (Proposal)</td><td>由工单沉淀、经 Team Lead 审批后落地为 live 的规则建议。</td></tr>
-          </tbody>
-        </table>
-      </div>
     </section>
 
     <!-- Appendix A: tech -->
@@ -502,8 +426,9 @@
         <li><strong>规则的时间规则（限时政策）</strong>：限时政策弹时间窗口（英文选择器），规则仅窗口内生效。</li>
         <li><strong>Sales Agent · Converted Orders 会话溯源</strong>：订单关联会话 ID 并可侧滑查看。</li>
         <li><strong>Live Widget 设置精简</strong>：移除渠道内 Escalation handoff 模块。</li>
+        <li><strong>Performance 复合图</strong>：「Tickets &amp; Resolution Rate」—— 工单量柱状图 + 解决率折线，双 Y 轴。</li>
       </ul>
-      <div class="callout"><strong>本期明确不收录 / 已回退：</strong>多 Rep 注册表 + 按渠道分配、多人设意图路由、Performance 复合图（详见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</div>
+      <div class="callout"><strong>本期已回退 / 不做：</strong>多 Rep 注册表 + 按渠道分配、多人设意图路由（详见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</div>
     </section>
 
   </main>
