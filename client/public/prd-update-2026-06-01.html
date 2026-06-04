@@ -137,7 +137,7 @@
     <div class="cover">
       <div class="cover-badge">Iteration Release · 内部 Demo</div>
       <div class="cover-title">本次迭代说明 · v2.0</div>
-      <div class="cover-sub">围绕「AI Manager = 数字员工管理中枢」的定位，完成一轮信息架构重构：6 个功能顶部 Tab + 全局 Settings 中枢、统一的渠道模式、多数字员工配置、Playbook 规则全生命周期，以及一轮一致性打磨。</div>
+      <div class="cover-sub">围绕「AI Manager = 数字员工管理中枢」的定位，完成一轮信息架构重构：6 个功能顶部 Tab + 全局 Settings 中枢、统一的渠道模式、数字员工配置、Playbook 规则全生命周期，以及一轮一致性打磨。</div>
       <div class="cover-meta">
         <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">Seel AI Support v2.0</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-01</span></div>
@@ -178,7 +178,7 @@
       <div class="section-title"><span class="section-num">0</span>概述 · 本次迭代范围</div>
       <p>本次迭代由两个提交构成，共同界定「本次新上线」的边界：</p>
       <ul>
-        <li><span class="pill b">3f661cb</span> <strong>导航重构主提交</strong> —— 把应用重组为 6 个功能顶部 Tab + 全局 Settings 中枢，并完成 Playbook 规则全生命周期、渠道模式统一、多数字员工配置等核心能力。</li>
+        <li><span class="pill b">3f661cb</span> <strong>导航重构主提交</strong> —— 把应用重组为 6 个功能顶部 Tab + 全局 Settings 中枢，并完成 Playbook 规则全生命周期、渠道模式统一、数字员工配置等核心能力。</li>
         <li><span class="pill g">25f9f0d</span> <strong>本次会话打磨</strong> —— 会话表格复用、Settings 拆分 Channels / Rep Config、Onboarding 跳转与文案、侧栏归位。</li>
       </ul>
       <div class="callout">本次迭代共涉及约 <strong>20 个前端源文件</strong>，无新增运行时依赖。TypeScript 类型检查仅余 <strong>3 个历史遗留错误</strong>（与本次改动无关）。下文以「域」为单位组织，每条以标签标注提交来源。</div>
@@ -221,7 +221,6 @@
     <section class="section" id="u3">
       <div class="section-title"><span class="section-num">3</span>数字员工配置</div>
       <ul>
-        <li><span class="pill b">3f661cb</span> <strong>多 Rep 注册表 + 按渠道分配</strong>（per-channel overrides）：数字员工可在不同渠道继承或覆盖默认配置。</li>
         <li><span class="pill b">3f661cb</span> 新增 <code>LiveChatWidgetCustomizer</code>：聊天组件外观与升级（escalation）定制，升级策略走继承体系。</li>
         <li><span class="pill b">3f661cb</span> → <span class="pill g">25f9f0d</span> 配置归位：AI Manager 先吸收 Agent Config 为 Settings 子标签，本次会话进一步迁出为<strong>全局 Settings 的 Rep Config 子标签</strong>，AI Manager 回归「纯操作」。</li>
       </ul>

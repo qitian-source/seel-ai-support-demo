@@ -649,61 +649,6 @@ function ChannelReplyOverrideBlock({ channel, surface, includeSignoff = false }:
   );
 }
 
-/* Assigned reps — pick which AI reps serve this channel (a channel can have many).
-   Each rep brings its OWN persona/permissions (edited in Agent Config); this is also
-   where you choose who's on duty for the surface. Replaces the old single-rep PersonaHint. */
-function AssignedRepsBlock({ channel, surface }: { channel: OverrideChannel; surface: string }) {
-  const { reps, channelReps, setChannelReps, goToManagerSettings } = useApp();
-  const assigned = channelReps[channel] ?? [];
-  const toggle = (id: string) => {
-    const next = assigned.includes(id) ? assigned.filter((x) => x !== id) : [...assigned, id];
-    setChannelReps(channel, next);
-  };
-  const assignedReps = reps.filter((r) => assigned.includes(r.id));
-  return (
-    <div className="rounded-lg border border-gray-200 p-3 space-y-2">
-      <div className="flex items-center gap-1.5">
-        <Bot className="w-3.5 h-3.5 text-gray-500" />
-        <p className="text-xs font-semibold text-gray-700">AI reps on {surface}</p>
-        <Tooltip text="Choose which AI reps answer on this channel. Each rep replies with its own persona & permissions — edit those in Agent Config.">
-          <HelpCircle className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 cursor-help" />
-        </Tooltip>
-        <button onClick={() => goToManagerSettings()} className="ml-auto text-[11px] font-medium text-indigo-600 hover:underline">Manage personas →</button>
-      </div>
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {reps.map((rep) => {
-          const on = assigned.includes(rep.id);
-          return (
-            <button
-              key={rep.id}
-              onClick={() => toggle(rep.id)}
-              className={cn(
-                "flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full border text-xs font-medium transition-colors",
-                on ? "bg-indigo-50 border-indigo-300 text-indigo-700" : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
-              )}
-            >
-              <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold" style={{ background: rep.color }}>
-                {(rep.name || "?").slice(0, 2).toUpperCase()}
-              </span>
-              {rep.name || "Unnamed"}
-              {on && <Check className="w-3 h-3 text-indigo-600" />}
-            </button>
-          );
-        })}
-      </div>
-      {assigned.length === 0 ? (
-        <p className="text-[11px] text-amber-600">No rep assigned — {surface} can't go live until you assign at least one.</p>
-      ) : (
-        <p className="text-[11px] text-gray-400">
-          {assignedReps.length === 1
-            ? <><strong className="text-gray-500">{assignedReps[0].name}</strong> replies on {surface} using its own persona & permissions.</>
-            : <>{assignedReps.length} reps share {surface}, each replying with its own persona & permissions.</>}
-        </p>
-      )}
-    </div>
-  );
-}
-
 /* ================================================================
    SECTION 1B — Channels (chat-first connection layer)
    Three channel cards in demand order: Support Chat > Email > Zendesk
@@ -875,8 +820,6 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                   }}
                 />
 
-                <AssignedRepsBlock channel="chat" surface="Live Widget" />
-
                 {/* Customize */}
                 <div className="flex items-center gap-2 pt-1">
                   <Button
@@ -942,8 +885,6 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                 </div>
 
                 <ChannelModeRow channel="email" mode={emailMode} setMode={setEmailMode} surface="Email" />
-
-                <AssignedRepsBlock channel="email" surface="Email" />
 
                 <ChannelReplyOverrideBlock channel="email" surface="Email" includeSignoff />
 
@@ -1131,7 +1072,6 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                 {zendeskConnected && (
                   <>
                     <ChannelModeRow channel="zendesk" mode={zendeskMode} setMode={setZendeskMode} surface="Zendesk" />
-                    <AssignedRepsBlock channel="zendesk" surface="Zendesk" />
                     <ChannelReplyOverrideBlock channel="zendesk" surface="Zendesk" includeSignoff />
                   </>
                 )}
@@ -1165,7 +1105,6 @@ export function ConfigureAgentSection() {
     repPermissions, setRepPermissions,
     handoff,
     discloseAI, setDiscloseAI,
-    reps, selectedRepId, setSelectedRepId, addRep, removeRep,
     setMainTab, setManagerTab,
   } = useApp();
 
@@ -1266,44 +1205,6 @@ export function ConfigureAgentSection() {
 
   return (
     <div className="space-y-6">
-      {/* ── Multi-rep secondary nav ── */}
-      <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg flex-wrap">
-        {reps.map((rep) => {
-          const isActive = rep.id === selectedRepId;
-          return (
-            <div
-              key={rep.id}
-              className={cn(
-                "flex items-center gap-2 pl-2 pr-1.5 py-1.5 rounded-lg border text-sm font-medium transition-colors",
-                isActive ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-              )}
-            >
-              <button onClick={() => setSelectedRepId(rep.id)} className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold" style={{ background: rep.color }}>
-                  {(rep.name || "?").slice(0, 2).toUpperCase()}
-                </div>
-                {rep.name || "Unnamed"}
-              </button>
-              {reps.length > 1 && (
-                <button
-                  onClick={() => removeRep(rep.id)}
-                  className="text-gray-300 hover:text-rose-500 transition-colors"
-                  title="Remove rep"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          );
-        })}
-        <button
-          onClick={addRep}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          新增 Rep
-        </button>
-      </div>
 
       {/* ── Identity ── */}
       <div className="space-y-4">

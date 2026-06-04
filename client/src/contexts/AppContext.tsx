@@ -562,7 +562,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSopUploaded(true);
     setExtractedRuleNames(["Refund Policy", "Shipping SLA", "Warranty Rules"]);
 
-    // ── Step 3: Hire two reps with distinct personas ──
+    // ── Step 3: Hire the AI rep (single digital employee) ──
     setReps([
       {
         id: "rep-ava", name: "Ava", color: "#6c47ff",
@@ -570,21 +570,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         permissions: [...defaultReadActions, ...defaultWriteActions],
         discloseAI: true,
       },
-      {
-        id: "rep-max", name: "Max", color: "#0ea5e9",
-        personality: "Professional", customTone: "",
-        permissions: [...defaultReadActions, ...defaultWriteActions],
-        discloseAI: true,
-      },
     ]);
     setSelectedRepId("rep-ava");
     setRepHired(true);
 
-    // ── Step 4: Staff each channel (shows solo + shared coverage) ──
+    // ── Step 4: One rep handles every connected channel ──
     setChannelRepsRaw({
-      chat: ["rep-ava"],            // Ava handles live chat
-      email: ["rep-ava", "rep-max"], // both cover email
-      zendesk: ["rep-max"],          // Max owns Zendesk tickets
+      chat: ["rep-ava"],
+      email: ["rep-ava"],
+      zendesk: ["rep-ava"],
     });
     // agentMode derives to "production" (chat is live in production)
   }, []);
