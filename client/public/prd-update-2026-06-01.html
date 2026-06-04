@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seel AI Support — 本次迭代说明 · v2.0 · 2026-06-01</title>
+<title>Seel AI Support — 产品需求文档 (PRD) · v2.0.2</title>
 <style>
   :root {
     --brand: #6c47ff;
@@ -37,7 +37,7 @@
   .layout { display: flex; max-width: 1140px; margin: 0 auto; padding: 0 20px; }
 
   /* sidebar */
-  .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 32px 0; }
+  .sidebar { width: 240px; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 32px 0; }
   .sidebar::-webkit-scrollbar { width: 3px; }
   .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--soft); padding: 0 16px 8px; text-transform: uppercase; }
@@ -51,7 +51,7 @@
   .cover::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 25%, rgba(124,58,237,.35) 0%, transparent 60%); }
   .cover-badge { position: relative; display: inline-block; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.88); padding: 4px 12px; border-radius: 99px; margin-bottom: 22px; }
   .cover-title { position: relative; font-size: 38px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 10px; }
-  .cover-sub { position: relative; font-size: 17px; color: rgba(255,255,255,.72); margin-bottom: 30px; max-width: 660px; }
+  .cover-sub { position: relative; font-size: 17px; color: rgba(255,255,255,.72); margin-bottom: 30px; max-width: 680px; }
   .cover-meta { position: relative; display: flex; gap: 32px; flex-wrap: wrap; }
   .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
   .cover-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
@@ -61,6 +61,7 @@
   .section { margin-bottom: 48px; scroll-margin-top: 76px; }
   .section-title { font-size: 22px; font-weight: 700; color: var(--dark); padding-bottom: 12px; border-bottom: 2px solid var(--border); margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
   .section-num { width: 34px; height: 34px; border-radius: 8px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .section-num.appx { background: var(--soft); font-size: 16px; }
   .sub2-title { font-size: 15px; font-weight: 700; color: var(--dark); margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
   p { color: var(--mid); line-height: 1.8; margin-bottom: 12px; }
   ul { margin: 8px 0 16px 0; padding-left: 22px; color: var(--mid); }
@@ -72,6 +73,7 @@
   .callout { border-left: 3px solid var(--brand); background: #faf9ff; border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0 22px; font-size: 14px; color: var(--mid); }
   .callout strong { color: var(--dark); }
   .callout.focus { border-left-color: var(--ok); background: #f4fbf6; }
+  .callout.warn { border-left-color: var(--warn); background: #fdf8f1; }
 
   /* before/after */
   .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 22px; }
@@ -98,12 +100,30 @@
   .pill.g   { background: #dcfce7; color: var(--ok); }
   .pill.focus { background: #6c47ff; color: #fff; }
 
+  /* PRD-specific */
+  .req { border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 14px 0; background: #fff; }
+  .req-id { font-size: 11px; font-weight: 700; color: var(--brand); letter-spacing: .04em; }
+  .req h4 { font-size: 14.5px; color: var(--dark); margin: 2px 0 6px; }
+  .req p { font-size: 13.5px; margin-bottom: 8px; }
+  .ac { background: #f4fbf6; border: 1px solid #cde8d6; border-radius: 8px; padding: 9px 14px 9px; margin-top: 8px; }
+  .ac-title { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: var(--ok); text-transform: uppercase; margin-bottom: 3px; }
+  .ac ul { margin: 0; padding-left: 18px; }
+  .ac li { font-size: 13px; margin-bottom: 3px; }
+  .goals { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 20px; }
+  .goals .ba-card.before .ba-tag { color: var(--ok); }
+  .kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0 20px; }
+  .kpi-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: #fff; }
+  .kpi-card .k-label { font-size: 12px; color: var(--soft); }
+  .kpi-card .k-target { font-size: 17px; font-weight: 800; color: var(--brand-d); margin-top: 4px; }
+  .kpi-card .k-note { font-size: 11px; color: var(--soft); margin-top: 2px; }
+
   footer { max-width: 1140px; margin: 0 auto; padding: 24px 68px 40px; font-size: 12px; color: #94A3B8; border-top: 1px solid var(--border); }
 
   @media (max-width: 860px) {
     .sidebar { display: none; }
     .main { padding-left: 0; }
-    .ba { grid-template-columns: 1fr; }
+    .ba, .goals { grid-template-columns: 1fr; }
+    .kpi { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -111,23 +131,27 @@
 
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel AI Support</div>
-  <span class="topbar-tag">本次迭代说明</span>
-  <span class="topbar-date">2026-06-01 · v2.0 Demo</span>
+  <span class="topbar-tag">产品需求文档 (PRD)</span>
+  <span class="topbar-date">2026-06-02 · v2.0.2 · Draft</span>
 </div>
 
 <div class="layout">
   <!-- sidebar -->
   <aside class="sidebar">
     <div class="nav-label">目录</div>
-    <a class="nav-link" href="#changelog">更新记录 (Changelog)</a>
-    <a class="nav-link" href="#overview">概述 · 迭代范围</a>
-    <a class="nav-link" href="#u1">1 · 信息架构与导航重构</a>
-    <a class="nav-link" href="#u2">2 · 渠道与模式</a>
-    <a class="nav-link" href="#u3">3 · 数字员工配置</a>
-    <a class="nav-link" href="#u4">4 · Playbook / 规则</a>
-    <a class="nav-link" href="#u5">5 · Onboarding 优化</a>
-    <a class="nav-link" href="#impl">6 · 技术实现 · 涉及文件</a>
-    <a class="nav-link" href="#verify">7 · 验证与部署</a>
+    <a class="nav-link" href="#bg">1 · 背景与问题</a>
+    <a class="nav-link" href="#goals">2 · 目标与非目标</a>
+    <a class="nav-link" href="#metrics">3 · 成功指标</a>
+    <a class="nav-link" href="#users">4 · 目标用户与场景</a>
+    <a class="nav-link" href="#req">5 · 功能需求与验收</a>
+    <a class="nav-link" href="#edge">6 · 边界与异常</a>
+    <a class="nav-link" href="#nfr">7 · 非功能需求</a>
+    <a class="nav-link" href="#analytics">8 · 埋点与数据</a>
+    <a class="nav-link" href="#risk">9 · 依赖 · 假设 · 风险</a>
+    <a class="nav-link" href="#rollout">10 · 发布计划</a>
+    <a class="nav-link" href="#glossary">11 · 术语表</a>
+    <a class="nav-link" href="#appx-tech">附录 A · 技术实现</a>
+    <a class="nav-link" href="#appx-log">附录 B · 变更清单</a>
   </aside>
 
   <!-- main -->
@@ -135,199 +159,356 @@
 
     <!-- cover -->
     <div class="cover">
-      <div class="cover-badge">Iteration Release · 内部 Demo</div>
-      <div class="cover-title">本次迭代说明 · v2.0</div>
-      <div class="cover-sub">围绕「AI Manager = 数字员工管理中枢」的定位，完成一轮信息架构重构：6 个功能顶部 Tab + 全局 Settings 中枢、统一的渠道模式、数字员工配置、Playbook 规则全生命周期，以及一轮一致性打磨。</div>
+      <div class="cover-badge">产品需求文档 · 内部评审</div>
+      <div class="cover-title">Seel AI Support · 产品需求文档</div>
+      <div class="cover-sub">定位：<strong style="color:#fff">AI Manager = 数字员工管理中枢</strong>。让商家以最低门槛把 AI 数字员工部署到多渠道客服，并能可控上线、可运营规则、可溯源效果。本文从背景、目标、用户场景到功能需求与验收、指标与发布计划完整描述本期范围。</div>
       <div class="cover-meta">
-        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">Seel AI Support v2.0</span></div>
-        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-01</span></div>
-        <div class="cover-meta-item"><span class="cover-meta-label">提交</span><span class="cover-meta-value">3f661cb + 25f9f0d</span></div>
-        <div class="cover-meta-item"><span class="cover-meta-label">影响文件</span><span class="cover-meta-value">~20 个源文件</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.2</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">评审中 (Draft)</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-02</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">范围</span><span class="cover-meta-value">本期迭代 · 内部 Demo</span></div>
       </div>
     </div>
 
-    <!-- changelog -->
-    <section class="section" id="changelog">
-      <div class="section-title">
-        <span class="pill g" style="font-size:13px;padding:3px 12px;">v2.0.2</span>
-        更新记录 · AI Manager 简化 + 渠道体验优化
-        <span style="font-size:13px;font-weight:500;color:var(--soft);margin-left:auto;">2026-06-02</span>
-      </div>
-
-      <div class="sub2-title">Changed</div>
+    <!-- 1 background -->
+    <section class="section" id="bg">
+      <div class="section-title"><span class="section-num">1</span>背景与问题</div>
+      <p>Seel AI Support 让商家用 AI 数字员工跨渠道（Live Widget / Email / Zendesk）自动处理客服。早期版本配置分散、上线门槛高、上线后缺乏即时反馈，商家难以「快速跑起来并看到效果」。</p>
+      <div class="sub2-title">待解决的核心痛点</div>
       <ul>
-        <li>AI Manager 上线门槛：<code>Go live</code> 与 setup 完成判定改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
-        <li>Onboarding <em>Get Started</em> 由 4 步精简为 3 步：连接渠道 → 导入政策（可选）→ 上线。</li>
-        <li>侧边栏 <em>Conversation</em> 回归主导航、置于 <strong>Reviews 之下</strong>（不再放在 WORKFORCE 分组）；WORKFORCE 分组现以 Support agent 起始。</li>
-        <li><strong>Onboarding 引导增强</strong>：每步完成后给出英文 Toast 提示并<strong>自动跳转</strong>到下一步；已完成的卡片新增跳转 CTA（<em>Manage channels</em> / <em>View parsed rules</em>）。</li>
-        <li><strong>上线后直达会话明细页</strong>：<code>Go live</code> 完成后自动跳到已连接渠道的 <em>Conversations / Inbox</em> 子标签查看实时会话——即使当前停留在该渠道的 <em>Settings</em> 子标签也会强制切换（新增一次性意图 <code>channelConversationsIntent</code>）。</li>
-        <li><strong>渠道 Tab 条件展示</strong>：<em>Live Widget / Email Inbox / Zendesk</em> 三个顶部 Tab 默认隐藏，<strong>连接对应渠道后才出现</strong>；AI Manager / Playbook / Performance 常驻。</li>
-        <li><strong>Zendesk 会话页对齐 Live Widget</strong>：Tickets 子标签改为 <em>Conversations</em>，复用共享的 <code>ConversationsView</code>（锁定 <code>lockedChannel="Zendesk"</code>），点击行展开完整会话详情——与 Live Widget 一致。</li>
-        <li><strong>Live Widget 灰度上线（Rollout）</strong>：切换到 <em>Production</em> 时弹出 <code>Switch to Production?</code> 确认框，可用滑块 + 预设（10/25/50/100%）选择<strong>灰度比例</strong>；上线后在 Mode 下方常驻显示当前灰度比例并可随时 <em>Adjust</em>。</li>
-        <li><strong>Playbook 规则</strong>：支持规则全生命周期（新建 / 编辑 / 删除），并新增工单提案审批流（<code>ProposalReviewSheet</code>）—— Team Lead 提案可审批后一键落地为 live 规则。</li>
-        <li><strong>文档（Documents）</strong>：上传文档自动解析为 modules → topics → rules（<code>DocumentDetailSheet</code> 展示解析结果）；规则来源区分（Team Lead 提案 / Manager 编辑 / 上传文档），并支持排序与按 module 过滤。</li>
-        <li><strong>规则的时间规则（限时政策）</strong>：上传文档时若 AI 识别为<strong>限时政策</strong>（大促 / campaign，如 BFCM、11.11），自动弹出<strong>时间窗口设置</strong>（英文日期时间选择器 · Start / End）；<strong>该规则仅在所设时间窗口内对 AI 生效，窗口外自动暂停</strong>，文档上常驻显示生效窗口并可随时调整。</li>
-        <li><strong>Sales Agent · Converted Orders 会话溯源</strong>：每笔转化订单展示对应的<strong>会话 ID（<code>SC-xxxx</code>）</strong>，点击可侧滑查看完整销售会话（客户提问 → AI 推荐商品 → 下单），打通「订单 ↔ 会话」溯源。</li>
-        <li><strong>Live Widget 设置精简</strong>：移除渠道内的 <em>Escalation handoff</em>（人工转接坐席选择）模块；Email / Zendesk 的「Written reply &amp; escalation」配置保留不变。</li>
-      </ul>
-
-    </section>
-
-    <!-- overview -->
-    <section class="section" id="overview">
-      <div class="section-title"><span class="section-num">0</span>概述 · 本次迭代范围</div>
-      <p>本次迭代由两个提交构成，共同界定「本次新上线」的边界：</p>
-      <ul>
-        <li><span class="pill b">3f661cb</span> <strong>导航重构主提交</strong> —— 把应用重组为 6 个功能顶部 Tab + 全局 Settings 中枢，并完成 Playbook 规则全生命周期、渠道模式统一、数字员工配置等核心能力。</li>
-        <li><span class="pill g">25f9f0d</span> <strong>本次会话打磨</strong> —— 会话表格复用、Settings 拆分 Channels / Rep Config、Onboarding 跳转与文案、侧栏归位。</li>
-      </ul>
-      <div class="callout">本次迭代共涉及约 <strong>20 个前端源文件</strong>，无新增运行时依赖。TypeScript 类型检查仅余 <strong>3 个历史遗留错误</strong>（与本次改动无关）。下文以「域」为单位组织，每条以标签标注提交来源。</div>
-      <p style="margin-bottom:0"><strong>图例：</strong>&nbsp;<span class="pill b">3f661cb</span> 导航重构主提交 &nbsp;·&nbsp; <span class="pill g">25f9f0d</span> 本次会话打磨</p>
-    </section>
-
-    <!-- 1 nav -->
-    <section class="section" id="u1">
-      <div class="section-title"><span class="section-num">1</span>信息架构与导航重构</div>
-      <p>这是本次迭代的主干。应用从「单页多面板」重组为按功能划分的顶部 Tab 体系，每个功能各自拥有 Operations / Settings 子标签，配置不再散落各处。</p>
-      <div class="ba">
-        <div class="ba-card before"><span class="ba-tag">改造前</span><p>设置集中在一个全局 Settings overlay；各功能混在一起，渠道与数字员工配置缺乏清晰归属。</p></div>
-        <div class="ba-card after"><span class="ba-tag">改造后</span><p>6 个功能顶部 Tab，各自带 Operations / Settings 子标签；右上角独立的全局 Settings 中枢做深链与状态汇总。</p></div>
-      </div>
-      <div class="sub2-title">关键变更</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 重构为 <strong>6 个功能顶部 Tab</strong>（AI Manager / Playbook / Live Widget / Email Inbox / Zendesk / Performance），引入共享组件 <code>SubTabBar</code>，每页自带 Operations / Settings 子标签。</li>
-        <li><span class="pill b">3f661cb</span> 新增右上角固定的<strong>全局 Settings 中枢</strong>：深链进各功能的设置模块（渠道 + AI Manager），并显示实时状态徽标；移除旧的全局 Settings overlay。</li>
-        <li><span class="pill b">3f661cb</span> AI Manager 吸收 Agent Config 为其 Settings 子标签；渠道页在未连接时默认落到 Settings。</li>
-        <li><span class="pill g">25f9f0d</span> 侧边栏 <code>Conversation</code> 最终置于<strong>主导航组、Reviews 之下</strong>（本次迭代回退了早期「移入 WORKFORCE」的方案）；<strong>WORKFORCE</strong> 分组以 Support agent 起始（Support / Sales / VOC / Review agent）。</li>
+        <li><strong>上线门槛高、路径不清晰</strong>：必须先创建 AI rep 才能上线，新用户卡在配置环节。</li>
+        <li><strong>信息架构混乱</strong>：设置集中在一个全局 overlay，渠道与数字员工配置缺乏清晰归属。</li>
+        <li><strong>上线后「看不到对话」</strong>：完成上线后没有直达实时会话，缺乏正反馈。</li>
+        <li><strong>限时政策无法表达</strong>：大促 / campaign 等有时间边界的政策，规则无法设定生效窗口。</li>
+        <li><strong>销售与对话割裂</strong>：转化订单无法回溯到驱动它的那一段对话。</li>
       </ul>
     </section>
 
-    <!-- 2 channels -->
-    <section class="section" id="u2">
-      <div class="section-title"><span class="section-num">2</span>渠道与模式</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 渠道模式统一为单一 <code>ChannelMode</code>：<strong>off / training / production</strong>，三个渠道（Live Widget / Email / Zendesk）共用同一语义。</li>
-        <li><span class="pill b">3f661cb</span> Zendesk 工单收件箱<strong>复用参数化的 <code>EmailInboxView</code></strong>，避免重复实现；渠道未连接时默认进入 Settings。</li>
-        <li><span class="pill g">25f9f0d</span> 抽出独立组件 <code>ConversationsView</code>，支持可选入参 <code>lockedChannel</code>。</li>
-      </ul>
-      <div class="sub2-title">会话表格复用 · <code>lockedChannel</code> 入参</div>
-      <div class="ba">
-        <div class="ba-card before"><span class="ba-tag">改造前</span><p>会话表格内嵌在 PerformancePage（约 265 行）；Live Widget 的 Conversations 子标签是空占位。</p></div>
-        <div class="ba-card after"><span class="ba-tag">改造后</span><p>抽离为 <code>ConversationsView</code>；Live Widget 传 <code>"Live Chat Widget"</code> 锁定渠道，Performance 不传保持全渠道筛选——单一数据源。</p></div>
+    <!-- 2 goals -->
+    <section class="section" id="goals">
+      <div class="section-title"><span class="section-num">2</span>目标与非目标</div>
+      <div class="goals">
+        <div class="ba-card before">
+          <span class="ba-tag">目标 (Goals)</span>
+          <ul style="margin-bottom:0">
+            <li>降低上线门槛：<strong>连接任一渠道即可上线</strong>，不强制创建 rep。</li>
+            <li>清晰信息架构：6 功能 Tab + 全局 Settings 中枢。</li>
+            <li>上线即见效：go-live 后<strong>直达会话页</strong>。</li>
+            <li>规则可运营：全生命周期 + 提案审批 + 文档解析 + <strong>限时政策</strong>。</li>
+            <li>风险可控：Live Widget production <strong>灰度上线</strong>。</li>
+            <li>效果可溯源：转化订单关联销售会话。</li>
+          </ul>
+        </div>
+        <div class="ba-card" style="background:#fdfbf7;border-color:#f0e3c8">
+          <span class="ba-tag" style="color:var(--warn)">非目标 (Non-Goals · 本期不做)</span>
+          <ul style="margin-bottom:0">
+            <li><strong>多 Rep 注册表 + 按渠道分配</strong>（per-channel overrides）—— 本期为单数字员工。</li>
+            <li><strong>多人设意图路由 + 中途转接</strong>。</li>
+            <li>Performance <strong>复合图</strong>（Tickets × Resolution）—— 已实现，但本期不作为 PRD 承诺范围。</li>
+            <li>真实后端 / 账号体系 / 支付 / 真实 Zendesk Triggers 接入（Demo 用 mock 数据）。</li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <!-- 3 reps -->
-    <section class="section" id="u3">
-      <div class="section-title"><span class="section-num">3</span>数字员工配置</div>
+    <!-- 3 metrics -->
+    <section class="section" id="metrics">
+      <div class="section-title"><span class="section-num">3</span>成功指标 (Success Metrics)</div>
+      <div class="kpi">
+        <div class="kpi-card"><div class="k-label">上线转化率</div><div class="k-target">≥ 70%</div><div class="k-note">连接渠道 → 完成 go-live</div></div>
+        <div class="kpi-card"><div class="k-label">Time-to-go-live</div><div class="k-target">≤ 5 min</div><div class="k-note">首次进入 → 上线</div></div>
+        <div class="kpi-card"><div class="k-label">自动解决率</div><div class="k-target">≥ 70%</div><div class="k-note">Resolution Rate</div></div>
+        <div class="kpi-card"><div class="k-label">灰度采用率</div><div class="k-target">观测</div><div class="k-note">production 渠道中设置了 rollout 的比例</div></div>
+        <div class="kpi-card"><div class="k-label">限时政策命中</div><div class="k-target">观测</div><div class="k-note">活动窗口内规则命中率</div></div>
+        <div class="kpi-card"><div class="k-label">会话溯源使用</div><div class="k-target">观测</div><div class="k-note">转化订单 → 查看会话点击率</div></div>
+      </div>
+      <div class="callout">副指标：onboarding 各步流失率、go-live 后会话页停留时长、规则提案审批通过率。指标埋点见 <a href="#analytics" style="color:var(--brand)">第 8 节</a>。</div>
+    </section>
+
+    <!-- 4 users -->
+    <section class="section" id="users">
+      <div class="section-title"><span class="section-num">4</span>目标用户与场景</div>
+      <div class="sub2-title">角色 (Personas)</div>
       <ul>
-        <li><span class="pill b">3f661cb</span> 新增 <code>LiveChatWidgetCustomizer</code>：聊天组件外观与升级（escalation）定制，升级策略走继承体系。</li>
-        <li><span class="pill b">3f661cb</span> → <span class="pill g">25f9f0d</span> 配置归位：AI Manager 先吸收 Agent Config 为 Settings 子标签，本次会话进一步迁出为<strong>全局 Settings 的 Rep Config 子标签</strong>，AI Manager 回归「纯操作」。</li>
+        <li><strong>商家管理员 / AI Manager</strong>：配置渠道、设定模式与灰度、上线、查看效果。</li>
+        <li><strong>Team Lead</strong>：审批来自工单的规则提案、监督会话质量。</li>
       </ul>
+      <div class="sub2-title">用户故事 (User Stories)</div>
+      <ul>
+        <li>作为<strong>商家</strong>，我想连接一个渠道就让 AI 上线，以便快速试用、看到效果。</li>
+        <li>作为<strong>商家</strong>，我想上传 SOP 文档自动变成规则，以便不必手写规则。</li>
+        <li>作为<strong>商家</strong>，我想给大促政策设时间窗口，以便活动结束后规则自动失效。</li>
+        <li>作为<strong>商家</strong>，我想在全量 production 前先灰度放量，以便控制风险。</li>
+        <li>作为<strong>Team Lead</strong>，我想审批来自工单的规则提案，以便规则可控上线。</li>
+        <li>作为<strong>商家</strong>，我想从转化订单点进对应对话，以便核对 AI 推荐的效果。</li>
+      </ul>
+    </section>
+
+    <!-- 5 functional requirements -->
+    <section class="section" id="req">
+      <div class="section-title"><span class="section-num">5</span>功能需求与验收 <span class="pill focus">本节重点</span></div>
+      <p>下列需求以「功能域」组织；每条含描述与<strong>验收标准 (Acceptance Criteria)</strong>，供研发与 QA 对齐。技术实现细节见 <a href="#appx-tech" style="color:var(--brand)">附录 A</a>。</p>
+
+      <!-- 5.1 -->
+      <div class="req">
+        <div class="req-id">FR-1 · 信息架构与导航</div>
+        <h4>6 功能顶部 Tab + 全局 Settings 中枢；渠道 Tab 按连接状态展示</h4>
+        <p>应用重组为 AI Manager / Playbook / Live Widget / Email Inbox / Zendesk / Performance，各页自带 Operations / Settings 子标签；右上角固定的全局 Settings 中枢做深链与状态汇总。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>默认仅显示 <strong>AI Manager / Playbook / Performance</strong> + Settings。</li>
+            <li>连接某渠道后，对应渠道 Tab（Live Widget / Email Inbox / Zendesk）才出现。</li>
+            <li>侧边栏 <code>Conversation</code> 位于主导航组、<strong>Reviews 之下</strong>；WORKFORCE 分组以 Support agent 起始。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.2 -->
+      <div class="req">
+        <div class="req-id">FR-2 · Onboarding 与上线 (Go-live)</div>
+        <h4>3 步上线，门槛仅依赖已连接渠道；每步完成引导 + 上线后直达会话页</h4>
+        <p>Get Started 由 4 步精简为 3 步：连接渠道 → 导入政策（可选）→ 上线。每步完成给出英文 Toast 并自动跳转，已完成卡片提供跳转 CTA。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>进度仅计 essentials（连接渠道、上线）；导入政策标注 (optional) 不计入。</li>
+            <li>连接渠道即满足上线门槛，<strong>无需创建 AI rep</strong> 即可 go-live。</li>
+            <li>每步完成弹英文 Toast 并自动跳转到下一步；已完成卡片有 CTA（Manage channels / View parsed rules）。</li>
+            <li>go-live 后自动跳到已连接渠道的 <strong>Conversations / Inbox</strong> 子标签——即使当前停留在该渠道的 Settings 也强制切换。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.3 -->
+      <div class="req">
+        <div class="req-id">FR-3 · 渠道模式与灰度上线</div>
+        <h4>统一 off / training / production；Live Widget production 支持灰度比例</h4>
+        <p>三个渠道共用同一 <code>ChannelMode</code> 语义。Live Widget 切换到 Production 时弹确认框，可设定灰度（Rollout）比例。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>三渠道模式语义统一：off（暂停）/ training（仅草拟）/ production（自主回复）。</li>
+            <li>Live Widget 选 Production → 弹 <code>Switch to Production?</code>，含滑块 + 预设（10/25/50/100%）。</li>
+            <li>确认后 Mode 下方<strong>常驻显示当前灰度比例</strong>，可随时 Adjust。</li>
+            <li>Email / Zendesk 切换模式不弹灰度框。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.4 -->
+      <div class="req">
+        <div class="req-id">FR-4 · 会话运营</div>
+        <h4>Zendesk 会话页与 Live Widget 对齐；点击行查看完整会话</h4>
+        <p>Zendesk 的 Tickets 子标签改为 Conversations，复用共享的会话表格组件（锁定 Zendesk 渠道），与 Live Widget 一致。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>Zendesk 子标签为 Conversations，列与 Live Widget 一致（Ticket / Customer / Intent / Outcome / Mode / Turns / Summary / Time）。</li>
+            <li>点击任意行右侧滑出完整会话详情（Thread / Reasoning）。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.5 -->
+      <div class="req">
+        <div class="req-id">FR-5 · Playbook 规则与文档（含限时政策时间规则）</div>
+        <h4>规则全生命周期 + 提案审批 + 文档解析 + 限时政策时间窗口</h4>
+        <p>Playbook 从静态展示升级为可操作的规则中枢；文档上传自动解析为 modules → topics → rules；若识别为限时政策，弹出时间窗口设置。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>规则可<strong>新建 / 编辑 / 删除</strong>，状态文案正确（created / updated / deleted / accepted and live）。</li>
+            <li>工单规则提案经审批后一键落地为 live 规则，支持「Edit rule before saving」。</li>
+            <li>上传文档：Processing → Processed，解析出 modules / topics / rules，并区分来源（提案 / 编辑 / 上传）。</li>
+            <li><strong>限时政策</strong>：AI 识别为限时政策（大促 / campaign，如 BFCM、11.11）时弹出时间窗口设置（<strong>英文日期时间选择器</strong> · Start / End）；保存后文档常驻显示生效窗口；<strong>规则仅在窗口内对 AI 生效，窗口外自动暂停</strong>。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.6 -->
+      <div class="req">
+        <div class="req-id">FR-6 · Sales Agent 会话溯源</div>
+        <h4>转化订单关联销售会话</h4>
+        <p>每笔转化订单展示对应的会话 ID，点击可查看驱动该订单的完整销售会话。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>每笔 Converted Order 显示<strong>会话 ID（<code>SC-xxxx</code>）</strong>与「View conversation」入口。</li>
+            <li>点击侧滑显示销售会话线程：客户提问 → AI 推荐商品 → 下单（含订单 / 渠道 / Touchpoint / 金额等元信息）。</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 5.7 -->
+      <div class="req">
+        <div class="req-id">FR-7 · 数字员工配置（单 Rep）</div>
+        <h4>单个 AI 数字员工：人设 + 权限，配置于全局 Settings → Rep Config</h4>
+        <p>本期为<strong>单数字员工</strong>模型。数字员工的人设、语气与读写权限在全局 Settings 的 Rep Config 子标签内联托管。</p>
+        <div class="ac">
+          <div class="ac-title">验收标准</div>
+          <ul>
+            <li>Rep Config 可编辑该 rep 的人设 / 语气 / 权限。</li>
+            <li><strong>不提供</strong>多 rep 管理与按渠道分配（见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 edge cases -->
+    <section class="section" id="edge">
+      <div class="section-title"><span class="section-num">6</span>边界与异常 (Edge Cases)</div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th style="width:130px">Settings 子标签</th><th>承载内容</th><th style="width:110px">入口</th></tr></thead>
+          <thead><tr><th style="width:230px">场景</th><th>预期行为</th></tr></thead>
           <tbody>
-            <tr><td><strong>Channels</strong></td><td>Live Widget / Email Inbox / Zendesk 三个渠道的设置跳板，展示各自连接状态（Live / Training / Connected / Not connected）。</td><td>默认子标签</td></tr>
-            <tr><td><strong>Rep Config</strong></td><td>AI 数字员工配置（<code>ConfigureAgentSection</code>）内联托管：人设、权限、共享默认值。</td><td>深链跳转</td></tr>
+            <tr><td>未连接任何渠道</td><td>三个渠道 Tab 全部隐藏；Go live 步骤锁定，提示先连接渠道。</td></tr>
+            <tr><td>文档解析失败</td><td>文档进入 <strong>Error</strong> 状态并提供 <strong>Retry</strong>。</td></tr>
+            <tr><td>限时政策窗口非法</td><td>开始时间 ≥ 结束时间时报错，阻止保存。</td></tr>
+            <tr><td>灰度比例为 0%</td><td>当前允许（演示），建议后续加下限提示，避免「上线但无人可见」。</td></tr>
+            <tr><td>go-live 目标渠道未连接</td><td>跳转兜底回 AI Manager，不落到隐藏 Tab。</td></tr>
+            <tr><td>规则提案被拒</td><td>不落地为 live 规则，保留在提案列表。</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="callout"><strong>深链机制：</strong>新增一次性意图标志 <code>agentSettingsIntent</code>。「编辑人设」或 Onboarding 的「Create an AI rep」带着该标志进入 Settings，自动定位到 Rep Config 子标签后立即复位。</div>
+      <div class="callout warn"><strong>待补充：</strong>限时政策的<strong>时区</strong>处理（按店铺时区 vs UTC）尚未定义，见 <a href="#risk" style="color:var(--brand)">第 9 节 · 未决问题</a>。</div>
     </section>
 
-    <!-- 4 playbook -->
-    <section class="section" id="u4">
-      <div class="section-title"><span class="section-num">4</span>Playbook / 规则 <span class="pill focus">本节重点</span></div>
-      <p>Playbook 从静态展示升级为可操作的<strong>规则中枢</strong>，覆盖规则的创建、审批、解析与溯源全流程。</p>
-      <div class="sub2-title">规则全生命周期</div>
+    <!-- 7 NFR -->
+    <section class="section" id="nfr">
+      <div class="section-title"><span class="section-num">7</span>非功能需求 (NFR)</div>
       <ul>
-        <li><span class="pill b">3f661cb</span> 新建（<code>NewRuleDialog</code>）、编辑、删除全链路；状态文案 "Rule created / updated / deleted / accepted and live"。</li>
-      </ul>
-      <div class="sub2-title">提案审批流</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> <code>ProposalReviewSheet</code>：把来自工单的规则提案（Team Lead proposal）经审批后落地为 live 规则，支持「Edit rule before saving」。</li>
-      </ul>
-      <div class="sub2-title">文档解析模型</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 新增 <code>ParsedModule</code> / <code>ParsedTopic</code>：文档解析为 modules → topics → rules 的层级；<code>DocumentDetailSheet</code> 展示解析结果。</li>
-      </ul>
-      <div class="sub2-title">来源溯源与组织</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 规则<strong>来源</strong>区分：Team Lead proposal / Manager edit / Uploaded document。</li>
-        <li><span class="pill b">3f661cb</span> 列表排序（Newest / Oldest）与按 module 过滤；示例 module：Refund Processing、Return Window、Seel Protection Claims、Shipping Delays。</li>
-      </ul>
-      <div class="callout focus"><strong>价值：</strong>规则不再是只读文案，而是一条可追溯（谁提的、从哪来）、可审批、可编辑的运营资产，承接了「Team Lead 提案 → Manager 审批 → 上线生效」的真实闭环。</div>
-    </section>
-
-    <!-- 5 onboarding -->
-    <section class="section" id="u5">
-      <div class="section-title"><span class="section-num">5</span>Onboarding 引导优化</div>
-      <ul>
-        <li><span class="pill b">3f661cb</span> 引导步骤通过 <code>goToChannelSettings</code> / <code>goToManagerSettings</code> 深链跳转到对应设置模块。</li>
-      </ul>
-      <div class="sub2-title"><span class="pill mod">调整</span> Connect a channel 的跳转目标</div>
-      <div class="ba">
-        <div class="ba-card before"><span class="ba-tag">改造前</span><p>直接深链进 Live Widget 渠道设置——默认替商家选好了「Chat」渠道。</p></div>
-        <div class="ba-card after"><span class="ba-tag">改造后</span><p><span class="pill g">25f9f0d</span> 跳转到 <strong>Settings → Channels</strong> 渠道选择列表，由商家自己挑选要接入哪个渠道。</p></div>
-      </div>
-      <div class="sub2-title"><span class="pill mod">调整</span> Import Policies 文案</div>
-      <ul>
-        <li><span class="pill g">25f9f0d</span> 步骤标题改为 <strong>「Import Policies (optional)」</strong>，把「可选」写进标题，任何状态下都可见。</li>
-        <li><span class="pill g">25f9f0d</span> 移除原先仅在未完成时出现的独立「Optional」徽标，避免与标题语义重复；「Done」徽标在完成后照常显示。该步骤始终不计入 essentials 进度。</li>
+        <li><strong>国际化 (i18n)</strong>：面向用户的文案以英文为主；时间选择器采用自建英文日期时间控件，规避浏览器 locale 导致的本地化格式。</li>
+        <li><strong>隐私与安全</strong>：邮箱连接密码<strong>仅存于组件本地状态</strong>，不写入全局状态、不持久化；Demo 不收集真实用户数据。</li>
+        <li><strong>性能</strong>：纯前端 Demo，本期<strong>无新增运行时依赖</strong>。</li>
+        <li><strong>兼容性</strong>：现代 Chromium / Safari；预览基于 Vite dev server。</li>
+        <li><strong>可访问性</strong>：交互控件应键盘可达（当前为待完善项，见风险）。</li>
       </ul>
     </section>
 
-    <!-- impl -->
-    <section class="section" id="impl">
-      <div class="section-title"><span class="section-num">6</span>技术实现 · 涉及文件</div>
-      <div class="sub2-title"><span class="pill b">3f661cb</span> 导航重构主提交（节选）</div>
+    <!-- 8 analytics -->
+    <section class="section" id="analytics">
+      <div class="section-title"><span class="section-num">8</span>埋点与数据 (Analytics)</div>
+      <p>为支撑第 3 节指标，规划以下关键事件（Demo 为 mock 数据，埋点为规划项）：</p>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>文件</th><th style="width:80px">类型</th><th>说明</th></tr></thead>
+          <thead><tr><th style="width:230px">事件</th><th>支撑指标</th></tr></thead>
           <tbody>
-            <tr><td><code>pages/Home.tsx</code></td><td><span class="pill mod">修改</span></td><td>顶部 6 Tab 路由骨架。</td></tr>
+            <tr><td><code>channel_connected</code></td><td>上线转化率</td></tr>
+            <tr><td><code>setup_step_completed</code></td><td>onboarding 流失</td></tr>
+            <tr><td><code>go_live</code></td><td>上线转化率 / Time-to-go-live</td></tr>
+            <tr><td><code>rollout_set</code></td><td>灰度采用率</td></tr>
+            <tr><td><code>document_uploaded</code> / <code>policy_window_set</code></td><td>限时政策命中</td></tr>
+            <tr><td><code>rule_created</code> / <code>rule_proposal_approved</code></td><td>规则运营</td></tr>
+            <tr><td><code>conversation_opened</code> / <code>sales_conversation_viewed</code></td><td>会话溯源使用</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 risk -->
+    <section class="section" id="risk">
+      <div class="section-title"><span class="section-num">9</span>依赖 · 假设 · 风险</div>
+      <div class="sub2-title">依赖</div>
+      <ul>
+        <li>Seel 平台与 Shopify 店铺上下文；Zendesk 渠道的工单路由走 <strong>Zendesk Triggers</strong>（Seel 侧不接管，避免冲突）。</li>
+      </ul>
+      <div class="sub2-title">假设</div>
+      <ul>
+        <li>单店铺、<strong>单数字员工</strong>；本期数据为 mock，用于内部评审与演示。</li>
+      </ul>
+      <div class="sub2-title">风险与未决问题 (Open Questions)</div>
+      <ul>
+        <li>限时政策的<strong>时区</strong>口径（店铺时区 / UTC）未定。</li>
+        <li>灰度比例是否设下限（避免 0% 上线）。</li>
+        <li>可访问性（键盘 / 屏幕阅读器）尚未系统验证。</li>
+        <li>接入真实后端后的处理时序与失败态体验需再设计。</li>
+      </ul>
+    </section>
+
+    <!-- 10 rollout -->
+    <section class="section" id="rollout">
+      <div class="section-title"><span class="section-num">10</span>发布计划 (Rollout)</div>
+      <ul>
+        <li><strong>产品内灰度</strong>：Live Widget production 通过 Rollout 比例对真实访客分批放量。</li>
+        <li><strong>环境发布</strong>：Demo 环境（Vercel）→ 内部评审 → 后续生产。</li>
+        <li><strong>本期回退项</strong>：多 Rep 按渠道分配、多人设意图路由已回退（见 Non-Goals），不在本期交付。</li>
+      </ul>
+    </section>
+
+    <!-- 11 glossary -->
+    <section class="section" id="glossary">
+      <div class="section-title"><span class="section-num">11</span>术语表 (Glossary)</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th style="width:190px">术语</th><th>含义</th></tr></thead>
+          <tbody>
+            <tr><td>AI 数字员工 (Rep)</td><td>承载人设与权限、代表商家回复客户的 AI 客服。</td></tr>
+            <tr><td>渠道 (Channel)</td><td>Live Widget（网页实时聊天）/ Email / Zendesk。</td></tr>
+            <tr><td>模式 (Mode)</td><td>off（暂停）/ training（仅草拟、不触达客户）/ production（自主回复）。</td></tr>
+            <tr><td>灰度 (Rollout)</td><td>Production 下让 AI 对部分访客生效的放量比例。</td></tr>
+            <tr><td>Touchpoint</td><td>销售场景下触发推荐的入口（Resolution Center / Policy Email / Live Chat / Search Bar）。</td></tr>
+            <tr><td>限时政策</td><td>仅在设定时间窗口内生效的规则（大促 / campaign）。</td></tr>
+            <tr><td>提案 (Proposal)</td><td>由工单沉淀、经 Team Lead 审批后落地为 live 的规则建议。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Appendix A: tech -->
+    <section class="section" id="appx-tech">
+      <div class="section-title"><span class="section-num appx">A</span>附录 · 技术实现</div>
+      <div class="callout">本附录承载工程视角细节，不影响产品需求理解。本期共涉及约 <strong>20+ 前端源文件</strong>，无新增运行时依赖；<code>tsc --noEmit</code> 仅余 <strong>3 个历史遗留错误</strong>（与本期改动无关）。</div>
+      <div class="sub2-title">关键模块 / 文件</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>文件 / 模块</th><th style="width:90px">类型</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td><code>pages/Home.tsx</code></td><td><span class="pill mod">修改</span></td><td>顶部 6 Tab 路由骨架；渠道 Tab 按连接状态条件展示。</td></tr>
             <tr><td><code>components/SubTabBar.tsx</code></td><td><span class="pill new">新增</span></td><td>共享的 Operations / Settings 子标签条。</td></tr>
-            <tr><td><code>components/SetupSettings.tsx</code></td><td><span class="pill mod">修改</span></td><td>设置分发与状态徽标（+1274 行）。</td></tr>
-            <tr><td><code>components/LiveChatWidgetCustomizer.tsx</code></td><td><span class="pill new">新增</span></td><td>聊天组件外观/升级定制。</td></tr>
-            <tr><td><code>components/LanguageSwitcher.tsx</code></td><td><span class="pill new">新增</span></td><td>语言切换。</td></tr>
-            <tr><td><code>pages/PlaybookPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>规则全生命周期 + 提案审批 + 文档解析（+815 行）。</td></tr>
-            <tr><td><code>lib/data.ts</code></td><td><span class="pill mod">修改</span></td><td>解析模型、销售数据、zendeskTickets（+636 行）。</td></tr>
-            <tr><td><code>contexts/AppContext.tsx</code></td><td><span class="pill mod">修改</span></td><td>渠道模式、深链 helpers、全局状态扩充（+429 行）。</td></tr>
-            <tr><td><code>pages/SettingsPage.tsx</code> / <code>pages/ZendeskPage.tsx</code> / <code>pages/LiveWidgetPage.tsx</code></td><td><span class="pill new">新增/修改</span></td><td>功能页与全局 Settings 中枢。</td></tr>
+            <tr><td><code>components/ConversationsView.tsx</code></td><td><span class="pill new">新增</span></td><td>共享会话表格，支持 <code>lockedChannel</code>（Live Widget / Zendesk / Performance 复用）。</td></tr>
+            <tr><td><code>components/SetupSettings.tsx</code></td><td><span class="pill mod">修改</span></td><td>渠道设置分发、模式与灰度（Rollout 弹窗）、Rep Config。</td></tr>
+            <tr><td><code>pages/PlaybookPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>规则全生命周期、提案审批、文档解析、限时政策时间窗口（英文选择器）。</td></tr>
+            <tr><td><code>pages/SalesAgentPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Converted Orders 会话 ID + 销售会话侧滑面板。</td></tr>
+            <tr><td><code>pages/AgentsPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Onboarding 3 步、完成提醒与跳转。</td></tr>
+            <tr><td><code>contexts/AppContext.tsx</code></td><td><span class="pill mod">修改</span></td><td>渠道模式、灰度、深链意图（<code>channelConversationsIntent</code> 等）、全局状态。</td></tr>
+            <tr><td><code>lib/data.ts</code></td><td><span class="pill mod">修改</span></td><td>解析模型、销售数据（含 conversationId）、文档时间窗口字段。</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="sub2-title"><span class="pill g">25f9f0d</span> 本次会话打磨（7 个文件）</div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>文件</th><th style="width:80px">类型</th><th>说明</th></tr></thead>
-          <tbody>
-            <tr><td><code>components/ConversationsView.tsx</code></td><td><span class="pill new">新增</span></td><td>抽离的会话日志表格，支持 <code>lockedChannel</code> 锁定渠道。</td></tr>
-            <tr><td><code>pages/LiveWidgetPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Conversations 子标签接入共享组件，锁定 Live Chat Widget。</td></tr>
-            <tr><td><code>pages/PerformancePage.tsx</code></td><td><span class="pill mod">修改</span></td><td>重构为复用 ConversationsView（全渠道），移除内嵌重复逻辑。</td></tr>
-            <tr><td><code>pages/SettingsPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>拆分为 Channels / Rep Config 两个子标签，内联托管数字员工配置。</td></tr>
-            <tr><td><code>contexts/AppContext.tsx</code></td><td><span class="pill mod">修改</span></td><td>新增 <code>agentSettingsIntent</code> 深链标志；<code>goToManagerSettings</code> 改指向全局 Settings。</td></tr>
-            <tr><td><code>pages/AgentsPage.tsx</code></td><td><span class="pill mod">修改</span></td><td>Onboarding：Connect a channel 跳渠道选择列表；Import Policies (optional) 文案。</td></tr>
-            <tr><td><code>components/Sidebar.tsx</code></td><td><span class="pill mod">修改</span></td><td>Conversation 移入 WORKFORCE 分组首位。</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="sub2-title">验证与部署</div>
+      <ul>
+        <li><strong>类型检查：</strong><code>tsc --noEmit</code> 仅余 3 个历史遗留错误，本期未引入新错误。</li>
+        <li><strong>预览验证：</strong>各功能（条件 Tab、灰度弹窗、限时政策、会话溯源、单 rep）均已在预览逐项截图确认。</li>
+        <li><strong>部署：</strong>推送至 <code>feat/email-inbox-v2</code> 与 <code>main</code>，经 Vercel 发布至 Demo 环境。</li>
+      </ul>
     </section>
 
-    <!-- verify -->
-    <section class="section" id="verify">
-      <div class="section-title"><span class="section-num">7</span>验证与部署</div>
+    <!-- Appendix B: changelog -->
+    <section class="section" id="appx-log">
+      <div class="section-title"><span class="section-num appx">B</span>附录 · 变更清单 (Changelog)</div>
+      <div class="sub2-title"><span class="pill g" style="font-size:12px;padding:2px 10px;">v2.0.2</span> · 本期 Changed</div>
       <ul>
-        <li><strong>类型检查：</strong><code>tsc --noEmit</code> 仅余 3 个历史遗留错误，本次迭代未引入新错误。</li>
-        <li><strong>预览验证：</strong>Live Widget → Conversations 正确展示锁定渠道的会话表（含上下文标签）；Performance → Conversations 全渠道行为不变；Onboarding 跳转与文案、侧栏归位均已截图确认。</li>
-        <li><strong>部署：</strong>提交 <code>3f661cb</code> 与 <code>25f9f0d</code> 已推送至 <code>feat/email-inbox-v2</code>，触发 Vercel 自动构建并发布到 Demo 环境。</li>
+        <li>AI Manager 上线门槛：改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
+        <li>Onboarding <em>Get Started</em> 由 4 步精简为 3 步。</li>
+        <li>侧边栏 <em>Conversation</em> 回归主导航、置于 <strong>Reviews 之下</strong>。</li>
+        <li><strong>Onboarding 引导增强</strong>：完成后英文 Toast + 自动跳转 + 已完成卡片 CTA。</li>
+        <li><strong>上线后直达会话明细页</strong>（一次性意图 <code>channelConversationsIntent</code>）。</li>
+        <li><strong>渠道 Tab 条件展示</strong>：连接对应渠道后才出现。</li>
+        <li><strong>Zendesk 会话页对齐 Live Widget</strong>（复用 <code>ConversationsView</code>）。</li>
+        <li><strong>Live Widget 灰度上线（Rollout）</strong>：Switch to Production 弹窗 + 滑块/预设 + 常驻显示。</li>
+        <li><strong>Playbook 规则</strong>：全生命周期 + 工单提案审批流（<code>ProposalReviewSheet</code>）。</li>
+        <li><strong>文档（Documents）</strong>：解析为 modules → topics → rules，来源区分、排序与过滤。</li>
+        <li><strong>规则的时间规则（限时政策）</strong>：限时政策弹时间窗口（英文选择器），规则仅窗口内生效。</li>
+        <li><strong>Sales Agent · Converted Orders 会话溯源</strong>：订单关联会话 ID 并可侧滑查看。</li>
+        <li><strong>Live Widget 设置精简</strong>：移除渠道内 Escalation handoff 模块。</li>
       </ul>
+      <div class="callout"><strong>本期明确不收录 / 已回退：</strong>多 Rep 注册表 + 按渠道分配、多人设意图路由、Performance 复合图（详见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</div>
     </section>
 
   </main>
 </div>
 
-<footer>© 2026 Seel Inc. · Seel AI Support v2.0 · 内部 Demo 文档，仅供评审使用</footer>
+<footer>© 2026 Seel Inc. · Seel AI Support · 产品需求文档 v2.0.2 · 内部 Demo 文档，仅供评审使用</footer>
 </body>
 </html>
