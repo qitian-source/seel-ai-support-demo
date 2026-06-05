@@ -19,7 +19,7 @@ import {
 import {
   BookOpen, FileText, Upload, Search, Clock,
   ChevronRight, ChevronDown, X, Trash2, History,
-  Plus, ThumbsUp, ThumbsDown, Sparkles, PenLine,
+  Plus, ThumbsUp, ThumbsDown, Sparkles, PenLine, Calendar,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -73,7 +73,7 @@ export default function PlaybookPage() {
 // RULES VIEW
 // ============================================================
 function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void }) {
-  const { rulesData, topicsData, updateTopic, setupFullyComplete, addRule, docsData } = useApp();
+  const { rulesData, topicsData, updateTopic, setupFullyComplete, addRule, docsData, toggleRule } = useApp();
 
   const sourceLabelFor = (r: Rule) => {
     if (r.sourceDocId) {
@@ -227,10 +227,23 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-[13px] font-medium text-foreground">{rule.name}</h4>
+                  <h4 className={cn("text-[13px] font-medium", rule.enabled ? "text-foreground" : "text-muted-foreground")}>{rule.name}</h4>
                   <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-muted-foreground/80 border-border/70 bg-muted/30 shrink-0">
                     {moduleOf(rule)}
                   </Badge>
+                  {/* Validity (有效期) */}
+                  {(() => {
+                    const win = rule.window ?? (rule.sourceDocId ? docsData.find((d) => d.id === rule.sourceDocId)?.window : undefined);
+                    return win ? (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-amber-700 border-amber-200 bg-amber-50 shrink-0 gap-1" title={`${fmtWindow(win.from)} → ${fmtWindow(win.to)}`}>
+                        <Clock size={9} /> {fmtShort(win.from)} – {fmtShort(win.to)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-muted-foreground/70 border-border/70 bg-muted/20 shrink-0">
+                        Always
+                      </Badge>
+                    );
+                  })()}
                 </div>
                 <p className="text-[12px] text-muted-foreground line-clamp-1 mt-0.5">
                   {rule.content.slice(0, 120)}{rule.content.length > 120 ? "…" : ""}
@@ -242,6 +255,13 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
                   <Clock size={11} className="shrink-0" />
                   <span className="shrink-0">Updated {rule.lastUpdated}</span>
                 </div>
+              </div>
+              {/* In use / Disabled status + toggle */}
+              <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <span className={cn("text-[11px] font-medium", rule.enabled ? "text-emerald-600" : "text-muted-foreground")}>
+                  {rule.enabled ? "In use" : "Disabled"}
+                </span>
+                <Switch checked={rule.enabled} onCheckedChange={() => toggleRule(rule.id)} className="scale-[0.8]" />
               </div>
               <ChevronRight size={14} className="text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -561,14 +581,27 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
   const [editName, setEditName] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editModule, setEditModule] = useState("");
+  /* Validity (有效期) edit state — per-rule window overrides the source doc's */
+  const [editValidity, setEditValidity] = useState<"always" | "custom">("always");
+  const [editFrom, setEditFrom] = useState("");
+  const [editTo, setEditTo] = useState("");
 
   const allModules = Array.from(new Set(rulesData.map((r) => r.module || "Uncategorized")));
+
+  // Effective validity window: the rule's own window, else its source document's.
+  const effectiveWindow = rule
+    ? (rule.window ?? (rule.sourceDocId ? docsData.find((d) => d.id === rule.sourceDocId)?.window : undefined))
+    : undefined;
 
   const startEdit = () => {
     if (!rule) return;
     setEditName(rule.name);
     setEditContent(rule.content);
     setEditModule(rule.module || "Uncategorized");
+    const w = rule.window ?? (rule.sourceDocId ? docsData.find((d) => d.id === rule.sourceDocId)?.window : undefined);
+    setEditValidity(w ? "custom" : "always");
+    setEditFrom(w?.from ?? "");
+    setEditTo(w?.to ?? "");
     setIsEditing(true);
   };
 
@@ -578,17 +611,25 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
       toast.error("Name and content cannot be empty.");
       return;
     }
+    let newWindow: { from: string; to: string } | undefined;
+    if (editValidity === "custom") {
+      if (!editFrom || !editTo) { toast.error("Set both a start and end time, or choose Always."); return; }
+      if (editFrom >= editTo) { toast.error("End time must be after the start time."); return; }
+      newWindow = { from: editFrom, to: editTo };
+    }
     const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const nextVersion = (rule.versionHistory[0]?.version ?? 0) + 1;
     const changes: string[] = [];
     if (editName.trim() !== rule.name) changes.push("name");
     if (editContent.trim() !== rule.content) changes.push("content");
     if (editModule !== (rule.module || "Uncategorized")) changes.push("module");
+    if (JSON.stringify(newWindow ?? null) !== JSON.stringify(rule.window ?? null)) changes.push("validity");
     const diff = changes.length ? `Edited rule ${changes.join(", ")}.` : "Rule reviewed (no content change).";
     updateRule(rule.id, {
       name: editName.trim(),
       content: editContent.trim(),
       module: editModule,
+      window: newWindow,
       source: "Manager edit",
       lastUpdated: today,
       versionHistory: [
@@ -750,107 +791,56 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
                 <Clock size={13} className="text-muted-foreground/70 shrink-0" />
                 <span>Last updated {rule.lastUpdated}</span>
               </div>
-            </div>
-          </div>
-
-          {/* ACTIONS */}
-          {actions.length > 0 && (
-            <div className="border-t border-border/60 pt-5">
-              <SectionHeader>Actions</SectionHeader>
-              <div className="flex flex-wrap gap-2">
-                {actions.map((action, i) => (
-                  <Badge key={i} variant="outline" className="text-[11px] h-6 font-normal border-border/80 text-foreground/80 bg-muted/30">
-                    <Sparkles size={10} className="mr-1 text-muted-foreground/50" /> {action}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STATS */}
-          <div className="border-t border-border/60 pt-5">
-            <SectionHeader>Stats</SectionHeader>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-muted/30 rounded-lg px-3 py-2.5">
-                <p className="text-[18px] font-semibold text-foreground">{rule.stats.used}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Times used</p>
-              </div>
-              <div className="bg-muted/30 rounded-lg px-3 py-2.5">
-                <p className="text-[18px] font-semibold text-foreground">{rule.stats.avgCsat}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Avg CSAT</p>
-              </div>
-              <div className="bg-muted/30 rounded-lg px-3 py-2.5">
-                <p className="text-[18px] font-semibold text-foreground">{rule.stats.deflection}%</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Deflection</p>
-              </div>
-            </div>
-          </div>
-
-          {/* CONFIG HISTORY — collapsible */}
-          <div className="border-t border-border/60 pt-5">
-            <button
-              onClick={() => setHistoryOpen(!historyOpen)}
-              className="flex items-center gap-1.5 w-full text-left"
-            >
-              <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.08em]">
-                Config History ({rule.versionHistory.length})
-              </span>
-              <ChevronDown
-                size={12}
-                className={cn(
-                  "text-muted-foreground/50 ml-auto transition-transform",
-                  historyOpen && "rotate-180"
-                )}
-              />
-            </button>
-
-            {historyOpen && (
-              <div className="mt-3 relative">
-                {/* Timeline line */}
-                <div className="absolute left-[5px] top-2 bottom-2 w-px bg-border/60" />
-
-                <div className="space-y-4">
-                  {rule.versionHistory.map((entry, i) => (
-                    <div key={i} className="flex gap-3 relative">
-                      {/* Timeline dot */}
-                      <div className={cn(
-                        "w-[11px] h-[11px] rounded-full border-2 shrink-0 mt-0.5 z-10",
-                        i === 0
-                          ? "bg-[#6c47ff] border-[#6c47ff]"
-                          : "bg-white border-border"
-                      )} />
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-[12px] font-semibold",
-                            i === 0 ? "text-[#6c47ff]" : "text-foreground"
-                          )}>
-                            v{entry.version}{i === 0 ? " (current)" : ""}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground">{entry.timestamp}</span>
-                        </div>
-                        <p className="text-[12px] text-foreground/80 mt-1 leading-relaxed">{entry.diff}</p>
-                        <button
-                          onClick={() => {
-                            if (entry.source === "Document" && rule.sourceDocId) onNavigateToDoc?.(rule.sourceDocId);
-                          }}
-                          className={cn(
-                            "text-[11px] mt-1.5",
-                            entry.source === "Document" && rule.sourceDocId
-                              ? "text-[#6c47ff] hover:text-[#5a3ad9] hover:underline cursor-pointer"
-                              : "text-muted-foreground cursor-default"
-                          )}
-                        >
-                          {sourceLabel(entry.source)}
-                        </button>
+              {isEditing ? (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center gap-2 text-[12.5px]">
+                    <Clock size={13} className="text-muted-foreground/70 shrink-0" />
+                    <span className="text-muted-foreground">Validity</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {(["always", "custom"] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setEditValidity(v)}
+                        className={cn(
+                          "flex-1 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-colors",
+                          editValidity === v ? "border-[#6c47ff] text-[#6c47ff] bg-[#f0edff]" : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        )}
+                      >
+                        {v === "always" ? "Always (permanent)" : "Custom range"}
+                      </button>
+                    ))}
+                  </div>
+                  {editValidity === "custom" && (
+                    <div className="space-y-2 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+                      <div>
+                        <label className="text-[11px] font-medium text-gray-600 mb-1 block">From</label>
+                        <EnglishDateTime value={editFrom} onChange={setEditFrom} />
                       </div>
+                      <div>
+                        <label className="text-[11px] font-medium text-gray-600 mb-1 block">To</label>
+                        <EnglishDateTime value={editTo} onChange={setEditTo} />
+                      </div>
+                      <p className="text-[11px] text-gray-400">The rule applies only within this window (to the minute); outside it the rule pauses automatically.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2 text-[12.5px]">
+                  <Clock size={13} className="text-muted-foreground/70 shrink-0" />
+                  <span className="text-muted-foreground">Validity:</span>
+                  {effectiveWindow ? (
+                    <Badge variant="outline" className="text-[11px] h-5 px-1.5 font-normal text-amber-700 border-amber-200 bg-amber-50">
+                      {fmtWindow(effectiveWindow.from)} → {fmtWindow(effectiveWindow.to)}
+                    </Badge>
+                  ) : (
+                    <span className="text-foreground/90 font-medium">Always (permanent)</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
         </div>
 
         {isEditing && (
@@ -886,61 +876,106 @@ function detectTimeBound(text: string): boolean {
 /* English date+time selector — built from <select>s so it always renders in
    English regardless of the browser locale (native datetime-local follows the
    OS locale and can't be forced to English). Value = "YYYY-MM-DDTHH:MM". */
-const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/* Date-time picker — click to open a dropdown of Y/M/D + H:M:S selects.
+   Value format: "YYYY-MM-DD HH:MM:SS" (to the second). */
+const DT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function EnglishDateTime({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  const [open, setOpen] = useState(false);
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
   const year = m ? m[1] : "";
   const month = m ? m[2] : "";
   const day = m ? m[3] : "";
   const hour = m ? m[4] : "";
   const minute = m ? m[5] : "";
+  const second = m ? m[6] : "";
 
-  const compose = (p: { year?: string; month?: string; day?: string; hour?: string; minute?: string }) => {
+  const compose = (p: Partial<Record<"year" | "month" | "day" | "hour" | "minute" | "second", string>>) => {
     const y = p.year ?? year, mo = p.month ?? month, d = p.day ?? day;
-    const h = p.hour ?? hour, mi = p.minute ?? minute;
+    const h = p.hour ?? hour, mi = p.minute ?? minute, s = p.second ?? second;
     if (!y || !mo || !d) { onChange(""); return; }
-    onChange(`${y}-${mo}-${d}T${h || "00"}:${mi || "00"}`);
+    onChange(`${y}-${mo}-${d} ${h || "00"}:${mi || "00"}:${s || "00"}`);
   };
 
-  const selCls = "h-9 px-2 rounded-lg border border-border bg-white text-[12px] focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30";
+  const pad = (n: number) => String(n).padStart(2, "0");
   const years = ["2026", "2027"];
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-  const minutes = ["00", "15", "30", "45"];
+  const days = Array.from({ length: 31 }, (_, i) => pad(i + 1));
+  const hrs = Array.from({ length: 24 }, (_, i) => pad(i));
+  const sixty = Array.from({ length: 60 }, (_, i) => pad(i));
+  const selCls = "h-8 px-1.5 rounded-md border border-gray-200 bg-white text-[12px] text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30";
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <select value={month} onChange={(e) => compose({ month: e.target.value })} className={selCls}>
-        <option value="">Month</option>
-        {EN_MONTHS.map((label, i) => <option key={label} value={String(i + 1).padStart(2, "0")}>{label}</option>)}
-      </select>
-      <select value={day} onChange={(e) => compose({ day: e.target.value })} className={selCls}>
-        <option value="">Day</option>
-        {days.map((d) => <option key={d} value={d}>{Number(d)}</option>)}
-      </select>
-      <select value={year} onChange={(e) => compose({ year: e.target.value })} className={selCls}>
-        <option value="">Year</option>
-        {years.map((y) => <option key={y} value={y}>{y}</option>)}
-      </select>
-      <span className="text-muted-foreground text-[12px] px-0.5">at</span>
-      <select value={hour} onChange={(e) => compose({ hour: e.target.value })} className={selCls}>
-        {hours.map((h) => <option key={h} value={h}>{h}</option>)}
-      </select>
-      <span className="text-muted-foreground text-[12px]">:</span>
-      <select value={minute} onChange={(e) => compose({ minute: e.target.value })} className={selCls}>
-        {minutes.map((mi) => <option key={mi} value={mi}>{mi}</option>)}
-      </select>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full h-9 pl-3 pr-8 rounded-lg border border-gray-200 bg-white text-[13px] text-left tabular-nums focus:outline-none focus:ring-2 focus:ring-[#6c47ff]/30"
+      >
+        <span className={value ? "text-gray-800" : "text-gray-400"}>{value || "YYYY-MM-DD HH:MM:SS"}</span>
+      </button>
+      <Calendar className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 z-50 w-[280px] rounded-lg border border-gray-200 bg-white shadow-lg p-3 space-y-2.5">
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Date</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <select value={year} onChange={(e) => compose({ year: e.target.value })} className={selCls}>
+                  <option value="">Year</option>
+                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <select value={month} onChange={(e) => compose({ month: e.target.value })} className={selCls}>
+                  <option value="">Mon</option>
+                  {DT_MONTHS.map((label, i) => <option key={label} value={pad(i + 1)}>{label}</option>)}
+                </select>
+                <select value={day} onChange={(e) => compose({ day: e.target.value })} className={selCls}>
+                  <option value="">Day</option>
+                  {days.map((d) => <option key={d} value={d}>{Number(d)}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Time (HH:MM:SS)</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <select value={hour} onChange={(e) => compose({ hour: e.target.value })} className={selCls}>
+                  {hrs.map((h) => <option key={h} value={h}>{h}</option>)}
+                </select>
+                <select value={minute} onChange={(e) => compose({ minute: e.target.value })} className={selCls}>
+                  {sixty.map((mi) => <option key={mi} value={mi}>{mi}</option>)}
+                </select>
+                <select value={second} onChange={(e) => compose({ second: e.target.value })} className={selCls}>
+                  {sixty.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-full h-8 rounded-md bg-[#6c47ff] hover:bg-[#5a3ad9] text-white text-[12px] font-medium"
+            >
+              Done
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-/* "2026-05-20T00:00" → "May 20, 2026 00:00" */
+/* "2026-05-20 00:00:00" → "May 20, 2026 00:00:00" (accepts T or space separator) */
 function fmtWindow(v: string): string {
   if (!v) return "—";
-  const [d, time] = v.split("T");
+  const [d, time] = v.split(/[T ]/);
   const [y, m, day] = d.split("-").map(Number);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${months[(m || 1) - 1]} ${day}, ${y}${time ? ` ${time}` : ""}`;
+}
+/* compact "2026-05-20 00:00:00" → "May 20" */
+function fmtShort(v: string): string {
+  if (!v) return "—";
+  const [y, m, day] = v.split(/[T ]/)[0].split("-").map(Number);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[(m || 1) - 1]} ${day}`;
 }
 
 function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
@@ -971,7 +1006,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
     }
   }, []);
 
-  const handleUploadFile = (name: string, size: string) => {
+  const handleUploadFile = (name: string, size: string, window?: { from: string; to: string }) => {
     const newDoc: DocType = {
       id: `doc-${Date.now()}`,
       name,
@@ -981,6 +1016,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       status: "Processing",
       inUse: false,
       extractedRules: "",
+      ...(window ? { campaign: true, window } : {}),
     };
     addDocument(newDoc);
     setProcessing(true);
@@ -1031,21 +1067,11 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       toast.success(`${ruleNames.length} rules extracted`, {
         description: "Check the Rules tab for details.",
       });
-
-      // AI flagged a time-limited (campaign) policy → prompt for its active window.
-      if (detectTimeBound(name)) {
-        updateDocument(newDoc.id, { campaign: true });
-        setWindowDocId(newDoc.id);
-        toast.info("AI detected a time-limited policy", {
-          description: "Set when this campaign policy should be active.",
-        });
-      } else {
-        onSwitchToRules();
-      }
+      onSwitchToRules();
     }, 2500);
   };
 
-  const handleManualInput = (title: string, content: string) => {
+  const handleManualInput = (title: string, content: string, window?: { from: string; to: string }) => {
     const newDoc: DocType = {
       id: `doc-${Date.now()}`,
       name: title,
@@ -1055,6 +1081,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       status: "Processing",
       inUse: false,
       extractedRules: "",
+      ...(window ? { campaign: true, window } : {}),
     };
     addDocument(newDoc);
     setProcessing(true);
@@ -1091,17 +1118,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       };
       addTopic(newTopic);
       toast.success(`${ruleNames.length} rule extracted`);
-
-      // AI flagged a time-limited (campaign) policy → prompt for its active window.
-      if (detectTimeBound(`${title} ${content}`)) {
-        updateDocument(newDoc.id, { campaign: true });
-        setWindowDocId(newDoc.id);
-        toast.info("AI detected a time-limited policy", {
-          description: "Set when this campaign policy should be active.",
-        });
-      } else {
-        onSwitchToRules();
-      }
+      onSwitchToRules();
     }, 2500);
   };
 
@@ -1253,8 +1270,8 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
       <AddDocumentDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        onUploadFile={(name, size) => { setShowAddDialog(false); handleUploadFile(name, size); }}
-        onManualInput={(title, content) => { setShowAddDialog(false); handleManualInput(title, content); }}
+        onUploadFile={(name, size, window) => { setShowAddDialog(false); handleUploadFile(name, size, window); }}
+        onManualInput={(title, content, window) => { setShowAddDialog(false); handleManualInput(title, content, window); }}
       />
 
       {/* Document Detail Sheet — parsed module → topic → rules */}
@@ -1315,11 +1332,11 @@ function TimeWindowDialog({ docId, onClose }: { docId: string; onClose: () => vo
 
           <div className="space-y-3">
             <div>
-              <label className="text-[12px] font-medium text-foreground mb-1 block">Starts</label>
+              <label className="text-[12px] font-medium text-foreground mb-1 block">From</label>
               <EnglishDateTime value={from} onChange={setFrom} />
             </div>
             <div>
-              <label className="text-[12px] font-medium text-foreground mb-1 block">Ends</label>
+              <label className="text-[12px] font-medium text-foreground mb-1 block">To</label>
               <EnglishDateTime value={to} onChange={setTo} />
             </div>
           </div>
@@ -1413,22 +1430,37 @@ function DocumentDetailSheet({ docId, open, onOpenChange }: {
 function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUploadFile: (name: string, size: string) => void;
-  onManualInput: (title: string, content: string) => void;
+  onUploadFile: (name: string, size: string, window?: { from: string; to: string }) => void;
+  onManualInput: (title: string, content: string, window?: { from: string; to: string }) => void;
 }) {
   const [tab, setTab] = useState<"upload" | "manual">("upload");
   const [dragOver, setDragOver] = useState(false);
   const [manualTitle, setManualTitle] = useState("");
   const [manualContent, setManualContent] = useState("");
+  /* Validity (有效期) — default permanent; custom = active only within a time range */
+  const [validity, setValidity] = useState<"always" | "custom">("always");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  // Returns: null = permanent · {from,to} = window · false = invalid (abort).
+  const resolveWindow = (): { from: string; to: string } | null | false => {
+    if (validity === "always") return null;
+    if (!from || !to) { toast.error("Set both a start and end time, or choose Always."); return false; }
+    if (from >= to) { toast.error("End time must be after the start time."); return false; }
+    return { from, to };
+  };
+
+  const submitUpload = (name: string, size: string) => {
+    const win = resolveWindow();
+    if (win === false) return;
+    onUploadFile(name, size, win ?? undefined);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      onUploadFile(file.name, `${(file.size / 1024).toFixed(0)} KB`);
-    }
+    if (files.length > 0) submitUpload(files[0].name, `${(files[0].size / 1024).toFixed(0)} KB`);
   };
 
   const handleManualSubmit = () => {
@@ -1436,10 +1468,16 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
       toast.error("Please fill in both title and content.");
       return;
     }
-    onManualInput(manualTitle.trim(), manualContent.trim());
+    const win = resolveWindow();
+    if (win === false) return;
+    onManualInput(manualTitle.trim(), manualContent.trim(), win ?? undefined);
     setManualTitle("");
     setManualContent("");
   };
+
+  const validityBtn = (active: boolean) =>
+    cn("flex-1 px-3 py-2 rounded-lg border text-[12px] font-medium transition-colors",
+      active ? "border-[#6c47ff] text-[#6c47ff] bg-[#f0edff]" : "border-gray-200 text-gray-500 hover:border-gray-300");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1470,6 +1508,30 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
           </button>
         </div>
 
+        {/* Validity (有效期) — applies to both upload & manual */}
+        <div className="space-y-2">
+          <label className="text-[12px] font-medium text-foreground block flex items-center gap-1.5">
+            <Clock size={13} className="text-[#6c47ff]" /> Validity
+          </label>
+          <div className="flex gap-2">
+            <button onClick={() => setValidity("always")} className={validityBtn(validity === "always")}>Always (permanent)</button>
+            <button onClick={() => setValidity("custom")} className={validityBtn(validity === "custom")}>Custom range</button>
+          </div>
+          {validity === "custom" && (
+            <div className="space-y-2 pt-1 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+              <div>
+                <label className="text-[11px] font-medium text-gray-600 mb-1 block">From</label>
+                <EnglishDateTime value={from} onChange={setFrom} />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-gray-600 mb-1 block">To</label>
+                <EnglishDateTime value={to} onChange={setTo} />
+              </div>
+              <p className="text-[11px] text-gray-400">Rules from this document apply only within the window (down to the minute) — outside it they pause automatically. For big sales / campaigns (BFCM, 11.11).</p>
+            </div>
+          )}
+        </div>
+
         {tab === "upload" ? (
           <div
             className={cn(
@@ -1479,7 +1541,7 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            onClick={() => onUploadFile(`Document_${Date.now().toString().slice(-4)}.pdf`, "1.2 MB")}
+            onClick={() => submitUpload(`Document_${Date.now().toString().slice(-4)}.pdf`, "1.2 MB")}
           >
             <Upload size={28} className="mx-auto mb-3 text-muted-foreground" />
             <p className="text-[13px] text-foreground font-medium">Drag & drop files here, or click to upload</p>

@@ -316,10 +316,7 @@ export default function LiveChatWidgetCustomizer({ open, onClose }: { open: bool
                   <ColorField label="Text on brand" value={w.textOnBrand} onChange={(v) => setChatWidget({ textOnBrand: v })} />
                   <ColorField label="Bot bubble" value={w.botBubble} onChange={(v) => setChatWidget({ botBubble: v })} />
                   <ColorField label="Bot text" value={w.botText} onChange={(v) => setChatWidget({ botText: v })} />
-                  <ColorField label="Customer bubble" value={w.userBubble} onChange={(v) => setChatWidget({ userBubble: v })} />
-                  <ColorField label="Customer text" value={w.userText} onChange={(v) => setChatWidget({ userText: v })} />
                   <ColorField label="Window background" value={w.windowBackground} onChange={(v) => setChatWidget({ windowBackground: v })} />
-                  <ColorField label="Launcher button" value={w.launcherColor} onChange={(v) => setChatWidget({ launcherColor: v })} />
                 </Section>
 
                 <Section title="Layout">
@@ -342,40 +339,12 @@ export default function LiveChatWidgetCustomizer({ open, onClose }: { open: bool
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-700 mb-1.5 block">Distance from side</label>
+                      <label className="text-xs font-medium text-gray-700 mb-1.5 block">Distance from right</label>
                       <div className="flex items-center gap-1">
                         <Input type="number" value={w.distanceRight} onChange={(e) => setChatWidget({ distanceRight: Number(e.target.value) })} className="text-sm" />
                         <span className="text-xs text-gray-400">px</span>
                       </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Corner radius</label>
-                    <div className="flex items-center gap-1 max-w-[140px]">
-                      <Input type="number" value={w.cornerRadius} onChange={(e) => setChatWidget({ cornerRadius: Number(e.target.value) })} className="text-sm" />
-                      <span className="text-xs text-gray-400">px</span>
-                    </div>
-                  </div>
-                </Section>
-
-                <Section title="Typography">
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Font family</label>
-                    <div className="relative">
-                      <Type className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <select
-                        value={w.fontFamily}
-                        onChange={(e) => setChatWidget({ fontFamily: e.target.value })}
-                        className="w-full h-9 pl-8 pr-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                      >
-                        {FONT_OPTIONS.map((f) => (
-                          <option key={f.label} value={f.label}>{f.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5" style={{ fontFamily: fontStack(w.fontFamily) }}>
-                      The quick brown fox jumps over the lazy dog.
-                    </p>
                   </div>
                 </Section>
               </>
@@ -406,128 +375,28 @@ export default function LiveChatWidgetCustomizer({ open, onClose }: { open: bool
                       <Button size="sm" variant="outline" onClick={addQuestion}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Input placeholder</label>
-                    <Input value={w.inputPlaceholder} onChange={(e) => setChatWidget({ inputPlaceholder: e.target.value })} className="text-sm" />
-                  </div>
                 </Section>
 
-                <Section title="Behavior">
+                <Section title="Page Targeting">
                   <div className="flex items-center justify-between">
                     <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">AI disclosure</p>
-                      <p className="text-[11px] text-gray-400">Show "You're chatting with an AI assistant". Managed in Agent Config.</p>
+                      <p className="text-xs font-medium text-gray-700">Show on all pages</p>
+                      <p className="text-[11px] text-gray-400">Display the widget everywhere except the hidden pages below.</p>
                     </div>
-                    <Switch checked={discloseAI} disabled />
+                    <Switch checked={w.targetAllPages} onCheckedChange={(v) => setChatWidget({ targetAllPages: v })} />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">Talk to a human</p>
-                      <p className="text-[11px] text-gray-400">Let shoppers escalate to your team.</p>
-                    </div>
-                    <Switch checked={w.talkToHuman} onCheckedChange={(v) => setChatWidget({ talkToHuman: v })} />
-                  </div>
-                  {w.talkToHuman && (() => {
-                    const seats = handoff.availableHandoffSeats;
-                    return (
-                      <div>
-                        <label className="text-xs font-medium text-gray-700 mb-1.5 block">Escalate to</label>
-                        <select value={channelReply.chat.escalationSeat} onChange={(e) => setChannelReply("chat", { escalationSeat: e.target.value })} className="w-full h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                          <option value="">Select a teammate…</option>
-                          {seats.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.email}</option>)}
-                        </select>
-                      </div>
-                    );
-                  })()}
-                  <div className="flex items-center justify-between">
-                    <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">Proactive greeting</p>
-                      <p className="text-[11px] text-gray-400">Auto-open the widget after a delay.</p>
-                    </div>
-                    <Switch checked={w.proactiveEnabled} onCheckedChange={(v) => setChatWidget({ proactiveEnabled: v })} />
-                  </div>
-                  {w.proactiveEnabled && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-700 mb-1.5 block">Open after</label>
-                      <div className="flex items-center gap-1 max-w-[140px]">
-                        <Input type="number" value={w.proactiveDelay} onChange={(e) => setChatWidget({ proactiveDelay: Number(e.target.value) })} className="text-sm" />
-                        <span className="text-xs text-gray-400">sec</span>
-                      </div>
-                    </div>
-                  )}
                   <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Offline / away message</label>
-                    <textarea
-                      value={w.offlineMessage}
-                      onChange={(e) => setChatWidget({ offlineMessage: e.target.value })}
-                      rows={2}
-                      className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">Pre-chat form</p>
-                      <p className="text-[11px] text-gray-400">Collect name &amp; email before the chat starts.</p>
-                    </div>
-                    <Switch checked={w.preChatForm} onCheckedChange={(v) => { setChatWidget({ preChatForm: v }); setPreChatDone(false); }} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">Post-chat rating (CSAT)</p>
-                      <p className="text-[11px] text-gray-400">Ask shoppers to rate the conversation.</p>
-                    </div>
-                    <Switch checked={w.csatEnabled} onCheckedChange={(v) => setChatWidget({ csatEnabled: v })} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="pr-3">
-                      <p className="text-xs font-medium text-gray-700">"Powered by Seel" badge</p>
-                    </div>
-                    <Switch checked={w.poweredBy} onCheckedChange={(v) => setChatWidget({ poweredBy: v })} />
-                  </div>
-                </Section>
-
-                <Section title="Page Targeting" defaultOpen={false}>
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1.5 block">Show on devices</label>
-                    <div className="flex rounded-lg border border-gray-200 overflow-hidden w-fit">
-                      {([["all", "All"], ["desktop", "Desktop"], ["mobile", "Mobile"]] as const).map(([val, label], i) => (
-                        <button
-                          key={val}
-                          onClick={() => setChatWidget({ deviceTarget: val })}
-                          className={cn("px-3 py-1.5 text-[12px] font-medium", i > 0 && "border-l border-gray-200",
-                            w.deviceTarget === val ? "bg-gray-100 text-gray-800" : "text-gray-400 bg-white")}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={w.targetAllPages} onChange={(e) => setChatWidget({ targetAllPages: e.target.checked })} className="w-4 h-4 rounded accent-indigo-600" />
-                    <span className="text-sm font-medium text-gray-800">All pages</span>
-                  </label>
-                  <div className={cn("space-y-2.5", w.targetAllPages && "opacity-40 pointer-events-none")}>
-                    {PAGE_TARGETS.map((p) => (
-                      <label key={p.key} className="flex items-start gap-2 cursor-pointer">
-                        <input type="checkbox" checked={w.targetPages.includes(p.key)} onChange={() => togglePage(p.key)} className="w-4 h-4 rounded accent-indigo-600 mt-0.5" />
-                        <span className="leading-tight">
-                          <span className="block text-sm text-gray-800">{p.label}</span>
-                          <span className="block text-[11px] text-gray-400">{p.path}</span>
-                        </span>
-                      </label>
+                    <p className="text-xs font-medium text-gray-700">Hidden Pages</p>
+                    <p className="text-[11px] text-gray-400 mb-1.5">The widget will not appear on pages matching these URL patterns.</p>
+                    {w.customPages.map((p, i) => (
+                      <div key={i} className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                        <code className="bg-gray-50 px-1.5 py-0.5 rounded">{p}</code>
+                        <button onClick={() => removeCustomPage(i)} className="text-gray-300 hover:text-gray-600"><X className="w-3 h-3" /></button>
+                      </div>
                     ))}
-                    <div className="pt-1">
-                      <p className="text-xs font-semibold text-gray-700 mb-1.5">Custom Pages</p>
-                      {w.customPages.map((p, i) => (
-                        <div key={i} className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                          <code className="bg-gray-50 px-1.5 py-0.5 rounded">{p}</code>
-                          <button onClick={() => removeCustomPage(i)} className="text-gray-300 hover:text-gray-600"><X className="w-3 h-3" /></button>
-                        </div>
-                      ))}
-                      <div className="flex gap-2">
-                        <Input value={newCustomPage} onChange={(e) => setNewCustomPage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustomPage()} placeholder="/pages/faq" className="text-sm" />
-                        <Button size="sm" variant="outline" onClick={addCustomPage}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
-                      </div>
+                    <div className="flex gap-2">
+                      <Input value={newCustomPage} onChange={(e) => setNewCustomPage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCustomPage()} placeholder="/products/*" className="text-sm" />
+                      <Button size="sm" variant="outline" onClick={addCustomPage}><Plus className="w-3.5 h-3.5 mr-1" /> Add</Button>
                     </div>
                   </div>
                 </Section>

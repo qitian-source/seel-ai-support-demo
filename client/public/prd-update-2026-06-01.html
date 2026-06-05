@@ -132,7 +132,7 @@
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel AI Support</div>
   <span class="topbar-tag">产品需求文档 (PRD)</span>
-  <span class="topbar-date">2026-06-02 · v2.0.2 · Draft</span>
+  <span class="topbar-date">2026-06-05 · v2.0.3 · Draft</span>
 </div>
 
 <div class="layout">
@@ -158,9 +158,9 @@
       <div class="cover-title">Seel AI Support · 产品需求文档</div>
       <div class="cover-sub">定位：<strong style="color:#fff">AI Manager = 数字员工管理中枢</strong>。让商家以最低门槛把 AI 数字员工部署到多渠道客服，并能可控上线、可运营规则、可溯源效果。本文从背景、目标、用户场景到功能需求与验收完整描述本期范围。</div>
       <div class="cover-meta">
-        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.2</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.3</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">评审中 (Draft)</span></div>
-        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-02</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-05</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">范围</span><span class="cover-meta-value">本期迭代 · 内部 Demo</span></div>
       </div>
     </div>
@@ -261,16 +261,17 @@
 
       <!-- 5.3 -->
       <div class="req">
-        <div class="req-id">FR-3 · 渠道模式与灰度上线</div>
-        <h4>统一 off / training / production；Live Widget production 支持灰度比例</h4>
-        <p>三个渠道共用同一 <code>ChannelMode</code> 语义。Live Widget 切换到 Production 时弹确认框，可设定灰度（Rollout）比例。</p>
+        <div class="req-id">FR-3 · 渠道模式、上线与灰度</div>
+        <h4>统一 off / training / production；Live Chat Widget 通过 Shopify 主题安装并支持灰度上线</h4>
+        <p>三个渠道共用同一 <code>ChannelMode</code> 语义。Live Chat Widget 经 Shopify 主题安装上线；切换到 Production 时弹确认框设定灰度（Rollout）比例。</p>
         <div class="ac">
           <div class="ac-title">验收标准</div>
           <ul>
             <li>三渠道模式语义统一：off（暂停）/ training（仅草拟）/ production（自主回复）。</li>
-            <li>Live Widget 选 Production → 弹 <code>Switch to Production?</code>，含滑块 + 预设（10/25/50/100%）。</li>
-            <li>确认后 Mode 下方<strong>常驻显示当前灰度比例</strong>，可随时 Adjust。</li>
-            <li>Email / Zendesk 切换模式不弹灰度框。</li>
+            <li>渠道命名为 <strong>Live Chat Widget</strong>；连接流程为 <em>Customize widget</em> + <strong>Add to theme</strong>（跳转 Shopify 主题安装）；安装后显示「Widget installed on seel-demo.myshopify.com」与 <em>Added to theme</em>。</li>
+            <li>Live Widget 选 Production → 弹 <code>Switch to Production?</code>，含滑块 + 预设（10/25/50/100%）；确认后 Mode 下方<strong>常驻显示灰度比例</strong>，可随时 Adjust。Email / Zendesk 切换不弹灰度框。</li>
+            <li>Live Chat Widget 设置含 <strong>Escalation Email</strong>（人工转接邮箱）；移除了渠道「Primary（主渠道）」标识。</li>
+            <li>Widget 定制器精简为 Colors（5）/ Layout / Messages / Page Targeting（Show on all pages + Hidden Pages）。</li>
           </ul>
         </div>
       </div>
@@ -300,7 +301,10 @@
             <li>规则可<strong>新建 / 编辑 / 删除</strong>，状态文案正确（created / updated / deleted / accepted and live）。</li>
             <li>工单规则提案经审批后一键落地为 live 规则，支持「Edit rule before saving」。</li>
             <li>上传文档：Processing → Processed，解析出 modules / topics / rules，并区分来源（提案 / 编辑 / 上传）。</li>
-            <li><strong>限时政策</strong>：AI 识别为限时政策（大促 / campaign，如 BFCM、11.11）时弹出时间窗口设置（<strong>英文日期时间选择器</strong> · Start / End）；保存后文档常驻显示生效窗口；<strong>规则仅在窗口内对 AI 生效，窗口外自动暂停</strong>。</li>
+            <li><strong>限时政策 / 有效期</strong>：上传文档时可设时间范围（<strong>默认永久</strong>，或自定义 From / To）；AI 识别为限时政策（大促 / campaign）时同样提示。规则<strong>仅在有效期内对 AI 生效，窗口外自动暂停</strong>。</li>
+            <li><strong>单条规则可改有效期</strong>：规则详情显示 <em>Validity</em>；编辑态可选 <em>Always (permanent)</em> 或 <em>Custom range</em>，规则自身窗口<strong>覆盖</strong>来源文档窗口。</li>
+            <li><strong>时间选择器</strong>：From / To 下拉选择（年/月/日 + 时/分/秒，格式 <code>YYYY-MM-DD HH:MM:SS</code>，精确到秒，英文、不受浏览器 locale 影响）。</li>
+            <li>规则列表标识 <strong>In use / Disabled</strong> 状态与<strong>有效期</strong>徽标；规则详情精简（移除 Actions / Stats / Config history）。</li>
           </ul>
         </div>
       </div>
@@ -321,14 +325,16 @@
 
       <!-- 5.7 -->
       <div class="req">
-        <div class="req-id">FR-7 · 数字员工配置（单 Rep）</div>
-        <h4>单个 AI 数字员工：人设 + 权限，配置于全局 Settings → Rep Config</h4>
-        <p>本期为<strong>单数字员工</strong>模型。数字员工的人设、语气与读写权限在全局 Settings 的 Rep Config 子标签内联托管。</p>
+        <div class="req-id">FR-7 · 数字员工配置（单 Rep）与动作权限</div>
+        <h4>单个 AI 数字员工：人设 + 动作权限，配置于全局 Settings → Rep Config</h4>
+        <p>本期为<strong>单数字员工</strong>模型。人设、语气与<strong>动作权限</strong>在全局 Settings 的 Rep Config 子标签内联托管。</p>
         <div class="ac">
           <div class="ac-title">验收标准</div>
           <ul>
-            <li>Rep Config 可编辑该 rep 的人设 / 语气 / 权限。</li>
-            <li><strong>不提供</strong>多 rep 管理与按渠道分配（见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</li>
+            <li>Rep Config 可编辑该 rep 的人设 / 语气 / 动作权限；<strong>不提供</strong>多 rep 管理与按渠道分配（见 <a href="#goals" style="color:var(--brand)">Non-Goals</a>）。</li>
+            <li><strong>READ</strong>：Orders（Look Up Order / Track Shipment / Look Up Customer Order History）· Customer Info（Look Up Customer）· Product（Look Up Product / Search Products）· Tools（Web Search）。READ ACTIONS <strong>默认全展开</strong>，不折叠。</li>
+            <li><strong>WRITE</strong>：Orders（Cancel Order / Edit Shipping Address）· Product（Recommend Products）· Tickets（Message User / Escalate Ticket）· Communication（Send Email）；后四项为 <em>Always on</em>。</li>
+            <li><strong>Look Up Order 范围可选</strong>：<em>Seel-protected</em>（仅 Seel 保障内订单）/ <em>All orders</em>（全部订单），由商家自行选择。</li>
           </ul>
         </div>
       </div>
@@ -411,6 +417,17 @@
     <!-- Appendix B: changelog -->
     <section class="section" id="appx-log">
       <div class="section-title"><span class="section-num appx">B</span>附录 · 变更清单 (Changelog)</div>
+
+      <div class="sub2-title"><span class="pill g" style="font-size:12px;padding:2px 10px;">v2.0.3</span> · 体验打磨与配置增强（2026-06-05）</div>
+      <ul>
+        <li><strong>AI rep 动作权限重构</strong>：READ（Orders / Customer Info / Product / Tools）+ WRITE（Orders / Product / Tickets / Communication）对齐设计；<strong>Look Up Order 可选范围</strong> Seel-protected / All orders；READ ACTIONS <strong>默认全展开</strong>。</li>
+        <li><strong>单条规则可改有效期</strong>：规则详情新增 <em>Validity</em>，编辑态可选 Always / Custom range（规则窗口覆盖文档窗口）；详情移除 Actions / Stats / Config history。</li>
+        <li><strong>文档上传时间选择</strong>：默认永久，可自定义 From / To；规则列表标识 <em>In use / Disabled</em> + 有效期徽标。</li>
+        <li><strong>时间选择器</strong>：From / To 下拉，格式 <code>YYYY-MM-DD HH:MM:SS</code>（精确到秒，英文）。</li>
+        <li><strong>Live Chat Widget</strong>：渠道改名；连接流程 <em>Customize</em> + <em>Add to theme</em>（Shopify 主题安装）；设置新增 <strong>Escalation Email</strong>；定制器精简（Colors 5 / Layout / Messages / Page Targeting）。</li>
+        <li><strong>移除</strong>：渠道「Primary」标识、AI Manager 的「Channel overview」面板、Get Started 的进度条与 Demo 控件、Import Policies 的「Done」态（改中性卡片）、Widget 的 Pre-chat / CSAT / Powered-by 开关。</li>
+      </ul>
+
       <div class="sub2-title"><span class="pill g" style="font-size:12px;padding:2px 10px;">v2.0.2</span> · 本期 Changed</div>
       <ul>
         <li>AI Manager 上线门槛：改为<strong>仅依赖「已连接渠道」</strong>，不再要求创建 AI rep。</li>
@@ -434,6 +451,6 @@
   </main>
 </div>
 
-<footer>© 2026 Seel Inc. · Seel AI Support · 产品需求文档 v2.0.2 · 内部 Demo 文档，仅供评审使用</footer>
+<footer>© 2026 Seel Inc. · Seel AI Support · 产品需求文档 v2.0.3 · 内部 Demo 文档，仅供评审使用</footer>
 </body>
 </html>

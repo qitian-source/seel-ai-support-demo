@@ -74,6 +74,7 @@ interface ChatWidgetConfig {
   proactiveDelay: number;
   talkToHuman: boolean;
   offlineMessage: string;
+  escalationEmail: string; // where chat escalations are sent
   poweredBy: boolean;
   preChatForm: boolean;
   csatEnabled: boolean;
@@ -300,6 +301,7 @@ const defaultChatWidget: ChatWidgetConfig = {
   proactiveDelay: 5,
   talkToHuman: true,
   offlineMessage: "We're away right now — leave a message and we'll get back to you.",
+  escalationEmail: "mstar@seel.com",
   poweredBy: true,
   preChatForm: false,
   csatEnabled: false,

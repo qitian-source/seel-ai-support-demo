@@ -667,6 +667,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
     zendeskMode, setZendeskMode,
     asyncBackbone, setAsyncBackbone,
     primaryChannel, setPrimaryChannel,
+    chatWidget, setChatWidget,
   } = useApp();
 
   const [chatConnecting, setChatConnecting] = useState(false);
@@ -695,6 +696,9 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
   const toggle = (id: ChannelId) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   const handleConnectChat = () => {
+    // Add to theme → jump to the Shopify theme editor to install the app embed,
+    // then reflect the installed state once it returns.
+    toast.info("Opening Shopify theme editor…");
     setChatConnecting(true);
     setTimeout(() => {
       setLiveChatConnected(true);
@@ -702,7 +706,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
       if (!primaryChannel) setPrimaryChannel("chat");
       setChatConnecting(false);
       setExpanded((p) => ({ ...p, chat: true }));
-      toast.success("Live chat widget installed on seel-demo.myshopify.com");
+      toast.success("Widget installed on seel-demo.myshopify.com");
     }, 1200);
   };
 
@@ -732,21 +736,8 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
   /* ── Connected pill / Set-as-primary control ── */
   function StatusControls({ id }: { id: ChannelId }) {
     if (!isConnected[id]) return null;
-    const isPrimary = primaryChannel === id;
     return (
       <div className="flex items-center gap-2">
-        {isPrimary ? (
-          <Badge className="h-5 px-1.5 text-[10px] gap-1 bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-100">
-            <Star className="w-2.5 h-2.5 fill-indigo-500 text-indigo-500" /> Primary
-          </Badge>
-        ) : connectedCount > 1 ? (
-          <button
-            onClick={() => { setPrimaryChannel(id); toast.success("Primary channel updated"); }}
-            className="text-[11px] text-gray-400 hover:text-indigo-600 transition-colors"
-          >
-            Set as primary
-          </button>
-        ) : null}
         <span className="flex items-center gap-1 text-[11px] font-medium text-green-700">
           <span className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
             <Check className="w-2.5 h-2.5 text-green-600" />
@@ -772,7 +763,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-semibold text-gray-800">Live Widget</p>
+                <p className="text-sm font-semibold text-gray-800">Live Chat Widget</p>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">Real-time chat on your storefront</p>
             </div>
@@ -795,10 +786,15 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
           <div className="border-t border-gray-100 p-4 space-y-4">
             {!liveChatConnected ? (
               <div className="space-y-3">
-                <p className="text-xs text-gray-600">One-click install on <strong>seel-demo.myshopify.com</strong> — no code required.</p>
-                <Button size="sm" onClick={handleConnectChat} disabled={chatConnecting}>
-                  {chatConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Installing...</> : "Install widget"}
-                </Button>
+                <p className="text-xs text-gray-600">Customize the widget, then add it to your <strong>Shopify theme</strong> — no code required.</p>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setWidgetOpen(true)}>
+                    <Sliders className="w-3.5 h-3.5" /> Customize widget
+                  </Button>
+                  <Button size="sm" onClick={handleConnectChat} disabled={chatConnecting}>
+                    {chatConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Opening Shopify…</> : "Add to theme"}
+                  </Button>
+                </div>
               </div>
             ) : (
               <>
@@ -820,7 +816,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                   }}
                 />
 
-                {/* Customize */}
+                {/* Customize + theme status */}
                 <div className="flex items-center gap-2 pt-1">
                   <Button
                     variant="outline" size="sm" className="h-8 text-[12px] gap-1.5"
@@ -828,6 +824,28 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                   >
                     <Sliders className="w-3.5 h-3.5" /> Customize widget
                   </Button>
+                  <Button
+                    variant="outline" size="sm" disabled
+                    className="h-8 text-[12px] gap-1.5 text-gray-400 disabled:opacity-100"
+                  >
+                    <Check className="w-3.5 h-3.5" /> Added to theme
+                  </Button>
+                </div>
+
+                {/* Escalation — where chat escalations are emailed */}
+                <div className="pt-3 mt-1 border-t border-gray-100">
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Escalation</p>
+                  <label className="text-xs font-medium text-gray-700 mb-1 block">
+                    Escalation Email <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    value={chatWidget.escalationEmail}
+                    onChange={(e) => setChatWidget({ escalationEmail: e.target.value })}
+                    placeholder="team@yourstore.com"
+                    className="text-sm max-w-sm"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">When a chat needs a human, the conversation is emailed here.</p>
                 </div>
               </>
             )}
@@ -1107,8 +1125,6 @@ export function ConfigureAgentSection() {
     discloseAI, setDiscloseAI,
     setMainTab, setManagerTab,
   } = useApp();
-
-  const [showReadActions, setShowReadActions] = useState(false);
   const [expandedPermGroups, setExpandedPermGroups] = useState<Record<string, boolean>>({});
 
   const readPerms = repPermissions.filter((p) => p.type === "read");
@@ -1140,6 +1156,9 @@ export function ConfigureAgentSection() {
       repPermissions.map((p) => (p.name === name && !p.locked ? { ...p, enabled: !p.enabled } : p))
     );
   };
+  const setPermScope = (name: string, scope: "all" | "seel") => {
+    setRepPermissions(repPermissions.map((p) => (p.name === name ? { ...p, scope } : p)));
+  };
 
   const isFirstHire = !repHired;
 
@@ -1166,12 +1185,30 @@ export function ConfigureAgentSection() {
   function PermRow({ perm }: { perm: typeof readPerms[0] }) {
     return (
       <div className="flex items-center justify-between py-2 px-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-gray-800">{perm.label}</span>
           {perm.locked && <Badge variant="outline" className="text-[9px] h-4 px-1 text-gray-400 border-gray-300">Always on</Badge>}
           <Tooltip text={perm.description + (perm.guardrail ? ` (Guardrail: ${perm.guardrail})` : "")}>
             <HelpCircle className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 cursor-help" />
           </Tooltip>
+          {/* Order-lookup scope: all orders vs Seel-protected only */}
+          {perm.scope && perm.enabled && (
+            <div className="inline-flex items-center rounded-md border border-gray-200 overflow-hidden ml-1">
+              {([["seel", "Seel-protected"], ["all", "All orders"]] as const).map(([val, label], i) => (
+                <button
+                  key={val}
+                  onClick={() => setPermScope(perm.name, val)}
+                  className={cn(
+                    "px-2 py-0.5 text-[11px] font-medium transition-colors",
+                    i > 0 && "border-l border-gray-200",
+                    perm.scope === val ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:bg-gray-50"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <Switch checked={perm.enabled} onCheckedChange={() => togglePerm(perm.name)} disabled={perm.locked} />
       </div>
@@ -1291,31 +1328,17 @@ export function ConfigureAgentSection() {
         </div>
 
         <div className="ml-6 space-y-4">
-          {/* READ ACTIONS */}
+          {/* READ ACTIONS — always expanded */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-medium text-gray-600 uppercase tracking-wider">Read Actions</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-400">{readPerms.filter(p => p.enabled).length} of {readPerms.length} enabled</span>
-                <button
-                  onClick={() => setShowReadActions(!showReadActions)}
-                  className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  {showReadActions ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  {showReadActions ? "Hide" : "Show"}
-                </button>
-              </div>
+              <span className="text-[10px] text-gray-400">{readPerms.filter(p => p.enabled).length} of {readPerms.length} enabled</span>
             </div>
-            {!showReadActions && (
-              <p className="text-xs text-gray-400 italic">All read actions are enabled by default. Click "Show" to view and adjust.</p>
-            )}
-            {showReadActions && (
-              <div className="space-y-2">
-                {Object.entries(readGroups).map(([domain, perms]) => (
-                  <PermGroup key={domain} domain={domain} perms={perms} />
-                ))}
-              </div>
-            )}
+            <div className="space-y-2">
+              {Object.entries(readGroups).map(([domain, perms]) => (
+                <PermGroup key={domain} domain={domain} perms={perms} />
+              ))}
+            </div>
           </div>
 
           {/* WRITE ACTIONS */}

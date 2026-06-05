@@ -297,42 +297,14 @@ function SetupProgress() {
           <p className="text-sm text-gray-500">Connect a channel to go live — importing policies is optional.</p>
         </div>
 
-        {/* Progress bar — counts essential steps only */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <span>{completedCount} of {essentialTotal} essentials</span>
-            <span>{Math.round((completedCount / essentialTotal) * 100)}%</span>
-          </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / essentialTotal) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Demo controls */}
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="text-[10px] text-gray-400 uppercase tracking-wider">Demo:</span>
-          <button
-            onClick={() => { resetDocuments(); toast.success("Documents reset — Import Policies is now empty."); }}
-            className="text-[11px] text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
-          >
-            Reset Documents
-          </button>
-          <span className="text-[10px] text-gray-300">|</span>
-          <button
-            onClick={() => { completeSetupDemo(); toast.success("All setup steps completed!"); }}
-            className="text-[11px] text-green-600 hover:text-green-800 underline underline-offset-2"
-          >
-            Complete All Steps
-          </button>
-        </div>
 
         {/* Steps */}
         <div className="space-y-3">
           {steps.map((step) => {
             const Icon = step.icon;
+            // Optional steps never adopt the "completed" (green) styling — they
+            // render like a normal white actionable card (e.g. Connect a channel).
+            const showComplete = step.complete && !step.optional;
             return (
               <button
                 key={step.id}
@@ -340,7 +312,7 @@ function SetupProgress() {
                 disabled={step.locked}
                 className={cn(
                   "w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all",
-                  step.complete
+                  showComplete
                     ? "bg-green-50/50 border-green-200 cursor-pointer hover:bg-green-50"
                     : step.locked
                     ? "bg-gray-50 border-gray-200 cursor-not-allowed opacity-60"
@@ -349,9 +321,9 @@ function SetupProgress() {
               >
                 <div className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                  step.complete ? "bg-green-100" : step.locked ? "bg-gray-100" : "bg-indigo-50"
+                  showComplete ? "bg-green-100" : step.locked ? "bg-gray-100" : "bg-indigo-50"
                 )}>
-                  {step.complete ? (
+                  {showComplete ? (
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   ) : step.locked ? (
                     <Lock className="w-5 h-5 text-gray-400" />
@@ -363,27 +335,27 @@ function SetupProgress() {
                   <div className="flex items-center gap-2">
                     <span className={cn(
                       "text-sm font-medium",
-                      step.complete ? "text-green-700" : step.locked ? "text-gray-400" : "text-gray-900"
+                      showComplete ? "text-green-700" : step.locked ? "text-gray-400" : "text-gray-900"
                     )}>
                       {step.label}
                     </span>
-                    {step.complete && (
+                    {showComplete && (
                       <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] h-5">Done</Badge>
                     )}
                   </div>
                   <p className={cn(
                     "text-xs mt-0.5",
-                    step.complete ? "text-green-600" : step.locked ? "text-gray-400" : "text-gray-500"
+                    showComplete ? "text-green-600" : step.locked ? "text-gray-400" : "text-gray-500"
                   )}>
                     {step.description}
                   </p>
                 </div>
-                {step.complete && step.cta ? (
+                {showComplete && step.cta ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-green-700 shrink-0">
                     {step.cta}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
-                ) : !step.complete && !step.locked ? (
+                ) : !step.locked ? (
                   <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
                 ) : null}
               </button>
@@ -449,10 +421,6 @@ function ChannelOverviewPanel() {
         {rows.map((row) => {
           const Icon = row.icon;
           const staff = (channelReps[row.key] ?? []).map(repById).filter(Boolean);
-          const isPrimary =
-            (primaryChannel === "chat" && row.key === "chat") ||
-            (primaryChannel === "email" && row.key === "email") ||
-            (primaryChannel === "zendesk" && row.key === "zendesk");
           return (
             <button
               key={row.key}
@@ -473,11 +441,6 @@ function ChannelOverviewPanel() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[12px] font-semibold text-foreground truncate">{row.name}</span>
-                  {isPrimary && (
-                    <span className="text-[9px] font-bold tracking-wide px-1.5 py-px rounded bg-indigo-50 text-indigo-600 border border-indigo-200">
-                      PRIMARY
-                    </span>
-                  )}
                 </div>
                 <p className="text-[10px] text-muted-foreground truncate">{row.sub}</p>
               </div>
@@ -568,11 +531,6 @@ function TeamLeadView() {
 
       {/* Content — conversational flow */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-
-        {/* ── Channel Overview ── */}
-        <div className="max-w-[640px] ml-11">
-          <ChannelOverviewPanel />
-        </div>
 
         {/* ── Message 1: Daily Digest ── */}
         <div className="flex gap-3 items-start">
