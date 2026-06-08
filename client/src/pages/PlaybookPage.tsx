@@ -19,7 +19,7 @@ import {
 import {
   BookOpen, FileText, Upload, Search, Clock,
   ChevronRight, ChevronDown, X, Trash2, History,
-  Plus, ThumbsUp, ThumbsDown, Sparkles, PenLine, Calendar,
+  Plus, ThumbsUp, ThumbsDown, Sparkles, PenLine, Calendar, Download,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -236,7 +236,7 @@ function RulesView({ onSwitchToDocuments }: { onSwitchToDocuments: () => void })
                     const win = rule.window ?? (rule.sourceDocId ? docsData.find((d) => d.id === rule.sourceDocId)?.window : undefined);
                     return win ? (
                       <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-amber-700 border-amber-200 bg-amber-50 shrink-0 gap-1" title={`${fmtWindow(win.from)} → ${fmtWindow(win.to)}`}>
-                        <Clock size={9} /> {fmtShort(win.from)} – {fmtShort(win.to)}
+                        <Clock size={9} /> Limited
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-normal text-muted-foreground/70 border-border/70 bg-muted/20 shrink-0">
@@ -371,8 +371,10 @@ function NewRuleDialog({ open, onOpenChange, onCreate, modules, defaultModule }:
               placeholder="Describe the rule the AI Rep should follow..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              maxLength={1000}
               className="text-[13px] min-h-[160px] resize-none"
             />
+            <p className="text-[10px] text-muted-foreground text-right mt-1">{content.length}/1000</p>
           </div>
         </div>
         <DialogFooter>
@@ -486,6 +488,7 @@ function ProposalReviewSheet({ topicId, open, onOpenChange, onTicketClick }: {
               <Textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
+                maxLength={1000}
                 className="text-[12px] min-h-[200px] resize-none leading-relaxed"
                 autoFocus
               />
@@ -758,11 +761,15 @@ function RuleDetailSheet({ ruleId, open, onOpenChange, onNavigateToDoc }: { rule
           <div>
             <SectionHeader>Content</SectionHeader>
             {isEditing ? (
-              <Textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="text-[13px] min-h-[200px] leading-[1.8] resize-none"
-              />
+              <div>
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  maxLength={1000}
+                  className="text-[13px] min-h-[200px] leading-[1.8] resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground text-right mt-1">{editContent.length}/1000</p>
+              </div>
             ) : (
               <p className="text-[13px] text-foreground leading-[1.8] whitespace-pre-wrap">
                 {rule.content}
@@ -1187,11 +1194,7 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
           {filteredDocs.map((doc) => (
             <div
               key={doc.id}
-              className={cn(
-                "px-4 py-3 flex items-center gap-3 group transition-colors",
-                doc.status === "Processed" ? "cursor-pointer hover:bg-[#f8f8f8]" : ""
-              )}
-              onClick={() => { if (doc.status === "Processed") setSelectedDocId(doc.id); }}
+              className="px-4 py-3 flex items-center gap-3 group transition-colors"
             >
               <div className={cn(
                 "w-8 h-8 rounded-md flex items-center justify-center text-white text-[9px] font-bold shrink-0 opacity-75",
@@ -1273,15 +1276,6 @@ function DocumentsView({ onSwitchToRules }: { onSwitchToRules: () => void }) {
         onUploadFile={(name, size, window) => { setShowAddDialog(false); handleUploadFile(name, size, window); }}
         onManualInput={(title, content, window) => { setShowAddDialog(false); handleManualInput(title, content, window); }}
       />
-
-      {/* Document Detail Sheet — parsed module → topic → rules */}
-      {selectedDocId && (
-        <DocumentDetailSheet
-          docId={selectedDocId}
-          open={!!selectedDocId}
-          onOpenChange={(open) => !open && setSelectedDocId(null)}
-        />
-      )}
 
       {/* Time-window setup — AI detected a time-limited (campaign) policy */}
       {windowDocId && (
@@ -1463,16 +1457,23 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
     if (files.length > 0) submitUpload(files[0].name, `${(files[0].size / 1024).toFixed(0)} KB`);
   };
 
-  const handleManualSubmit = () => {
-    if (!manualTitle.trim() || !manualContent.trim()) {
-      toast.error("Please fill in both title and content.");
-      return;
-    }
-    const win = resolveWindow();
-    if (win === false) return;
-    onManualInput(manualTitle.trim(), manualContent.trim(), win ?? undefined);
-    setManualTitle("");
-    setManualContent("");
+  const downloadTemplate = () => {
+    // 3-column CSV template: module · questions · answer
+    const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
+    const rows: [string, string, string][] = [
+      ["module", "questions", "answer"],
+      ["Returns & Refunds", "How do I return an item?", "Returns are accepted within 30 days of delivery for unused items in original packaging."],
+      ["Returns & Refunds", "When will I get my refund?", "Refunds are issued to the original payment method within 5–7 business days after we receive the return."],
+      ["Shipping", "Where is my order?", "Track it with the number in your confirmation email. Standard delivery is 3–5 business days."],
+      ["Shipping", "My shipment is delayed.", "If a shipment is delayed beyond the promised window, we offer compensation per policy."],
+    ];
+    const csv = rows.map((r) => r.map(esc).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "support-policy-template.csv"; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
   };
 
   const validityBtn = (active: boolean) =>
@@ -1486,29 +1487,7 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
           <DialogTitle className="text-[15px]">Add Document</DialogTitle>
         </DialogHeader>
 
-        {/* Tab switcher */}
-        <div className="flex gap-1 bg-[#f5f5f5] rounded-lg p-1">
-          <button
-            onClick={() => setTab("upload")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium transition-colors",
-              tab === "upload" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Upload size={13} /> Upload File
-          </button>
-          <button
-            onClick={() => setTab("manual")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium transition-colors",
-              tab === "manual" ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <PenLine size={13} /> Manual Input
-          </button>
-        </div>
-
-        {/* Validity (有效期) — applies to both upload & manual */}
+        {/* Validity (有效期) — default permanent; custom = active only within a time range */}
         <div className="space-y-2">
           <label className="text-[12px] font-medium text-foreground block flex items-center gap-1.5">
             <Clock size={13} className="text-[#6c47ff]" /> Validity
@@ -1532,52 +1511,28 @@ function AddDocumentDialog({ open, onOpenChange, onUploadFile, onManualInput }: 
           )}
         </div>
 
-        {tab === "upload" ? (
-          <div
-            className={cn(
-              "border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer",
-              dragOver ? "border-[#6c47ff] bg-[#f8f6ff]" : "border-border bg-[#fafafa] hover:border-[#6c47ff]/40"
-            )}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => submitUpload(`Document_${Date.now().toString().slice(-4)}.pdf`, "1.2 MB")}
-          >
-            <Upload size={28} className="mx-auto mb-3 text-muted-foreground" />
-            <p className="text-[13px] text-foreground font-medium">Drag & drop files here, or click to upload</p>
-            <p className="text-[11px] text-muted-foreground mt-1.5">Supports PDF, PPTX, DOCX, TXT, CSV, XLS</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div>
-              <label className="text-[12px] font-medium text-foreground mb-1 block">Title</label>
-              <Input
-                placeholder="e.g., Return Policy SOP"
-                value={manualTitle}
-                onChange={(e) => setManualTitle(e.target.value)}
-                className="text-[13px]"
-              />
-            </div>
-            <div>
-              <label className="text-[12px] font-medium text-foreground mb-1 block">Content</label>
-              <Textarea
-                placeholder="Paste your support policy, FAQ, or rule content here..."
-                value={manualContent}
-                onChange={(e) => setManualContent(e.target.value)}
-                className="text-[13px] min-h-[160px] resize-none"
-              />
-            </div>
-          </div>
-        )}
+        <div
+          className={cn(
+            "border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer",
+            dragOver ? "border-[#6c47ff] bg-[#f8f6ff]" : "border-border bg-[#fafafa] hover:border-[#6c47ff]/40"
+          )}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => submitUpload(`Document_${Date.now().toString().slice(-4)}.pdf`, "1.2 MB")}
+        >
+          <Upload size={28} className="mx-auto mb-3 text-muted-foreground" />
+          <p className="text-[13px] text-foreground font-medium">Drag & drop files here, or click to upload</p>
+          <p className="text-[11px] text-muted-foreground mt-1.5">Supports PDF, PPTX, DOCX, TXT, CSV, XLS</p>
+        </div>
 
-        {tab === "manual" && (
-          <DialogFooter>
-            <Button variant="outline" className="text-[12px]" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button className="text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white" onClick={handleManualSubmit}>
-              Submit
-            </Button>
-          </DialogFooter>
-        )}
+        {/* Template */}
+        <div className="flex items-center justify-center gap-1.5 text-[12px] -mt-1">
+          <span className="text-muted-foreground">Not sure about the format?</span>
+          <button onClick={downloadTemplate} className="inline-flex items-center gap-1 font-medium text-[#6c47ff] hover:underline">
+            <Download size={12} /> Download template
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

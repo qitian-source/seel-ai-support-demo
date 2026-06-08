@@ -685,6 +685,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
   const [mailboxServerType, setMailboxServerType] = useState("IMAP");
   const [mailboxError, setMailboxError] = useState("");
   const [widgetOpen, setWidgetOpen] = useState(false);
+  const [showModePrompt, setShowModePrompt] = useState(true);
 
   const isConnected: Record<ChannelId, boolean> = {
     chat: liveChatConnected,
@@ -696,8 +697,9 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
   const toggle = (id: ChannelId) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   const handleConnectChat = () => {
-    // Add to theme → jump to the Shopify theme editor to install the app embed,
-    // then reflect the installed state once it returns.
+    // Add to theme → simulate jumping to the Shopify theme editor to install the
+    // app embed, then reflect the installed state on return. (No real external
+    // navigation — the preview sandbox blocks non-localhost URLs.)
     toast.info("Opening Shopify theme editor…");
     setChatConnecting(true);
     setTimeout(() => {
@@ -786,15 +788,10 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
           <div className="border-t border-gray-100 p-4 space-y-4">
             {!liveChatConnected ? (
               <div className="space-y-3">
-                <p className="text-xs text-gray-600">Customize the widget, then add it to your <strong>Shopify theme</strong> — no code required.</p>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setWidgetOpen(true)}>
-                    <Sliders className="w-3.5 h-3.5" /> Customize widget
-                  </Button>
-                  <Button size="sm" onClick={handleConnectChat} disabled={chatConnecting}>
-                    {chatConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Opening Shopify…</> : "Add to theme"}
-                  </Button>
-                </div>
+                <p className="text-xs text-gray-600">Add the chat widget to your <strong>Shopify theme</strong> — no code required. We'll open the Shopify theme editor; once installed, your widget settings appear here.</p>
+                <Button size="sm" onClick={handleConnectChat} disabled={chatConnecting}>
+                  {chatConnecting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Opening Shopify…</> : "Add to theme"}
+                </Button>
               </div>
             ) : (
               <>
@@ -804,31 +801,32 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
                   <p className="text-xs text-green-800">Widget installed on <strong>seel-demo.myshopify.com</strong></p>
                 </div>
 
-                <ChannelModeRow
-                  channel="chat"
-                  mode={liveChatMode}
-                  setMode={setLiveChatMode}
-                  surface="Widget"
-                  descriptions={{
-                    off: "Widget is hidden from shoppers.",
-                    training: "Visible to your team only for testing — no replies reach shoppers.",
-                    production: "Live for all shoppers. Eligible chats are answered automatically.",
-                  }}
-                />
+                {showModePrompt && (
+                  <p className="flex items-center gap-1 text-[11px] font-medium text-[#6c47ff]">
+                    <Bolt className="w-3 h-3" /> Choose a mode to go live ↓
+                  </p>
+                )}
+                <div className={cn("rounded-lg transition-shadow", showModePrompt && "ring-2 ring-[#6c47ff] ring-offset-2")}>
+                  <ChannelModeRow
+                    channel="chat"
+                    mode={liveChatMode}
+                    setMode={(m) => { setLiveChatMode(m); setShowModePrompt(false); }}
+                    surface="Widget"
+                    descriptions={{
+                      off: "Widget is hidden from shoppers.",
+                      training: "Visible to your team only for testing — no replies reach shoppers.",
+                      production: "Live for all shoppers. Eligible chats are answered automatically.",
+                    }}
+                  />
+                </div>
 
-                {/* Customize + theme status */}
+                {/* Customize */}
                 <div className="flex items-center gap-2 pt-1">
                   <Button
                     variant="outline" size="sm" className="h-8 text-[12px] gap-1.5"
                     onClick={() => setWidgetOpen(true)}
                   >
                     <Sliders className="w-3.5 h-3.5" /> Customize widget
-                  </Button>
-                  <Button
-                    variant="outline" size="sm" disabled
-                    className="h-8 text-[12px] gap-1.5 text-gray-400 disabled:opacity-100"
-                  >
-                    <Check className="w-3.5 h-3.5" /> Added to theme
                   </Button>
                 </div>
 
@@ -1104,6 +1102,7 @@ export function ChannelsSection({ only }: { only?: ChannelId } = {}) {
       {(!only || only === "chat") && (
         <LiveChatWidgetCustomizer open={widgetOpen} onClose={() => setWidgetOpen(false)} />
       )}
+
     </div>
   );
 }

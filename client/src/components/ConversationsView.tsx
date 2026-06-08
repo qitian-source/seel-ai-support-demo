@@ -15,7 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { ArrowUpDown, Search, SlidersHorizontal, X, Download } from "lucide-react";
 import ConversationLogSidebar from "@/components/ConversationLogSidebar";
 import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePicker";
 import { type ChannelValue } from "@/components/ChannelPicker";
@@ -69,6 +72,11 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
   const [sortField, setSortField] = useState<SortField>("time");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const exportEmail = "mstar@seel.com";
+  const toggleRowSelect = (id: string) =>
+    setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   // When a channel is locked, that filter is always applied and not user-editable.
   const effectiveChannel = lockedChannel ?? convChannelFilter;
@@ -164,6 +172,9 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
       <div className="flex items-baseline gap-2 mb-3">
         <h1 className="text-[15px] font-semibold text-foreground">Conversations</h1>
         <span className="text-[12px] text-muted-foreground">{filteredLogs.length} results</span>
+        {selectedIds.size > 0 && (
+          <span className="text-[12px] font-medium text-[#6c47ff]">· {selectedIds.size} rows selected</span>
+        )}
       </div>
 
       {/* Toolbar: primary outcome segments (left) + search & filter (right) */}
@@ -331,6 +342,16 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
               </div>
             </PopoverContent>
           </Popover>
+
+          <Button
+            size="sm"
+            disabled={selectedIds.size === 0}
+            className="h-8 gap-1.5 text-[12px] bg-[#6c47ff] hover:bg-[#5a3ad9] text-white disabled:opacity-50"
+            onClick={() => setExportOpen(true)}
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download CSV
+          </Button>
         </div>
       </div>
 
@@ -369,9 +390,19 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="border-b bg-muted/20">
+                  <th className="py-2.5 px-3 w-9">
+                    <Checkbox
+                      checked={filteredLogs.length > 0 && filteredLogs.every((l) => selectedIds.has(l.ticketId))}
+                      onCheckedChange={(c) =>
+                        setSelectedIds(c ? new Set(filteredLogs.map((l) => l.ticketId)) : new Set())
+                      }
+                      aria-label="Select all"
+                    />
+                  </th>
                   {[
                     { label: "Ticket",    field: "ticketId"  as SortField },
                     { label: "Customer",  field: null },
+                    { label: "Email",     field: null },
                     { label: "Intent",    field: "intent"    as SortField },
                     { label: "Exit Sent.", field: "sentiment" as SortField },
                     { label: "Outcome",   field: "outcome"   as SortField },
@@ -400,13 +431,18 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
                     onClick={() => setSelectedTicketId(log.ticketId)}
                     className="border-b border-border/30 hover:bg-muted/20 cursor-pointer transition-colors"
                   >
+                    <td className="py-2.5 px-3 w-9" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(log.ticketId)}
+                        onCheckedChange={() => toggleRowSelect(log.ticketId)}
+                        aria-label={`Select ${log.ticketId}`}
+                      />
+                    </td>
                     <td className="py-2.5 px-3 whitespace-nowrap">
                       <span className="text-primary font-mono text-[11px]">{log.ticketId}</span>
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="text-[11px]">{log.customer}</div>
-                      <div className="text-[10px] text-muted-foreground">{log.email}</div>
-                    </td>
+                    <td className="py-2.5 px-3 text-[11px] whitespace-nowrap">{log.customer}</td>
+                    <td className="py-2.5 px-3 text-[11px] text-muted-foreground whitespace-nowrap">{log.email}</td>
                     <td className="py-2.5 px-3 text-[11px] whitespace-nowrap">{log.intent}</td>
                     <td className="py-2.5 px-3">
                       <Badge variant="outline" className={cn("text-[9px] py-0 h-4", sentimentColor(log.sentiment))}>
@@ -433,6 +469,33 @@ export default function ConversationsView({ lockedChannel }: { lockedChannel?: C
       </Card>
 
       <ConversationLogSidebar ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
+
+      {/* Export conversation records — emailed download link */}
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="text-[15px]">Export conversation records</DialogTitle>
+          </DialogHeader>
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
+            Exporting <span className="font-medium text-foreground">{selectedIds.size}</span> selected record{selectedIds.size === 1 ? "" : "s"}.
+            The export process may take several minutes depending on the amount of data.
+            Once completed, we'll send a download link to your email:{" "}
+            <span className="font-medium text-foreground">{exportEmail}</span>
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-[#6c47ff] hover:bg-[#5a3ad9] text-white"
+              onClick={() => {
+                setExportOpen(false);
+                toast.success("Export started", { description: `We'll email the download link for ${selectedIds.size} record(s) to ${exportEmail} when it's ready.` });
+              }}
+            >
+              Export
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

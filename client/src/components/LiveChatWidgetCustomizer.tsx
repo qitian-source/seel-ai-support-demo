@@ -377,6 +377,19 @@ export default function LiveChatWidgetCustomizer({ open, onClose }: { open: bool
                   </div>
                 </Section>
 
+                <Section title="Pre-chat form">
+                  <div className="flex items-center justify-between">
+                    <div className="pr-3">
+                      <p className="text-xs font-medium text-gray-700">Collect name &amp; email</p>
+                      <p className="text-[11px] text-gray-400">Ask shoppers for their name and email before the chat starts. Saved to each conversation (Customer &amp; Email).</p>
+                    </div>
+                    <Switch
+                      checked={w.preChatForm}
+                      onCheckedChange={(v) => { setChatWidget({ preChatForm: v }); setPreChatDone(false); }}
+                    />
+                  </div>
+                </Section>
+
                 <Section title="Page Targeting">
                   <div className="flex items-center justify-between">
                     <div className="pr-3">

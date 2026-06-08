@@ -132,7 +132,7 @@
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel AI Support</div>
   <span class="topbar-tag">产品需求文档 (PRD)</span>
-  <span class="topbar-date">2026-06-05 · v2.0.3 · Draft</span>
+  <span class="topbar-date">2026-06-06 · v2.0.4 · Draft</span>
 </div>
 
 <div class="layout">
@@ -158,9 +158,9 @@
       <div class="cover-title">Seel AI Support · 产品需求文档</div>
       <div class="cover-sub">定位：<strong style="color:#fff">AI Manager = 数字员工管理中枢</strong>。让商家以最低门槛把 AI 数字员工部署到多渠道客服，并能可控上线、可运营规则、可溯源效果。本文从背景、目标、用户场景到功能需求与验收完整描述本期范围。</div>
       <div class="cover-meta">
-        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.3</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v2.0.4</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">评审中 (Draft)</span></div>
-        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-05</span></div>
+        <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-06</span></div>
         <div class="cover-meta-item"><span class="cover-meta-label">范围</span><span class="cover-meta-value">本期迭代 · 内部 Demo</span></div>
       </div>
     </div>
@@ -268,10 +268,11 @@
           <div class="ac-title">验收标准</div>
           <ul>
             <li>三渠道模式语义统一：off（暂停）/ training（仅草拟）/ production（自主回复）。</li>
-            <li>渠道命名为 <strong>Live Chat Widget</strong>；连接流程为 <em>Customize widget</em> + <strong>Add to theme</strong>（跳转 Shopify 主题安装）；安装后显示「Widget installed on seel-demo.myshopify.com」与 <em>Added to theme</em>。</li>
+            <li>渠道命名为 <strong>Live Chat Widget</strong>；未连接时<strong>仅显示「Add to theme」</strong>（模拟跳转 Shopify 主题安装）；安装完成后才展开下方设置（Mode / Customize / Escalation），并在 <strong>Mode 行高亮提示「Choose a mode to go live」</strong>，选完即消失。安装（training）不再弹「You're live」。</li>
             <li>Live Widget 选 Production → 弹 <code>Switch to Production?</code>，含滑块 + 预设（10/25/50/100%）；确认后 Mode 下方<strong>常驻显示灰度比例</strong>，可随时 Adjust。Email / Zendesk 切换不弹灰度框。</li>
             <li>Live Chat Widget 设置含 <strong>Escalation Email</strong>（人工转接邮箱）；移除了渠道「Primary（主渠道）」标识。</li>
-            <li>Widget 定制器精简为 Colors（5）/ Layout / Messages / Page Targeting（Show on all pages + Hidden Pages）。</li>
+            <li><strong>Pre-chat form（可开关）</strong>：开启后插件在开聊前收集<strong>姓名 + 邮箱</strong>，留存到会话记录的 <code>Customer</code> / <code>Email</code> 字段。</li>
+            <li>Widget 定制器精简为 Colors（5）/ Layout / Messages / Pre-chat form / Page Targeting（Show on all pages + Hidden Pages）。</li>
           </ul>
         </div>
       </div>
@@ -284,8 +285,9 @@
         <div class="ac">
           <div class="ac-title">验收标准</div>
           <ul>
-            <li>Zendesk 子标签为 Conversations，列与 Live Widget 一致（Ticket / Customer / Intent / Outcome / Mode / Turns / Summary / Time）。</li>
+            <li>Zendesk 子标签为 Conversations，列与 Live Widget 一致：Ticket / <strong>Customer</strong> / <strong>Email</strong>（独立两列）/ Intent / Outcome / Mode / Turns / Summary / Time。</li>
             <li>点击任意行右侧滑出完整会话详情（Thread / Reasoning）。</li>
+            <li><strong>导出</strong>：每行 checkbox + 表头全选，显示「N rows selected」；<strong>Download CSV</strong> 仅在选中后可用 → 弹出导出确认（提示导出耗时、完成后将下载链接发送到邮箱 <code>mstar@seel.com</code>），仅导出选中行。</li>
           </ul>
         </div>
       </div>
@@ -418,6 +420,16 @@
     <section class="section" id="appx-log">
       <div class="section-title"><span class="section-num appx">B</span>附录 · 变更清单 (Changelog)</div>
 
+      <div class="sub2-title"><span class="pill g" style="font-size:12px;padding:2px 10px;">v2.0.4</span> · 上线引导、Pre-chat 收集与会话导出（2026-06-06）</div>
+      <ul>
+        <li><strong>Live Chat Widget 上线流程</strong>：未连接仅留「Add to theme」（模拟跳转 Shopify 安装）；安装后展开设置并在 <strong>Mode 行高亮提示选择模式</strong>；安装不再弹「You're live」；去掉多余的「Added to theme」确认按钮。</li>
+        <li><strong>Pre-chat form</strong>：定制器 Settings 新增开关「Collect name &amp; email」——开聊前收集姓名 + 邮箱，存入会话的 <code>Customer</code> / <code>Email</code> 字段。</li>
+        <li><strong>会话记录导出</strong>：每行 checkbox + 全选 + 「N rows selected」；<strong>Download CSV</strong> → 导出确认弹框（邮件下载链接 <code>mstar@seel.com</code>），仅导出选中行。</li>
+        <li><strong>Conversations 列拆分</strong>：<code>Customer</code> 与 <code>Email</code> 独立成两列。</li>
+        <li><strong>Documents 模版</strong>：可下载三列 CSV（<code>module</code> / <code>questions</code> / <code>answer</code>）；Add Document 仅保留上传（去 Manual Input）。</li>
+        <li><strong>规则有效期标签</strong>：永久 = <em>Always</em>，限时 = <em>🕐 Limited</em>（不显示起止时间，悬停 tooltip 可见）。</li>
+      </ul>
+
       <div class="sub2-title"><span class="pill g" style="font-size:12px;padding:2px 10px;">v2.0.3</span> · 体验打磨与配置增强（2026-06-05）</div>
       <ul>
         <li><strong>AI rep 动作权限重构</strong>：READ（Orders / Customer Info / Product / Tools）+ WRITE（Orders / Product / Tickets / Communication）对齐设计；<strong>Look Up Order 可选范围</strong> Seel-protected / All orders；READ ACTIONS <strong>默认全展开</strong>。</li>
@@ -451,6 +463,6 @@
   </main>
 </div>
 
-<footer>© 2026 Seel Inc. · Seel AI Support · 产品需求文档 v2.0.3 · 内部 Demo 文档，仅供评审使用</footer>
+<footer>© 2026 Seel Inc. · Seel AI Support · 产品需求文档 v2.0.4 · 内部 Demo 文档，仅供评审使用</footer>
 </body>
 </html>

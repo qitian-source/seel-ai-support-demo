@@ -634,6 +634,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     prevStep2.current = step2Complete;
     prevStep4.current = step4Complete;
 
+    // Only guide (toast + auto-navigate) from the AI Manager onboarding view.
+    // When the merchant configures directly on a channel settings page (e.g. installs
+    // the widget via "Add to theme"), stay put — the in-page card + the bottom-right
+    // "Choose a mode" prompt are the guidance, so we don't fire "You're live" here.
+    if (mainTab !== "agents") return;
+
     // Priority: going live wins (it ends the setup flow); otherwise advance the checklist.
     if (justStep4) {
       // Land on whichever channel is connected so we never jump to a hidden tab.
@@ -666,7 +672,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       setMainTab("agents");
     }
-  }, [step1Complete, step2Complete, step4Complete, liveChatConnected, zendeskConnected, emailChannelConnected]);
+  }, [step1Complete, step2Complete, step4Complete, liveChatConnected, zendeskConnected, emailChannelConnected, mainTab]);
 
   return (
     <AppContext.Provider
