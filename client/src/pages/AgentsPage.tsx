@@ -264,8 +264,8 @@ function SetupProgress() {
       id: 3,
       label: "Go live",
       description: step4Status === "locked"
-        ? `First ${goLiveMissing.join(" and ")}.`
-        : `You're all set — pick a mode (Training or Production) and you're live.`,
+        ? `First ${goLiveMissing.join(" and ")} — then you can go live.`
+        : `Setup complete — you can go live anytime. Set a channel to Training or Production.`,
       icon: Rocket,
       complete: step4Complete,
       locked: step4Status === "locked",
