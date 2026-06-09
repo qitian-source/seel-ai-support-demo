@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Slack bot that helps Seel sales answer questions about customers and the AI Workforce, grounded in Notion + Google Drive.",
+  "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
