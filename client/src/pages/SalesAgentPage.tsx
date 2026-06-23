@@ -5,7 +5,7 @@
  * Metrics are aggregated from salesDaily for the selected time range + modes.
  * Row click → Order Details slide-over panel.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   salesDaily, salesTouchpoints, SALES_MODES,
   type SalesDailyPoint, type SalesOrder,
@@ -15,7 +15,7 @@ import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePick
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, X, Info, Sparkles, MessageSquare, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, X, Info, Sparkles, MessageSquare, ArrowRight, ChevronDown } from "lucide-react";
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -52,7 +52,6 @@ function aggregate(points: SalesDailyPoint[], keys: string[]): Totals {
 }
 const ctrOf = (t: Totals) => (t.impressions ? (t.clicks / t.impressions) * 100 : 0);
 const cvrOf = (t: Totals) => (t.clicks ? (t.orders / t.clicks) * 100 : 0);
-const rpmOf = (t: Totals) => (t.impressions ? (t.revenue / t.impressions) * 1000 : 0);
 
 function pctDelta(curV: number, prevV: number): { delta: string; positive: boolean } | null {
   if (!prevV) return null;
@@ -66,7 +65,7 @@ const usd = (v: number, dp = 2) => `$${v.toLocaleString("en-US", { minimumFracti
 interface ModeRow {
   key: string; label: string; color: string;
   impressions: number; clicks: number; orders: number; revenue: number;
-  ctr: number; cvr: number; rpm: number;
+  ctr: number; cvr: number;
   salesDelta: number; sampleOrders: SalesOrder[];
 }
 
@@ -91,7 +90,6 @@ function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () 
   const stats = [
     { label: "CTR", value: `${row.ctr.toFixed(2)}%` },
     { label: "CVR", value: `${row.cvr.toFixed(2)}%` },
-    { label: "RPM", value: usd(row.rpm) },
   ];
   return (
     <>
@@ -110,7 +108,7 @@ function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () 
         </div>
 
         {/* Stats strip */}
-        <div className="grid grid-cols-3 gap-0 border-b border-border">
+        <div className="grid grid-cols-2 gap-0 border-b border-border">
           {stats.map((s) => (
             <div key={s.label} className="px-5 py-3 border-r last:border-r-0 border-border">
               <div className="text-[10px] text-muted-foreground">{s.label}</div>
@@ -185,8 +183,8 @@ function OrderDetailsPanel({ row, onClose }: { row: ModeRow | null; onClose: () 
 function buildSalesThread(order: SalesOrder): { from: "customer" | "agent" | "system"; text: string }[] {
   const opener: Record<string, string> = {
     "Resolution Center": `Hi, I was sorting out my recent order and wanted to ask about ${order.items[0]?.name ?? "a product"}.`,
-    "Policy Email": `Thanks for the email — while I'm here, is ${order.recommendedItem} a good fit for me?`,
-    "Live Chat": `Hey! I'm looking for ${order.recommendedItem} — is it in stock?`,
+    "WFP Confirmation Email": `Thanks for the email — while I'm here, is ${order.recommendedItem} a good fit for me?`,
+    "Support Chat": `Hey! I'm looking for ${order.recommendedItem} — is it in stock?`,
     "Search Bar": `Searching for ${order.recommendedItem}… do you have it?`,
   };
   const firstMsg = opener[order.touchpoint] ?? `Hi, I'm interested in ${order.recommendedItem}.`;
@@ -269,20 +267,101 @@ function SalesConversationPanel({ order, onClose }: { order: SalesOrder | null; 
   );
 }
 
+/* ── Touchpoint dropdown filter (Clear All + checkboxes + Apply) ── */
+function TouchpointPicker({
+  selected,
+  onApply,
+}: {
+  selected: string[];
+  onApply: (keys: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<string[]>(selected);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Re-sync the draft with the applied selection whenever the panel opens.
+  useEffect(() => {
+    if (open) setDraft(selected);
+  }, [open, selected]);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const label =
+    selected.length === SALES_MODES.length
+      ? "All touchpoints"
+      : selected.length === 1
+        ? SALES_MODES.find((m) => m.key === selected[0])!.label
+        : `${selected.length} touchpoints`;
+
+  function toggle(key: string) {
+    setDraft((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  }
+
+  function apply() {
+    // Empty selection falls back to all touchpoints ("All touchpoints").
+    onApply(draft.length ? draft : SALES_MODES.map((m) => m.key));
+    setOpen(false);
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-white text-[12px] text-foreground hover:bg-[#f5f5f5] transition-colors"
+      >
+        <span>{label}</span>
+        <ChevronDown size={13} className="text-muted-foreground" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-10 w-[260px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.10)] border border-border z-50 overflow-hidden">
+          <button
+            onClick={() => setDraft([])}
+            className="w-full text-left px-4 pt-3 pb-2 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear All
+          </button>
+          <div className="px-2 pb-1">
+            {SALES_MODES.map((m) => (
+              <label
+                key={m.key}
+                className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-muted/40 cursor-pointer select-none"
+              >
+                <Checkbox
+                  checked={draft.includes(m.key)}
+                  onCheckedChange={() => toggle(m.key)}
+                  className="size-4"
+                />
+                <span className="text-[13px] text-foreground">{m.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end px-3 py-2.5 border-t border-border">
+            <button
+              onClick={apply}
+              className="h-8 px-4 rounded-lg bg-[#6c47ff] text-white text-[12px] font-medium hover:bg-[#5a39d6] transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Analytics sub-tab ── */
 function AnalyticsTab() {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [selKeys, setSelKeys] = useState<string[]>(SALES_MODES.map((m) => m.key));
   const [selectedRow, setSelectedRow] = useState<ModeRow | null>(null);
-
-  function toggleMode(key: string) {
-    setSelKeys((prev) =>
-      prev.includes(key)
-        ? (prev.length === 1 ? prev : prev.filter((k) => k !== key)) // keep at least one
-        : [...prev, key]
-    );
-  }
 
   const days = DAYS_MAP[timeRange];
   const cur  = useMemo(() => salesDaily.slice(-days), [days]);
@@ -311,7 +390,7 @@ function AnalyticsTab() {
       const meta = salesTouchpoints.find((s) => s.key === m.key)!;
       return {
         key: m.key, label: m.label, color: m.color,
-        ...agg, ctr: ctrOf(agg), cvr: cvrOf(agg), rpm: rpmOf(agg),
+        ...agg, ctr: ctrOf(agg), cvr: cvrOf(agg),
         salesDelta: meta.salesDelta, sampleOrders: meta.orders,
       };
     }),
@@ -336,20 +415,7 @@ function AnalyticsTab() {
               onChange={(v, custom) => { setTimeRange(v as TimeRange); if (custom) setCustomRange(custom); }}
             />
           </div>
-          <div className="h-5 w-px bg-border" />
-          <div className="flex items-center gap-1">
-            <span className="text-[12px] text-muted-foreground mr-1.5">Modes</span>
-            {SALES_MODES.map((m) => (
-              <label key={m.key} className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted/40 cursor-pointer select-none">
-                <Checkbox
-                  checked={selKeys.includes(m.key)}
-                  onCheckedChange={() => toggleMode(m.key)}
-                  className="size-3.5"
-                />
-                <span className="text-[12px] text-foreground">{m.label}</span>
-              </label>
-            ))}
-          </div>
+          <TouchpointPicker selected={selKeys} onApply={setSelKeys} />
         </div>
 
         {/* KPI Cards */}
@@ -437,7 +503,7 @@ function AnalyticsTab() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-2.5 px-4 text-[11px] font-medium text-muted-foreground">Touchpoint</th>
-                    {["Impressions", "Clicks", "CTR", "Orders", "CVR", "Revenue", "RPM"].map((h) => (
+                    {["Impressions", "Clicks", "CTR", "Orders", "CVR", "Revenue"].map((h) => (
                       <th key={h} className="text-right py-2.5 px-4 text-[11px] font-medium text-muted-foreground">
                         {h} <Info size={11} className="inline mb-0.5 ml-0.5 text-muted-foreground/40" />
                       </th>
@@ -461,7 +527,6 @@ function AnalyticsTab() {
                         {usd(row.revenue)}
                         <span className="ml-1.5 text-[10px] text-emerald-600 font-medium">(+{row.salesDelta}%)</span>
                       </td>
-                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">{usd(row.rpm)}</td>
                     </tr>
                   ))}
                 </tbody>
