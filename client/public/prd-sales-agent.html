@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Agent — Performance 改版 PRD · v1.1</title>
+<style>
+  :root {
+    --brand: #6c47ff; --brand-d:#5a3ad9; --dark:#1E293B; --mid:#475569;
+    --soft:#64748B; --border:#E2E8F0; --bg:#F8FAFC; --ok:#16A34A; --warn:#B45309; --blue:#2563EB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+    font-size: 15px; line-height: 1.75; color: var(--dark); background: var(--bg);
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 100; background: #fff;
+    border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px;
+    display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .topbar-brand { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--dark); }
+  .topbar-brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+  .topbar-tag { font-size: 11px; font-weight: 600; background: #f0edff; color: var(--brand); padding: 2px 8px; border-radius: 99px; }
+  .topbar-date { margin-left: auto; font-size: 12px; color: var(--soft); }
+
+  .layout { display: flex; max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+  .sidebar { width: 248px; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; padding: 28px 0; }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--soft); padding: 0 16px 8px; text-transform: uppercase; }
+  .nav-link { display: block; padding: 5px 16px; font-size: 13px; color: var(--mid); text-decoration: none; border-left: 2px solid transparent; transition: all .15s; }
+  .nav-link.lvl3 { padding-left: 30px; font-size: 12.5px; color: var(--soft); }
+  .nav-link:hover { color: var(--brand); border-left-color: var(--brand); background: #faf9ff; }
+
+  .main { flex: 1; min-width: 0; padding: 36px 0 80px 48px; }
+
+  .cover { background: linear-gradient(135deg, #1b1340 0%, #34246e 55%, #6c47ff 130%); border-radius: 16px; padding: 48px 44px; margin-bottom: 40px; color: #fff; position: relative; overflow: hidden; }
+  .cover::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 25%, rgba(124,58,237,.35) 0%, transparent 60%); }
+  .cover-badge { position: relative; display: inline-block; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.88); padding: 4px 12px; border-radius: 99px; margin-bottom: 20px; }
+  .cover-title { position: relative; font-size: 34px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; margin-bottom: 10px; }
+  .cover-sub { position: relative; font-size: 16px; color: rgba(255,255,255,.74); margin-bottom: 28px; max-width: 660px; }
+  .cover-meta { position: relative; display: flex; gap: 30px; flex-wrap: wrap; }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .cover-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .cover-meta-value { font-size: 14px; font-weight: 600; color: #fff; }
+
+  #content h1 { display: none; }
+  #content h2 { font-size: 22px; font-weight: 700; color: var(--dark); padding-bottom: 12px; border-bottom: 2px solid var(--border); margin: 44px 0 20px; scroll-margin-top: 76px; }
+  #content h2:first-of-type { margin-top: 0; }
+  #content h3 { font-size: 17px; font-weight: 700; color: var(--dark); margin: 30px 0 12px; scroll-margin-top: 76px; }
+  #content h4 { font-size: 14px; font-weight: 700; color: var(--brand-d); margin: 20px 0 8px; }
+  #content p { color: var(--mid); line-height: 1.8; margin: 10px 0; }
+  #content ul, #content ol { margin: 8px 0 16px 0; padding-left: 22px; color: var(--mid); }
+  #content li { margin-bottom: 6px; line-height: 1.7; }
+  #content strong { color: var(--dark); font-weight: 600; }
+  #content code { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; background: #f1f0fa; color: var(--brand-d); padding: 1px 6px; border-radius: 4px; }
+  #content a { color: var(--brand); text-decoration: none; border-bottom: 1px solid rgba(108,71,255,.3); }
+  #content a:hover { border-bottom-color: var(--brand); }
+  #content hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+  #content blockquote { border-left: 3px solid var(--brand); background: #faf9ff; border-radius: 0 10px 10px 0; padding: 12px 18px; margin: 16px 0; color: var(--mid); font-size: 14px; }
+  #content blockquote p { margin: 4px 0; }
+  #content table { border-collapse: collapse; width: 100%; margin: 14px 0 22px; font-size: 13.5px; box-shadow: 0 1px 3px rgba(0,0,0,.04); border-radius: 10px; overflow: hidden; }
+  #content thead th { background: #f5f3ff; color: var(--dark); font-weight: 700; text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  #content tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--mid); vertical-align: top; }
+  #content tbody tr:last-child td { border-bottom: none; }
+  #content tbody tr:nth-child(even) { background: #fafafb; }
+
+  @media (max-width: 900px) { .sidebar { display: none; } .main { padding-left: 0; } }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="topbar-brand"><span class="dot"></span>Seel AI Workforce</span>
+    <span class="topbar-tag">PRD</span>
+    <span class="topbar-date">Sales Agent · Performance · v1.1 · 2026-06-23</span>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="nav-label">目录</div>
+      <nav id="toc"></nav>
+    </aside>
+
+    <main class="main">
+      <div class="cover">
+        <span class="cover-badge">🆕 v1.1 更新</span>
+        <h1 class="cover-title">Sales Agent · Performance 改版</h1>
+        <p class="cover-sub">Analytics 升级为「展示 → 点击 → 转化 → 营收」全漏斗视图：6 个 KPI、柱+线 Daily Trend、Touchpoint 下拉筛选器，Breakdown 新增 CVR 列。Touchpoint 维度保持原有四项不变。</p>
+        <div class="cover-meta">
+          <div class="cover-meta-item"><span class="cover-meta-label">模块</span><span class="cover-meta-value">Sales Agent → Analytics</span></div>
+          <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v1.1</span></div>
+          <div class="cover-meta-item"><span class="cover-meta-label">日期</span><span class="cover-meta-value">2026-06-23</span></div>
+          <div class="cover-meta-item"><span class="cover-meta-label">状态</span><span class="cover-meta-value">待研发评审</span></div>
+        </div>
+      </div>
+
+      <article id="content"></article>
+    </main>
+  </div>
+
+  <!-- Markdown source (rendered client-side) -->
+  <script type="text/markdown" id="md-source">
+# Sales Agent — Performance（Analytics）改版
+
+> **本次更新（v1.1）：** Sales Agent → Analytics（Performance）改版为「全漏斗」模型——KPI 由 4 个改为 6 个，Sales Trend 升级为柱+线 Composed Chart，Touchpoint 筛选改为下拉框，Breakdown 表新增 CVR 列。**Touchpoint 维度保持不变**（Resolution Center / WFP Confirmation Email / Support Chat / Search Bar）。
+
+---
+
+## 一、背景与范围
+
+将 Sales Agent → Analytics 由「销售归因摘要」升级为完整的 **展示 → 点击 → 转化 → 营收** 全漏斗视图，让商家一眼看清 AI 推荐在每个环节的表现，并能下钻到订单。
+
+> **范围说明：** 本次改版**仅调整指标与图表结构**，Touchpoint（渠道）维度完全保留原有 4 个，不做增删；订单详情面板（行点击展开）逻辑不变。
+
+---
+
+## 二、筛选器
+
+| 筛选项 | 控件 | 可选值 |
+|--------|------|--------|
+| **Time range** | 下拉 | Last 7 days / Last 30 days / Last 90 days（默认 Last 7 days） |
+| **Touchpoint** | 下拉多选 | Resolution Center / WFP Confirmation Email / Support Chat / Search Bar |
+
+**Touchpoint 下拉筛选器交互：**
+
+- 触发按钮默认显示「**All touchpoints**」；展开后含 **Clear All** + 四个勾选项 + **Apply** 按钮。
+- 勾选为**草稿态**，点 **Apply** 才生效；点击面板外部则放弃改动。
+- 按钮标签随选择变化：全选 → 「All touchpoints」；单选 → 触点名；多选 → 「N touchpoints」。
+- 保留原有 4 项及配色，不做增删。**Clear All 后 Apply 回落为全选**。
+- 所有 KPI、趋势图、Breakdown 表均随选中的 Touchpoint 与 Time range **实时联动**；环比（vs previous）按相同跨度的上一周期计算。
+
+---
+
+## 三、KPI 卡片（6 个，替换原 4 个）
+
+| 指标 | 定义 | 计算方式 | 正向方向 |
+|------|------|----------|----------|
+| **Impressions** | AI 推荐的展示总次数 | Σ 选中 Touchpoint 的 impressions | 增加 ↑ |
+| **Clicks** | 用户点击推荐的总次数 | Σ 选中 Touchpoint 的 clicks | 增加 ↑ |
+| **CTR** | 点击率 | Clicks / Impressions | 增加 ↑ |
+| **Orders** | 经推荐转化的订单数 | Σ 选中 Touchpoint 的 orders | 增加 ↑ |
+| **CVR** | 转化率 | Orders / Clicks | 增加 ↑ |
+| **Revenue** | 归因销售额（仅推荐商品价值） | Σ 选中 Touchpoint 的 revenue | 增加 ↑ |
+
+> **归因口径：** Revenue 只统计推荐商品本身的价值，不含订单整体金额。
+
+- 每张卡片：当前值 + 环比（% + 箭头 + 颜色，绿涨红跌）。
+- 布局：宽屏一行 6 张（`grid-cols-6`），窄屏每行 3 张。
+
+---
+
+## 四、Daily Trend 图表（替换原 Sales Trend）
+
+- 图表类型：**Composed Chart（柱 + 线组合图）**，双 Y 轴。
+- X 轴：日期。
+- 系列与映射：
+
+| 系列 | 图形 | Y 轴 | 颜色 |
+|------|------|------|------|
+| **Impressions** | 柱状 Bar | 左轴 | 紫色 `#6c47ff` |
+| **Clicks** | 实线 Line | 右轴 | 青色 `#06b6d4` |
+| **Orders** | 实线 Line | 右轴 | 橙色 `#f59e0b` |
+| **Revenue** | 虚线 Line | 左轴 | 绿色 `#10b981` |
+
+- 标题「Daily trend」与图例同一行（左标题，右图例）。
+- Tooltip：Revenue 显示为货币格式，其余显示千分位整数。
+
+---
+
+## 五、Performance Breakdown 表格（新增 CVR）
+
+按 touchpoint 维度汇总，**点击任意行展开订单详情面板**（展示该渠道的转化订单，推荐商品高亮）。
+
+| 列名 | 定义 |
+|------|------|
+| **Touchpoint** | 渠道名称（原 4 项） |
+| **Impressions** | 展示总次数 |
+| **Clicks** | 点击总次数 |
+| **CTR** | Clicks / Impressions |
+| **Orders** | 转化订单数 |
+| **CVR** | Orders / Clicks |
+| **Revenue** | 归因销售额，附环比变化（绿色 +x%） |
+
+> 说明文案：「Revenue counts only the recommended product value. Click a row to see converted orders.」
+
+---
+
+## 六、验收要点
+
+1. Touchpoint 筛选器为下拉框：默认「All touchpoints」，含 Clear All / 勾选列表 / Apply，点 Apply 才生效。
+2. 筛选项为且仅为：Resolution Center、WFP Confirmation Email、Support Chat、Search Bar。
+3. KPI 由 4 个变为 6 个（Impressions / Clicks / CTR / Orders / CVR / Revenue）。
+4. Daily Trend 为柱 + 线 Composed Chart，双 Y 轴。
+5. Breakdown 表新增 CVR 列；点击行仍能拉起订单详情面板。
+6. 全部 KPI / 图表 / 表格随 Time range 与 Touchpoint 实时联动。
+
+---
+
+## 七、设计规范
+
+- 主色：`#6c47ff`（紫色，品牌色）
+- 正向趋势：Emerald `#10b981` ／ 负向趋势：Red `#ef4444`
+- Touchpoint 配色：Resolution Center `#6c47ff` ／ WFP Confirmation Email `#f59e0b` ／ Support Chat `#10b981` ／ Search Bar `#3b82f6`
+- 卡片圆角：`rounded-xl`（12px）；分隔线：`border-border/40`（半透明）
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+  <script>
+    (function () {
+      const src = document.getElementById('md-source').textContent;
+      const html = marked.parse(src, { gfm: true, breaks: false });
+      const content = document.getElementById('content');
+      content.innerHTML = html;
+      const toc = document.getElementById('toc');
+      let n = 0;
+      content.querySelectorAll('h2, h3').forEach((h) => {
+        const id = 'sec-' + (n++);
+        h.id = id;
+        const a = document.createElement('a');
+        a.href = '#' + id;
+        a.textContent = h.textContent;
+        a.className = 'nav-link' + (h.tagName === 'H3' ? ' lvl3' : '');
+        toc.appendChild(a);
+      });
+    })();
+  </script>
+</body>
+</html>

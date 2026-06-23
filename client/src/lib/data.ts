@@ -2273,10 +2273,10 @@ export interface SalesModeDef {
   color: string;
 }
 export const SALES_MODES: SalesModeDef[] = [
-  { key: "resolutionCenter", label: "Resolution Center", color: "#6c47ff" },
-  { key: "policyEmail",      label: "Policy Email",      color: "#f59e0b" },
-  { key: "liveChat",         label: "Live Chat",         color: "#10b981" },
-  { key: "searchBar",        label: "Search Bar",        color: "#3b82f6" },
+  { key: "resolutionCenter", label: "Resolution Center",      color: "#6c47ff" },
+  { key: "policyEmail",      label: "WFP Confirmation Email", color: "#f59e0b" },
+  { key: "liveChat",         label: "Support Chat",           color: "#10b981" },
+  { key: "searchBar",        label: "Search Bar",             color: "#3b82f6" },
 ];
 
 /* Per-touchpoint static metadata. Per-period metrics are derived from salesDaily. */
@@ -2340,13 +2340,13 @@ const sampleOrders: Record<string, SalesOrder[]> = {
     { id: "ORD-10375", customer: "Sofia Rodriguez", email: "sofia.r@example.com", items: [{ name: "Portable Charger", qty: 1, price: "$49.99" }, { name: "USB-C Cable", qty: 3, price: "$9.99" }], recommendedItem: "Portable Charger", total: "$79.96", date: "May 1, 2026", status: "pending", touchpoint: "Resolution Center", channel: "Mobile", conversationId: "SC-10375" },
   ],
   policyEmail: [
-    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email", conversationId: "SC-10440" },
-    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "Policy Email", channel: "Email", conversationId: "SC-10412" },
+    { id: "ORD-10440", customer: "Liam Park", email: "liam.p@example.com", items: [{ name: "Laptop Stand", qty: 1, price: "$59.99" }], recommendedItem: "Laptop Stand", total: "$59.99", date: "May 4, 2026", status: "fulfilled", touchpoint: "WFP Confirmation Email", channel: "Email", conversationId: "SC-10440" },
+    { id: "ORD-10412", customer: "Ava Thompson", email: "ava.t@example.com", items: [{ name: "Keyboard Cover", qty: 2, price: "$19.99" }, { name: "Mouse Pad XL", qty: 1, price: "$24.99" }], recommendedItem: "Keyboard Cover", total: "$64.97", date: "May 2, 2026", status: "fulfilled", touchpoint: "WFP Confirmation Email", channel: "Email", conversationId: "SC-10412" },
   ],
   liveChat: [
-    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10455" },
-    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10431" },
-    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Live Chat", channel: "Chat", conversationId: "SC-10388" },
+    { id: "ORD-10455", customer: "Noah Kim", email: "noah.k@example.com", items: [{ name: "Gaming Headset", qty: 1, price: "$89.99" }], recommendedItem: "Gaming Headset", total: "$89.99", date: "May 5, 2026", status: "fulfilled", touchpoint: "Support Chat", channel: "Chat", conversationId: "SC-10455" },
+    { id: "ORD-10431", customer: "Mia Johnson", email: "mia.j@example.com", items: [{ name: "Desk Organizer", qty: 1, price: "$29.99" }, { name: "Cable Management Kit", qty: 1, price: "$14.99" }], recommendedItem: "Desk Organizer", total: "$44.98", date: "May 3, 2026", status: "fulfilled", touchpoint: "Support Chat", channel: "Chat", conversationId: "SC-10431" },
+    { id: "ORD-10388", customer: "Ethan Brown", email: "e.brown@example.com", items: [{ name: "Screen Protector 3-Pack", qty: 1, price: "$15.99" }], recommendedItem: "Screen Protector 3-Pack", total: "$15.99", date: "Apr 30, 2026", status: "refunded", touchpoint: "Support Chat", channel: "Chat", conversationId: "SC-10388" },
   ],
   searchBar: [
     { id: "ORD-10466", customer: "Olivia Davis", email: "o.davis@example.com", items: [{ name: "Bluetooth Speaker", qty: 1, price: "$69.99" }], recommendedItem: "Bluetooth Speaker", total: "$69.99", date: "May 6, 2026", status: "fulfilled", touchpoint: "Search Bar", channel: "Web", conversationId: "SC-10466" },
@@ -2355,8 +2355,8 @@ const sampleOrders: Record<string, SalesOrder[]> = {
 };
 
 export const salesTouchpoints: SalesTouchpointMeta[] = [
-  { key: "resolutionCenter", label: "Resolution Center", salesDelta: 24.1,  orders: sampleOrders.resolutionCenter },
-  { key: "policyEmail",      label: "Policy Email",      salesDelta: 43.0,  orders: sampleOrders.policyEmail },
-  { key: "liveChat",         label: "Live Chat",         salesDelta: 70.2,  orders: sampleOrders.liveChat },
-  { key: "searchBar",        label: "Search Bar",        salesDelta: 103.7, orders: sampleOrders.searchBar },
+  { key: "resolutionCenter", label: "Resolution Center",      salesDelta: 24.1,  orders: sampleOrders.resolutionCenter },
+  { key: "policyEmail",      label: "WFP Confirmation Email", salesDelta: 43.0,  orders: sampleOrders.policyEmail },
+  { key: "liveChat",         label: "Support Chat",           salesDelta: 70.2,  orders: sampleOrders.liveChat },
+  { key: "searchBar",        label: "Search Bar",             salesDelta: 103.7, orders: sampleOrders.searchBar },
 ];

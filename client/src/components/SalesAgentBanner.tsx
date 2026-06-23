@@ -31,10 +31,10 @@ const kpis = [
 ];
 
 const touchpoints = [
-  { name: "Seel Resolution Center", sales: "$11,611" },
-  { name: "WFP Policy Email",        sales: "$10,870" },
-  { name: "Support Agent",           sales: "$10,234" },
-  { name: "Search Bar",              sales:  "$9,542"  },
+  { name: "Resolution Center",      sales: "$11,611" },
+  { name: "WFP Confirmation Email", sales: "$10,870" },
+  { name: "Support Chat",           sales: "$10,234" },
+  { name: "Search Bar",             sales:  "$9,542"  },
 ];
 
 export default function SalesAgentBanner({ onClose }: Props) {
