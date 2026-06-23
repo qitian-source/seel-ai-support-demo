@@ -86,7 +86,7 @@
       <div class="cover">
         <span class="cover-badge">🆕 v1.1 更新</span>
         <h1 class="cover-title">Sales Agent · Performance 改版</h1>
-        <p class="cover-sub">Analytics 升级为「展示 → 点击 → 转化 → 营收」全漏斗视图：6 个 KPI、柱+线 Daily Trend、Touchpoint 下拉筛选器，Breakdown 新增 CVR 列。Touchpoint 维度保持原有四项不变。</p>
+        <p class="cover-sub">Analytics 升级为「展示 → 点击 → 转化 → 营收」全漏斗视图：6 个 KPI、可切 metric 的 Daily Trend（每 touchpoint 一条折线）、Touchpoint 下拉筛选器，Breakdown 新增 CVR 列。Touchpoint 维度保持原有四项不变。</p>
         <div class="cover-meta">
           <div class="cover-meta-item"><span class="cover-meta-label">模块</span><span class="cover-meta-value">Sales Agent → Analytics</span></div>
           <div class="cover-meta-item"><span class="cover-meta-label">版本</span><span class="cover-meta-value">v1.1</span></div>
@@ -103,7 +103,7 @@
   <script type="text/markdown" id="md-source">
 # Sales Agent — Performance（Analytics）改版
 
-> **本次更新（v1.1）：** Sales Agent → Analytics（Performance）改版为「全漏斗」模型——KPI 由 4 个改为 6 个，Sales Trend 升级为柱+线 Composed Chart，Touchpoint 筛选改为下拉框，Breakdown 表新增 CVR 列。**Touchpoint 维度保持不变**（Resolution Center / WFP Confirmation Email / Support Chat / Search Bar）。
+> **本次更新（v1.1）：** Sales Agent → Analytics（Performance）改版为「全漏斗」模型——KPI 由 4 个改为 6 个，Sales Trend 升级为「单 metric 选择器 × 每 touchpoint 一条折线」，Touchpoint 筛选改为下拉框，Breakdown 表新增 CVR 列。**Touchpoint 维度保持不变**（Resolution Center / WFP Confirmation Email / Support Chat / Search Bar）。
 
 ---
 
@@ -152,19 +152,20 @@
 
 ## 四、Daily Trend 图表（替换原 Sales Trend）
 
-- 图表类型：**Composed Chart（柱 + 线组合图）**，双 Y 轴。
-- X 轴：日期。
-- 系列与映射：
+趋势图涉及 **touchpoint × metric × 时间** 三个维度，无法同屏铺开，否则量纲与系列互相打架、不可读。设计上**降一维**：一次只看一个 metric，touchpoint 用颜色区分。
 
-| 系列 | 图形 | Y 轴 | 颜色 |
-|------|------|------|------|
-| **Impressions** | 柱状 Bar | 左轴 | 紫色 `#6c47ff` |
-| **Clicks** | 实线 Line | 右轴 | 青色 `#06b6d4` |
-| **Orders** | 实线 Line | 右轴 | 橙色 `#f59e0b` |
-| **Revenue** | 虚线 Line | 左轴 | 绿色 `#10b981` |
+- **Metric 选择器**：图表右上角分段控件，可切换 **Impressions / Clicks / CTR / Orders / CVR / Revenue**（默认 Revenue）。一次仅选一个 → **单 Y 轴**、量纲统一。
+- **每个选中的 touchpoint 画一条折线**，颜色取各自品牌色；图例展示的是 touchpoint（带颜色），而非 metric。
 
-- 标题「Daily trend」与图例同一行（左标题，右图例）。
-- Tooltip：Revenue 显示为货币格式，其余显示千分位整数。
+| Touchpoint | 颜色 |
+|------------|------|
+| Resolution Center | 紫色 `#6c47ff` |
+| WFP Confirmation Email | 橙色 `#f59e0b` |
+| Support Chat | 绿色 `#10b981` |
+| Search Bar | 蓝色 `#3b82f6` |
+
+- X 轴：日期；Y 轴随所选 metric 自适应——Revenue 显示 `$`、CTR/CVR 显示 `%`、其余千分位/紧凑（k）格式。
+- Tooltip：逐行列出各 touchpoint 在当日的取值，按当前 metric 格式化。切换 metric / 增减 touchpoint，折线实时联动。
 
 ---
 

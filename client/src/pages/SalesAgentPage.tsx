@@ -8,7 +8,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
   salesDaily, salesTouchpoints, SALES_MODES,
-  type SalesDailyPoint, type SalesOrder,
+  type SalesDailyPoint, type SalesOrder, type SalesDayMetrics,
 } from "@/lib/data";
 import SalesAgentBanner from "@/components/SalesAgentBanner";
 import TimeRangePicker, { type TimeRangeValue } from "@/components/TimeRangePicker";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, X, Info, Sparkles, MessageSquare, ArrowRight, ChevronDown } from "lucide-react";
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  ComposedChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -25,9 +25,6 @@ type AgentSubTab = "touchpoints" | "strategies" | "analytics";
 type TimeRange = "yesterday" | "7d" | "30d" | "90d" | "custom";
 
 const DAYS_MAP: Record<TimeRange, number> = { yesterday: 1, "7d": 7, "30d": 30, "90d": 90, custom: 30 };
-
-/* Series colors (also used in the legend / breakdown) */
-const C = { impressions: "#6c47ff", clicks: "#06b6d4", orders: "#f59e0b", revenue: "#10b981" };
 
 /* ── Aggregation helpers ── */
 interface Totals { impressions: number; clicks: number; orders: number; revenue: number; }
@@ -52,6 +49,28 @@ function aggregate(points: SalesDailyPoint[], keys: string[]): Totals {
 }
 const ctrOf = (t: Totals) => (t.impressions ? (t.clicks / t.impressions) * 100 : 0);
 const cvrOf = (t: Totals) => (t.clicks ? (t.orders / t.clicks) * 100 : 0);
+
+/* Trend chart shows ONE metric at a time; touchpoints are distinguished by color. */
+type TrendMetric = "impressions" | "clicks" | "ctr" | "orders" | "cvr" | "revenue";
+const TREND_METRICS: { key: TrendMetric; label: string }[] = [
+  { key: "impressions", label: "Impressions" },
+  { key: "clicks",      label: "Clicks" },
+  { key: "ctr",         label: "CTR" },
+  { key: "orders",      label: "Orders" },
+  { key: "cvr",         label: "CVR" },
+  { key: "revenue",     label: "Revenue" },
+];
+const isPct = (m: TrendMetric) => m === "ctr" || m === "cvr";
+function metricOfDay(m: SalesDayMetrics, metric: TrendMetric): number {
+  if (metric === "ctr") return m.impressions ? (m.clicks / m.impressions) * 100 : 0;
+  if (metric === "cvr") return m.clicks ? (m.orders / m.clicks) * 100 : 0;
+  return m[metric];
+}
+const compact = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${v}`);
+const fmtMetricValue = (metric: TrendMetric, v: number) =>
+  metric === "revenue" ? usd(v) : isPct(metric) ? `${v.toFixed(2)}%` : v.toLocaleString();
+const fmtMetricAxis = (metric: TrendMetric, v: number) =>
+  metric === "revenue" ? `$${compact(v)}` : isPct(metric) ? `${v}%` : compact(v);
 
 function pctDelta(curV: number, prevV: number): { delta: string; positive: boolean } | null {
   if (!prevV) return null;
@@ -362,6 +381,7 @@ function AnalyticsTab() {
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | undefined>();
   const [selKeys, setSelKeys] = useState<string[]>(SALES_MODES.map((m) => m.key));
   const [selectedRow, setSelectedRow] = useState<ModeRow | null>(null);
+  const [trendMetric, setTrendMetric] = useState<TrendMetric>("revenue");
 
   const days = DAYS_MAP[timeRange];
   const cur  = useMemo(() => salesDaily.slice(-days), [days]);
@@ -379,9 +399,19 @@ function AnalyticsTab() {
     { label: "Revenue",     value: usd(curAgg.revenue),                 d: pctDelta(curAgg.revenue, prevAgg.revenue) },
   ], [curAgg, prevAgg]);
 
-  const chartData = useMemo(
-    () => cur.map((p) => ({ date: p.date, ...sumModes(p, selKeys) })),
-    [cur, selKeys]
+  const selectedModes = useMemo(() => SALES_MODES.filter((m) => selKeys.includes(m.key)), [selKeys]);
+
+  // One series per selected touchpoint, keyed by touchpoint key, for the chosen metric.
+  const trendData = useMemo(
+    () => cur.map((p) => {
+      const row: Record<string, number | string> = { date: p.date };
+      for (const m of selectedModes) {
+        const md = p.byMode[m.key];
+        row[m.key] = md ? metricOfDay(md, trendMetric) : 0;
+      }
+      return row;
+    }),
+    [cur, selectedModes, trendMetric]
   );
 
   const modeRows: ModeRow[] = useMemo(
@@ -396,10 +426,6 @@ function AnalyticsTab() {
     }),
     [cur, selKeys]
   );
-
-  const tooltipLabels: Record<string, string> = {
-    impressions: "Impressions", clicks: "Clicks", orders: "Orders", revenue: "Revenue",
-  };
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -442,44 +468,52 @@ function AnalyticsTab() {
         {/* Daily Trend */}
         <div className="mb-5">
           <Card>
-            <CardHeader className="pb-3 flex-row items-center justify-between flex-wrap gap-2">
+            <CardHeader className="pb-3 flex-row items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-[13px] font-semibold">Daily trend</CardTitle>
                 <Info size={13} className="text-muted-foreground/40" />
               </div>
-              <div className="flex items-center gap-4 flex-wrap">
-                {[
-                  { label: "Impressions", color: C.impressions },
-                  { label: "Clicks",      color: C.clicks },
-                  { label: "Orders",      color: C.orders },
-                  { label: "Revenue",     color: C.revenue },
-                ].map((s) => (
-                  <span key={s.label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: s.color }} />
-                    {s.label}
-                  </span>
+              {/* Metric selector — one metric at a time keeps the axis readable */}
+              <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-0.5">
+                {TREND_METRICS.map((mt) => (
+                  <button
+                    key={mt.key}
+                    onClick={() => setTrendMetric(mt.key)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors",
+                      trendMetric === mt.key
+                        ? "bg-white text-[#6c47ff] shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {mt.label}
+                  </button>
                 ))}
               </div>
             </CardHeader>
             <CardContent>
+              {/* Touchpoint legend — series are distinguished by touchpoint color */}
+              <div className="flex items-center gap-4 flex-wrap mb-3 px-1">
+                {selectedModes.map((m) => (
+                  <span key={m.key} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="w-3 h-[3px] rounded-full inline-block" style={{ backgroundColor: m.color }} />
+                    {m.label}
+                  </span>
+                ))}
+              </div>
               <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
+                  <ComposedChart data={trendData} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(chartData.length / 8))} />
-                    <YAxis yAxisId="left" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(trendData.length / 8))} />
+                    <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtMetricAxis(trendMetric, v)} width={48} />
                     <RechartsTooltip
                       contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
-                      formatter={(value: number, name: string) => {
-                        const v = name === "revenue" ? usd(value) : value.toLocaleString();
-                        return [v, tooltipLabels[name] || name];
-                      }}
+                      formatter={(value: number, name: string) => [fmtMetricValue(trendMetric, value), name]}
                     />
-                    <Bar yAxisId="left" dataKey="impressions" fill={C.impressions} radius={[2, 2, 0, 0]} maxBarSize={18} opacity={0.85} />
-                    <Line yAxisId="left" type="monotone" dataKey="revenue" stroke={C.revenue} strokeWidth={2} strokeDasharray="4 3" dot={false} />
-                    <Line yAxisId="right" type="monotone" dataKey="clicks" stroke={C.clicks} strokeWidth={2} dot={false} />
-                    <Line yAxisId="right" type="monotone" dataKey="orders" stroke={C.orders} strokeWidth={2} dot={false} />
+                    {selectedModes.map((m) => (
+                      <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color} strokeWidth={2} dot={false} />
+                    ))}
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
