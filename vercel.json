@@ -3,5 +3,8 @@
   "installCommand": "npm install --legacy-peer-deps",
   "outputDirectory": "dist/public",
   "framework": null,
-  "rewrites": [{ "source": "/((?!.*\\.html$).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/((?!.*\\.html$).*)", "destination": "/index.html" }
+  ]
 }

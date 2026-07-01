@@ -13,6 +13,7 @@ import ZendeskPage from "@/pages/ZendeskPage";
 import SalesAgentPage from "@/pages/SalesAgentPage";
 import VocAgentPage from "@/pages/VocAgentPage";
 import BillingPage from "@/pages/BillingPage";
+import DiscoPage from "@/pages/DiscoPage";
 import SettingsPage from "@/pages/SettingsPage";
 import OrgMenu from "@/components/OrgMenu";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export default function Home() {
   const isSalesAgent = mainTab === "sales-agent";
   const isVocAgent = mainTab === "voc-agent";
   const isBilling = mainTab === "billing";
+  const isDisco = mainTab === "disco";
 
   /* Handle tab switch — consume playbookDeepLink */
   const handleTabSwitch = (tabId: typeof mainTab) => {
@@ -53,8 +55,9 @@ export default function Home() {
   };
 
   const vocAgentTabs = [{ id: "voc-agent" as const, label: "Insights" }];
-  const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : aiSupportTabs;
-  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : "Support agent";
+  const discoTabs = [{ id: "disco" as const, label: "Overview" }];
+  const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : isDisco ? discoTabs : aiSupportTabs;
+  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : isDisco ? "Disco" : "Support agent";
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -63,8 +66,20 @@ export default function Home() {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Billing page has its own header — render standalone */}
-        {isBilling ? (
+        {/* Disco and Billing pages render standalone without tabs header */}
+        {isDisco ? (
+          <div className="flex-1 overflow-hidden bg-[#fafafa] flex flex-col">
+            <div className="border-b border-border bg-white px-6 pt-4 pb-0">
+              <h1 className="text-[18px] font-bold text-foreground mb-3">Disco</h1>
+              <div className="flex items-center gap-0">
+                <button className="px-4 py-2 text-[13px] font-medium border-b-2 border-[#6c47ff] text-[#6c47ff] -mb-[1px]">
+                  Overview
+                </button>
+              </div>
+            </div>
+            <DiscoPage />
+          </div>
+        ) : isBilling ? (
           <div className="flex-1 overflow-hidden bg-[#fafafa]">
             <BillingPage />
           </div>

@@ -17,7 +17,7 @@ import {
 } from "@/lib/data";
 
 /* ── Navigation ── */
-type MainTab = "agents" | "playbook" | "performance" | "email" | "live-widget" | "zendesk" | "settings" | "sales-agent" | "billing" | "voc-agent";
+type MainTab = "agents" | "playbook" | "performance" | "email" | "live-widget" | "zendesk" | "settings" | "sales-agent" | "billing" | "voc-agent" | "disco";
 
 /** Single, unified operating mode shared by every channel (chat / email / zendesk)
  *  and by the derived agent state. off = paused, training = draft-only, production = autonomous. */
@@ -59,6 +59,8 @@ interface ChatWidgetConfig {
   windowBackground: string;
   /* layout */
   position: "bottom-left" | "bottom-right";
+  sizeDesktop: "compact" | "standard" | "large"; // widget size on web
+  sizeMobile: "compact" | "standard" | "large"; // widget size on mobile (separate so it can be smaller)
   distanceBottom: number;
   distanceRight: number;
   cornerRadius: number;
@@ -289,6 +291,8 @@ const defaultChatWidget: ChatWidgetConfig = {
   userText: "#FFFFFF",
   windowBackground: "#FFFFFF",
   position: "bottom-right",
+  sizeDesktop: "standard",
+  sizeMobile: "compact",
   distanceBottom: 20,
   distanceRight: 20,
   cornerRadius: 16,

@@ -6,7 +6,7 @@ import { useApp } from "@/contexts/AppContext";
 import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
   Puzzle, Star, Bot, Grid3X3, Bell, Settings,
-  Headphones, TrendingUp, UserSquare2, Megaphone, ClipboardCheck,
+  Headphones, TrendingUp, UserSquare2, Megaphone, ClipboardCheck, Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -29,6 +29,10 @@ const workforceNav = [
   { icon: ClipboardCheck, label: "Review agent",  tab: null,                   disabled: true },
 ];
 
+const partnerNav = [
+  { icon: Radio, label: "Disco", tab: "disco" as const, disabled: false },
+];
+
 const customizeNav = [
   { icon: Grid3X3,     label: "Widgets",         disabled: true },
   { icon: UserSquare2, label: "Customer Portal",  disabled: true },
@@ -38,7 +42,7 @@ const customizeNav = [
 type NavItem = {
   icon: typeof Home;
   label: string;
-  tab: "agents" | "sales-agent" | "voc-agent" | null;
+  tab: "agents" | "sales-agent" | "voc-agent" | "disco" | null;
   disabled: boolean;
 };
 
@@ -101,6 +105,14 @@ export default function Sidebar() {
           </span>
         </div>
         {workforceNav.map((item) => renderNavItem(item))}
+
+        {/* Partners section */}
+        <div className="mt-4 mb-1 px-3">
+          <span className="text-[11px] font-semibold text-[#8c9196] uppercase tracking-wider">
+            Partners
+          </span>
+        </div>
+        {partnerNav.map((item) => renderNavItem(item))}
 
         {/* Customize section */}
         <div className="mt-4 mb-1 px-3">
