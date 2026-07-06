@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Return SaaS — Issues & Rules 交互优化 PRD · v1.0</title>
+<style>
+  :root {
+    --brand: #645AFF; --brand-d:#4d43e0; --dark:#1E293B; --mid:#475569;
+    --soft:#64748B; --border:#E2E8F0; --bg:#F8FAFC; --ok:#16A34A; --warn:#B45309; --blue:#2563EB;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+    font-size: 15px; line-height: 1.75; color: var(--dark); background: var(--bg);
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 100; background: #fff;
+    border-bottom: 1px solid var(--border); padding: 0 40px; height: 56px;
+    display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .topbar-brand { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .topbar-brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+  .topbar-tag { font-size: 11px; font-weight: 600; background: #f0edff; color: var(--brand-d); padding: 2px 8px; border-radius: 99px; }
+  .topbar-date { margin-left: auto; font-size: 12px; color: var(--soft); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 36px 24px 100px; }
+
+  .cover { background: linear-gradient(135deg, #16123d 0%, #2d2470 55%, #645AFF 135%); border-radius: 16px; padding: 44px 42px; margin-bottom: 40px; color: #fff; position: relative; overflow: hidden; }
+  .cover::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 75% 25%, rgba(124,58,237,.35) 0%, transparent 60%); }
+  .cover > * { position: relative; }
+  .cover-badge { display: inline-block; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.88); padding: 4px 12px; border-radius: 99px; margin-bottom: 18px; }
+  .cover-title { font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-bottom: 10px; }
+  .cover-sub { font-size: 15px; color: rgba(255,255,255,.75); margin-bottom: 26px; max-width: 680px; }
+  .cover-meta { display: flex; gap: 34px; flex-wrap: wrap; }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .cover-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .cover-meta-value { font-size: 14px; font-weight: 600; }
+  .cover-meta-value a { color: #fff; }
+
+  h2 { font-size: 22px; font-weight: 700; padding-bottom: 12px; border-bottom: 2px solid var(--border); margin: 44px 0 20px; }
+  h3 { font-size: 17px; font-weight: 700; margin: 30px 0 12px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--brand-d); margin: 20px 0 8px; }
+  p { color: var(--mid); margin: 10px 0; }
+  ul, ol { margin: 8px 0 16px 0; padding-left: 22px; color: var(--mid); }
+  li { margin-bottom: 6px; }
+  strong { color: var(--dark); font-weight: 600; }
+  code { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; background: #f1f0fa; color: var(--brand-d); padding: 1px 6px; border-radius: 4px; }
+  a { color: var(--brand-d); text-decoration: none; border-bottom: 1px solid rgba(100,90,255,.3); }
+  a:hover { border-bottom-color: var(--brand-d); }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0 22px; background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 13.5px; }
+  th { background: #F4F5FA; text-align: left; padding: 9px 14px; font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 9px 14px; border-bottom: 1px solid #EEF0F4; color: var(--mid); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  .quote { background: #fff; border: 1px solid var(--border); border-left: 3px solid var(--brand); border-radius: 8px; padding: 14px 18px; margin: 14px 0; font-size: 13.5px; color: var(--mid); }
+  .quote .who { font-weight: 700; color: var(--dark); font-size: 12.5px; margin-bottom: 4px; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 99px; padding: 1px 9px; margin-right: 6px; vertical-align: 1px; }
+  .pill.p0 { background: #FEE2E2; color: #B91C1C; }
+  .pill.p1 { background: #FEF3C7; color: #92580B; }
+  .pill.new { background: #DCFAE6; color: #166534; }
+  .note { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px; font-size: 13.5px; color: #92580B; margin: 14px 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand"><span class="dot"></span>Seel · Return SaaS</div>
+  <span class="topbar-tag">PRD v1.0</span>
+  <span class="topbar-date">2026-07-06 · qi.tian@seel.com</span>
+</div>
+
+<div class="wrap">
+
+<div class="cover">
+  <span class="cover-badge">Merchant Dashboard · Return 模块</span>
+  <div class="cover-title">【Return SaaS】Issues & Rules 交互优化</div>
+  <div class="cover-sub">来自 aelfriceden、bassdash 两家商户的一线反馈：Issues 列表补齐 Tracking 信息与 Item 级明细导出，让仓库核对不再逐单点开；Rules Flow 编辑器选项文案全文展示，让商家一屏看全规则。</div>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><span class="cover-meta-label">需求来源</span><span class="cover-meta-value">aelfriceden0 · bassdash-fishing-gear</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">影响面</span><span class="cover-meta-value">merchant-dashboard · return 模块</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">交互 Demo</span><span class="cover-meta-value"><a href="./return_saas_optimizations_demo.html" target="_blank">return_saas_optimizations_demo.html ↗</a></span></div>
+  </div>
+</div>
+
+<h2 id="bg">1 · 背景与商户反馈</h2>
+<p>两家 Return SaaS 商户在使用过程中提出了 5 个具体痛点，均集中在 <strong>Issues 列表的仓库核对效率</strong> 和 <strong>Rules Flow 编辑器的可读性</strong> 上：</p>
+
+<div class="quote">
+  <div class="who">bassdash（bassdash-fishing-gear.myshopify.com）· 渔具类目</div>
+  ① 希望 Issues 列表增加展示 tracking number 字段；② 希望支持导出 RMA 明细（RMA、order number、return item SKU、label tracking number、return reason），以便与仓库线下核对，而不是一个个点开，当前操作路径冗长；③ 消费者提交的 return item 希望展示 SKU，方便识别；④ 状态为 completed 的 RMA 仍希望能查看 return label & tracking number。
+</div>
+<div class="quote">
+  <div class="who">aelfriceden（aelfriceden0.myshopify.com）· 服饰类目</div>
+  MD → Issues → Rules → Return rules 模块：较长的 multiple choices 选项目前默认只展示前几个字符，希望全部展开或做成鼠标 hover 效果，让商家可以看全界面。
+</div>
+
+<h3>1.1 问题本质</h3>
+<ul>
+  <li><strong>仓库核对场景缺失</strong>：Return SaaS 当前的列表和导出都是 RMA 粒度（<code>ReturnList</code> 8 列 + <code>exportReturns</code> 汇总），而仓库收货是<strong>包裹 + 商品</strong>粒度——核对必须拿到 SKU 和运单号，目前只能逐个点进 <code>/return/detail/:rmaNumber</code>，每单 3~4 次点击。</li>
+  <li><strong>信息生命周期断档</strong>：RMA 完结（completed）后 label / tracking 入口消失，但仓库对账、物流理赔往往发生在完结之后。</li>
+  <li><strong>Flow 画布可读性</strong>：<code>Rules/Flow</code> 基于 @xyflow/react，边标签（退货原因、multiple choices 选项）截断为几个字符，服饰类商户的选项天然很长（"The waist of the pants is too tight or too loose"），画布失去自解释能力。</li>
+</ul>
+
+<h2 id="scope">2 · 需求范围</h2>
+<table>
+  <tr><th>#</th><th>需求</th><th>优先级</th><th>模块</th><th>来源</th></tr>
+  <tr><td><strong>R1</strong></td><td>Issues 列表新增 <strong>Tracking #</strong> 列（可复制）</td><td><span class="pill p0">P0</span></td><td>Issues 列表</td><td>bassdash ①</td></tr>
+  <tr><td><strong>R2</strong></td><td>CSV 导出支持 <strong>Item 级明细</strong>（RMA / Order / SKU / Reason / Tracking）</td><td><span class="pill p0">P0</span></td><td>Issues 导出</td><td>bassdash ②</td></tr>
+  <tr><td><strong>R3</strong></td><td>Return item 展示 <strong>SKU</strong>（详情页 + 明细导出）</td><td><span class="pill p0">P0</span></td><td>RMA 详情</td><td>bassdash ③</td></tr>
+  <tr><td><strong>R4</strong></td><td><strong>Completed 状态</strong> RMA 仍可查看/下载 label & tracking</td><td><span class="pill p1">P1</span></td><td>RMA 详情</td><td>bassdash ④</td></tr>
+  <tr><td><strong>R5</strong></td><td>Rules Flow 选项文案<strong>全文展示 + Hover 浮层</strong></td><td><span class="pill p1">P1</span></td><td>Rules Flow</td><td>aelfriceden</td></tr>
+</table>
+
+<h2 id="detail">3 · 详细设计</h2>
+
+<h3>R1 · Issues 列表新增 Tracking # 列</h3>
+<ul>
+  <li>列位置：<code>Status</code> 与 <code>Fraud risk</code> 之间；展示 <strong>return label 的运单号</strong>（即 Seel 生成或商家上传 label 对应的 tracking number），带承运商角标（USPS / UPS / FedEx…）。</li>
+  <li>交互：单元格内提供 <strong>一键复制</strong>（复制去空格的原始单号）；点击单号可跳转承运商轨迹页（复用详情页已有的 tracking link 逻辑）；复制/跳转均 <code>stopPropagation</code>，不触发行点击进详情。</li>
+  <li>空态：label 未生成或未揽收扫描时显示 <code>— Label not scanned</code> 置灰文案。</li>
+  <li>多包裹（一个 RMA 多个 label）：列内展示第一个 + <code>+N</code> 角标，hover 展开全部；导出时逐行展开（见 R2）。</li>
+  <li>搜索框同步支持按 tracking number 精确查询（placeholder 更新为 <code>RMA# / Order / Customer / Tracking#</code>）。</li>
+</ul>
+
+<h3>R2 · Item 级明细 CSV 导出</h3>
+<p>现有 Download CSV 弹窗升级为<strong>两种导出格式</strong>单选，默认记住上次选择：</p>
+<table>
+  <tr><th>格式</th><th>粒度</th><th>字段</th></tr>
+  <tr><td>RMA 汇总（现状）</td><td>1 RMA = 1 行</td><td>维持现有字段不变，保证存量商户导出模板兼容</td></tr>
+  <tr><td>Item 明细 <span class="pill new">NEW</span></td><td>1 退货商品 = 1 行</td><td><code>rma_number</code> · <code>order_number</code> · <code>sku</code> · <code>item_name</code> · <code>variant</code> · <code>qty</code> · <code>return_reason</code>（含 multiple choice 选项全文）· <code>label_carrier</code> · <code>label_tracking_number</code> · <code>resolution_type</code> · <code>rma_status</code> · <code>created_at</code></td></tr>
+</table>
+<ul>
+  <li>应用当前列表的全部筛选条件与日期范围，与列表所见一致。</li>
+  <li>沿用现有异步导出机制：生成完成后发送下载链接至商户邮箱；预估行数 &lt; 500 时同步直接下载。</li>
+  <li>多商品 RMA 每个 line item 一行；同一 RMA 的公共字段（tracking 等）在每行重复，便于仓库用 Excel 直接 VLOOKUP。</li>
+  <li>return_reason 输出消费者实际选择的<strong>完整选项文案</strong>；有附加说明（Others 填空）时拼接在后，格式 <code>选项 — 补充说明</code>。</li>
+</ul>
+
+<h3>R3 · Return item 展示 SKU</h3>
+<ul>
+  <li>RMA 详情页 Return items 卡片：商品名 / 变体行下方新增 <strong>SKU chip</strong>（等宽字体、可复制）。数据源为 Shopify line item 的 <code>sku</code> 字段；SKU 为空时回退展示 <code>variant_id</code>，再空则隐藏。</li>
+  <li>覆盖同一组件的所有消费方：RMA 详情、Process items 弹窗、Packing Slip PDF（新增 SKU 列）。</li>
+  <li>消费者端（return portal）不在本期范围，仅商户侧展示。</li>
+</ul>
+
+<h3>R4 · Completed RMA 保留 label & tracking 入口</h3>
+<ul>
+  <li>现状（源码定位）：<code>ReturnDetail/components/ShippingInfo.jsx</code> 中 Shipping documents 区块由 <code>{isNeedReview && renderShippingDocuments()}</code> 门禁——仅 <code>needReview</code>（In progress）状态渲染，RMA 进入 completed / expired / cancelled 等状态后 label 下载与 packing slip 入口消失。</li>
+  <li>目标：<strong>只要 label 生成过，任何状态下该区块永久可见</strong>——包含 View label (PDF)、tracking number（可复制）、Track 跳转。</li>
+  <li>终态下该区块降级为只读（不可重新生成 / 替换 label），并保留 label 来源标识（<code>MERCHANT_UPLOAD</code> / <code>SEEL_GENERATED</code>）。</li>
+  <li>Label 文件保留策略：与 RMA 数据同生命周期，不做提前清理。</li>
+</ul>
+
+<h3>R5 · Rules Flow 选项文案全文展示 + Hover</h3>
+<p>作用范围：<code>Rules/Flow</code> 画布内全部边标签——退货原因（Return reason → 下游）与 Multiple choices 各选项（→ Return / 下一节点）。</p>
+<table>
+  <tr><th>层</th><th>方案</th></tr>
+  <tr><td><strong>默认展示</strong></td><td>现状源码：<code>Rules/Flow/Step/StepDefaultEdge.jsx</code> 边标签为 <code>max-w-[120px]</code> + antd <code>Typography.Text ellipsis</code> 单行截断，定位在贝塞尔中点。改为<strong>全文展示、自动换行</strong>：max-width ~140px，最多 3 行（line-clamp:3）；白底 + 细边框，保证与连线交叠时可读。</td></tr>
+  <tr><td><strong>Hover 浮层</strong></td><td>鼠标悬停任意边标签 → 深色 tooltip 展示<strong>完整文案</strong>（含超出 3 行部分），同时该条边高亮（brand 色加粗），辅助追踪路径。触屏设备点按标签等效。</td></tr>
+  <tr><td><strong>布局适配</strong></td><td>标签变高/变宽后需两处适配：① dagre 布局（<code>utils.jsx getLayoutedElements</code>，现为固定 NODE 240×60、ranksep 120、nodesep 20）按标签实际尺寸重算间距；② 标签锚点从贝塞尔中点（t=0.5，扇出汇聚处横向间距过小必然压盖）移至靠近目标节点一侧（t≈0.8），相邻标签间距 ≈ 节点间距。切换展示不改动 flow 数据结构，纯渲染层改造，<code>data2Flow</code>/<code>flow2Data</code> 不变。</td></tr>
+</table>
+<div class="note">性能注意：大型 flow（服饰商户实测 60+ 节点）标签全量渲染后，初始 fitView 的可视密度会下降。默认缩放级别按内容 bounding box 重算；zoom &lt; 0.5 时标签自动退回截断模式（LOD），避免小字糊成一团。</div>
+
+<h2 id="api">4 · 接口改动</h2>
+<table>
+  <tr><th>接口</th><th>改动</th><th>需求</th></tr>
+  <tr><td><code>queryReturnByCondition</code></td><td>list item 增加 <code>labels: [{ carrier, trackingNumber, trackingUrl, source }]</code>；<code>queryParam</code> 支持 tracking number 匹配</td><td>R1</td></tr>
+  <tr><td><code>exportReturns</code></td><td>新增参数 <code>exportLevel: RMA | ITEM</code>（默认 <code>RMA</code>，向后兼容）；ITEM 级按 line item 展开并联表 label 信息</td><td>R2</td></tr>
+  <tr><td><code>queryReturnDetail</code></td><td><code>items[]</code> 增加 <code>sku</code>、<code>variantTitle</code>；终态 RMA 不再裁剪 <code>labelInfo</code> 节点</td><td>R3 / R4</td></tr>
+  <tr><td><code>queryLatestReturnFlowConfig</code></td><td>无改动（R5 为纯前端渲染层改造）</td><td>R5</td></tr>
+</table>
+
+<h2 id="ac">5 · 验收标准</h2>
+<ol>
+  <li>Issues 列表可见 Tracking # 列；有单号的 RMA 可复制、可跳转轨迹页；无单号显示占位文案；列表加载 P95 无可感知劣化（&lt; +100ms）。</li>
+  <li>导出弹窗可选两种格式；Item 明细 CSV 中，多商品 RMA 正确展开为多行，SKU / reason / tracking 三字段与详情页一致；筛选条件对导出生效。</li>
+  <li>RMA 详情、Process items、Packing Slip 三处均展示 SKU；SKU 为空时按回退规则处理、不出现空 chip。</li>
+  <li>任选一个 completed / expired RMA，Return shipping 区块仍展示 label 下载与 tracking，且为只读。</li>
+  <li>Flow 画布中 ≥ 40 字符的选项默认完整可读（≤3 行）；hover 出现全文浮层且对应边高亮；60+ 节点 flow 无标签压盖、拖拽缩放流畅（60fps）。</li>
+  <li>回归：现状 RMA 汇总导出模板字段不变；flow 发布（<code>flow2Data</code>）产物与改造前逐字节一致。</li>
+</ol>
+
+<h2 id="plan">6 · 排期建议</h2>
+<table>
+  <tr><th>阶段</th><th>内容</th><th>估时</th></tr>
+  <tr><td>Phase 1</td><td>R1 + R3（列表列 & SKU 展示，纯增量字段）</td><td>前端 2d + 后端 2d</td></tr>
+  <tr><td>Phase 2</td><td>R2（明细导出，后端联表 + 异步任务改造）</td><td>前端 1d + 后端 3d</td></tr>
+  <tr><td>Phase 3</td><td>R4 + R5（详情终态逻辑 & Flow 渲染层）</td><td>前端 3d</td></tr>
+  <tr><td colspan="2"><strong>灰度</strong>：bassdash、aelfriceden 两家反馈商户先行开启，收集一轮反馈后全量。</td><td>1 周</td></tr>
+</table>
+
+<p style="margin-top:40px;font-size:12.5px;color:var(--soft)">附：交互 Demo — <a href="./return_saas_optimizations_demo.html" target="_blank">return_saas_optimizations_demo.html</a>（覆盖 R1–R5 全部交互，含 Before/After 对比）</p>
+
+</div>
+</body>
+</html>
