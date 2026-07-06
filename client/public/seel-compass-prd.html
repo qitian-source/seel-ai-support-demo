@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — PRD & State Machines · Draft v1.1</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0;
+    --bg:#F8FAFC; --card:#fff;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+    --warn:#B45309; --warn-bg:#FFFBEB; --warn-br:#FDE68A;
+    --na:#64748B; --na-bg:#F1F5F9; --na-br:#E2E8F0;
+    --danger:#DC2626; --danger-bg:#FEF2F2; --danger-br:#FECACA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  a{color:var(--seel-d);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12.5px;color:#334155}
+
+  /* Top brand bar */
+  .topbar{background:#0A0A1A;color:#fff;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.02em}
+  .brand .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .brand .title{display:flex;flex-direction:column;line-height:1.2}
+  .brand small{font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .topbar-right{display:flex;gap:12px;align-items:center;font-size:12px}
+  .pill{background:rgba(124,58,237,.25);border:1px solid rgba(167,139,250,.4);color:#DDD6FE;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600}
+  .pill.warn{background:rgba(180,83,9,.25);border-color:rgba(251,191,36,.4);color:#FDE68A}
+
+  /* Callout at very top */
+  .callout-top{background:linear-gradient(135deg,#F5F3FF,#FFF);border-bottom:1px solid #DDD6FE;padding:16px 28px}
+  .callout-top .inner{max-width:1200px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .callout-top .icon{width:36px;height:36px;background:var(--seel);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+  .callout-top .text{flex:1;font-size:13px;color:var(--mid)}
+  .callout-top .text b{color:var(--ink)}
+  .callout-top a{color:var(--seel-d);font-weight:600}
+
+  /* Layout */
+  .layout{display:flex;max-width:1400px;margin:0 auto}
+  .sidebar{width:240px;flex-shrink:0;padding:24px 16px 40px 28px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+  .sidebar h4{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:8px;margin-top:14px}
+  .sidebar h4:first-child{margin-top:0}
+  .sidebar a{display:block;padding:5px 10px;font-size:12.5px;color:var(--mid);border-radius:6px;margin-bottom:2px;line-height:1.35}
+  .sidebar a:hover{background:var(--seel-l);color:var(--seel-d);text-decoration:none}
+  .sidebar a.legal{color:var(--warn);font-weight:600}
+  .sidebar a.legal:hover{background:var(--warn-bg)}
+
+  .main{flex:1;padding:24px 40px 80px;max-width:960px}
+  .main h1{font-size:24px;font-weight:800;margin-bottom:6px;line-height:1.3}
+  .main h2{font-size:19px;font-weight:800;margin:36px 0 12px;padding-top:20px;border-top:2px solid var(--border);color:var(--ink)}
+  .main h2:first-of-type{margin-top:0;padding-top:0;border-top:none}
+  .main h3{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--ink)}
+  .main h4{font-size:13.5px;font-weight:700;margin:16px 0 6px;color:var(--ink)}
+  .main p{margin-bottom:10px;color:var(--ink)}
+  .main ul,.main ol{margin:8px 0 14px 22px;color:var(--ink)}
+  .main li{margin-bottom:4px}
+  .lede{font-size:15px;color:var(--mid);margin-bottom:14px}
+
+  /* Cards / callouts */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .note{background:#F8FAFC;border-left:3px solid var(--sub);padding:11px 16px;font-size:13px;color:var(--mid);border-radius:0 8px 8px 0;margin:12px 0}
+  .note.legal{background:var(--warn-bg);border-left-color:var(--warn);color:var(--warn)}
+  .note.legal b{color:var(--warn)}
+  .note.info{background:var(--seel-l);border-left-color:var(--seel);color:var(--seel-d)}
+  .note.info b{color:var(--seel-d)}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+  th{background:#F8FAFC;text-align:left;padding:9px 12px;font-weight:700;color:var(--sub);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.mini{color:var(--sub);font-size:12.5px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+  .badge.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-br)}
+  .badge.na{background:var(--na-bg);color:var(--na);border:1px solid var(--na-br)}
+  .badge.seel{background:var(--seel-l);color:var(--seel-d);border:1px solid #DDD6FE}
+  .badge.danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-br)}
+
+  /* Sub-group grid for Product 24 items */
+  .subgroups{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0}
+  .subgroup{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .subgroup h5{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--seel-d);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  .subgroup h5 .n{background:var(--seel-l);color:var(--seel-d);padding:1px 8px;border-radius:99px;font-size:10.5px}
+  .subgroup ol{margin:4px 0 0 20px;font-size:12.5px;color:var(--mid)}
+  .subgroup ol li{margin-bottom:3px}
+
+  /* State machine diagrams */
+  .diagram{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0;overflow-x:auto}
+  .diagram-title{font-size:13px;font-weight:700;color:var(--seel-d);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .diagram-title .letter{background:var(--seel);color:#fff;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+  .diagram svg{display:block;max-width:100%;height:auto}
+  .diagram-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:12px;color:var(--sub)}
+  .diagram-legend .k{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin-right:4px}
+  .diagram-notes{margin-top:12px;font-size:12.5px;color:var(--mid);padding:10px 14px;background:#F8FAFC;border-radius:8px;border-left:3px solid var(--border)}
+  .diagram-notes b{color:var(--ink)}
+
+  /* Open items decision table */
+  table.decision td{padding:11px 14px}
+  table.decision .block{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-br);padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;display:inline-block}
+  table.decision .nice{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-br);padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;display:inline-block}
+
+  /* Signature block */
+  .sig{margin-top:40px;padding:20px 22px;background:linear-gradient(135deg,var(--seel-l),#FFF);border:1px solid #DDD6FE;border-radius:12px}
+  .sig h3{margin-top:0;color:var(--seel-d)}
+  .sig-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  .sig-field{background:#fff;padding:12px 14px;border-radius:8px;border:1px solid var(--border)}
+  .sig-field .lbl{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);margin-bottom:6px}
+  .sig-field .val{font-size:13px;color:var(--mid);min-height:20px;border-bottom:1px dashed var(--border);padding-bottom:6px}
+
+  footer{max-width:1400px;margin:0 auto;padding:18px 28px;color:var(--sub);font-size:11.5px;border-top:1px solid var(--border);margin-top:40px;text-align:center}
+
+  /* Print */
+  @media print{
+    .sidebar,.callout-top,.topbar-right{display:none}
+    .topbar{position:static;background:#fff;color:#000;border-bottom:1px solid #000}
+    .brand small{color:#666}
+    .brand .mark{background:#7C3AED;color:#fff}
+    .main{max-width:none;padding:20px}
+    .layout{max-width:none}
+    .diagram{page-break-inside:avoid}
+    h2{page-break-after:avoid}
+    .card{page-break-inside:avoid;box-shadow:none}
+    body{background:#fff;font-size:11.5px;line-height:1.5}
+    a{color:#000}
+  }
+
+  @media (max-width:900px){
+    .sidebar{display:none}
+    .layout{display:block}
+    .main{max-width:none;padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Top brand bar -->
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">🧭</div>
+    <div class="title">
+      <span>Seel Compass — PRD & State Machines</span>
+      <small>Draft v1.1 · Go-Global Readiness · For Counsel Review</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="pill">Draft v1.1</span>
+    <span class="pill warn">Counsel review needed</span>
+    <a href="#open-items" style="color:#DDD6FE">Jump to open items →</a>
+  </div>
+</div>
+
+<!-- Callout at very top -->
+<div class="callout-top">
+  <div class="inner">
+    <div class="icon">⚖️</div>
+    <div class="text">
+      <b>What we want from counsel review:</b> (a) confirmation the framing avoids UPL exposure; (b) sign-off on the counsel-involvement model (<a href="#legal-safeguards">§5.3</a>); (c) sign-off on the self-harm carve-out rule set (<a href="#legal-safeguards">§5.2</a>); (d) any items in <a href="#open-items">§12</a> that require a legal decision. Async comments or a live 30-min walkthrough — both work.
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar TOC -->
+  <aside class="sidebar">
+    <h4>Contents</h4>
+    <a href="#overview">1. Product overview</a>
+    <a href="#scope">2. In-scope: 5 categories</a>
+    <a href="#out-of-scope">3. Out of scope</a>
+    <a href="#agent">4. Agent operating model</a>
+    <a href="#legal-safeguards" class="legal">5. Legal safeguards ⭐</a>
+    <a href="#state-machines" class="legal">6. State machines ⭐⭐</a>
+    <a href="#workflow">7. Merchant workflow</a>
+    <a href="#report">8. Report structure</a>
+    <a href="#data-sources">9. Data source integration</a>
+    <a href="#cadence">10. Cadence & monitoring</a>
+    <a href="#phase">11. Phase 1 vs Phase 2</a>
+    <a href="#open-items" class="legal">12. Open items for counsel ⭐</a>
+    <a href="#metrics">13. Success metrics</a>
+    <h4>Appendix</h4>
+    <a href="#appendix-a">A. Michael's 24-item list</a>
+    <a href="#appendix-b">B. Related docs</a>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- 1. Product overview -->
+    <section id="overview">
+      <h1>Seel Compass — Product Requirements</h1>
+      <p class="lede">A merchant-facing tool that gives an objective, structured baseline assessment of common go-global gaps. Points to relevant rules, recommends counsel review, and never renders a legal conclusion.</p>
+
+      <h2>1. Product overview</h2>
+
+      <div class="card">
+        <p><b>Product:</b> Seel Compass · Go-Global Readiness</p>
+        <p><b>Tagline:</b> <i>"Your partner for global expansion and readiness."</i></p>
+        <p><b>Framing analogy:</b> closer to a SOC-2 readiness assessment than to a legal opinion.</p>
+        <p style="margin-bottom:0"><b>Explicit non-goal:</b> Compass is <b>not</b> a substitute for legal counsel. Every review item includes a "recommend confirming with qualified counsel" line.</p>
+      </div>
+
+      <p><b>Status:</b> Draft v1.1 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist, omit-not-label carve-out). v1.1 (7/6) adds the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan architecture, and async report generation (§7).</p>
+      <p><b>Predecessor:</b> Replaces the earlier <i>Compliance LLP Product Implementation Spec</i>; that document is superseded.</p>
+    </section>
+
+    <!-- 2. In-scope -->
+    <section id="scope">
+      <h2>2. In-scope: five categories</h2>
+
+      <table>
+        <thead>
+          <tr><th>#</th><th>Module</th><th>Data source</th><th>Applies to</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>🔒 <b>Data & Privacy</b></td><td>Merchant site crawl (privacy pages + cookie trace)</td><td>US + EU</td></tr>
+          <tr><td>2</td><td>📄 <b>Terms & Conditions</b></td><td>Merchant site crawl (ToS, refund, warranty)</td><td>US + EU</td></tr>
+          <tr><td>3</td><td>🛍️ <b>Product</b></td><td>Merchant site crawl (PDPs, catalog)</td><td>US + EU</td></tr>
+          <tr><td>4</td><td>™️ <b>Intellectual Property</b></td><td>USPTO Open Data Portal API</td><td>US only (Phase 1)</td></tr>
+          <tr><td>5</td><td>🏛️ <b>Corporate Entity</b></td><td>Merchant questionnaire + State SoS (Middesk aggregator)</td><td>US only (Phase 1)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>2.1 Data & Privacy</h3>
+      <p><b>Coverage examples:</b> access/correct/delete/portability rights; lawful basis (GDPR Art. 6); DSAR response window; consent withdrawal mechanism; cookie consent behavior; retention statements (marked "not assessable" for operational enforcement).</p>
+      <p><b>Not covered:</b> actual backend data-processing practices (SOC-2 territory).</p>
+
+      <h3>2.2 Terms & Conditions</h3>
+      <p><b>Coverage examples:</b> governing law & dispute-resolution clause; refund/return policy language; warranty language; unqualified guarantees over third-party goods; disclaimers.</p>
+      <p><b>Not covered:</b> actual dispute outcomes; contract enforcement history.</p>
+
+      <h3>2.3 Product — five sub-groups, ~24 items per Michael 6/25</h3>
+
+      <div class="subgroups">
+        <div class="subgroup">
+          <h5>1. Regulated / restricted categories <span class="n">7</span></h5>
+          <ol>
+            <li>Alcohol</li>
+            <li>CBD / hemp / cannabinoids</li>
+            <li>Tobacco / vape / nicotine</li>
+            <li>Firearms / weapons / regulated blades</li>
+            <li>Supplements / nutraceuticals</li>
+            <li>Cosmetics / topicals</li>
+            <li>Pharmaceuticals / medical devices</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>2. Claims & advertising <span class="n">4</span></h5>
+          <ol>
+            <li>Health / disease / efficacy claims</li>
+            <li>Country-of-origin ("Made in USA")</li>
+            <li>Environmental / "green" claims</li>
+            <li>Reference / discount pricing</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>3. Safety, conformity & disclosures <span class="n">6</span></h5>
+          <ol>
+            <li>Children's products / toys</li>
+            <li>CE / UKCA conformity markings</li>
+            <li>EU Responsible Person (GPSR)</li>
+            <li>Allergen / ingredient / INCI labeling</li>
+            <li>Prop 65 / EU REACH signals</li>
+            <li>Restricted-shipment / hazmat</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>4. IP & marketing integrity <span class="n">2</span></h5>
+          <ol>
+            <li>Counterfeit / unauthorized-reseller risk</li>
+            <li>Endorsement / influencer / review disclosures</li>
+          </ol>
+          <p style="font-size:11.5px;color:var(--sub);margin-top:6px">Michael's #20 <i>website accessibility</i> proposed → Phase 2 (see <a href="#open-items">§12</a>).</p>
+        </div>
+        <div class="subgroup">
+          <h5>5. Consumer protection · promotions · cross-border <span class="n">5</span></h5>
+          <ol>
+            <li>Country-of-sale / geo & shipping restrictions</li>
+            <li>Sweepstakes / contests / prize draws</li>
+            <li>Comparative / competitor advertising</li>
+            <li>Country-of-origin / sourcing disclosure</li>
+            <li>Urgency / scarcity claims</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="note info">
+        <b>Explicitly out of scope for Product:</b> checkout-flow analysis (per Jenny 6/18). Also removed from public-facing messaging — the product is described by what it covers, not by what it excludes.
+      </div>
+
+      <h3>2.4 Intellectual Property</h3>
+      <p>USPTO trademark database name screening for the merchant's own brand. Flags similar registered marks in relevant Nice classes. <b>Name-only</b>; does not cover design-patent, utility-patent, or full freedom-to-operate. Includes annual re-screening.</p>
+      <div class="note">
+        <b>Distinct from Product sub-group 4 #18</b> (counterfeit / unauthorized-reseller risk on inventory the merchant sells). The two are surfaced in different sections with cross-references.
+      </div>
+
+      <h3>2.5 Corporate Entity</h3>
+      <p>Merchant questionnaire (formation state, entity type, registered agent) + State Secretary of State good-standing check. Surfaces annual report / franchise tax due dates. <b>Phase 1 state coverage:</b> DE + CA + NY + TX (~80% of DTC formations), via Middesk aggregator.</p>
+    </section>
+
+    <!-- 3. Out of scope -->
+    <section id="out-of-scope">
+      <h2>3. Explicitly out of scope</h2>
+      <ul>
+        <li>Checkout-flow analysis — removed entirely per 6/18</li>
+        <li>Negative-option / opt-out analysis on checkout — removed with checkout</li>
+        <li>Litigation analysis / "Top 3 Exposures" — removed per 6/18</li>
+        <li>Support ticket / conversation review — Phase 2 candidate; not in Phase 1</li>
+        <li>Chat / Discuss surface — <b>disabled and removed from UI</b> per Jenny 6/18 + Michael 6/11 paper-trail concern (the tab is no longer even visible in the merchant dashboard)</li>
+        <li>Full freedom-to-operate IP analysis — disclosed in IP tab</li>
+        <li>Website accessibility (WCAG / ADA / EAA) — Phase 2 candidate</li>
+        <li>Industry-comparables view (Michael 6/11 ask) — Phase 2 candidate</li>
+      </ul>
+    </section>
+
+    <!-- 4. Agent operating model -->
+    <section id="agent">
+      <h2>4. Agent operating model</h2>
+
+      <h3>4.1 Scan pipeline</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">·</span> High-level flow</div>
+        <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#7C3AED"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="12" font-weight="600">
+            <rect x="10" y="80" width="130" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="75" y="107" text-anchor="middle" fill="#5B21B6">Onboarding</text>
+            <text x="75" y="123" text-anchor="middle" fill="#5B21B6" font-size="10.5" font-weight="500">store · verify · markets</text>
+
+            <line x1="140" y1="110" x2="180" y2="110" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <rect x="180" y="80" width="160" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="260" y="107" text-anchor="middle" fill="#5B21B6">Category detection</text>
+            <text x="260" y="123" text-anchor="middle" fill="#5B21B6" font-size="10.5" font-weight="500">LLM + merchant confirm</text>
+
+            <line x1="340" y1="110" x2="380" y2="110" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <rect x="380" y="80" width="160" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="460" y="107" text-anchor="middle" fill="#5B21B6">Full scan</text>
+            <text x="460" y="123" text-anchor="middle" fill="#5B21B6" font-size="10.5" font-weight="500">per market · per category</text>
+
+            <line x1="540" y1="110" x2="580" y2="110" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <rect x="580" y="80" width="160" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="660" y="107" text-anchor="middle" fill="#5B21B6">Classify findings</text>
+            <text x="660" y="123" text-anchor="middle" fill="#5B21B6" font-size="10.5" font-weight="500">4 states (see 4.2)</text>
+
+            <line x1="740" y1="110" x2="780" y2="110" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <rect x="780" y="80" width="110" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="835" y="107" text-anchor="middle" fill="#5B21B6">Surface to</text>
+            <text x="835" y="123" text-anchor="middle" fill="#5B21B6">merchant</text>
+
+            <!-- Cadence loop -->
+            <path d="M 835,140 Q 835,190 460,190 Q 75,190 75,140" fill="none" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+            <text x="460" y="205" text-anchor="middle" fill="#64748B" font-size="10.5" font-weight="500">re-scan every 7 days</text>
+          </g>
+        </svg>
+        <div class="diagram-notes">
+          <b>Two-phase scan (v1.1):</b> the pipeline runs in two passes. A quick <b>discovery scan</b> during onboarding (crawl → policies → catalog → category detection, ~2 min, live progress) feeds the merchant confirmation screen; the heavy <b>rule application + report composition</b> pass runs asynchronously after confirmation (~10 min, email on completion). See §7.1–7.2.
+        </div>
+      </div>
+
+      <h3>4.2 Finding classification — 4 states</h3>
+      <table>
+        <thead>
+          <tr><th>State</th><th>Icon</th><th>When used</th><th>Surfaced?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge ok">Verified</span></td><td>✓ green</td><td>Rule met, with evidence pointer</td><td>Yes</td></tr>
+          <tr><td><span class="badge warn">Review Item</span></td><td>! amber</td><td>Rule not met OR ambiguous, evidence attached</td><td>Yes</td></tr>
+          <tr><td><span class="badge na">Not Assessable</span></td><td>○ gray</td><td>Rule cannot be evaluated from a point-in-time public scan</td><td>Yes — with "omitted, not guessed" explainer</td></tr>
+          <tr><td><span class="badge na">N/A</span></td><td>○ gray</td><td>Rule applies to a category the merchant does not sell</td><td>Yes — shown as skipped</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note legal">
+        <b>Language rule (enforced at output layer):</b> Findings never use <code>violates</code>, <code>illegal</code>, <code>non-compliant</code>, or <code>deceptive</code>. They use <code>Review item: …</code>, <code>inconsistent with …</code>, <code>Recommend confirming with qualified counsel whether …</code>.
+      </div>
+    </section>
+
+    <!-- 5. Legal safeguards -->
+    <section id="legal-safeguards">
+      <h2>5. Legal safeguards ⭐</h2>
+
+      <h3>5.1 Language & framing rules</h3>
+      <ul>
+        <li><b>Never</b> used: <code>violates</code>, <code>illegal</code>, <code>non-compliant</code>, <code>deceptive</code>, <code>unlawful</code>, <code>you must …</code></li>
+        <li><b>Always</b> used for review items: <code>Review item: …  Recommend confirming with qualified counsel whether …</code></li>
+        <li>Persistent footer on every report tab: <i>"Informational only — not legal advice, and not a law firm. Review items point to relevant rules and recommend confirming with qualified counsel."</i></li>
+        <li>Category-specific scope disclaimers in-context (IP tab: "name-only, not FTO"; Entity: "informational only, confirm with counsel or tax advisor")</li>
+      </ul>
+
+      <h3>5.2 Self-harm carve-out — omit, not label</h3>
+      <div class="note info">
+        An agent trained to detect legal risk in merchant operations will, by default, flag Seel's own product model. The design isolates this <b>without creating a discoverable admission</b>. See <a href="#sm-b">State Machine B (§6.2)</a>.
+      </div>
+      <ul>
+        <li>Seel-provided components are <b>omitted from the report entirely</b> — no "Seel-provided" label, no "skipped" marker, not visible in merchant's report</li>
+        <li>Fingerprint match is logged <b>internally</b> for audit; audit log is not surfaced to merchant</li>
+        <li>Checkout flow is <b>not crawled at all</b> — no paper trail of analysis exists</li>
+        <li>Carve-out is narrow: applies only to a whitelisted set of rules that would otherwise mis-fire on Seel's product model. Everything else on the merchant's page is evaluated normally.</li>
+      </ul>
+
+      <h3>5.3 Counsel involvement model — middle path (proposed)</h3>
+      <div class="note info">
+        Needs counsel sign-off. See <a href="#sm-c">State Machine C (§6.3)</a>.
+      </div>
+      <ol>
+        <li><b>One-time sign-off</b> on the methodology + regulatory corpus (public text of GDPR / CCPA / state privacy laws / FTC Act §5 / Mag-Moss / FTC Green Guides / etc. as ingested).</li>
+        <li><b>Re-sign</b> on material change (new market, new category, new corpus version). Turnaround target: ≤ 5 business days.</li>
+        <li><b>First N reports</b> (proposed N = 5) per new category or new market reviewed before that category/market goes live to merchants.</li>
+        <li><b>Steady state:</b> ~5% random spot-check + auto-route of any "high-severity" finding into a counsel review queue. Counsel decides batch-approve or individual review.</li>
+      </ol>
+      <p style="font-size:12.5px;color:var(--mid)"><b>Why the middle path:</b> per-finding sign-off (Alex 6/9 view) recreates the $50–100k/market counsel cost Compass exists to reduce. Once-and-done sign-off (Zack 6/9 view) leaves category-specific drift unhandled. The middle path bounds counsel cost while catching drift.</p>
+
+      <h3>5.4 Scan authorization & domain-ownership verification (new in v1.1)</h3>
+      <div class="note info">
+        <b>What this prevents:</b> without verification, anyone could request a Compass report on <i>any</i> domain — including a competitor's — and Seel would be generating a structured document of "review items" about a third party who never consented. That is exactly the paper-trail exposure raised on 6/11. Two independent controls close it:
+      </div>
+      <table>
+        <thead><tr><th>Control</th><th>Mechanism</th><th>What it protects</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Authorization affirmation</b></td>
+            <td>Required checkbox at onboarding: <i>"I confirm I am authorized to have this domain reviewed."</i> Cannot proceed without it. Timestamped and retained.</td>
+            <td>Contractual layer — the requesting user takes on the representation</td>
+          </tr>
+          <tr>
+            <td><b>Domain-ownership verification</b></td>
+            <td>DNS TXT record challenge (<code>seel-compass-verify=…</code>), industry-standard (same pattern as Google Search Console / SSL issuance). Scans only run against verified domains.</td>
+            <td>Diligence layer — Seel has independently confirmed control of the domain, not merely accepted a claim</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:12.5px;color:var(--mid)">Phase 1 is invite-only with manually vetted merchants, so the practical marginal risk is low — but the control is in the product from day one so the GA path does not depend on retrofitting it, and so this PRD can represent that no unverified domain is ever scanned.</p>
+
+      <h3>5.5 Audit log — internal only</h3>
+      <ul>
+        <li>Fingerprint matches (which Seel components on which pages)</li>
+        <li>Skip-rule applications (which rules omitted)</li>
+        <li>Corpus version + LLM/prompt version applied</li>
+        <li>Category-detection outcomes vs merchant declarations</li>
+        <li>Any LLM-vs-merchant conflict (for future audit if a merchant claims a category doesn't apply when the agent detected it)</li>
+      </ul>
+      <p>Retention: engagement length + 3 years. Not surfaced to merchant. Available to counsel on request.</p>
+    </section>
+
+    <!-- 6. State machines -->
+    <section id="state-machines">
+      <h2>6. State machines ⭐⭐</h2>
+
+      <!-- SM A -->
+      <div id="sm-a"></div>
+      <h3>6.1 Hybrid category detection</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">A</span> Category detection lifecycle</div>
+        <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+            <marker id="arr2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#94A3B8"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="12">
+            <!-- 1 -->
+            <rect x="330" y="10" width="240" height="42" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="450" y="36" text-anchor="middle" fill="#5B21B6" font-weight="700">1 · Merchant onboarding</text>
+            <line x1="450" y1="52" x2="450" y2="76" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- 2 -->
+            <rect x="300" y="76" width="300" height="52" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="450" y="98" text-anchor="middle" fill="#5B21B6" font-weight="700">2 · LLM catalog classifier</text>
+            <text x="450" y="115" text-anchor="middle" fill="#64748B" font-size="11">reads PDPs + product tags + meta</text>
+            <line x1="450" y1="128" x2="450" y2="152" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- 3 - Diamond decision -->
+            <path d="M 450 152 L 610 195 L 450 238 L 290 195 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="450" y="188" text-anchor="middle" fill="#B45309" font-weight="700">3 · Confidence bucket</text>
+            <text x="450" y="205" text-anchor="middle" fill="#B45309" font-size="10.5">≥90% detected  ·  70–89% possible</text>
+            <text x="450" y="219" text-anchor="middle" fill="#B45309" font-size="10.5">&lt;70% not detected</text>
+
+            <line x1="450" y1="238" x2="450" y2="262" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- 4 - Merchant confirms -->
+            <rect x="270" y="262" width="360" height="52" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="450" y="284" text-anchor="middle" fill="#5B21B6" font-weight="700">4 · Merchant confirmation screen</text>
+            <text x="450" y="301" text-anchor="middle" fill="#64748B" font-size="11">checkboxes · pre-populated · merchant can add/remove</text>
+
+            <line x1="450" y1="314" x2="450" y2="336" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+            <!-- 5 - Applied scope -->
+            <rect x="300" y="336" width="300" height="42" rx="10" fill="#DDD6FE" stroke="#5B21B6" stroke-width="2"/>
+            <text x="450" y="362" text-anchor="middle" fill="#5B21B6" font-weight="800">5 · Confirmed set = rule scope</text>
+
+            <!-- Re-detection loop side note -->
+            <path d="M 620 288 Q 810 288 810 195 Q 810 100 640 100" fill="none" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr2g)"/>
+            <text x="820" y="200" fill="#64748B" font-size="10.5" font-weight="600">re-runs</text>
+            <text x="820" y="215" fill="#64748B" font-size="10.5" font-weight="600">weekly</text>
+          </g>
+        </svg>
+        <div class="diagram-notes">
+          <b>Conflict handling:</b> if LLM detects a category the merchant did not confirm (e.g., detects cosmetics but merchant unchecks), the merchant's declaration takes precedence in the report, and the discrepancy is logged for audit (§5.5).<br>
+          <b>Re-detection cadence:</b> LLM runs at onboarding + on every weekly scan. Merchant is notified only if a new category is detected between weeks.
+        </div>
+      </div>
+
+      <!-- SM B -->
+      <div id="sm-b"></div>
+      <h3>6.2 Self-harm carve-out — omit, not label</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">B</span> Carve-out decision tree (per page, per rule)</div>
+        <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+            <marker id="arr3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#DC2626"/>
+            </marker>
+            <marker id="arr3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#16A34A"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="12">
+            <!-- Start -->
+            <rect x="340" y="10" width="220" height="38" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5"/>
+            <text x="450" y="34" text-anchor="middle" fill="#334155" font-weight="700">Page discovered by crawler</text>
+            <line x1="450" y1="48" x2="450" y2="70" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+            <!-- Decision 1: crawler excluded (checkout)? -->
+            <path d="M 450 70 L 620 108 L 450 146 L 280 108 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="450" y="105" text-anchor="middle" fill="#B45309" font-weight="700">1. In crawler excluded set?</text>
+            <text x="450" y="122" text-anchor="middle" fill="#B45309" font-size="10.5">(e.g., any checkout page)</text>
+
+            <!-- Yes → SKIP (never fetched) -->
+            <line x1="620" y1="108" x2="720" y2="108" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arr3r)"/>
+            <text x="670" y="99" text-anchor="middle" fill="#DC2626" font-weight="700" font-size="11">Yes</text>
+            <rect x="720" y="82" width="160" height="52" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+            <text x="800" y="102" text-anchor="middle" fill="#DC2626" font-weight="800">SKIP</text>
+            <text x="800" y="118" text-anchor="middle" fill="#DC2626" font-size="10.5">page never fetched</text>
+            <text x="800" y="130" text-anchor="middle" fill="#DC2626" font-size="10.5">no analysis · no log</text>
+
+            <!-- No ↓ -->
+            <text x="460" y="163" fill="#5B21B6" font-weight="700" font-size="11">No ↓</text>
+            <line x1="450" y1="146" x2="450" y2="182" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+            <!-- Decision 2: Seel fingerprint match? -->
+            <path d="M 450 182 L 620 220 L 450 258 L 280 220 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="450" y="217" text-anchor="middle" fill="#B45309" font-weight="700">2. Seel fingerprint on page?</text>
+            <text x="450" y="234" text-anchor="middle" fill="#B45309" font-size="10.5">widget DOM · copy · CDN · SKU</text>
+
+            <!-- No → normal ruleset -->
+            <line x1="280" y1="220" x2="180" y2="220" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arr3g)"/>
+            <text x="230" y="211" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11">No</text>
+            <rect x="20" y="194" width="160" height="52" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="100" y="214" text-anchor="middle" fill="#16A34A" font-weight="800">Full ruleset</text>
+            <text x="100" y="230" text-anchor="middle" fill="#16A34A" font-size="10.5">evaluate normally</text>
+            <text x="100" y="242" text-anchor="middle" fill="#16A34A" font-size="10.5">produce findings</text>
+
+            <!-- Yes ↓ (also log to audit) -->
+            <text x="460" y="275" fill="#5B21B6" font-weight="700" font-size="11">Yes ↓ (log to audit)</text>
+            <line x1="450" y1="258" x2="450" y2="298" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+            <!-- Decision 3: rule on skip whitelist? -->
+            <path d="M 450 298 L 620 338 L 450 378 L 280 338 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="450" y="335" text-anchor="middle" fill="#B45309" font-weight="700">3. For each rule:</text>
+            <text x="450" y="352" text-anchor="middle" fill="#B45309" font-size="10.5">on skip whitelist?</text>
+
+            <!-- No → normal -->
+            <line x1="280" y1="338" x2="180" y2="338" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arr3g)"/>
+            <text x="230" y="329" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11">No</text>
+            <rect x="20" y="312" width="160" height="52" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="100" y="332" text-anchor="middle" fill="#16A34A" font-weight="800">Evaluate rule</text>
+            <text x="100" y="348" text-anchor="middle" fill="#16A34A" font-size="10.5">produce finding</text>
+            <text x="100" y="360" text-anchor="middle" fill="#16A34A" font-size="10.5">normally</text>
+
+            <!-- Yes → OMIT -->
+            <line x1="620" y1="338" x2="720" y2="338" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arr3r)"/>
+            <text x="670" y="329" text-anchor="middle" fill="#DC2626" font-weight="700" font-size="11">Yes</text>
+            <rect x="720" y="300" width="170" height="76" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
+            <text x="805" y="322" text-anchor="middle" fill="#DC2626" font-weight="800">OMIT</text>
+            <text x="805" y="337" text-anchor="middle" fill="#DC2626" font-size="10.5">no finding produced</text>
+            <text x="805" y="349" text-anchor="middle" fill="#DC2626" font-size="10.5">no "Seel-provided" label</text>
+            <text x="805" y="361" text-anchor="middle" fill="#DC2626" font-size="10.5">log to audit (internal)</text>
+            <text x="805" y="371" text-anchor="middle" fill="#DC2626" font-size="10.5">merchant does not see</text>
+
+            <!-- Skip whitelist detail -->
+            <rect x="120" y="410" width="660" height="130" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1"/>
+            <text x="450" y="435" text-anchor="middle" fill="#5B21B6" font-weight="800">Initial skip-rule whitelist (requires counsel sign-off)</text>
+            <text x="450" y="459" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Default-enabled add-on clearly disclosed"  →  Seel post-purchase protection is default-on by design</text>
+            <text x="450" y="478" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Opt-out consent flow visible at decision point"  →  Seel opt-out is a one-click product standard</text>
+            <text x="450" y="497" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Shipping insurance fee shown pre-checkout"  →  Seel fee is disclosed at a different surface</text>
+            <text x="450" y="522" text-anchor="middle" fill="#5B21B6" font-size="11" font-style="italic">Additions to this list require counsel review per State Machine C.</text>
+          </g>
+        </svg>
+        <div class="diagram-legend">
+          <span><i class="k" style="background:#F0FDF4;border:1px solid #16A34A"></i>normal path (produce finding)</span>
+          <span><i class="k" style="background:#FEF2F2;border:1px solid #DC2626"></i>omit path (no output)</span>
+          <span><i class="k" style="background:#FFFBEB;border:1px solid #B45309"></i>decision node</span>
+          <span><i class="k" style="background:#F5F3FF;border:1px solid #7C3AED"></i>config data</span>
+        </div>
+        <div class="diagram-notes">
+          <b>CI honeypot regression:</b> every corpus / methodology change must produce zero red findings on the honeypot set (Seel demo storefront + anonymized real Seel-using merchant pages + non-Seel control pages). Build fails otherwise.<br>
+          <b>Boundary:</b> the carve-out only suppresses these specific rules on pages with a Seel fingerprint. All other rules on Seel-touching pages, and all rules on non-Seel pages, run normally.
+        </div>
+      </div>
+
+      <!-- SM C -->
+      <div id="sm-c"></div>
+      <h3>6.3 Corpus / methodology sign-off lifecycle</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">C</span> Counsel sign-off states</div>
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+            <marker id="arr4d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#B45309"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="12">
+            <!-- Draft -->
+            <rect x="20" y="90" width="130" height="48" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5"/>
+            <text x="85" y="113" text-anchor="middle" fill="#334155" font-weight="800">Draft</text>
+            <text x="85" y="128" text-anchor="middle" fill="#64748B" font-size="10.5">product + eng</text>
+
+            <line x1="150" y1="114" x2="200" y2="114" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+            <!-- Under review -->
+            <rect x="200" y="90" width="170" height="48" rx="10" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="285" y="110" text-anchor="middle" fill="#B45309" font-weight="800">Under counsel review</text>
+            <text x="285" y="126" text-anchor="middle" fill="#B45309" font-size="10.5">target ≤ 5 business days</text>
+
+            <line x1="370" y1="114" x2="420" y2="114" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+            <!-- Signed -->
+            <rect x="420" y="90" width="130" height="48" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="485" y="113" text-anchor="middle" fill="#16A34A" font-weight="800">Signed</text>
+            <text x="485" y="128" text-anchor="middle" fill="#16A34A" font-size="10.5">counsel approved</text>
+
+            <line x1="550" y1="114" x2="600" y2="114" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr4)"/>
+
+            <!-- In production -->
+            <rect x="600" y="90" width="160" height="48" rx="10" fill="#DDD6FE" stroke="#5B21B6" stroke-width="2"/>
+            <text x="680" y="110" text-anchor="middle" fill="#5B21B6" font-weight="800">In production</text>
+            <text x="680" y="126" text-anchor="middle" fill="#5B21B6" font-size="10.5">what every scan uses</text>
+
+            <!-- Steady state loop -->
+            <rect x="470" y="180" width="410" height="70" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1"/>
+            <text x="675" y="200" text-anchor="middle" fill="#5B21B6" font-weight="700">Steady state</text>
+            <text x="675" y="217" text-anchor="middle" fill="#5B21B6" font-size="11">• random 5% reports → counsel queue</text>
+            <text x="675" y="232" text-anchor="middle" fill="#5B21B6" font-size="11">• any high-severity finding → counsel queue</text>
+            <text x="675" y="245" text-anchor="middle" fill="#5B21B6" font-size="11">• counsel: batch-approve or review individually</text>
+
+            <line x1="680" y1="138" x2="680" y2="178" stroke="#5B21B6" stroke-width="1" stroke-dasharray="3 2"/>
+
+            <!-- Material change back to draft -->
+            <path d="M 680,90 Q 680,30 85,30 L 85,88" fill="none" stroke="#B45309" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr4d)"/>
+            <text x="380" y="22" fill="#B45309" font-size="11" font-weight="700">Material change (new market / category / corpus version) → back to Draft</text>
+
+            <!-- Gate for new category -->
+            <rect x="20" y="180" width="410" height="70" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1"/>
+            <text x="225" y="200" text-anchor="middle" fill="#DC2626" font-weight="700">Gate for new category / market</text>
+            <text x="225" y="220" text-anchor="middle" fill="#DC2626" font-size="11">first N reports (proposed N = 5) reviewed</text>
+            <text x="225" y="234" text-anchor="middle" fill="#DC2626" font-size="11">by counsel before that category / market</text>
+            <text x="225" y="245" text-anchor="middle" fill="#DC2626" font-size="11">goes live to merchants</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- SM D -->
+      <div id="sm-d"></div>
+      <h3>6.4 Review-item lifecycle (merchant-facing)</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">D</span> Merchant status track</div>
+        <svg viewBox="0 0 900 210" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="12">
+            <!-- Open -->
+            <rect x="30" y="70" width="160" height="60" rx="10" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="110" y="95" text-anchor="middle" fill="#B45309" font-weight="800">Open</text>
+            <text x="110" y="112" text-anchor="middle" fill="#B45309" font-size="10.5">default when scan</text>
+            <text x="110" y="124" text-anchor="middle" fill="#B45309" font-size="10.5">produces a review item</text>
+
+            <line x1="190" y1="100" x2="230" y2="100" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr5)"/>
+            <text x="210" y="90" text-anchor="middle" fill="#64748B" font-size="10.5">merchant</text>
+
+            <!-- Acknowledged -->
+            <rect x="230" y="70" width="180" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="320" y="95" text-anchor="middle" fill="#5B21B6" font-weight="800">Acknowledged</text>
+            <text x="320" y="112" text-anchor="middle" fill="#5B21B6" font-size="10.5">merchant has read</text>
+            <text x="320" y="124" text-anchor="middle" fill="#5B21B6" font-size="10.5">+ shared with counsel</text>
+
+            <line x1="410" y1="100" x2="450" y2="100" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr5)"/>
+            <text x="430" y="90" text-anchor="middle" fill="#64748B" font-size="10.5">merchant</text>
+
+            <!-- In remediation -->
+            <rect x="450" y="70" width="180" height="60" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="540" y="95" text-anchor="middle" fill="#5B21B6" font-weight="800">In remediation</text>
+            <text x="540" y="112" text-anchor="middle" fill="#5B21B6" font-size="10.5">change in progress</text>
+            <text x="540" y="124" text-anchor="middle" fill="#5B21B6" font-size="10.5">on merchant side</text>
+
+            <line x1="630" y1="100" x2="670" y2="100" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr5)"/>
+            <text x="650" y="90" text-anchor="middle" fill="#16A34A" font-size="10.5" font-weight="700">next scan</text>
+
+            <!-- Resolved -->
+            <rect x="670" y="70" width="200" height="60" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+            <text x="770" y="95" text-anchor="middle" fill="#16A34A" font-weight="800">Resolved</text>
+            <text x="770" y="112" text-anchor="middle" fill="#16A34A" font-size="10.5">only assigned when the</text>
+            <text x="770" y="124" text-anchor="middle" fill="#16A34A" font-size="10.5">next scan no longer triggers</text>
+          </g>
+        </svg>
+        <div class="diagram-notes">
+          <b>Design choice:</b> Resolved is <b>only</b> assigned by a subsequent scan confirming the underlying evidence no longer triggers the rule. This prevents a merchant from marking something "resolved" without the underlying gap actually being closed.
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Workflow -->
+    <section id="workflow">
+      <h2>7. Merchant workflow (Phase 1)</h2>
+
+      <h3>7.1 Onboarding wizard (new in v1.1)</h3>
+      <p>First entry into Compass is a five-step guided flow. A merchant cannot reach a report without passing the authorization and verification gates.</p>
+      <table>
+        <thead><tr><th style="width:32px">#</th><th style="width:140px">Step</th><th>What happens</th><th style="width:230px">Gate / safeguard</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td><td><b>Connect store</b></td>
+            <td>Merchant enters the store domain. Compass reads public storefront pages only — nothing is installed on the store.</td>
+            <td>Required authorization checkbox (§5.4) — cannot proceed unchecked</td>
+          </tr>
+          <tr>
+            <td>2</td><td><b>Verify ownership</b></td>
+            <td>DNS TXT record challenge; merchant adds the record and verifies in-flow (or later from Setup).</td>
+            <td>No scan runs against an unverified domain (§5.4)</td>
+          </tr>
+          <tr>
+            <td>3</td><td><b>Target markets</b></td>
+            <td>US / EU selectable (≥ 1 required); UK / Canada shown as coming soon.</td>
+            <td>Rule sets applied per selected market only</td>
+          </tr>
+          <tr>
+            <td>4</td><td><b>Discovery scan</b></td>
+            <td>Quick pass (~2 min, live staged progress): crawl storefront pages → read policy documents → catalog products → detect product categories.</td>
+            <td>Crawler exclusion set applies from the first fetch (SM B, §6.2) — checkout pages are never retrieved</td>
+          </tr>
+          <tr>
+            <td>5</td><td><b>Confirm categories</b></td>
+            <td>Detected categories pre-checked with catalog evidence (e.g. "Sunscreen SKUs detected"); merchant can uncheck or add. Confirmed set = rule scope (§6.1).</td>
+            <td>Merchant declaration is captured before any rule application; conflicts logged internally (§5.5)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>7.2 Report generation — asynchronous</h3>
+      <p>After category confirmation, Compass applies the market rule sets to the confirmed categories and composes the full report. This is <b>not</b> instant and is not presented as instant:</p>
+      <ul>
+        <li>In-product state: <i>"Generating your first report… this usually takes about 10 minutes."</i> The merchant can leave the page; completion is notified by email and the report waits under Compass.</li>
+        <li><b>Why the scan is split in two phases:</b> the heavy rule pass runs exactly once, against the merchant-<i>confirmed</i> category set. No analysis is produced for categories the merchant unchecked, and no report ever exists whose scope was set by unconfirmed AI detection alone.</li>
+      </ul>
+
+      <h3>7.3 Steady state</h3>
+      <ol>
+        <li><b>Report ready</b> — Overview: 6 score cards side-by-side, delta strip, summary counts; D&P / T&C / Product sections collapsed by default with headline counts, expanding on click</li>
+        <li><b>Merchant reviews Review Items</b> — grouped by category, expandable, with recommended-counsel-review language and status track</li>
+        <li><b>Weekly re-scan</b> — automatic every 7 days, version-stamped; History tab shows deltas</li>
+        <li><b>Ongoing monitoring</b> — IP annual re-screen · Corporate Entity good-standing polling · category re-detection on each weekly scan</li>
+      </ol>
+    </section>
+
+    <!-- 8. Report structure -->
+    <section id="report">
+      <h2>8. Report structure (merchant-facing UI)</h2>
+      <p>First run: the onboarding wizard (§7.1) occupies the Compass surface until the first report exists. Thereafter, six tabs (Discuss removed for Phase 1 — the tab is no longer visible):</p>
+      <table>
+        <thead><tr><th>Tab</th><th>Contents</th></tr></thead>
+        <tbody>
+          <tr><td><b>Overview</b></td><td>6 score cards · delta · market pill · summary counts · D&P / T&C / Product checklists — <b>sections collapsed by default</b>, header shows verified/review counts; clicking a score card auto-expands and scrolls to its section</td></tr>
+          <tr><td><b>Review Items</b></td><td>Consolidated across all categories, grouped by category, collapsible</td></tr>
+          <tr><td><b>Intellectual Property</b></td><td>Trademark screening panel + ongoing monitoring</td></tr>
+          <tr><td><b>Corporate Entity</b></td><td>Entity questionnaire + State SoS good-standing readout</td></tr>
+          <tr><td><b>History</b></td><td>Version-stamped review timeline with score / delta / new / resolved</td></tr>
+          <tr><td><b>Setup</b></td><td>Target markets + Product categories detection UI + Authorization & domain-verification status</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12.5px;color:var(--mid)">Persistent footer disclaimer on every tab.</p>
+    </section>
+
+    <!-- 9. Data sources -->
+    <section id="data-sources">
+      <h2>9. Data source integration</h2>
+      <table>
+        <thead><tr><th>Module</th><th>External source</th><th>Auth</th><th>Cost</th><th>Eng effort</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>D&P / T&C / Product</b></td>
+            <td>Merchant site crawl + internal regulatory corpus + tracker lists (EasyPrivacy, DDG Tracker Radar)</td>
+            <td>Merchant scan authorization</td>
+            <td>$0</td>
+            <td>Already built</td>
+          </tr>
+          <tr>
+            <td><b>IP</b></td>
+            <td>USPTO Open Data Portal API</td>
+            <td>API key (free tier)</td>
+            <td>$0</td>
+            <td>2–3 weeks</td>
+          </tr>
+          <tr>
+            <td><b>Corporate Entity</b></td>
+            <td>Middesk aggregator (proposed)</td>
+            <td>Merchant questionnaire; agent queries via API</td>
+            <td>~$10 / lookup</td>
+            <td>1 week</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:12.5px;color:var(--mid)">Regulatory corpus is <b>counsel-signed</b> per State Machine C — not per-report authored.</p>
+    </section>
+
+    <!-- 10. Cadence -->
+    <section id="cadence">
+      <h2>10. Cadence & monitoring</h2>
+      <ul>
+        <li><b>Full compliance scan:</b> every 7 days per merchant</li>
+        <li><b>Category re-detection:</b> on each weekly scan (low-cost incremental)</li>
+        <li><b>IP annual re-screen:</b> default-on for enabled merchants</li>
+        <li><b>Corporate Entity good-standing:</b> on each weekly scan</li>
+        <li><b>Corpus refresh:</b> monthly review for material updates; ad-hoc for new laws / market additions</li>
+        <li><b>Honeypot regression:</b> on every corpus / prompt change (CI gate)</li>
+      </ul>
+    </section>
+
+    <!-- 11. Phase 1 vs Phase 2 -->
+    <section id="phase">
+      <h2>11. Phase 1 vs Phase 2 boundary</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+        <div class="card" style="border-color:#7C3AED;background:#F5F3FF">
+          <h3 style="margin-top:0;color:#5B21B6">Phase 1 (this PRD)</h3>
+          <ul style="margin-left:20px;font-size:12.5px">
+            <li>5 categories, US + EU markets</li>
+            <li>Web scan pipeline for D&P / T&C / Product</li>
+            <li>USPTO name screening for IP</li>
+            <li>Middesk for 4 states (DE, CA, NY, TX) in Corporate Entity</li>
+            <li>Hybrid category detection</li>
+            <li>Onboarding wizard — authorization + domain verification + discovery scan + category confirmation; async report generation</li>
+            <li>Middle-path counsel involvement</li>
+            <li>6-tab merchant UI</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:#94A3B8;background:#F8FAFC">
+          <h3 style="margin-top:0;color:#334155">Phase 2 candidates</h3>
+          <ul style="margin-left:20px;font-size:12.5px;color:var(--mid)">
+            <li>Support ticket / conversation review</li>
+            <li>Chat / Discuss surface for merchants</li>
+            <li>Website accessibility (WCAG / ADA / EAA)</li>
+            <li>Industry-comparables view</li>
+            <li>UK + Canada market rulesets</li>
+            <li>EUIPO / UK-IPO for IP</li>
+            <li>Additional US states in Corporate Entity</li>
+            <li>Design-patent / FTO IP analysis</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. Open items -->
+    <section id="open-items">
+      <h2>12. Open items requiring counsel decision ⭐</h2>
+      <p style="color:var(--mid)">Items marked <span class="badge danger">Blocks launch</span> unblock Phase 1 execution once decided. <span class="badge warn">Nice-to-have</span> items don't block launch but would be helpful to close in the same review.</p>
+
+      <table class="decision">
+        <thead><tr><th style="width:36px">#</th><th>Item</th><th style="width:110px">Reference</th><th style="width:120px">Priority</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><b>Counsel involvement model</b> — approve middle-path proposal (§5.3, SM C) or specify alternative</td>
+            <td><a href="#legal-safeguards">§5.3</a></td>
+            <td><span class="block">Blocks launch</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><b>Skip-rule whitelist</b> for self-harm carve-out — approve initial 3-rule set + governance for future additions</td>
+            <td><a href="#sm-b">§5.2 / SM B</a></td>
+            <td><span class="block">Blocks launch</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><b>Initial regulatory corpus sign-off</b> (US + EU)</td>
+            <td><a href="#legal-safeguards">§5.3</a></td>
+            <td><span class="block">Blocks launch</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><b>5-business-day corpus re-sign target</b> — confirm acceptable</td>
+            <td><a href="#legal-safeguards">§5.3</a></td>
+            <td><span class="block">Blocks launch</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><b>N = 5 first-reports-per-new-category gate</b> — confirm sample size</td>
+            <td><a href="#legal-safeguards">§5.3</a></td>
+            <td><span class="block">Blocks launch</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Confirm #18 counterfeit vs IP module are distinct scans (Compass surfaces both)</td>
+            <td><a href="#scope">§2.4</a></td>
+            <td><span class="nice">Nice-to-have</span></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Accessibility (#20) — confirm Phase 2 push</td>
+            <td><a href="#out-of-scope">§3</a></td>
+            <td><span class="nice">Nice-to-have</span></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Support ticket review — confirm Phase 2 candidacy (Michael 6/25 raised)</td>
+            <td><a href="#out-of-scope">§3</a></td>
+            <td><span class="nice">Nice-to-have</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="sig">
+        <h3>Counsel sign-off block</h3>
+        <p style="font-size:12.5px;color:var(--mid)">Once §12 items 1–5 are resolved, Phase 1 is unblocked for build. Signatures below indicate approval of the framing, safeguards, and counsel-involvement model as specified in this PRD.</p>
+        <div class="sig-fields">
+          <div class="sig-field">
+            <div class="lbl">Reviewed by (Legal — Seel)</div>
+            <div class="val">&nbsp;</div>
+            <div class="lbl" style="margin-top:8px">Date</div>
+            <div class="val">&nbsp;</div>
+          </div>
+          <div class="sig-field">
+            <div class="lbl">Reviewed by (Legal — Seel)</div>
+            <div class="val">&nbsp;</div>
+            <div class="lbl" style="margin-top:8px">Date</div>
+            <div class="val">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13. Metrics -->
+    <section id="metrics">
+      <h2>13. Success metrics</h2>
+      <div class="subgroups">
+        <div class="subgroup">
+          <h5>Adoption</h5>
+          <ol>
+            <li>Merchants active on weekly cadence</li>
+            <li>Categories per merchant (coverage breadth)</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>Report quality</h5>
+          <ol>
+            <li>False-positive rate on review items (via counsel spot-check)</li>
+            <li>Status-track engagement (Ack / In-remediation / Resolved conversion)</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>Legal safety</h5>
+          <ol>
+            <li>Honeypot regression pass rate (target 100%)</li>
+            <li>Zero review items surfaced on Seel components</li>
+            <li>Zero language-rule violations in surfaced text</li>
+          </ol>
+        </div>
+        <div class="subgroup">
+          <h5>Counsel workload</h5>
+          <ol>
+            <li>Corpus sign-off turnaround (target ≤ 5 bd)</li>
+            <li>Steady-state spot-check volume (~5%)</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Appendix A -->
+    <section id="appendix-a">
+      <h2>Appendix A · Michael's 24-item Product checklist (verbatim 6/25)</h2>
+      <p style="color:var(--mid)">Preserved for reference. Item #20 (accessibility) proposed → Phase 2, hence <b>24 items in Phase 1</b> not 25.</p>
+      <table>
+        <thead><tr><th>#</th><th>Sub-group</th><th>Item</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Regulated categories</td><td>Alcohol — licensing, age, per-country import limits</td></tr>
+          <tr><td>2</td><td>Regulated categories</td><td>CBD / hemp / cannabinoids — legality varies by country/state</td></tr>
+          <tr><td>3</td><td>Regulated categories</td><td>Tobacco / vape / nicotine — heavy import & flavor restrictions</td></tr>
+          <tr><td>4</td><td>Regulated categories</td><td>Firearms / weapons / regulated blades — cross-border prohibitions</td></tr>
+          <tr><td>5</td><td>Regulated categories</td><td>Supplements / nutraceuticals / ingestibles — EU dosing / novel-food</td></tr>
+          <tr><td>6</td><td>Regulated categories</td><td>Cosmetics / topicals — EU product notification + Responsible Person</td></tr>
+          <tr><td>7</td><td>Regulated categories</td><td>Pharmaceuticals / medical devices — clearance / prescription rules</td></tr>
+          <tr><td>8</td><td>Claims & advertising</td><td>Health / disease / efficacy claims — substantiation</td></tr>
+          <tr><td>9</td><td>Claims & advertising</td><td>Origin claims — "Made in USA" / country-of-origin accuracy</td></tr>
+          <tr><td>10</td><td>Claims & advertising</td><td>Environmental / "green" claims — greenwashing exposure</td></tr>
+          <tr><td>11</td><td>Claims & advertising</td><td>Reference / discount pricing — "was/now" prior-price rules</td></tr>
+          <tr><td>12</td><td>Safety & conformity</td><td>Children's products / toys — safety standards + choking-hazard</td></tr>
+          <tr><td>13</td><td>Safety & conformity</td><td>CE / UKCA conformity markings</td></tr>
+          <tr><td>14</td><td>Safety & conformity</td><td>EU Responsible Person (GPSR)</td></tr>
+          <tr><td>15</td><td>Safety & conformity</td><td>Allergen / ingredient / INCI labeling</td></tr>
+          <tr><td>16</td><td>Safety & conformity</td><td>Prop 65 / EU REACH signals</td></tr>
+          <tr><td>17</td><td>Safety & conformity</td><td>Restricted-shipment / hazmat</td></tr>
+          <tr><td>18</td><td>IP & marketing integrity</td><td>Counterfeit / IP-infringement risk on merchant inventory</td></tr>
+          <tr><td>19</td><td>IP & marketing integrity</td><td>Endorsement / influencer / review disclosures (#ad)</td></tr>
+          <tr><td>20</td><td>IP & marketing integrity</td><td><span style="color:var(--sub)">Website accessibility (WCAG / EAA / ADA) — <b>proposed Phase 2</b></span></td></tr>
+          <tr><td>21</td><td>Consumer protection & cross-border</td><td>Country-of-sale / geo & shipping restrictions</td></tr>
+          <tr><td>22</td><td>Consumer protection & cross-border</td><td>Sweepstakes / contests / prize draws</td></tr>
+          <tr><td>23</td><td>Consumer protection & cross-border</td><td>Comparative / competitor advertising</td></tr>
+          <tr><td>24</td><td>Consumer protection & cross-border</td><td>Country-of-origin / sourcing disclosure</td></tr>
+          <tr><td>25</td><td>Consumer protection & cross-border</td><td>Urgency / scarcity claims — countdown timers / "only X left"</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Appendix B -->
+    <section id="appendix-b">
+      <h2>Appendix B · Related documents</h2>
+      <ul>
+        <li>Merchant-facing demo (current — includes onboarding wizard, async report generation, and full interactions): Compass module inside the merchant dashboard, <code>client/src/pages/CompassPage.tsx</code></li>
+        <li>Earlier standalone HTML demo (superseded by the dashboard build): <a href="/seel-compass-demo.html">seel-compass-demo.html</a></li>
+        <li>Product PRD（中文 · team alignment）: <a href="/seel-compass-prd-cn.html">seel-compass-prd-cn.html</a></li>
+        <li>Sync Prep notes (team-facing status): <a href="https://app.notion.com/p/3893b4ed17a2815d9129c8548d18d7da">🧭 Seel Compass — Sync Prep</a></li>
+        <li>Predecessor spec (superseded): <i>Compliance LLP Product Implementation Spec</i></li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · PRD Draft v1.1 · © 2026
+</footer>
+
+</body>
+</html>

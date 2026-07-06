@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — Go-Global Readiness</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0;
+    --bg:#F8FAFC; --card:#fff;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+    --warn:#B45309; --warn-bg:#FFFBEB; --warn-br:#FDE68A;
+    --na:#64748B; --na-bg:#F1F5F9; --na-br:#E2E8F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+  a{color:inherit}
+
+  /* top brand bar */
+  .topbar{background:#0A0A1A;color:#fff;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+  .brand .mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .brand small{font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .topbar-right{display:flex;align-items:center;gap:14px;font-size:12.5px;color:#CBD5E1}
+  .pill{background:rgba(124,58,237,.25);border:1px solid rgba(167,139,250,.4);color:#DDD6FE;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+
+  /* client subheader */
+  .subhead{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .subhead .client{font-size:13px;color:var(--mid)}
+  .subhead .client b{color:var(--ink)}
+  .subhead .meta{font-size:12px;color:var(--sub)}
+  .subhead .right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pdf-btn{font-size:12.5px;font-weight:600;color:var(--seel-d);background:var(--seel-l);border:1px solid #DDD6FE;padding:7px 14px;border-radius:8px;cursor:pointer}
+  .pdf-btn:hover{background:#EDE9FE}
+  @media print{.topbar,.tabs,.mkt-toggle,.pdf-btn,.legend,.delta{display:none!important}.view{display:block!important}.wrap{max-width:none}}
+
+  /* tabs */
+  .tabs{background:var(--card);border-bottom:1px solid var(--border);padding:0 18px;display:flex;gap:2px;overflow-x:auto}
+  .tab{padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--sub);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--seel);border-bottom-color:var(--seel)}
+  .tab .soon{font-size:9px;font-weight:700;background:#EEF2FF;color:#6366F1;padding:1px 6px;border-radius:99px;letter-spacing:.04em}
+  .tab.disabled{color:#CBD5E1;cursor:not-allowed}
+
+  .wrap{max-width:1020px;margin:0 auto;padding:26px 24px 80px}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* disclaimer banner */
+  .disc{background:var(--seel-l);border:1px solid #DDD6FE;border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--seel-d);margin-bottom:22px}
+  .disc b{color:var(--seel-d)}
+
+  /* score hero */
+  .hero{display:flex;gap:24px;align-items:stretch;margin-bottom:22px;flex-wrap:wrap}
+  .score-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 26px;min-width:200px;display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .score-num{font-size:46px;font-weight:800;color:var(--seel);line-height:1}
+  .score-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-top:8px;display:flex;align-items:center;gap:5px}
+  .qmark{width:16px;height:16px;border-radius:50%;background:#E2E8F0;color:var(--mid);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .qmark:hover{background:var(--seel);color:#fff}
+
+  .cat-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;min-width:300px}
+  .cat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .cat:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.09)}
+  .cat-name{font-size:12px;font-weight:700;color:var(--mid);display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;min-height:30px}
+  .cat-stat{display:inline-block;font-size:12px;font-weight:700;padding:4px 10px;border-radius:7px;margin:2px 0}
+  .cat-stat.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-br)}
+  .cat-stat.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+  .cat-score{font-size:24px;font-weight:800;color:var(--ink)}
+  .cat-score.warn{color:var(--warn)}
+  .cat-score.na{color:var(--na);font-size:15px;font-weight:600}
+  .bar{height:5px;border-radius:99px;background:#EEF2F6;margin-top:8px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:99px;background:var(--ok)}
+  .bar > i.warn{background:#F59E0B}
+
+  /* summary line */
+  .summary{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 16px;font-size:13px;color:var(--mid);margin-bottom:10px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .summary b{color:var(--ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-bottom:20px}
+  .legend span{display:flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:7px;border:1px solid transparent}
+  .legend span:hover{background:#F1F5F9}
+  .legend span.lg-on{background:var(--seel-l);border-color:#DDD6FE;color:var(--seel-d)}
+  .dot{width:10px;height:10px;border-radius:3px}
+  .dot.ok{background:var(--ok)} .dot.warn{background:#F59E0B} .dot.na{background:#94A3B8}
+
+  /* control sections */
+  .sec{margin-bottom:18px}
+  .sec-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+  .sec-h .cnt{color:var(--ok);font-weight:600}
+  .ctrl{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;overflow:hidden}
+  .ctrl-row{display:flex;align-items:flex-start;gap:11px;padding:12px 15px;cursor:pointer}
+  .ctrl-row:hover{background:#FAFAFE}
+  .ic{flex-shrink:0;width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px}
+  .ic.ok{background:var(--ok-bg);color:var(--ok)} .ic.warn{background:var(--warn-bg);color:var(--warn)} .ic.na{background:var(--na-bg);color:var(--na)}
+  .ctrl-main{flex:1}
+  .ctrl-title{font-size:13.5px;font-weight:600;color:var(--ink)}
+  .ctrl-sub{font-size:12px;color:var(--sub);margin-top:2px}
+  .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.03em;flex-shrink:0;margin-top:1px}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+  .badge.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-br)}
+  .badge.na{background:var(--na-bg);color:var(--na);border:1px solid var(--na-br)}
+  .ev{display:none;padding:0 15px 14px 46px;font-size:12.5px;color:var(--mid);line-height:1.65}
+  .ctrl.open .ev{display:block}
+  .ev .ev-lbl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);margin:8px 0 3px}
+  .ev .src{display:inline-block;background:#F1F5F9;border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--mid);margin-top:2px}
+  .ev .rec{background:var(--seel-l);border-left:3px solid var(--seel);padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;color:var(--seel-d)}
+  .rec::after{content:' This is not a legal determination.';font-style:italic;opacity:.65}
+
+  /* issues */
+  .issue{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:16px 18px;margin-bottom:12px}
+  .issue-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .issue-title{font-size:14.5px;font-weight:700;flex:1;min-width:200px}
+  .tag{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:#F1F5F9;color:var(--mid);border:1px solid var(--border)}
+  .tag.mkt{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+  .status-row{display:flex;gap:6px;margin:10px 0 2px}
+  .st{font-size:11px;font-weight:600;padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--sub);cursor:pointer}
+  .st.on{background:var(--seel);color:#fff;border-color:var(--seel)}
+  .ctx{font-size:12.5px;color:var(--mid);line-height:1.65;margin-top:8px}
+  .ctx .ev-lbl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sub);margin:10px 0 3px}
+  .ctx .rec{background:var(--seel-l);border-left:3px solid var(--seel);padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;color:var(--seel-d)}
+
+  /* generic panel */
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:14px}
+  .panel h3{font-size:15px;margin-bottom:4px}
+  .panel p{font-size:13px;color:var(--mid);margin-bottom:10px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--sub)}
+  .row .v{font-weight:600}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--mid);margin:4px 0}
+  .ck{width:17px;height:17px;border-radius:5px;background:var(--ok);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+  .field{margin:12px 0}
+  .field label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);margin-bottom:5px}
+  .field input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff}
+  .mkts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .mkts .m{font-size:12px;font-weight:600;padding:5px 12px;border-radius:8px;border:1px solid var(--seel);background:var(--seel-l);color:var(--seel-d)}
+  .mkts .m.off{border-color:var(--border);background:#fff;color:var(--sub)}
+
+  /* score explainer popover */
+  .pop-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:50;align-items:center;justify-content:center;padding:20px}
+  .pop-bg.show{display:flex}
+  .pop{background:#fff;border-radius:14px;max-width:440px;padding:24px 26px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .pop h4{font-size:16px;margin-bottom:10px}
+  .pop p{font-size:13px;color:var(--mid);line-height:1.7;margin-bottom:10px}
+  .pop code{background:#F1F5F9;padding:1px 6px;border-radius:5px;font-size:12px;color:var(--seel-d)}
+  .pop .close{margin-top:6px;background:var(--seel);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+
+  /* delta strip */
+  .delta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-left:3px solid var(--seel);border-radius:0 10px 10px 0;padding:11px 16px;font-size:12.5px;color:var(--mid);margin-bottom:18px}
+  .delta b{color:var(--ink)}
+  .delta .up{color:var(--ok);font-weight:700}
+  .delta .new{color:var(--warn);font-weight:700}
+  .delta .res{color:var(--seel);font-weight:700}
+  /* history timeline */
+  .tl{position:relative;margin-left:8px;padding-left:22px;border-left:2px solid var(--border)}
+  .tl-item{position:relative;padding:0 0 22px}
+  .tl-item::before{content:'';position:absolute;left:-29px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--seel);border:2px solid #fff;box-shadow:0 0 0 2px var(--seel)}
+  .tl-item.muted::before{background:#CBD5E1;box-shadow:0 0 0 2px #CBD5E1}
+  .tl-date{font-size:12px;font-weight:700;color:var(--ink)}
+  .tl-meta{font-size:12.5px;color:var(--mid);margin-top:3px;line-height:1.6}
+  .tl-meta .up{color:var(--ok);font-weight:600}
+  .tl-meta .new{color:var(--warn);font-weight:600}
+  .tl-meta .res{color:var(--seel);font-weight:600}
+  .tl-score{display:inline-block;font-weight:800;color:var(--seel);font-size:14px;margin-right:8px}
+  /* market toggle */
+  .mkt-toggle{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px;margin-bottom:16px}
+  .mkt-btn{font-size:12.5px;font-weight:600;color:var(--sub);padding:6px 14px;border-radius:8px;cursor:pointer;border:none;background:transparent}
+  .mkt-btn.on{background:var(--seel);color:#fff}
+  .mkt-btn.dis{color:#CBD5E1}
+  .mkt-btn.dis:hover{color:var(--sub)}
+  .us-only-note{font-size:10px;font-weight:600;color:var(--sub);background:#F1F5F9;border:1px solid var(--border);padding:1px 7px;border-radius:99px}
+  footer{text-align:center;font-size:11.5px;color:#94A3B8;padding:22px;border-top:1px solid var(--border);background:#fff}
+  @media(max-width:640px){.hero{flex-direction:column}.score-card{width:100%}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">◑</span>
+    <span>Seel Compass <small>Go-Global Readiness</small></span>
+  </div>
+  <div class="topbar-right">
+    <span class="pill">12-month free trial</span>
+    <span>Acme Outdoor Co.</span>
+    <span id="lang" onclick="setLang(LANG==='zh'?'en':'zh')" style="cursor:pointer;font-weight:700;color:#C4B5FD">中文</span>
+    <span>Sign out</span>
+  </div>
+</div>
+
+<div class="subhead">
+  <div class="client">Client portal · <b>https://acme-outdoor.com/</b> · markets: United States, European Union</div>
+  <div class="right">
+    <div class="meta">Latest review completed Jun 17, 2026 · next review Jun 24 · every 7d</div>
+    <button class="pdf-btn" onclick="window.print()">⬇︎ Download report (PDF)</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-v="overview">Overview</div>
+  <div class="tab" data-v="issues">Review Items <span id="ri-count" style="font-size:10px;color:#B45309;font-weight:700">·5</span></div>
+  <div class="tab" data-v="ip">Intellectual Property</div>
+  <div class="tab" data-v="entity">Corporate Entity</div>
+  <div class="tab" data-v="history">History</div>
+  <div class="tab" data-v="setup">Setup</div>
+  <div class="tab" data-v="billing">Billing</div>
+  <div class="tab disabled" title="Coming in a later phase">Discuss <span class="soon">PHASE 2</span></div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===== OVERVIEW ===== -->
+  <div class="view active" id="overview">
+    <div class="disc">
+      <b>Seel Compass</b> is your partner for global expansion and readiness. It gives an objective, structured baseline assessment of common gaps across key go-global categories. It is <b>informational only — not legal advice, and not a law firm</b>. Review items point to relevant rules and recommend confirming with qualified counsel.
+    </div>
+
+    <div class="delta">
+      <span>📈 Since last review (<b>Jun 10</b>):</span>
+      <span class="up">▲ readiness +2</span>
+      <span class="new">+2 new review items</span>
+      <span class="res">2 resolved</span>
+      <span style="margin-left:auto"><a href="#" onclick="goTab('history');return false;" style="color:var(--seel);font-weight:600;text-decoration:none">View history →</a></span>
+    </div>
+
+    <div class="mkt-toggle">
+      <button class="mkt-btn on" data-m="us" onclick="setMkt('us')">🇺🇸 United States</button>
+      <button class="mkt-btn" data-m="eu" onclick="setMkt('eu')">🇪🇺 European Union</button>
+      <button class="mkt-btn dis" title="Not yet enabled — add this market in Setup" onclick="goTab('setup')">🇬🇧 UK</button>
+      <button class="mkt-btn dis" title="Not yet enabled — add this market in Setup" onclick="goTab('setup')">🇨🇦 Canada</button>
+    </div>
+
+    <div class="hero">
+      <div class="score-card">
+        <div class="score-num" id="ov-score">89<span style="font-size:24px">%</span></div>
+        <div class="score-lbl">Readiness score <span class="qmark" onclick="document.getElementById('pop').classList.add('show')">?</span></div>
+      </div>
+      <div class="cat-grid">
+        <div class="cat" id="cat-dp" data-us="92" data-eu="81" onclick="goSec('sh-dp')">
+          <div class="cat-name">🔒 Data &amp; Privacy</div>
+          <div class="cat-score">92%</div>
+          <div class="bar"><i style="width:92%"></i></div>
+        </div>
+        <div class="cat" id="cat-tc" data-us="86" data-eu="88" onclick="goSec('sh-tc')">
+          <div class="cat-name">📄 Terms &amp; Conditions</div>
+          <div class="cat-score warn">86%</div>
+          <div class="bar"><i class="warn" style="width:86%"></i></div>
+        </div>
+        <div class="cat" id="cat-pr" data-us="88" data-eu="82" onclick="goSec('sh-pr')">
+          <div class="cat-name">🛍️ Product</div>
+          <div class="cat-score warn">88%</div>
+          <div class="bar"><i class="warn" style="width:88%"></i></div>
+        </div>
+        <div class="cat" onclick="goTab('ip')">
+          <div class="cat-name">™️ Intellectual Property <span class="us-only-note">US</span></div>
+          <div class="cat-stat warn">⚠ Review</div>
+        </div>
+        <div class="cat" onclick="goTab('entity')">
+          <div class="cat-name">🏛️ Corporate Entity <span class="us-only-note">US</span></div>
+          <div class="cat-stat ok">✓ Good standing</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary" id="sum">
+      <span><b>168</b> verified</span>
+      <span><b style="color:var(--warn)">4</b> review items</span>
+      <span><b>172</b> scan-verifiable controls</span>
+      <span><b style="color:var(--na)">41</b> not assessable by an automated scan (omitted)</span>
+    </div>
+    <div class="legend" id="legend">
+      <span data-s="ok" onclick="setState('ok')"><i class="dot ok"></i> Verified with evidence</span>
+      <span data-s="warn" onclick="setState('warn')"><i class="dot warn"></i> Review item — recommend counsel review</span>
+      <span data-s="na" onclick="setState('na')"><i class="dot na"></i> Not assessable by scan — omitted, not guessed</span>
+      <span data-s="all" onclick="setState('all')" style="color:var(--seel);font-weight:600">↺ show all</span>
+    </div>
+
+    <!-- Data & Privacy -->
+    <div class="sec-h" id="sh-dp">🔒 Data &amp; Privacy · <span class="cnt">62/64 verified</span></div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Access / correct / delete / portability rights stated</div>
+          <div class="ctrl-sub">Found in Privacy Policy, §4 “Your Rights”.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        CCPA/CPRA and GDPR frameworks commonly expect consumers to be told how to access, correct, delete, and port their data.
+        <div class="ev-lbl">What was reviewed</div>
+        Pulled the Privacy Policy linked in the site footer; the four rights are described in <span class="src">/privacy · §4 Your Rights</span>. Language appears consistent with industry-standard disclosure.
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic warn">!</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Option to limit use of sensitive data (location / biometric)</div>
+          <div class="ctrl-sub">Review item — element not found on reviewed pages.</div>
+        </div>
+        <span class="badge warn">REVIEW ITEM</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Several US state privacy frameworks describe a consumer ability to limit the use of sensitive personal data. The reviewed Privacy Policy did not surface a corresponding control.
+        <div class="ev-lbl">Sources searched</div>
+        <span class="src">your /privacy page</span> · public web research
+        <div class="rec">Review item: limit-use-of-sensitive-data disclosure appears to be missing. Recommend confirming with qualified counsel whether your markets require it and, if so, adding the disclosure.</div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Data retention periods actually enforced</div>
+          <div class="ctrl-sub">Not assessable by an automated scan — operational record.</div>
+        </div>
+        <span class="badge na">NOT ASSESSABLE</span>
+      </div>
+      <div class="ev">
+        A point-in-time scan of public pages can read a stated retention period but cannot verify it is enforced operationally. Omitted rather than assumed either way.
+      </div>
+    </div>
+
+    <div class="ctrl" data-mkt="eu">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Lawful basis for processing stated (GDPR Art. 6)</div>
+          <div class="ctrl-sub">Found in Privacy Policy, §2 “How we use your data”.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        GDPR commonly expects a stated lawful basis (consent, contract, legitimate interest) for each processing purpose.
+        <div class="ev-lbl">What was reviewed</div>
+        Privacy Policy <span class="src">/privacy · §2</span> names a lawful basis per purpose. · <span class="src">source: your /privacy page</span>
+      </div>
+    </div>
+    <div class="ctrl" data-mkt="eu">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic warn">!</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Non-essential cookies set before consent</div>
+          <div class="ctrl-sub">Review item — analytics cookies observed before a consent choice.</div>
+        </div>
+        <span class="badge warn">REVIEW ITEM</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent. On load, analytics cookies were observed being set before any consent interaction.
+        <div class="ev-lbl">Sources searched</div>
+        <span class="src">network trace on your storefront homepage</span> · public web research
+        <div class="rec">Review item: cookies set pre-consent. Recommend confirming with qualified counsel and adjusting the consent banner if needed.</div>
+      </div>
+    </div>
+
+    <!-- Terms & Conditions -->
+    <div class="sec-h" id="sh-tc">📄 Terms &amp; Conditions · <span class="cnt">48/50 verified</span></div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Governing law &amp; dispute-resolution clause present</div>
+          <div class="ctrl-sub">Found in Terms of Service, §12.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">What was reviewed</div>
+        Terms of Service <span class="src">/terms · §12 Governing Law</span> names the governing jurisdiction and a dispute-resolution path.
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic warn">!</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Unqualified authenticity guarantee over third-party goods</div>
+          <div class="ctrl-sub">Review item — listing language may extend an absolute guarantee.</div>
+        </div>
+        <span class="badge warn">REVIEW ITEM</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Product listing states “Authenticity Ensured — every item guaranteed genuine.” Unqualified authenticity guarantees that extend to third-party sellers are a recurring enforcement and review topic under the FTC Act §5 framework.
+        <div class="rec">Review item: unqualified guarantee. Recommend confirming with qualified counsel whether the guarantee should be qualified (e.g. scope, sellers covered).</div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Refunds honored within the stated window</div>
+          <div class="ctrl-sub">Not assessable by an automated scan — timing / operational.</div>
+        </div>
+        <span class="badge na">NOT ASSESSABLE</span>
+      </div>
+      <div class="ev">A scan can read the stated refund window but cannot verify refunds are honored within it. Omitted, not guessed.</div>
+    </div>
+
+    <!-- Product · 5 sub-groups per 6/25 Michael review -->
+    <div class="sec-h" id="sh-pr">🛍️ Product · <span class="cnt">16/18 verified</span> <span style="color:var(--sub);font-weight:500;text-transform:none;letter-spacing:0">· 2 review items · 6 categories not detected</span></div>
+    <div style="background:var(--seel-l);border:1px solid #DDD6FE;border-radius:9px;padding:11px 15px;font-size:12.5px;color:var(--seel-d);margin-bottom:14px">
+      Reviews product listings, claims, safety markings, and cross-border disclosures across your target markets. Organized into five areas below. Regulated-category rules apply only to categories the merchant sells (auto-detected, then confirmed in <a href="#" onclick="goTab('setup');return false;" style="color:var(--seel-d);font-weight:600;text-decoration:underline">Setup</a>).
+    </div>
+
+    <!-- Sub-group 1: Regulated / restricted categories -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 6px">1. Regulated / restricted categories · 7</div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Alcohol — licensing, age gates, cross-border import limits</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">CBD / hemp / cannabinoids — legality varies sharply by country/state</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Tobacco / vape / nicotine — heavy import and flavor restrictions</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Firearms / weapons / regulated blades — broad cross-border prohibitions</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Supplements / nutraceuticals / ingestibles — EU dosing &amp; novel-food limits</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+    <div class="ctrl" data-mkt="eu">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic warn">!</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Cosmetics / topicals — EU product notification &amp; Responsible Person</div>
+          <div class="ctrl-sub">Sunscreen SKUs detected. EU Responsible Person disclosure missing on 3 listings.</div>
+        </div>
+        <span class="badge warn">REVIEW ITEM</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        EU Cosmetic Products Regulation (EC) 1223/2009 commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.
+        <div class="ev-lbl">What was reviewed</div>
+        Sampled 3 sunscreen product pages (SKU prefix <span class="src">SUN-</span>). None surface a Responsible Person disclosure. UK listings would require an equivalent under the UK Cosmetic Regulation.
+        <div class="rec">Review item: Responsible Person disclosure appears to be missing on cosmetics SKUs shipped into the EU. Recommend confirming with qualified counsel.</div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic na">○</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Pharmaceuticals / medical devices — clearance, marking, prescription rules</div>
+          <div class="ctrl-sub">Not detected in catalog. Rules skipped.</div>
+        </div>
+        <span class="badge na">N/A</span>
+      </div>
+    </div>
+
+    <!-- Sub-group 2: Claims & advertising -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 6px">2. Claims &amp; advertising · 4</div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Health / disease / efficacy claims are substantiated</div>
+          <div class="ctrl-sub">No unsubstantiated health claims found on sampled PDPs.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+      <div class="ev"><div class="ev-lbl">What was reviewed</div>Sampled 12 PDPs across outdoor gear and personal-care lines. No “clinically proven,” “doctor recommended,” or disease-treatment language observed.</div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Country-of-origin claims are accurate (e.g., “Made in USA”)</div>
+          <div class="ctrl-sub">No unsupported country-of-origin claims found on sampled PDPs.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Environmental / “green” claims — “eco,” “natural,” “sustainable”</div>
+          <div class="ctrl-sub">Language aligns with FTC Green Guides guidance.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Reference / discount pricing displays a prior-price basis</div>
+          <div class="ctrl-sub">“Was $X” references an actual sold-at price within the prior 90 days.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+
+    <!-- Sub-group 3: Product safety, conformity & disclosures -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 6px">3. Product safety, conformity &amp; disclosures · 6</div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Children's products / toys — safety standards &amp; choking-hazard rules</div>
+          <div class="ctrl-sub">Kids' outdoor gear detected. Age labels and small-parts warnings present.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">CE / UKCA conformity markings displayed where required</div>
+          <div class="ctrl-sub">Markings shown on regulated goods sold into EU / UK.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">EU Responsible Person named for goods sold into the EU (GPSR)</div>
+          <div class="ctrl-sub">Named for general merchandise. Cosmetics-specific gap tracked separately above.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Allergen / ingredient / INCI labeling on ingestibles &amp; cosmetics</div>
+          <div class="ctrl-sub">INCI ingredient lists present on all sampled cosmetic PDPs.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Prop 65 / EU REACH substance-restriction signals</div>
+          <div class="ctrl-sub">Prop 65 warnings surfaced on relevant CA-shipping listings.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Restricted-shipment / hazmat — batteries, aerosols, flammables</div>
+          <div class="ctrl-sub">Battery-containing SKUs carry the required transport disclosures.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+
+    <!-- Sub-group 4: IP & marketing integrity -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 6px">4. IP &amp; marketing integrity · 2</div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Counterfeit / unauthorized-reseller risk</div>
+          <div class="ctrl-sub">All listings appear sourced from the brand directly or trusted independent sellers. <span style="color:var(--sub)">(Separate from own-brand trademark screening — see the <a href="#" onclick="goTab('ip');return false;" style="color:var(--seel);font-weight:600">Intellectual Property tab</a>.)</span></div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Endorsement / influencer / review disclosures (#ad, review authenticity)</div>
+          <div class="ctrl-sub">Sponsored posts on-site carry FTC-compliant disclosure; no fake-review signals detected.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+
+    <!-- Sub-group 5: Consumer protection, promotions & cross-border -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--sub);margin:18px 0 6px">5. Consumer protection, promotions &amp; cross-border · 5</div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Country-of-sale / geo &amp; shipping restrictions flagged</div>
+          <div class="ctrl-sub">Ship-to gating in place for excluded markets on relevant SKUs.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Sweepstakes / contests / prize draws follow jurisdictional rules</div>
+          <div class="ctrl-sub">No active sweepstakes detected on-site.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Comparative / competitor advertising follows disclosure rules</div>
+          <div class="ctrl-sub">No competitor-named claims found on PDPs.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic ok">✓</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Country-of-origin / sourcing disclosure surfaced</div>
+          <div class="ctrl-sub">Manufacturing country stated on PDPs where required.</div>
+        </div>
+        <span class="badge ok">VERIFIED</span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-row" onclick="t(this)">
+        <span class="ic warn">!</span>
+        <div class="ctrl-main">
+          <div class="ctrl-title">Urgency / scarcity claims (countdown timers, “only X left”)</div>
+          <div class="ctrl-sub">Countdown timers &amp; “only 3 left” language on 4 PDPs — substantiation not confirmed.</div>
+        </div>
+        <span class="badge warn">REVIEW ITEM</span>
+      </div>
+      <div class="ev">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        FTC has flagged unsubstantiated urgency messaging under §5 and its 2024 dark-patterns guidance. Real, verifiable scarcity is generally acceptable; simulated urgency is not.
+        <div class="ev-lbl">What was reviewed</div>
+        4 PDPs display “only 3 left” or countdown timers. Backing inventory data was not cross-checked in this scan.
+        <div class="rec">Review item: verify the on-site urgency signals reflect actual stock or timing. Recommend confirming with qualified counsel.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== REVIEW ITEMS (was "Issues") ===== -->
+  <div class="view" id="issues">
+    <div class="disc">Review items state the facts found and the relevant rules alongside them, then recommend counsel review. They are not legal conclusions and do not assert any wrongdoing.</div>
+    <div class="mkt-toggle">
+      <button class="mkt-btn on" data-m="us" onclick="setMkt('us')">🇺🇸 United States</button>
+      <button class="mkt-btn" data-m="eu" onclick="setMkt('eu')">🇪🇺 European Union</button>
+      <button class="mkt-btn dis" title="Not yet enabled — add this market in Setup" onclick="goTab('setup')">🇬🇧 UK</button>
+      <button class="mkt-btn dis" title="Not yet enabled — add this market in Setup" onclick="goTab('setup')">🇨🇦 Canada</button>
+    </div>
+
+    <div class="issue" data-mkt="us">
+      <div class="issue-top">
+        <div class="issue-title">Unqualified authenticity guarantee over third-party goods</div>
+        <span class="tag">Terms &amp; Conditions</span><span class="tag mkt">United States</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Listing states “Authenticity Ensured — every item guaranteed genuine,” extending to independent sellers. Unqualified authenticity guarantees are a recurring enforcement and review topic under the FTC Act §5 framework.
+        <div class="ev-lbl">Sources searched</div>
+        Your product listing pages · public web research
+        <div class="rec">Recommend confirming with qualified counsel whether to qualify the guarantee (scope / sellers covered).</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="us">
+      <div class="issue-top">
+        <div class="issue-title">Option to limit use of sensitive data not surfaced</div>
+        <span class="tag">Data &amp; Privacy</span><span class="tag mkt">United States</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Several US state privacy frameworks describe a consumer ability to limit use of sensitive personal data (e.g. precise location, biometric). The reviewed Privacy Policy did not surface a corresponding disclosure or control.
+        <div class="ev-lbl">Sources searched</div>
+        Your /privacy page · public web research
+        <div class="rec">Recommend confirming with qualified counsel whether your markets require it and adding the disclosure if so.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="us">
+      <div class="issue-top">
+        <div class="issue-title">Trademark name similarity — “Acme Outdoor” vs registered mark</div>
+        <span class="tag">Intellectual Property</span><span class="tag mkt">United States</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        A USPTO trademark database search on the brand name returned a similar registered mark, <b>“ACME OUTDOORS”</b> (Reg. No. 5,xxx,xxx — Class 25, apparel), owned by an unrelated party.
+        <div class="rec">Recommend confirming with qualified counsel whether the similarity poses an infringement risk before scaling US marketing. Annual monitoring available.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="us">
+      <div class="issue-top">
+        <div class="issue-title">Annual report filing due — Delaware entity</div>
+        <span class="tag">Corporate Entity</span><span class="tag mkt">United States</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Delaware Secretary of State record shows the entity is in <b>good standing</b>, with the next annual report / franchise tax due <b>Mar 1, 2027</b>. Filing late risks loss of good standing.
+        <div class="rec">Recommend calendaring the filing; Seel Compass can monitor good-standing status on an ongoing basis.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="us">
+      <div class="issue-top">
+        <div class="issue-title">Urgency / scarcity claims — countdown timers &amp; “only X left”</div>
+        <span class="tag">Product</span><span class="tag mkt">United States</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        FTC has flagged unsubstantiated urgency messaging under §5 and its 2024 dark-patterns guidance. Real, verifiable scarcity is generally acceptable; simulated urgency is not.
+        <div class="ev-lbl">Sources searched</div>
+        4 PDPs on your storefront displaying countdown timers or “only 3 left” language · public web research
+        <div class="rec">Recommend confirming with qualified counsel and verifying that on-site urgency signals reflect actual stock or timing.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="eu">
+      <div class="issue-top">
+        <div class="issue-title">Non-essential cookies set before consent</div>
+        <span class="tag">Data &amp; Privacy</span><span class="tag mkt">European Union</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        On load, analytics cookies were observed being set before any consent interaction. Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.
+        <div class="ev-lbl">Sources searched</div>
+        Network trace on your storefront homepage · public web research
+        <div class="rec">Recommend confirming with qualified counsel and adjusting the consent banner if needed.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="eu">
+      <div class="issue-top">
+        <div class="issue-title">DSAR response window not stated</div>
+        <span class="tag">Data &amp; Privacy</span><span class="tag mkt">European Union</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        The Privacy Policy describes data-subject rights but does not state a response timeframe for data-subject access requests. GDPR commonly references a one-month response expectation.
+        <div class="rec">Recommend confirming with qualified counsel and stating the response window in your policy.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="eu">
+      <div class="issue-top">
+        <div class="issue-title">No clear mechanism to withdraw consent</div>
+        <span class="tag">Data &amp; Privacy</span><span class="tag mkt">European Union</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        Consent is collected at signup, but the reviewed pages do not surface an equally easy way to withdraw it. GDPR commonly expects withdrawing consent to be as easy as giving it.
+        <div class="rec">Recommend confirming with qualified counsel and adding a self-serve withdrawal control.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+
+    <div class="issue" data-mkt="eu">
+      <div class="issue-top">
+        <div class="issue-title">Cosmetics — EU Responsible Person disclosure missing</div>
+        <span class="tag">Product</span><span class="tag mkt">European Union</span>
+      </div>
+      <div class="ctx">
+        <div class="ev-lbl">Relevant Rules and Context</div>
+        EU Cosmetic Products Regulation (EC) 1223/2009 commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.
+        <div class="ev-lbl">Sources searched</div>
+        3 sunscreen product pages (SKU prefix <span class="src">SUN-</span>) on your storefront · public web research
+        <div class="rec">Recommend confirming with qualified counsel and surfacing a Responsible Person disclosure on cosmetics SKUs sold into the EU.</div>
+      </div>
+      <div class="status-row"><span class="st on" onclick="st(this)">Open</span><span class="st" onclick="st(this)">Acknowledged</span><span class="st" onclick="st(this)">In remediation</span><span class="st" onclick="st(this)">Resolved</span></div>
+    </div>
+  </div>
+
+  <!-- ===== IP ===== -->
+  <div class="view" id="ip">
+    <div class="disc">Trademark <b>name</b> screening only. This does not cover design-patent, utility-patent, or full freedom-to-operate analysis, and is not a legal opinion. Counterfeit / unauthorized-reseller risk on the merchant's own inventory is tracked separately under Product.</div>
+    <div class="panel">
+      <h3>Trademark name screening — “Acme Outdoor”</h3>
+      <p>Searched the USPTO trademark database for the brand name and close variants, filtered by relevant goods/services class.</p>
+      <div class="row"><span class="k">Database searched</span><span class="v">USPTO TESS — text search</span></div>
+      <div class="row"><span class="k">Brand name</span><span class="v">Acme Outdoor</span></div>
+      <div class="row"><span class="k">Similar registered mark found</span><span class="v" style="color:var(--warn)">ACME OUTDOORS · Class 25 · Reg. 5,xxx,xxx</span></div>
+      <div class="row"><span class="k">Owner</span><span class="v">Unrelated third party</span></div>
+      <div class="row"><span class="k">Recommended next step</span><span class="v">Counsel review before scaling US marketing</span></div>
+    </div>
+    <div class="panel">
+      <h3>Ongoing monitoring</h3>
+      <p>If no conflicts are found in a future scan, Seel Compass notes that and offers continued annual screening to catch new registrations.</p>
+      <div class="chk"><span class="ck">✓</span> Annual trademark-name monitoring — enabled</div>
+    </div>
+  </div>
+
+  <!-- ===== CORPORATE ENTITY ===== -->
+  <div class="view" id="entity">
+    <div class="disc">Helps you think through US entity structure and surfaces good-standing signals from public Secretary of State records. Informational only — confirm structure decisions with qualified counsel / a tax advisor.</div>
+    <div class="panel">
+      <h3>Entity questionnaire</h3>
+      <p>“Have you incorporated a US entity? If yes, share the details below.”</p>
+      <div class="row"><span class="k">US entity incorporated?</span><span class="v">Yes</span></div>
+      <div class="row"><span class="k">State of formation</span><span class="v">Delaware</span></div>
+      <div class="row"><span class="k">Entity type</span><span class="v">C-corp</span></div>
+      <div class="row"><span class="k">Registered agent</span><span class="v">On file ✓</span></div>
+    </div>
+    <div class="panel">
+      <h3>Good-standing check — Delaware SoS</h3>
+      <p>Queried the Delaware Secretary of State portal for status and filing currency.</p>
+      <div class="row"><span class="k">Status</span><span class="v" style="color:var(--ok)">Good standing</span></div>
+      <div class="row"><span class="k">Annual report / franchise tax</span><span class="v" style="color:var(--warn)">Due Mar 1, 2027</span></div>
+      <div class="row"><span class="k">Last checked</span><span class="v">Jun 17, 2026</span></div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY ===== -->
+  <div class="view" id="history">
+    <div class="disc">Reviews re-run automatically every 7 days. Each run is version-stamped so you can see what changed — new review items, resolutions, and score movement over time.</div>
+    <div class="panel">
+      <h3 style="margin-bottom:16px">Review history · acme-outdoor.com</h3>
+      <div class="tl">
+        <div class="tl-item">
+          <div class="tl-date">Jun 17, 2026 · latest</div>
+          <div class="tl-meta"><span class="tl-score">89%</span> 11 pages checked · <span class="up">▲ +2</span> · <span class="new">+2 new</span> (cosmetics EU RP, urgency claims) · <span class="res">2 resolved</span> (age screen, affiliate disclosure)</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-date">Jun 10, 2026</div>
+          <div class="tl-meta"><span class="tl-score">87%</span> 11 pages checked · <span class="up">▲ +2</span> · <span class="new">+2 new</span> · <span class="res">1 resolved</span></div>
+        </div>
+        <div class="tl-item muted">
+          <div class="tl-date">Jun 3, 2026</div>
+          <div class="tl-meta"><span class="tl-score">85%</span> 10 pages checked · first baseline review · 5 review items opened</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SETUP ===== -->
+  <div class="view" id="setup">
+    <div class="panel">
+      <h3>Store &amp; markets</h3>
+      <div class="field"><label>Store URL</label><input value="https://acme-outdoor.com/" readonly></div>
+      <div class="field"><label>Target markets</label>
+        <div class="mkts"><span class="m">United States ✓</span><span class="m">European Union ✓</span><span class="m off">United Kingdom</span><span class="m off">Canada</span></div>
+      </div>
+      <div style="margin-top:12px;background:var(--na-bg);border:1px dashed var(--border);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--sub)">
+        🌐 <b>United Kingdom</b> and <b>Canada</b> are available but not yet enabled. Enable a market to add its rule set and start weekly reviews — <a href="#" onclick="return false" style="color:var(--seel);font-weight:600;text-decoration:none">＋ Enable market</a>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Product categories</h3>
+      <p style="font-size:12.5px;color:var(--sub);margin:-4px 0 10px">Regulated-category rules are only applied to categories you actually sell. Seel Compass auto-detected the categories below from your storefront during onboarding — confirm or correct so we scope the review correctly.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;margin-top:4px">
+        <div class="chk"><span class="ck">✓</span> Cosmetics / topicals <span style="color:var(--sub);font-weight:500;font-size:11.5px;margin-left:6px">detected · 12 SKUs</span></div>
+        <div class="chk"><span class="ck">✓</span> Children's products / toys <span style="color:var(--sub);font-weight:500;font-size:11.5px;margin-left:6px">detected · 4 SKUs</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> Alcohol <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> CBD / hemp / cannabinoids <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> Tobacco / vape / nicotine <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> Firearms / weapons <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> Supplements / nutraceuticals <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub)"><span style="width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;display:inline-block"></span> Pharmaceuticals / medical devices <span style="font-size:11.5px;margin-left:2px">not detected</span></div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--sub);border-top:1px solid var(--border);padding-top:10px">
+        Detection runs at onboarding and on each weekly review. Add or remove categories any time — the next review will apply the updated rule set.
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Authorization &amp; verification</h3>
+      <div class="chk"><span class="ck">✓</span> I confirm I am authorized to have this domain reviewed</div>
+      <div class="chk"><span class="ck">✓</span> Domain ownership verified (DNS TXT record)</div>
+      <div class="row"><span class="k">Review cadence</span><span class="v">Automatic, every 7 days</span></div>
+      <div class="row"><span class="k">Data retention</span><span class="v">12 months · delete on request</span></div>
+    </div>
+  </div>
+
+  <!-- ===== BILLING ===== -->
+  <div class="view" id="billing">
+    <div class="panel">
+      <h3>Plan</h3>
+      <p>You’re on the invite-only early access plan.</p>
+      <div class="row"><span class="k">Plan</span><span class="v">Early Access · 12-month free trial</span></div>
+      <div class="row"><span class="k">Trial ends</span><span class="v">Jun 11, 2027</span></div>
+      <div class="row"><span class="k">Price after trial</span><span class="v">To be confirmed</span></div>
+    </div>
+    <div class="panel">
+      <h3>Usage this period</h3>
+      <div class="row"><span class="k">Sites under review</span><span class="v">1 of 3</span></div>
+      <div class="row"><span class="k">Markets enabled</span><span class="v">2 (US, EU)</span></div>
+      <div class="row"><span class="k">Reviews run</span><span class="v">3 (weekly, automatic)</span></div>
+      <div class="row"><span class="k">Add-ons</span><span class="v">Trademark-name monitoring · annual</span></div>
+    </div>
+    <div class="panel">
+      <h3>Payment method</h3>
+      <p>No payment method required during the free trial.</p>
+      <div class="chk"><span class="ck">✓</span> No card on file — you’ll be notified before the trial ends</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- score explainer -->
+<div class="pop-bg" id="pop">
+  <div class="pop">
+    <h4>How the readiness score is calculated</h4>
+    <p>Each category starts at <code>100</code>. Every open review item subtracts points by severity. The overall score is the <b>average of the assessed categories</b>, shown with a color band.</p>
+    <p>Controls a one-time scan can’t determine (operational records, timing, off-site behavior) are <b>omitted, not guessed</b> — so the score never reflects a false green or a legal verdict.</p>
+    <p style="color:var(--sub)">Example: Data &amp; Privacy 92 + Terms 86 + Product 88 → assessed average ≈ 89.</p>
+    <button class="close" onclick="document.getElementById('pop').classList.remove('show')">Got it</button>
+  </div>
+</div>
+
+<footer>Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · Demo · © 2026</footer>
+
+<script>
+  // tab switching
+  document.querySelectorAll('.tab[data-v]').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var v = tab.getAttribute('data-v');
+      document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+      tab.classList.add('active');
+      document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active')});
+      var el = document.getElementById(v);
+      if(el) el.classList.add('active');
+      window.scrollTo(0,0);
+    });
+  });
+  // category card → switch tab
+  function goTab(v){ var tb=document.querySelector('.tab[data-v="'+v+'"]'); if(tb) tb.click(); }
+  // category card → scroll to its Overview section
+  function goSec(id){ var el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+  // expand control evidence
+  function t(row){ row.parentElement.classList.toggle('open'); }
+  // status chip toggle (visual only)
+  function st(chip){
+    chip.parentElement.querySelectorAll('.st').forEach(function(s){s.classList.remove('on')});
+    chip.classList.add('on');
+  }
+  // close popover on backdrop click
+  document.getElementById('pop').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('show'); });
+
+  // ===== market switch (US / EU) =====
+  var CATDATA = { us:{score:89}, eu:{score:84} };
+  var SUM = {
+    us:'<span><b>126</b> verified</span><span><b style="color:var(--warn)">5</b> review items</span><span><b>131</b> scan-verifiable controls</span><span><b style="color:var(--na)">41</b> not assessable by an automated scan (omitted)</span><span><b style="color:var(--na)">6</b> categories not detected in catalog</span>',
+    eu:'<span><b>79</b> verified</span><span><b style="color:var(--warn)">4</b> review items</span><span><b>83</b> scan-verifiable controls</span><span><b style="color:var(--na)">33</b> not assessable by an automated scan (omitted)</span><span><b style="color:var(--na)">6</b> categories not detected in catalog</span>'
+  };
+  var SUMZH = {
+    us:'<span><b>126</b> 项已验证</span><span><b style="color:var(--warn)">5</b> 项待审</span><span><b>131</b> 项可扫描核查控制点</span><span><b style="color:var(--na)">41</b> 项扫描无法核查（已略去）</span><span><b style="color:var(--na)">6</b> 个品类未在目录中识别到</span>',
+    eu:'<span><b>79</b> 项已验证</span><span><b style="color:var(--warn)">4</b> 项待审</span><span><b>83</b> 项可扫描核查控制点</span><span><b style="color:var(--na)">33</b> 项扫描无法核查（已略去）</span><span><b style="color:var(--na)">6</b> 个品类未在目录中识别到</span>'
+  };
+  var RICOUNT = { us:'·5', eu:'·4' };
+  var MKT='us', STATE='all', LANG='en';
+  function setCat(id, m){
+    var c = document.getElementById(id); if(!c) return;
+    var v = +c.getAttribute('data-'+m);
+    var s = c.querySelector('.cat-score'); s.textContent = v+'%'; s.className = 'cat-score'+(v<90?' warn':'');
+    var i = c.querySelector('.bar i'); i.style.width = v+'%'; i.className = (v<90?'warn':'');
+  }
+  function ctrlState(c){ return c.querySelector('.ic.ok')?'ok':(c.querySelector('.ic.warn')?'warn':'na'); }
+  function applyOverviewFilters(){
+    document.querySelectorAll('#overview .ctrl').forEach(function(c){
+      var mk = c.getAttribute('data-mkt');
+      var mOk = !mk || mk===MKT || mk==='both';
+      var sOk = STATE==='all' || STATE===ctrlState(c);
+      c.style.display = (mOk && sOk) ? '' : 'none';
+    });
+  }
+  function setState(s){
+    STATE = (s===STATE && s!=='all') ? 'all' : s;
+    document.querySelectorAll('#legend span').forEach(function(sp){ sp.classList.toggle('lg-on', sp.getAttribute('data-s')===STATE && STATE!=='all'); });
+    applyOverviewFilters();
+  }
+  function setMkt(m){
+    MKT = m;
+    document.querySelectorAll('.mkt-btn').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-m')===m); });
+    document.getElementById('ov-score').firstChild.textContent = CATDATA[m].score;
+    setCat('cat-dp', m); setCat('cat-tc', m); setCat('cat-pr', m);
+    // issues filter by market
+    document.querySelectorAll('#issues [data-mkt]').forEach(function(el){
+      var mk = el.getAttribute('data-mkt');
+      el.style.display = (mk===m || mk==='both') ? '' : 'none';
+    });
+    applyOverviewFilters();
+    document.getElementById('sum').innerHTML = (LANG==='zh'?SUMZH:SUM)[m];
+    document.getElementById('ri-count').textContent = RICOUNT[m];
+  }
+  setMkt('us'); // initialize
+
+  // ===== bilingual (EN / 中文) — localizes UI chrome & labels; finding prose stays in report language (EN) =====
+  var ZH = {
+    "Overview":"概览","Review Items":"待审项","Intellectual Property":"知识产权","Corporate Entity":"公司主体","History":"历史","Setup":"设置","Billing":"账单","Discuss":"对话","PHASE 2":"阶段 2",
+    "Go-Global Readiness":"出海就绪度","12-month free trial":"12 个月免费试用","Sign out":"退出",
+    "Client portal ·":"客户门户 ·","· markets: United States, European Union":"· 市场：美国、欧盟",
+    "Latest review completed Jun 17, 2026 · next review Jun 24 · every 7d":"最近一次审查完成于 2026-06-17 · 下次审查 6/24 · 每 7 天",
+    "⬇︎ Download report (PDF)":"⬇︎ 下载报告 (PDF)","Readiness score":"就绪度评分",
+    "🇺🇸 United States":"🇺🇸 美国","🇪🇺 European Union":"🇪🇺 欧盟","🇬🇧 UK":"🇬🇧 英国","🇨🇦 Canada":"🇨🇦 加拿大",
+    "Verified with evidence":"已验证（含证据）","Review item — recommend counsel review":"待审项 — 建议律师审阅","Not assessable by scan — omitted, not guessed":"扫描无法核查 — 略去，不臆测","↺ show all":"↺ 显示全部",
+    "🔒 Data & Privacy ·":"🔒 数据与隐私 ·","📄 Terms & Conditions ·":"📄 条款与条件 ·","🛍️ Product ·":"🛍️ 产品 ·","· 2 review items · 6 categories not detected":"· 2 项待审 · 6 个品类未识别",
+    "62/64 verified":"62/64 已验证","48/50 verified":"48/50 已验证","16/18 verified":"16/18 已验证",
+    "🔒 Data & Privacy":"🔒 数据与隐私","📄 Terms & Conditions":"📄 条款与条件","🛍️ Product":"🛍️ 产品","™️ Intellectual Property":"™️ 知识产权","🏛️ Corporate Entity":"🏛️ 公司主体",
+    "⚠ Review":"⚠ 待审","✓ Good standing":"✓ 良好存续","US":"美",
+    "VERIFIED":"已验证","REVIEW ITEM":"待审项","NOT ASSESSABLE":"无法核查","N/A":"无对应",
+    "Product categories":"产品品类","Product":"产品",
+    "Relevant Rules and Context":"相关规则与背景","What was reviewed":"已核查内容","Sources searched":"检索来源",
+    "Data & Privacy":"数据与隐私","Terms & Conditions":"条款与条件","United States":"美国","European Union":"欧盟",
+    "Open":"待处理","Acknowledged":"已知悉","In remediation":"整改中","Resolved":"已解决",
+    "Trademark name screening — “Acme Outdoor”":"商标名称查重 — “Acme Outdoor”","Ongoing monitoring":"持续监测","Entity questionnaire":"主体问卷","Good-standing check — Delaware SoS":"良好存续核查 — 特拉华州务卿","Store & markets":"店铺与市场","Authorization & verification":"授权与验证","Plan":"套餐","Usage this period":"本期用量","Payment method":"支付方式","Review history · acme-outdoor.com":"审查历史 · acme-outdoor.com",
+    "Searched the USPTO trademark database for the brand name and close variants, filtered by relevant goods/services class.":"在 USPTO 商标库中按品牌名及近似变体检索，并按相关商品/服务类别筛选。",
+    "If no conflicts are found in a future scan, Seel Compass notes that and offers continued annual screening to catch new registrations.":"若后续扫描未发现冲突，Seel Compass 会注明并提供持续的年度筛查以捕捉新注册。",
+    "“Have you incorporated a US entity? If yes, share the details below.”":"“你是否已设立美国实体？若是，请在下方提供信息。”",
+    "Queried the Delaware Secretary of State portal for status and filing currency.":"已查询特拉华州州务卿门户的状态与申报时效。",
+    "You’re on the invite-only early access plan.":"你正在使用邀请制早期访问套餐。","No payment method required during the free trial.":"免费试用期间无需支付方式。",
+    "Store URL":"店铺 URL","Target markets":"目标市场",
+    "Database searched":"检索数据库","Brand name":"品牌名","Similar registered mark found":"发现近似已注册商标","Owner":"持有人","Recommended next step":"建议的下一步","US entity incorporated?":"是否已设立美国实体？","State of formation":"注册州","Entity type":"实体类型","Registered agent":"注册代理","Status":"状态","Annual report / franchise tax":"年报 / 特许经营税","Last checked":"最后核查","Review cadence":"审查频率","Data retention":"数据留存","Trial ends":"试用到期","Price after trial":"试用后价格","Sites under review":"审查中的站点","Markets enabled":"已启用市场","Reviews run":"已运行审查","Add-ons":"附加项",
+    "United States ✓":"美国 ✓","European Union ✓":"欧盟 ✓","United Kingdom":"英国","Canada":"加拿大",
+    "I confirm I am authorized to have this domain reviewed":"我确认我有权对该域名进行审查","Domain ownership verified (DNS TXT record)":"域名所有权已验证（DNS TXT 记录）","Annual trademark-name monitoring — enabled":"年度商标名称监测 — 已启用","No card on file — you’ll be notified before the trial ends":"未绑定银行卡 — 试用到期前会通知你",
+    "Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · Demo · © 2026":"Seel Compass · 由 Seel Inc.（特拉华州公司）提供 — 仅供参考，不构成法律意见，亦非律师事务所。你出海扩张与就绪度的伙伴。· 演示 · © 2026"
+  };
+  var DISCZH = [
+    '<b>Seel Compass</b> 是你出海扩张与就绪度的伙伴。它跨关键出海类别，给出客观、结构化的常见缺口基线评估。<b>仅供参考 — 不构成法律意见，亦非律师事务所</b>。待审项指向相关规则，并建议向有资质的律师确认。',
+    '待审项陈述发现的事实及其相关规则，并建议律师审阅。它们不是法律结论，也不主张任何违规。',
+    '仅做商标<b>名称</b>查重。不覆盖外观设计专利、实用专利或完整的自由实施（FTO）分析，且不构成法律意见。',
+    '帮助你梳理美国实体结构，并从公开的州务卿记录中提取良好存续信号。仅供参考 — 结构决策请与有资质的律师 / 税务顾问确认。',
+    '审查每 7 天自动重跑。每次运行都带版本时间戳，便于你看到变化 — 新增待审项、已解决项，以及评分随时间的变动。'
+  ];
+  var DELTAZH = '<span>📈 距上次审查（<b>6/10</b>）：</span><span class="up">▲ 就绪度 +3</span><span class="new">+1 项新待审</span><span class="res">2 项已解决</span><span style="margin-left:auto"><a href="#" onclick="goTab(\'history\');return false;" style="color:var(--seel);font-weight:600;text-decoration:none">查看历史 →</a></span>';
+  var POPZH = '<h4>就绪度评分如何计算</h4><p>每个类别从 <code>100</code> 起算。每个未处理的待审项按严重度扣分。总分是<b>各已评估类别的平均值</b>，并以颜色带显示。</p><p>一次性扫描无法判定的控制点（运营记录、时间性、站外行为）会被<b>略去而非臆测</b> — 因此评分绝不会出现虚假绿色或法律裁断。</p><p style="color:var(--sub)">示例：数据与隐私 92 + 条款 86 + 产品 88 → 已评估平均 ≈ 89。</p><button class="close" onclick="document.getElementById(\'pop\').classList.remove(\'show\')">知道了</button>';
+
+  var _orig = new Map();
+  var GEN_SEL = '.brand small,.pill,.topbar-right span,.mkt-btn,.tab,.subhead .client,.subhead .meta,.pdf-btn,.score-lbl,#legend span,.sec-h,.cat-name,.cat-stat,.badge,.ev-lbl,.tag,.st,.panel h3,.panel p,.field label,.row .k,.mkts .m,.chk,footer';
+  function _tnode(el){
+    el.childNodes.forEach(function(n){
+      if(n.nodeType===3){ var k=n.textContent.trim(); if(k && ZH[k]) n.textContent = n.textContent.replace(k, ZH[k]); }
+      else if(n.nodeType===1) _tnode(n);
+    });
+  }
+  function setLang(lang){
+    LANG = lang;
+    document.querySelectorAll(GEN_SEL).forEach(function(el){
+      if(el.id==='lang') return;
+      if(!_orig.has(el)) _orig.set(el, el.innerHTML);
+      el.innerHTML = _orig.get(el);
+      if(lang==='zh') _tnode(el);
+    });
+    document.querySelectorAll('.disc').forEach(function(el,i){
+      if(!_orig.has(el)) _orig.set(el, el.innerHTML);
+      el.innerHTML = (lang==='zh' && DISCZH[i]!=null) ? DISCZH[i] : _orig.get(el);
+    });
+    var d=document.querySelector('.delta'); if(d){ if(!_orig.has(d))_orig.set(d,d.innerHTML); d.innerHTML=(lang==='zh')?DELTAZH:_orig.get(d); }
+    var p=document.querySelector('.pop'); if(p){ if(!_orig.has(p))_orig.set(p,p.innerHTML); p.innerHTML=(lang==='zh')?POPZH:_orig.get(p); }
+    document.getElementById('lang').textContent = (lang==='zh')?'EN':'中文';
+    setMkt(MKT); setState(STATE);
+  }
+</script>
+</body>
+</html>

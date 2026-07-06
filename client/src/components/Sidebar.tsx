@@ -7,6 +7,7 @@ import {
   Home, BarChart3, ShoppingBag, AlertCircle, Shield,
   Puzzle, Star, Bot, Grid3X3, Bell, Settings,
   Headphones, TrendingUp, UserSquare2, Megaphone, ClipboardCheck, Radio,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ const workforceNav = [
   { icon: Headphones,     label: "Support agent", tab: "agents" as const,      disabled: false },
   { icon: TrendingUp,     label: "Sales agent",   tab: "sales-agent" as const, disabled: false },
   { icon: Megaphone,      label: "VOC agent",     tab: "voc-agent" as const,   disabled: false },
+  { icon: Compass,        label: "Compass",       tab: "compass" as const,     disabled: false },
   { icon: ClipboardCheck, label: "Review agent",  tab: null,                   disabled: true },
 ];
 
@@ -42,7 +44,7 @@ const customizeNav = [
 type NavItem = {
   icon: typeof Home;
   label: string;
-  tab: "agents" | "sales-agent" | "voc-agent" | "disco" | null;
+  tab: "agents" | "sales-agent" | "voc-agent" | "disco" | "compass" | null;
   disabled: boolean;
 };
 

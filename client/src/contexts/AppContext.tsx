@@ -17,7 +17,7 @@ import {
 } from "@/lib/data";
 
 /* ── Navigation ── */
-type MainTab = "agents" | "playbook" | "performance" | "email" | "live-widget" | "zendesk" | "settings" | "sales-agent" | "billing" | "voc-agent" | "disco";
+type MainTab = "agents" | "playbook" | "performance" | "email" | "live-widget" | "zendesk" | "settings" | "sales-agent" | "billing" | "voc-agent" | "disco" | "compass";
 
 /** Single, unified operating mode shared by every channel (chat / email / zendesk)
  *  and by the derived agent state. off = paused, training = draft-only, production = autonomous. */

@@ -14,6 +14,7 @@ import SalesAgentPage from "@/pages/SalesAgentPage";
 import VocAgentPage from "@/pages/VocAgentPage";
 import BillingPage from "@/pages/BillingPage";
 import DiscoPage from "@/pages/DiscoPage";
+import CompassPage from "@/pages/CompassPage";
 import SettingsPage from "@/pages/SettingsPage";
 import OrgMenu from "@/components/OrgMenu";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ export default function Home() {
   const isVocAgent = mainTab === "voc-agent";
   const isBilling = mainTab === "billing";
   const isDisco = mainTab === "disco";
+  const isCompass = mainTab === "compass";
 
   /* Handle tab switch — consume playbookDeepLink */
   const handleTabSwitch = (tabId: typeof mainTab) => {
@@ -56,8 +58,9 @@ export default function Home() {
 
   const vocAgentTabs = [{ id: "voc-agent" as const, label: "Insights" }];
   const discoTabs = [{ id: "disco" as const, label: "Overview" }];
-  const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : isDisco ? discoTabs : aiSupportTabs;
-  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : isDisco ? "Disco" : "Support agent";
+  const compassTabs = [{ id: "compass" as const, label: "Overview" }];
+  const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : isDisco ? discoTabs : isCompass ? compassTabs : aiSupportTabs;
+  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : isDisco ? "Disco" : isCompass ? "Compass" : "Support agent";
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -78,6 +81,13 @@ export default function Home() {
               </div>
             </div>
             <DiscoPage />
+          </div>
+        ) : isCompass ? (
+          <div className="flex-1 overflow-hidden bg-[#fafafa] flex flex-col">
+            <div className="border-b border-border bg-white px-6 py-3">
+              <h1 className="text-[18px] font-bold text-foreground">Compass</h1>
+            </div>
+            <CompassPage />
           </div>
         ) : isBilling ? (
           <div className="flex-1 overflow-hidden bg-[#fafafa]">

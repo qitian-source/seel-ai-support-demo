@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — 产品需求文档（PRD）· Draft v1.1</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0;
+    --bg:#F8FAFC; --card:#fff;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+    --warn:#B45309; --warn-bg:#FFFBEB; --warn-br:#FDE68A;
+    --na:#64748B; --na-bg:#F1F5F9; --na-br:#E2E8F0;
+    --danger:#DC2626; --danger-bg:#FEF2F2; --danger-br:#FECACA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.75}
+  a{color:var(--seel-d);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12.5px;color:#334155}
+
+  .topbar{background:#0A0A1A;color:#fff;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800}
+  .brand .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .brand .title{display:flex;flex-direction:column;line-height:1.2}
+  .brand small{font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .topbar-right{display:flex;gap:12px;align-items:center;font-size:12px}
+  .pill{background:rgba(124,58,237,.25);border:1px solid rgba(167,139,250,.4);color:#DDD6FE;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600}
+  .pill.blue{background:rgba(59,130,246,.25);border-color:rgba(96,165,250,.4);color:#BFDBFE}
+
+  .callout-top{background:linear-gradient(135deg,#F5F3FF,#FFF);border-bottom:1px solid #DDD6FE;padding:16px 28px}
+  .callout-top .inner{max-width:1200px;margin:0 auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .callout-top .icon{width:36px;height:36px;background:var(--seel);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+  .callout-top .text{flex:1;font-size:13px;color:var(--mid)}
+  .callout-top .text b{color:var(--ink)}
+
+  .layout{display:flex;max-width:1400px;margin:0 auto}
+  .sidebar{width:250px;flex-shrink:0;padding:24px 16px 40px 28px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+  .sidebar h4{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--sub);margin-bottom:8px;margin-top:14px}
+  .sidebar h4:first-child{margin-top:0}
+  .sidebar a{display:block;padding:5px 10px;font-size:12.5px;color:var(--mid);border-radius:6px;margin-bottom:2px;line-height:1.35}
+  .sidebar a:hover{background:var(--seel-l);color:var(--seel-d);text-decoration:none}
+  .sidebar a.hot{color:var(--warn);font-weight:600}
+
+  .main{flex:1;padding:24px 40px 80px;max-width:960px}
+  .main h1{font-size:24px;font-weight:800;margin-bottom:6px}
+  .main h2{font-size:19px;font-weight:800;margin:36px 0 12px;padding-top:20px;border-top:2px solid var(--border);color:var(--ink)}
+  .main h2:first-of-type{margin-top:0;padding-top:0;border-top:none}
+  .main h3{font-size:15.5px;font-weight:700;margin:22px 0 8px;color:var(--ink)}
+  .main h4{font-size:13.5px;font-weight:700;margin:16px 0 6px;color:var(--ink)}
+  .main p{margin-bottom:10px}
+  .main ul,.main ol{margin:8px 0 14px 22px}
+  .main li{margin-bottom:4px}
+  .lede{font-size:15px;color:var(--mid);margin-bottom:14px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .note{background:#F8FAFC;border-left:3px solid var(--sub);padding:11px 16px;font-size:13px;color:var(--mid);border-radius:0 8px 8px 0;margin:12px 0}
+  .note.warn{background:var(--warn-bg);border-left-color:var(--warn);color:var(--warn)}
+  .note.info{background:var(--seel-l);border-left-color:var(--seel);color:var(--seel-d)}
+  .note.danger{background:var(--danger-bg);border-left-color:var(--danger);color:var(--danger)}
+  .note b{color:inherit}
+
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+  th{background:#F8FAFC;text-align:left;padding:9px 12px;font-weight:700;color:var(--sub);font-size:11.5px;letter-spacing:.03em;border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+  .badge.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-br)}
+  .badge.na{background:var(--na-bg);color:var(--na);border:1px solid var(--na-br)}
+  .badge.seel{background:var(--seel-l);color:var(--seel-d);border:1px solid #DDD6FE}
+  .badge.danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-br)}
+
+  /* User story block */
+  .story{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:8px 0;border-left:3px solid var(--seel)}
+  .story .role{font-size:11px;font-weight:800;color:var(--seel-d);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+  .story .text{color:var(--ink)}
+  .story .text b{color:var(--seel-d)}
+
+  /* Feature card grid */
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0}
+  .feature{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .feature h5{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .feature h5 .emoji{font-size:16px}
+  .feature p{font-size:12.5px;color:var(--mid);margin-bottom:0;line-height:1.6}
+
+  /* Acceptance criteria */
+  .accept{background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:8px;padding:10px 14px;margin:8px 0;font-size:12.5px}
+  .accept b{color:var(--ok)}
+  .accept ul{margin:4px 0 0 20px}
+
+  /* Diagram */
+  .diagram{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0;overflow-x:auto}
+  .diagram-title{font-size:13px;font-weight:700;color:var(--seel-d);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .diagram-title .letter{background:var(--seel);color:#fff;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+  .diagram svg{display:block;max-width:100%;height:auto}
+
+  /* Milestone timeline */
+  .milestones{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding:6px 0;margin:12px 0}
+  .milestone{flex-shrink:0;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;border-top:3px solid var(--seel)}
+  .milestone .wk{font-size:11px;color:var(--sub);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .milestone .goal{font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:4px}
+  .milestone .deliv{font-size:11.5px;color:var(--mid)}
+
+  footer{max-width:1400px;margin:0 auto;padding:18px 28px;color:var(--sub);font-size:11.5px;border-top:1px solid var(--border);margin-top:40px;text-align:center}
+
+  @media print{
+    .sidebar,.callout-top,.topbar-right{display:none}
+    .topbar{position:static;background:#fff;color:#000;border-bottom:1px solid #000}
+    .brand small{color:#666}
+    .brand .mark{background:#7C3AED;color:#fff}
+    .main{max-width:none;padding:20px}
+    .layout{max-width:none}
+    .diagram,.card,.feature,.story,.accept,.milestone{page-break-inside:avoid;box-shadow:none}
+    h2,h3{page-break-after:avoid}
+    body{background:#fff;font-size:11.5px;line-height:1.55}
+    a{color:#000}
+  }
+  @media (max-width:900px){
+    .sidebar{display:none}
+    .layout{display:block}
+    .main{max-width:none;padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">🧭</div>
+    <div class="title">
+      <span>Seel Compass — 产品需求文档（PRD）</span>
+      <small>Draft v1.1 · Go-Global Readiness · 产品需求定义</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="pill">Draft v1.1</span>
+    <span class="pill blue">PRD · 中文</span>
+    <a href="/seel-compass-prd.html" style="color:#DDD6FE">English (counsel) 版 →</a>
+  </div>
+</div>
+
+<div class="callout-top">
+  <div class="inner">
+    <div class="icon">📄</div>
+    <div class="text">
+      <b>本文档目的：</b>定义 Seel Compass Phase 1 的产品需求 —— 我们要做什么产品、给谁用、解决什么问题、如何验收、如何衡量成功。<b>面向：</b>产品 / 设计 / 研发 / 法务 · <b>作者：</b>Tammy · <b>Reviewers：</b>Alex · Zack · Michael / Jenny · <b>关联文档：</b><a href="/seel-compass-prd.html">法务版 PRD (English)</a>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h4>目录</h4>
+    <a href="#background">1. 背景与目标</a>
+    <a href="#users">2. 目标用户</a>
+    <a href="#positioning">3. 产品定位</a>
+    <a href="#stories">4. 核心用户故事</a>
+    <a href="#features">5. 功能列表</a>
+    <a href="#feature-detail">6. 功能详细规格</a>
+    <a href="#user-flow">7. 用户流程</a>
+    <a href="#ui-ux">8. UI / UX 需求</a>
+    <a href="#accept">9. 验收标准</a>
+    <a href="#metrics">10. 成功指标</a>
+    <a href="#scope">11. 范围（in / out）</a>
+    <a href="#dep-risk" class="hot">12. 依赖与风险</a>
+    <a href="#release">13. 发布计划</a>
+    <h4>附录</h4>
+    <a href="#glossary">A. 术语表</a>
+    <a href="#related">B. 关联文档</a>
+  </aside>
+
+  <main class="main">
+
+    <!-- 1 -->
+    <section id="background">
+      <h1>Seel Compass — 产品需求文档</h1>
+      <p class="lede">给出海商家的合规基线评估工具。本 PRD 定义 Phase 1 要做什么、给谁、如何验收、如何度量成功。</p>
+
+      <h2>1. 背景与目标</h2>
+
+      <h3>1.1 商家痛点</h3>
+      <ul>
+        <li><b>合规工作找不到起点。</b>商家想出海到 US / EU 时，不知道自己网站的哪部分需要改</li>
+        <li><b>找当地律师贵。</b>每个市场找一位合格律师，$50K–100K/市场是常态</li>
+        <li><b>律师沟通效率低。</b>商家不能给律师一个"哪里需要看"的 gap 列表，律师只能从零开始</li>
+        <li><b>出海后再合规，代价成倍。</b>已经发布后再改产品页、政策、退款条款，机会成本 + 律师纠纷成本极高</li>
+      </ul>
+
+      <h3>1.2 产品目标</h3>
+      <ul>
+        <li>给商家<b>一个客观、结构化的合规基线</b>，标注哪些是 verified / review item / 无法核查</li>
+        <li>让商家在找律师<b>之前</b>先做完自查，把复杂的合规工作变成 gap-driven</li>
+        <li>每周自动 re-scan，跟踪合规状态变化</li>
+        <li>把商家出海合规准备成本降低<b>一个数量级</b></li>
+      </ul>
+
+      <h3>1.3 商业目标（Phase 1）</h3>
+      <table>
+        <thead><tr><th>指标</th><th>目标</th><th>时间点</th></tr></thead>
+        <tbody>
+          <tr><td>邀请制早期商家数</td><td>5–10 个</td><td>Phase 1 上线后 4 周内</td></tr>
+          <tr><td>Weekly active 商家</td><td>≥ 80%（邀请制期间）</td><td>Phase 1 上线后 6 周</td></tr>
+          <tr><td>付费模式</td><td>预留 subscription 空间；Phase 1 免费邀请制</td><td>Phase 2 讨论</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 2 -->
+    <section id="users">
+      <h2>2. 目标用户</h2>
+
+      <h3>2.1 主要用户画像</h3>
+      <div class="card">
+        <p><b>Persona：</b>DTC 出海商家的运营负责人（Ops / Founder / eCom Manager）</p>
+        <p><b>规模：</b>年 GMV $1M+，1–3 个海外市场准备/已进入</p>
+        <p><b>行业：</b>outdoor / cosmetics / apparel / supplements / kids 等消费品垂直</p>
+        <p><b>技术能力：</b>能熟练用 Shopify / Woo / BigCommerce 后台；不是律师、不懂合规术语</p>
+        <p style="margin-bottom:0"><b>使用频率：</b>Onboarding 时深度 review 一次；之后每周花 5–10 分钟看 delta</p>
+      </div>
+
+      <h3>2.2 次要角色</h3>
+      <table>
+        <thead><tr><th>角色</th><th>关系</th><th>使用方式</th></tr></thead>
+        <tbody>
+          <tr><td>商家的外部律师</td><td>接收商家转发的 review items</td><td>只读 report；不直接登录 Compass</td></tr>
+          <tr><td>Seel 客户成功</td><td>协助商家理解报告</td><td>可能会代商家操作；帮商家解释 finding</td></tr>
+          <tr><td>Seel 法务（Michael / Jenny）</td><td>负责 corpus + carve-out 签署 · 抽检 report 质量</td><td>后台工具（不在 merchant dashboard 里）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>2.3 典型使用场景</h3>
+      <ul>
+        <li><b>场景 A —— 准备扩到 EU：</b>商家已在 US，考虑进入 EU。想知道现有网站在 GDPR / EU 消费者法下有哪些差距</li>
+        <li><b>场景 B —— 扩品前自查：</b>商家新加了一条 cosmetics 或 supplements 线，想知道有没有踩到品类特有的合规要求</li>
+        <li><b>场景 C —— 找律师前打好基础：</b>商家马上要花钱找外部律师，希望能把范围缩小到 4–5 个具体 gap，而不是整站 review</li>
+        <li><b>场景 D —— 持续监控：</b>商家已完成一轮合规审查，想确保后续网站改动不引入新问题</li>
+      </ul>
+    </section>
+
+    <!-- 3 -->
+    <section id="positioning">
+      <h2>3. 产品定位</h2>
+
+      <div class="card">
+        <p><b>一句话定位：</b>你出海扩张与就绪度的伙伴。</p>
+        <p><b>类比：</b>Compass 之于合规就像 <b>SOC-2 readiness assessment</b> 之于安全 —— 结构化的基线自查工具，不是法律意见，不替代律师。</p>
+        <p style="margin-bottom:0"><b>核心区隔：</b>市面上要么是律师（贵、慢），要么是模板化 SaaS 表格（浅、无法落地）。Compass 是<b>面向出海商家</b>的、<b>基于扫描</b>的、<b>可追溯</b>的合规基线工具。</p>
+      </div>
+
+      <h3>3.1 明确非目标（must NOT）</h3>
+      <ul>
+        <li>❌ 不是法律咨询、不给法律意见</li>
+        <li>❌ 不是判决："某某违反了 XX 法" 这种话不会出现</li>
+        <li>❌ 不替代律师 —— 每一条 review item 都以"建议与合格律师复核"结尾</li>
+        <li>❌ 不做完整的 FTO (freedom-to-operate) 分析</li>
+        <li>❌ 不审查商家的客服对话（Phase 2 候选）</li>
+      </ul>
+
+      <h3>3.2 产品语气原则</h3>
+      <ul>
+        <li>用<b>"待审项"（review item）</b>而不是 "issue" / "violation"</li>
+        <li>用<b>"与……不一致"（inconsistent with）</b>而不是 "违反"</li>
+        <li>用<b>"建议向合格律师确认"</b>作为每个 review item 的结尾</li>
+        <li>永不出现的词：<code>violates</code> · <code>illegal</code> · <code>non-compliant</code> · <code>deceptive</code> · <code>unlawful</code></li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section id="stories">
+      <h2>4. 核心用户故事</h2>
+
+      <h3>4.1 商家视角</h3>
+
+      <div class="story">
+        <div class="role">US-1 · 商家 · 出海准备</div>
+        <div class="text">作为一个准备扩到 EU 的商家，我想<b>看到我的网站在 EU 隐私、条款、产品标示上有哪些 gap</b>，这样我可以在花钱找 EU 律师之前先自己补上明显的问题。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-2 · 商家 · 品类识别</div>
+        <div class="text">作为一个卖化妆品 + 服装的商家，我想<b>知道系统识别到了我卖化妆品</b>，并且只对化妆品 SKU 应用 EU 化妆品法规检查，这样我不会为不相关的规则（比如酒类）浪费时间。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-3 · 商家 · 追溯 evidence</div>
+        <div class="text">作为一个不懂合规术语的商家运营，我想<b>看到"为什么这一条被标为待审"背后的具体证据</b>（比如"你的 /privacy 页第 4 节说了 X，但没提到 Y"），这样我能理解 gap 是什么，而不只是看到一个红标。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-4 · 商家 · 转给律师</div>
+        <div class="text">作为一个准备找律师的商家，我想<b>把 Compass 生成的 review items 直接分享给我的外部律师</b>，让律师从这个明确 gap 列表开始工作，而不是从零 review 我整站。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-5 · 商家 · 持续监控</div>
+        <div class="text">作为一个已经跑过一轮 Compass 的商家，我想<b>每周自动收到"这周有什么变化"</b>的报告 —— 新增了什么 gap、resolved 了什么、还有什么在跟踪，这样我不用手动去查。</div>
+      </div>
+
+      <h3>4.2 Seel 法务视角</h3>
+
+      <div class="story">
+        <div class="role">US-6 · 法务 · 一次性签方法论</div>
+        <div class="text">作为 Seel 法务，我想<b>一次性签署产品的方法论 + 法条 corpus</b>，之后由架构保障机制（语言 filter、carve-out、审计日志）来管理每份 report 的输出，而不是每份都要我人肉过。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-7 · 法务 · 抽检机制</div>
+        <div class="text">作为 Seel 法务，我想<b>能随机抽检 5% 的 report</b>、并且能收到"高严重度 finding" 的自动通知，这样我能保持对产品输出质量的持续可见性但不用每份 report 都看。</div>
+      </div>
+
+      <div class="story">
+        <div class="role">US-8 · 法务 · Seel 自伤保护</div>
+        <div class="text">作为 Seel 法务，我需要<b>产品不会把 Seel 自己的售后保障 / opt-out 机制标为合规问题</b>—— 因为那样等于 Seel 承认自家产品有问题、且给 plaintiff 律师留了书面证据。</div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="features">
+      <h2>5. 功能列表</h2>
+      <p>Phase 1 的功能全景，按重要度排序：</p>
+
+      <div class="features">
+        <div class="feature">
+          <h5><span class="emoji">🔒</span>Data & Privacy 扫描</h5>
+          <p>扫商家的隐私政策 + cookie 行为，产出 verified / review items（GDPR / CCPA / 各州 privacy laws）。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">📄</span>Terms & Conditions 扫描</h5>
+          <p>扫服务条款、退款、担保措辞，识别 FTC §5 / Magnuson-Moss 相关的 gap。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">🛍️</span>Product 扫描（5 sub-groups）</h5>
+          <p>Regulated categories / Claims / Safety / IP&Marketing / Consumer protection 五组，24 条检查项。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">™️</span>Intellectual Property 查重</h5>
+          <p>USPTO 商标名查重，识别近似已注册商标，年度自动重扫。US only Phase 1。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">🏛️</span>Corporate Entity 状态</h5>
+          <p>州 SoS good-standing 核查 + 年报截止日提醒。US only Phase 1，覆盖 DE / CA / NY / TX。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">🤖</span>品类自动识别 + 确认</h5>
+          <p>Agent 扫商家 catalog 自动识别品类；商家在 Setup 里 confirm 或修改，用于决定 Product 模块的规则范围。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">📋</span>Review Items 集中视图</h5>
+          <p>所有类目的待审项集中一个 tab，按 category 分组、可折叠；带状态追踪（Open / Ack / In remediation / Resolved）。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">📈</span>History 版本时间线</h5>
+          <p>每次 scan 版本化记录，展示分数变化 · 新增 items · 已 resolve items。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">🔄</span>每周自动 re-scan</h5>
+          <p>每 7 天自动重跑，商家收到变化通知；商家可主动触发 re-scan。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">⬇️</span>PDF 报告导出</h5>
+          <p>整份 report 可导出为 PDF，方便商家转发给外部律师。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">🚀</span>Onboarding 五步引导（v1.1 新增）</h5>
+          <p>连接店铺（含授权勾选）→ DNS 域名验证 → 选市场 → 发现扫描（实时进度）→ 确认品类；之后异步生成报告（约 10 分钟，邮件通知）。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">⚙️</span>Setup / 商家自服务</h5>
+          <p>Store & markets · 品类确认 · Authorization + 域名验证状态。可自主启用新市场（UK / Canada 灰在 Phase 1）。</p>
+        </div>
+        <div class="feature">
+          <h5><span class="emoji">📊</span>Merchant dashboard 集成</h5>
+          <p>作为 Workforce 一个模块进入现有商家 dashboard，跟其他 agents 保持视觉一致。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="feature-detail">
+      <h2>6. 功能详细规格</h2>
+
+      <h3>6.1 Data & Privacy 扫描</h3>
+      <p><b>要解决的问题：</b>商家不知道自己的隐私政策 / cookie 处理在目标市场是否达到基线。</p>
+      <p><b>商家看到：</b>一个 checklist（US 市场 62–64 条 / EU 市场 42–46 条），每条标注 verified / review item / not assessable。可点击展开查看 evidence（哪个 policy 页第几节命中了）。</p>
+      <p><b>典型 finding：</b>Access/correct/delete/portability rights 是否描述 · lawful basis (GDPR Art. 6) 是否声明 · DSAR 回应时限是否说明 · non-essential cookies 是否 consent-before-set · retention statement 是否 enforceable（标为 Not Assessable）。</p>
+
+      <h3>6.2 Terms & Conditions 扫描</h3>
+      <p><b>要解决的问题：</b>商家的 ToS / 退款 / 担保措辞在消费者保护法下有没有明显 gap 或过度承诺。</p>
+      <p><b>商家看到：</b>~50 条 checklist（US）· ~39 条（EU），同样带 evidence pane。</p>
+      <p><b>典型 finding：</b>governing law + 争议解决条款是否齐全 · warranty 措辞是否过绝对（Unqualified authenticity guarantee）· refund window 履行（标为 Not Assessable）。</p>
+
+      <h3>6.3 Product 扫描（Michael 6/25 定义的 5 sub-groups · 24 条）</h3>
+      <p><b>要解决的问题：</b>商家产品页上的声明、标签、跨境合规是否有 gap，尤其是品类特有的强制要求。</p>
+
+      <div class="card" style="padding:14px 18px">
+        <table style="border:none;margin:0">
+          <thead><tr><th>Sub-group</th><th>数量</th><th>示例检查项</th></tr></thead>
+          <tbody>
+            <tr><td>1. Regulated categories</td><td>7</td><td>Alcohol · CBD · Tobacco · Firearms · Supplements · Cosmetics · Pharmaceuticals</td></tr>
+            <tr><td>2. Claims & advertising</td><td>4</td><td>Health claims · Made-in claims · Green claims · Reference pricing</td></tr>
+            <tr><td>3. Safety, conformity & disclosures</td><td>6</td><td>Kids products · CE/UKCA · EU Responsible Person · INCI labeling · Prop 65 · Hazmat</td></tr>
+            <tr><td>4. IP & marketing integrity</td><td>2</td><td>Counterfeit / unauthorized reseller · Endorsement disclosures</td></tr>
+            <tr><td>5. Consumer protection & cross-border</td><td>5</td><td>Geo shipping restrictions · Sweepstakes · Comparative ads · COO disclosure · Urgency claims</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note info">
+        <b>Product 模块特殊逻辑：</b>Sub-group 1（Regulated categories）依赖<b>品类自动识别</b>（§6.6）—— 商家不卖的品类完全不呈现规则评估，标为 N/A（"Not detected in catalog"）。这避免了信息噪音，也让"我们只审你实际卖的东西"这一原则可见。
+      </div>
+
+      <div class="note warn">
+        <b>关键 UX 约束（Michael 6/25）：</b>Product section header <b>不能</b>使用 "checkout-flow analysis is out of scope" 这种<b>负向声明</b>—— 会给商家和法律 opponent 一个 "Seel 明知这里有风险但选择不看" 的把柄。要用正向语言描述"我们做什么"。
+      </div>
+
+      <h3>6.4 Intellectual Property 商标查重</h3>
+      <p><b>要解决的问题：</b>商家在美国用自己的品牌名做营销之前，需要知道有没有已注册的相似商标可能构成风险。</p>
+      <p><b>商家看到：</b>输入品牌名 → 系统在 USPTO 数据库里查找相似商标 → 显示：查询数据库 · 品牌名 · 找到的近似商标 · 持有人 · 建议下一步。</p>
+      <p><b>范围（Phase 1）：</b><span class="badge ok">Name only</span>（仅文字商标）· <span class="badge na">不含 logo / 外形</span> · <span class="badge na">不含 utility patent</span> · <span class="badge na">不含 FTO 分析</span></p>
+      <p><b>持续监测：</b>商家可开启年度自动重扫。</p>
+
+      <div class="note">
+        <b>与 Product #18 的区别：</b>本模块查的是<b>商家自己品牌名</b>是否跟已注册商标撞车；Product #18 查的是<b>商家 listing 里是否卖别家品牌的假货 / 灰市货</b>。这是两个不同的 scan，商家 UI 里有交叉引用。
+      </div>
+
+      <h3>6.5 Corporate Entity 状态核查</h3>
+      <p><b>要解决的问题：</b>商家的美国实体是否处于 good standing，年报 / franchise tax 是否即将到期。</p>
+      <p><b>商家看到：</b>Entity questionnaire（一次性填 formation state / entity type / registered agent）→ 系统查询州 SoS → 显示：Status · Next annual report due · Last checked。</p>
+      <p><b>Phase 1 覆盖州：</b>Delaware · California · New York · Texas（~80% DTC 商家注册在这四个州）。其他州标为 Not Assessable + 引导手动上传申报文件。</p>
+
+      <h3>6.6 品类自动识别 + 商家确认（Hybrid）</h3>
+      <p><b>要解决的问题：</b>Product 模块的规则需要按品类应用；但商家不应手填 40 个品类，也不应完全依赖 AI（有漏报风险）。</p>
+      <p><b>混合方案：</b></p>
+      <ol>
+        <li>Onboarding 发现扫描（§6.11 步骤 4）时 agent 扫商家 catalog，用 AI 识别可能的品类</li>
+        <li>识别结果按置信度分档展示给商家：<code>≥ 90% Detected</code> · <code>70–89% Possible</code> · <code>&lt; 70% Not detected</code></li>
+        <li>商家在 wizard 第 5 步的确认页勾选或取消勾选（之后可随时在 Setup 里改），最终 set 用于报告生成和所有后续扫描</li>
+        <li>每周 re-scan 时增量重跑识别，如发现新品类会主动通知商家确认</li>
+      </ol>
+      <p><b>冲突处理：</b>商家 declaration 覆盖 AI 结果。冲突事件<b>内部审计</b>记录（法务可查），不呈现给商家。</p>
+
+      <h3>6.7 Review Items 集中视图</h3>
+      <p><b>要解决的问题：</b>商家想要一个"所有需要我关注的事"的集中列表，而不是在 5 个类目里翻找。</p>
+      <p><b>商家看到：</b></p>
+      <ul>
+        <li>按 category（5 类目）自动分组</li>
+        <li>每组默认展开、可折叠</li>
+        <li>每条 review item 显示：标题 · 相关规则背景 · 检索来源 · 建议 · 状态追踪 pill（Open / Acknowledged / In remediation / Resolved）</li>
+        <li>市场切换（US ↔ EU）会过滤显示对应市场的项</li>
+      </ul>
+
+      <h3>6.8 Review Item 状态追踪</h3>
+      <p><b>状态转换：</b></p>
+      <ul>
+        <li><b>Open</b>（默认）—— scan 首次产生此项</li>
+        <li><b>Acknowledged</b>—— 商家已看到并可能已分享给律师</li>
+        <li><b>In remediation</b>—— 商家正在整改</li>
+        <li><b>Resolved</b>—— <b>只能</b>由下次 scan 确认规则不再触发时自动设置；商家不能手动 mark resolved</li>
+      </ul>
+      <div class="note info">
+        <b>为什么 Resolved 不能手动标：</b>防止商家把没真正修好的 item 标成"已解决"而误导自己/法务/未来审计。resolved 只能由 evidence 消失来证明。
+      </div>
+
+      <h3>6.9 History 版本时间线</h3>
+      <p><b>商家看到：</b>时间线视图，每次 scan 一个节点，显示：日期 · 分数 · +N new · N resolved · 具体新增/resolved 项目名。可对比任意两次 scan 的 diff。</p>
+
+      <h3>6.10 PDF 报告导出</h3>
+      <p><b>用途：</b>商家常需要把整份 report 转发给外部律师、董事会、投资人。</p>
+      <p><b>要求：</b>能一键从任意 tab 生成完整 PDF，print-friendly 排版，包含所有 tabs 内容 + footer disclaimer。</p>
+
+      <h3>6.11 Onboarding 引导流程（v1.1 新增）</h3>
+      <p><b>要解决的问题：</b>首次进入的商家需要一条从"什么都没有"到"拿到第一份报告"的完整路径，且授权 / 验证两道门槛必须在任何扫描发生之前完成。</p>
+      <p><b>五个步骤 + 两个门槛：</b></p>
+      <ol>
+        <li><b>Connect store</b> —— 输入店铺域名；<b>必须勾选</b>授权声明 "I confirm I am authorized to have this domain reviewed"，不勾无法继续（门槛 1：合同层）</li>
+        <li><b>Verify ownership</b> —— DNS TXT record 验证（<code>seel-compass-verify=…</code>，可复制），行业标准做法；未验证的域名不会被扫描（门槛 2：尽职层，防"替竞对扫描"的 paper-trail 风险）</li>
+        <li><b>Target markets</b> —— US / EU 可选（至少 1 个），UK / Canada 显示 coming soon</li>
+        <li><b>Discovery scan（发现扫描）</b> —— 快速轻量（约 2 分钟，分阶段实时进度）：爬取页面 → 读政策文档 → 编目商品 → 识别品类。爬虫排除集从第一次抓取就生效（checkout 页永不抓取）</li>
+        <li><b>Confirm categories</b> —— 识别到的品类预勾选并附 catalog 证据（如 "Sunscreen SKUs detected"），商家可增删；确认后的 set 即规则范围</li>
+      </ol>
+      <div class="note info">
+        <b>两段式扫描（为什么报告不是立刻出）：</b>确认品类后进入异步的<b>报告生成</b>阶段（应用市场规则集 + 编写 findings，约 10 分钟）。产品内显示 "Generating your first report…"，商家可离开页面，完成后邮件通知。这样重量级规则计算只跑一次、只对商家<b>确认过</b>的品类跑 —— 不会存在一份 scope 仅由 AI 识别（未经商家确认）决定的报告。
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="user-flow">
+      <h2>7. 用户流程</h2>
+
+      <h3>7.1 首次 onboarding（v1.1 · 与 demo 一致）</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">1</span> 商家首次进入 Compass —— 五步 wizard + 异步报告生成</div>
+        <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="ff" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'PingFang SC'" font-size="12">
+            <!-- Row 1 -->
+            <rect x="10" y="30" width="200" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="110" y="53" text-anchor="middle" fill="#5B21B6" font-weight="700">1. Connect store</text>
+            <text x="110" y="71" text-anchor="middle" fill="#64748B" font-size="10.5">域名 + 授权勾选（必选）</text>
+            <line x1="210" y1="60" x2="238" y2="60" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <rect x="238" y="30" width="200" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="338" y="53" text-anchor="middle" fill="#5B21B6" font-weight="700">2. Verify ownership</text>
+            <text x="338" y="71" text-anchor="middle" fill="#64748B" font-size="10.5">DNS TXT record 验证</text>
+            <line x1="438" y1="60" x2="466" y2="60" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <rect x="466" y="30" width="190" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="561" y="53" text-anchor="middle" fill="#5B21B6" font-weight="700">3. Target markets</text>
+            <text x="561" y="71" text-anchor="middle" fill="#64748B" font-size="10.5">US / EU · ≥1 个</text>
+            <line x1="656" y1="60" x2="684" y2="60" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <rect x="684" y="30" width="206" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="787" y="53" text-anchor="middle" fill="#5B21B6" font-weight="700">4. Discovery scan</text>
+            <text x="787" y="71" text-anchor="middle" fill="#64748B" font-size="10.5">爬页面·读政策·编目·识别品类 ~2 分钟</text>
+
+            <!-- wrap arrow to row 2 -->
+            <path d="M 787,90 Q 787,125 640,125 L 480,125" fill="none" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <!-- Row 2 -->
+            <rect x="270" y="95" width="210" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="375" y="118" text-anchor="middle" fill="#5B21B6" font-weight="700">5. Confirm categories</text>
+            <text x="375" y="136" text-anchor="middle" fill="#64748B" font-size="10.5">识别结果预勾选 · 可增删</text>
+            <line x1="270" y1="125" x2="242" y2="125" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <rect x="32" y="95" width="210" height="60" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+            <text x="137" y="118" text-anchor="middle" fill="#B45309" font-weight="700">⏳ 报告生成中（异步）</text>
+            <text x="137" y="136" text-anchor="middle" fill="#B45309" font-size="10.5">约 10 分钟 · 可离开 · 邮件通知</text>
+            <line x1="137" y1="155" x2="137" y2="185" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#ff)"/>
+
+            <rect x="32" y="185" width="210" height="60" rx="8" fill="#DDD6FE" stroke="#5B21B6" stroke-width="2"/>
+            <text x="137" y="208" text-anchor="middle" fill="#5B21B6" font-weight="800">✅ 报告就绪</text>
+            <text x="137" y="226" text-anchor="middle" fill="#5B21B6" font-size="10.5">Overall + review items 预览 → 进 dashboard</text>
+
+            <!-- annotations -->
+            <text x="480" y="205" fill="#64748B" font-size="11">两道门槛在任何扫描之前：授权勾选（步骤 1）+ 域名验证（步骤 2）；</text>
+            <text x="480" y="223" fill="#64748B" font-size="11">重量级规则计算只对商家确认过的品类跑（步骤 5 之后）。</text>
+          </g>
+        </svg>
+      </div>
+      <div class="note warn">
+        <b>与 v1 的差别：</b>v1 里"首次全量扫描 ~10–15 分钟"是 wizard 的最后一步、商家盯着进度条等；v1.1 拆成<b>发现扫描</b>（快，wizard 内实时进度）+ <b>报告生成</b>（慢，异步，可离开等邮件）。品类确认从 Setup 页提前到 wizard 第 5 步，成为报告生成的前置条件。
+      </div>
+
+      <h3>7.2 日常查看流程</h3>
+      <ol>
+        <li>商家收到"新报告出来了"或"weekly delta"通知（邮件 / dashboard 内提醒）</li>
+        <li>打开 merchant dashboard → 左侧 Sidebar 点 Compass</li>
+        <li>Overview tab 上一眼看：Overall 89% · 5 类目分数 · Since last review +2 / +2 new（D&P / T&C / Product 三个 section <b>默认折叠</b>，标题行直接显示 verified / review 统计）</li>
+        <li>关心某类 → 点该 category card：section <b>自动展开</b>并平滑滚动过去（IP / Entity 卡则切换到对应 tab）</li>
+        <li>或者点 Review Items tab → 看所有待审项集中列表</li>
+        <li>点开某条 review item → 看 evidence · rule context · 建议 · 状态 pill</li>
+        <li>标为 Acknowledged 或 In remediation</li>
+        <li>把这一条转发给自己的律师</li>
+      </ol>
+
+      <h3>7.3 Review Item 生命周期</h3>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">2</span> Review Item 状态流转</div>
+        <svg viewBox="0 0 900 130" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="fr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
+            </marker>
+          </defs>
+          <g font-family="-apple-system,'PingFang SC'" font-size="12">
+            <rect x="20" y="35" width="180" height="60" rx="8" fill="#FFFBEB" stroke="#B45309"/>
+            <text x="110" y="58" text-anchor="middle" fill="#B45309" font-weight="800">Open</text>
+            <text x="110" y="76" text-anchor="middle" fill="#B45309" font-size="10.5">扫描发现时默认状态</text>
+
+            <line x1="200" y1="65" x2="225" y2="65" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#fr)"/>
+            <text x="212" y="55" text-anchor="middle" fill="#64748B" font-size="10">商家</text>
+
+            <rect x="225" y="35" width="180" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="315" y="58" text-anchor="middle" fill="#5B21B6" font-weight="800">Acknowledged</text>
+            <text x="315" y="76" text-anchor="middle" fill="#5B21B6" font-size="10.5">商家已看 · 已分享律师</text>
+
+            <line x1="405" y1="65" x2="430" y2="65" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#fr)"/>
+            <text x="417" y="55" text-anchor="middle" fill="#64748B" font-size="10">商家</text>
+
+            <rect x="430" y="35" width="180" height="60" rx="8" fill="#F5F3FF" stroke="#7C3AED"/>
+            <text x="520" y="58" text-anchor="middle" fill="#5B21B6" font-weight="800">In Remediation</text>
+            <text x="520" y="76" text-anchor="middle" fill="#5B21B6" font-size="10.5">正在整改</text>
+
+            <line x1="610" y1="65" x2="635" y2="65" stroke="#16A34A" stroke-width="1.5" marker-end="url(#fr)"/>
+            <text x="622" y="55" text-anchor="middle" fill="#16A34A" font-size="10" font-weight="700">下次 scan</text>
+
+            <rect x="635" y="35" width="230" height="60" rx="8" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+            <text x="750" y="58" text-anchor="middle" fill="#16A34A" font-weight="800">Resolved</text>
+            <text x="750" y="76" text-anchor="middle" fill="#16A34A" font-size="10.5">仅 scan 确认后自动切换</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="ui-ux">
+      <h2>8. UI / UX 需求</h2>
+
+      <h3>8.1 视觉规范</h3>
+      <ul>
+        <li>整体风格与现有 <b>merchant dashboard</b> 保持一致（Support / Sales / VOC agent 视觉语言）</li>
+        <li>主品牌色：Seel purple（<code>#6c47ff</code>）· 语义色：verified 绿 / review 橙 / na 灰</li>
+        <li>字号：主体 13px / 标题 15–19px / 小字 11–12px</li>
+        <li>圆角卡片 · 淡阴影 · 中性配色</li>
+      </ul>
+
+      <h3>8.2 页面结构（6 个 sub-tabs）</h3>
+      <table>
+        <thead><tr><th>Tab</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td><b>Overview</b></td><td>Score hero（6 卡片一行：Overall + 5 类目）· delta 条 · market 切换 · summary · D&P / T&C / Product 三个 section 的完整 checklist —— <b>section 默认折叠</b>，标题行带统计，点击展开；score card 点击自动展开 + 滚动</td></tr>
+          <tr><td><b>Review Items</b></td><td>按 category 分组、可折叠的 review items 全集，含状态 pill</td></tr>
+          <tr><td><b>Intellectual Property</b></td><td>商标查重面板 + 年度监测开关</td></tr>
+          <tr><td><b>Corporate Entity</b></td><td>Entity questionnaire + State SoS good-standing 结果</td></tr>
+          <tr><td><b>History</b></td><td>版本化 timeline，展示 score / 新增 / 已解决</td></tr>
+          <tr><td><b>Setup</b></td><td>Target markets · <b>Product categories 品类识别与确认</b> · Authorization + 域名验证状态 · Replay onboarding（demo）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note info">
+        <b>不显示的 tab：</b>Billing tab（Phase 1 免费，无 billing 内容）· Discuss / Chat tab（Phase 2 候选，Phase 1 完全从 UI 移除，不是 disabled）。
+      </div>
+
+      <h3>8.3 关键 UI 元素约定</h3>
+      <ul>
+        <li><b>Score hero：</b>6 张同尺寸卡片一行并排（Overall 89% + Data & Privacy 92 + T&C 86 + Product 88 + IP Review + Entity Good standing）。IP 和 Entity 卡右上带 "US" 徽标。</li>
+        <li><b>Section 默认折叠：</b>Overview 的 D&P / T&C / Product 三个 section 默认收起，标题行显示 emoji · 类目名 · verified/review 统计 · chevron；点击标题展开/收起</li>
+        <li><b>Category cards 可点击：</b>点击卡片自动展开对应 section 并平滑滚动（Overview 内锚）；IP / Entity 卡切换到对应 tab</li>
+        <li><b>Onboarding wizard：</b>顶部 5 步 step indicator（已完成 ✓ / 当前高亮 / 未到灰色）；授权 checkbox 未勾选时 Continue 禁用；DNS TXT record 可一键复制；生成中页有 spinner + "约 10 分钟 · 可离开 · 邮件通知" 提示</li>
+        <li><b>Checklist 项：</b>每一条可点击展开 evidence pane，含"相关规则背景 / 已核查内容 / 检索来源 / 建议"四个区域</li>
+        <li><b>Review Items 分组头：</b>展示 emoji · 类目名 · 数量 · chevron 折叠图标</li>
+        <li><b>Not Assessable 状态：</b>灰色，配"omitted, not guessed"说明</li>
+        <li><b>N/A 状态：</b>灰色，配"Not detected in catalog. Rules skipped."说明</li>
+      </ul>
+
+      <h3>8.4 法务视觉约束</h3>
+      <div class="note danger">
+        <b>硬约束：</b>下列任何一项在 UI 里出现都视为 bug：
+        <ul style="margin-top:6px">
+          <li>使用 "violates" / "illegal" / "non-compliant" / "deceptive" / "unlawful"</li>
+          <li>使用 "you must" / "must comply" 等指令式动词</li>
+          <li>暴露"Seel-provided component" 标签</li>
+          <li>暴露"checkout-flow analysis is out of scope" 之类的负向声明</li>
+          <li>Discuss / Chat tab 可见（即使是 disabled 状态也不行）</li>
+          <li>缺少 footer disclaimer</li>
+        </ul>
+      </div>
+
+      <h3>8.5 品牌与视角</h3>
+      <ul>
+        <li><b>视角：</b>商家自己的工具（第二人称：<i>"your review" · "your catalog"</i>），不是"我们在审你"</li>
+        <li><b>不显示：</b>"Client portal" · 商家自己网站 URL（商家自己就知道）· "markets: US, EU" 冗余显示（下面市场 pill 已经有）</li>
+      </ul>
+    </section>
+
+    <!-- 9 -->
+    <section id="accept">
+      <h2>9. 验收标准</h2>
+
+      <h3>9.1 功能验收（每个 feature 都要满足）</h3>
+
+      <div class="accept">
+        <b>AC-1 · Data & Privacy 扫描</b>
+        <ul>
+          <li>能对一个测试商家的 <code>/privacy</code> 页产生 verified / review / not assessable 三种状态的 findings</li>
+          <li>US 市场至少 60 项 · EU 市场至少 40 项</li>
+          <li>每一条可点击查看 evidence（引用 policy 章节）</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-2 · Terms & Conditions 扫描</b>
+        <ul>
+          <li>能识别测试商家 ToS 里的 governing law / dispute resolution / warranty 措辞</li>
+          <li>US 市场至少 45 项 · EU 市场至少 35 项</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-3 · Product 扫描</b>
+        <ul>
+          <li>能对识别到的品类应用对应规则</li>
+          <li>未识别到的品类清晰标为 N/A（"Not detected in catalog"）</li>
+          <li>5 sub-groups 展示结构与 Michael 6/25 清单一致</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-4 · IP 商标查重</b>
+        <ul>
+          <li>输入品牌名能返回 USPTO 数据库里的近似商标列表</li>
+          <li>结果按 Nice 分类相关性过滤</li>
+          <li>UI 明示 "name-only, not FTO"</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-5 · Corporate Entity 状态</b>
+        <ul>
+          <li>覆盖 DE / CA / NY / TX 至少四个州</li>
+          <li>能查询 good-standing 状态 · 下次年报截止日</li>
+          <li>非覆盖州显示 Not Assessable + 引导手动上传</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-6 · 品类识别与确认</b>
+        <ul>
+          <li>系统对测试商家 catalog 能自动识别至少 3 个品类</li>
+          <li>识别结果按 3 个置信度分档呈现（Detected / Possible / Not detected）</li>
+          <li>商家能勾选 / 取消勾选并触发规则重跑</li>
+          <li>识别置信度 ≥ 85%（在 7 类品类的标注测试集上）</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-7 · Review Items 集中视图</b>
+        <ul>
+          <li>按 category 自动分组</li>
+          <li>组内 items 数量对</li>
+          <li>点击 header 可折叠 / 展开</li>
+          <li>市场切换正确过滤 items</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-8 · Review Item 状态追踪</b>
+        <ul>
+          <li>商家能在 Open / Acknowledged / In remediation 之间自由切换</li>
+          <li>Resolved 只能由 scan 触发（商家 UI 上不能手动点）</li>
+          <li>状态变化在 History 中可追溯</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-9 · Weekly re-scan</b>
+        <ul>
+          <li>每 7 天自动触发一次全量 re-scan</li>
+          <li>产生 delta 通知给商家</li>
+          <li>History timeline 更新新条目</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-10 · PDF 报告导出</b>
+        <ul>
+          <li>能一键生成完整 PDF</li>
+          <li>PDF 包含所有 tabs 的核心内容 + footer disclaimer</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-11 · Onboarding 引导流程（v1.1 新增）</b>
+        <ul>
+          <li>授权 checkbox 未勾选时无法进入下一步；勾选事件带时间戳留存</li>
+          <li>域名未通过 DNS TXT 验证时不触发任何扫描</li>
+          <li>发现扫描分阶段实时进度展示（爬取 / 政策 / 编目 / 品类识别）</li>
+          <li>品类确认页预勾选识别结果并附 catalog 证据；商家可增删</li>
+          <li>确认品类后进入异步生成态：页面明示约 10 分钟 + 可离开 + 邮件通知；完成后报告在 Compass 下等待</li>
+          <li>onboarding 里确认的品类 set 与 dashboard 的规则范围一致（分数 / badge / N-A 项全联动）</li>
+        </ul>
+      </div>
+
+      <h3>9.2 法务硬性验收</h3>
+      <div class="accept" style="background:var(--danger-bg);border-color:var(--danger-br)">
+        <b>AC-Legal（必须 100% 通过）</b>
+        <ul>
+          <li>UI 里搜不到 "violates" / "illegal" / "non-compliant" / "deceptive" 等禁词</li>
+          <li>每个 tab 都有 footer disclaimer</li>
+          <li>IP tab 有 "name-only, not FTO" in-context disclaimer</li>
+          <li>Entity tab 有 "informational only, confirm with counsel" 提示</li>
+          <li>商家 report 里搜不到 "Seel-provided component" 或类似标签</li>
+          <li>Honeypot 回归测试：Seel 自营 demo 店 + 5 个匿名化 Seel 使用商家页 = 0 个 red finding</li>
+          <li>Michael + Jenny 已签署 corpus + skip-rule whitelist</li>
+        </ul>
+      </div>
+
+      <h3>9.3 性能验收</h3>
+      <div class="accept">
+        <b>AC-Perf</b>
+        <ul>
+          <li>发现扫描（onboarding 内，含品类识别）P95 &lt; 3 分钟</li>
+          <li>首次报告生成（异步）P95 &lt; 15 分钟 · 目标均值 ~10 分钟（与产品文案一致）</li>
+          <li>Weekly re-scan P95 &lt; 8 分钟</li>
+          <li>Report 页首屏加载 &lt; 1.5 秒</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="metrics">
+      <h2>10. 成功指标</h2>
+
+      <table>
+        <thead><tr><th>维度</th><th>指标</th><th>Phase 1 目标</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2"><b>采用</b></td><td>Weekly active 商家占比</td><td>≥ 80% 邀请制商家</td></tr>
+          <tr><td>平均品类覆盖广度</td><td>≥ 3 类目 / 商家</td></tr>
+          <tr><td rowspan="2"><b>报告质量</b></td><td>False positive rate (counsel 抽检)</td><td>&lt; 15%</td></tr>
+          <tr><td>Review item status 转化率（Ack → Remediation → Resolved）</td><td>≥ 30% 在 8 周内到达 Resolved</td></tr>
+          <tr><td rowspan="3"><b>法律安全 ⚠</b></td><td>Honeypot 回归通过率</td><td>100%（每次 methodology 改动）</td></tr>
+          <tr><td>商家 report 里出现"Seel-provided" 标签次数</td><td>0（硬约束）</td></tr>
+          <tr><td>UI 里语言禁词违规次数</td><td>0（硬约束）</td></tr>
+          <tr><td rowspan="2"><b>法务工作量</b></td><td>Corpus 签署 turnaround</td><td>≤ 5 工作日（材料改动后）</td></tr>
+          <tr><td>稳态抽检比例</td><td>≈ 5%（不多也不少）</td></tr>
+          <tr><td><b>商家满意度</b></td><td>NPS（邀请制 beta 期）</td><td>≥ 50</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 11 -->
+    <section id="scope">
+      <h2>11. 范围（In / Out）</h2>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+        <div class="card" style="border-color:#7C3AED;background:#F5F3FF">
+          <h3 style="margin-top:0;color:#5B21B6">✅ Phase 1 In-scope</h3>
+          <ul style="margin-left:20px;font-size:12.5px">
+            <li>5 类目：D&P / T&C / Product / IP / Entity</li>
+            <li>2 个市场：US + EU</li>
+            <li>Onboarding 五步引导（授权 + 域名验证 + 发现扫描 + 品类确认）+ 异步报告生成</li>
+            <li>Merchant dashboard 集成（Workforce 区块）</li>
+            <li>6 个 sub-tabs（去掉 Billing 和 Discuss）</li>
+            <li>品类识别 + 商家确认</li>
+            <li>Review Items 分组视图 + 状态追踪</li>
+            <li>Weekly 自动 re-scan</li>
+            <li>History 版本时间线</li>
+            <li>PDF 导出</li>
+            <li>邀请制 5–10 商家</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:#94A3B8;background:#F8FAFC">
+          <h3 style="margin-top:0;color:#334155">❌ Phase 1 Out-of-scope</h3>
+          <ul style="margin-left:20px;font-size:12.5px;color:var(--mid)">
+            <li>Checkout flow 分析（永久性删除）</li>
+            <li>Chat / Discuss surface（Phase 2 候选，Phase 1 完全从 UI 移除）</li>
+            <li>Support ticket / 对话审查（Phase 2 候选）</li>
+            <li>Accessibility WCAG 审查（Phase 2 候选）</li>
+            <li>Industry-comparables 视图（Phase 2 候选）</li>
+            <li>UK / Canada 市场规则（Phase 2）</li>
+            <li>EUIPO / UK IPO 商标查询（Phase 2）</li>
+            <li>DE / CA / NY / TX 之外的州（Phase 2）</li>
+            <li>Design patent / FTO 分析（永久性）</li>
+            <li>付费订阅（Phase 2 讨论）</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section id="dep-risk">
+      <h2>12. 依赖与风险</h2>
+
+      <h3>12.1 前置阻塞项（不解决无法上线）</h3>
+      <div class="note danger">
+        以下三项任何一项未完成，Phase 1 不能对外部商家开放：
+        <ol style="margin-top:6px">
+          <li><b>Michael + Jenny 签署 corpus + skip-rule whitelist</b>（见 <a href="/seel-compass-prd.html#open-items">法务 PRD §12</a>）</li>
+          <li><b>Honeypot 回归测试全绿</b>（Seel 自营页 + 已知 Seel 商家页 = 0 red finding）</li>
+          <li><b>Michael 抽检</b>首 5 份对商家的 report 无 language / framing 违规</li>
+        </ol>
+      </div>
+
+      <h3>12.2 关键假设</h3>
+      <ul>
+        <li>Michael 6/25 提交的 24 items 相对稳定（Phase 1 内不会大幅重构）</li>
+        <li>USPTO ODP API 稳定可用</li>
+        <li>Middesk 服务对 DE / CA / NY / TX 覆盖度足够</li>
+        <li>LLM category classifier 在 7 类品类上准确率 ≥ 85%</li>
+        <li>商家愿意在 onboarding 花 30 秒确认品类</li>
+      </ul>
+
+      <h3>12.3 风险与缓解</h3>
+      <table>
+        <thead><tr><th>风险</th><th>影响</th><th>缓解</th></tr></thead>
+        <tbody>
+          <tr><td>Corpus 签署 turnaround 超预期</td><td>Phase 1 launch 延期</td><td>提前跟 Michael 排会 · 分批签署（先 US 后 EU）</td></tr>
+          <tr><td>品类识别准确率不够</td><td>商家负担重 · 信任下降</td><td>Fine-tune LLM prompt · 提高 confidence 门槛 · 加多个 signal（catalog + PDP + tags）</td></tr>
+          <tr><td>外部 API（USPTO / Middesk）宕机</td><td>IP / Entity 模块不可用</td><td>Cache 30d · fallback UI 明确告知 · degrade gracefully</td></tr>
+          <tr><td>商家把 Compass 当律师用</td><td>UPL 风险 · Seel 责任</td><td>Language filter 硬约束 · footer disclaimer · 每条 recommendation 明示 "consult counsel"</td></tr>
+          <tr><td>Seel 出新产品，carve-out 未及时更新</td><td>self-harm 风险 · honeypot fail</td><td>Fingerprint 版本化 · 产品变更 checklist 里加"更新 Compass fingerprint"步骤</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 13 -->
+    <section id="release">
+      <h2>13. 发布计划</h2>
+
+      <h3>13.1 里程碑</h3>
+      <div class="milestones">
+        <div class="milestone">
+          <div class="wk">M1 · Week 1–2</div>
+          <div class="goal">Corpus 定稿 + 法务并行签署</div>
+          <div class="deliv">Corpus v1 draft · Michael/Jenny 首轮签署</div>
+        </div>
+        <div class="milestone">
+          <div class="wk">M2 · Week 3–5</div>
+          <div class="goal">核心扫描 pipeline + 前端集成</div>
+          <div class="deliv">D&P / T&C / Product 扫描可跑 · Compass 前端集成完成（已达成 alpha）</div>
+        </div>
+        <div class="milestone">
+          <div class="wk">M3 · Week 5–7</div>
+          <div class="goal">品类识别 + IP + Entity</div>
+          <div class="deliv">Hybrid 识别 · USPTO 集成 · Middesk 集成</div>
+        </div>
+        <div class="milestone">
+          <div class="wk">M4 · Week 7–8</div>
+          <div class="goal">Self-harm carve-out + Honeypot</div>
+          <div class="deliv">Fingerprint set · skip whitelist · CI 回归测试全绿</div>
+        </div>
+        <div class="milestone">
+          <div class="wk">M5 · Week 8–10</div>
+          <div class="goal">内部 dogfood + 前 5 份 report 抽检</div>
+          <div class="deliv">3 个内部 volunteer 商家 · Michael 抽检通过</div>
+        </div>
+        <div class="milestone">
+          <div class="wk">M6 · Week 10–12</div>
+          <div class="goal">邀请制 launch</div>
+          <div class="deliv">5–10 个外部商家上线 · 收集 NPS + 报告质量数据</div>
+        </div>
+      </div>
+
+      <h3>13.2 上线标准（launch gate）</h3>
+      <ol>
+        <li>所有法务硬性验收（AC-Legal）100% 通过</li>
+        <li>所有功能验收（AC-1 到 AC-10）通过</li>
+        <li>性能验收（AC-Perf）达标</li>
+        <li>首 5 份对外部商家的 report 由 Michael 抽检 · 无 framing / language 违规</li>
+        <li>Honeypot 回归测试全绿</li>
+        <li>PDF 导出可用</li>
+        <li>Corpus 已签 · skip-rule whitelist 已签</li>
+      </ol>
+
+      <h3>13.3 灰度策略</h3>
+      <ol>
+        <li><b>内部 dogfood：</b>Seel 团队自己的测试店铺 · 3 个 Seel 员工手动 review</li>
+        <li><b>Alpha：</b>3–5 个 Seel 内部推荐的友好商家 · 深度访谈反馈</li>
+        <li><b>Beta（邀请制）：</b>5–10 个外部商家 · Michael 抽检前 5 份 report · 收集 NPS 与 report 质量数据</li>
+        <li><b>Public invite-only：</b>持续扩容邀请码（不做 public open sign-up）</li>
+      </ol>
+    </section>
+
+    <!-- Appendix A -->
+    <section id="glossary">
+      <h2>附录 A · 术语表</h2>
+      <table>
+        <thead><tr><th>术语</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><b>Compass</b></td><td>本产品名 · Seel Compass · 出海就绪度评估工具</td></tr>
+          <tr><td><b>Review item</b></td><td>系统识别到的一个需要商家 + 律师关注的合规 gap</td></tr>
+          <tr><td><b>Verified</b></td><td>系统确认商家页面已满足某条规则</td></tr>
+          <tr><td><b>Not Assessable</b></td><td>规则本身无法通过一次性静态扫描核查（例如"退款是否在承诺期内履行"）</td></tr>
+          <tr><td><b>N/A</b></td><td>规则涉及的品类商家不销售（例如商家不卖酒精类，酒精规则不评估）</td></tr>
+          <tr><td><b>Corpus</b></td><td>法条 + 规则的完整集合，法务签署的对象</td></tr>
+          <tr><td><b>Carve-out</b></td><td>Self-harm 避免机制，识别到 Seel 自家组件时跳过特定规则评估</td></tr>
+          <tr><td><b>Honeypot</b></td><td>回归测试用的固定商家页面集合</td></tr>
+          <tr><td><b>Nice class</b></td><td>商标国际分类的 45 大类，商标查重时按相关类过滤</td></tr>
+          <tr><td><b>DSAR</b></td><td>Data Subject Access Request，用户数据访问请求（GDPR / CCPA 概念）</td></tr>
+          <tr><td><b>GPSR</b></td><td>General Product Safety Regulation，欧盟一般产品安全法规</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Appendix B -->
+    <section id="related">
+      <h2>附录 B · 关联文档</h2>
+      <ul>
+        <li>法务版 PRD（English）: <a href="/seel-compass-prd.html">seel-compass-prd.html</a></li>
+        <li>商家 demo（可交互 · 当前版本）：merchant dashboard 内 Compass 模块（<code>client/src/pages/CompassPage.tsx</code>，含 onboarding wizard + 异步生成 + 全部交互）</li>
+        <li>早期独立 HTML demo（已被 dashboard 版取代）：<a href="/seel-compass-demo.html">seel-compass-demo.html</a></li>
+        <li>Notion 版 PRD（可评论）：<a href="https://app.notion.com/p/3923b4ed17a281d69c67ff889910946f">Notion · PRD & State Machines</a></li>
+        <li>Sync Prep notes（团队 Slack 协作）：<a href="https://app.notion.com/p/3893b4ed17a2815d9129c8548d18d7da">Notion · Sync Prep</a></li>
+        <li>Michael 6/25 反馈原文 + 24 items 清单：见法务版 PRD 附录 A</li>
+        <li>Predecessor（已 superseded）：Compliance LLP Product Implementation Spec</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Seel Compass · by Seel Inc. · 产品需求文档 Draft v1.1 · 仅供内部产品/研发/法务使用 · © 2026
+</footer>
+
+</body>
+</html>
