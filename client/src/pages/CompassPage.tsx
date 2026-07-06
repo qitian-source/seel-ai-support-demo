@@ -58,7 +58,7 @@ const CATEGORY_LABELS: Record<CategoryKey, { label: string; meta: string; catalo
   cbd:        { label: "CBD / hemp / cannabinoids",          meta: "not detected",       catalogHint: "" },
   tobacco:    { label: "Tobacco / vape / nicotine",          meta: "not detected",       catalogHint: "" },
   firearms:   { label: "Firearms / weapons",                 meta: "not detected",       catalogHint: "" },
-  supplements:{ label: "Supplements / nutraceuticals",       meta: "not detected",       catalogHint: "" },
+  supplements:{ label: "Supplements / nutraceuticals",       meta: "possible · 2 SKUs",  catalogHint: "2 SKUs reference collagen peptides — confirm if you sell ingestible supplements." },
   pharma:     { label: "Pharmaceuticals / medical devices",  meta: "not detected",       catalogHint: "" },
 };
 
@@ -181,7 +181,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
     key: "ip-mkt", title: "IP & marketing integrity", count: 2,
     items: [
       { id: "p-counterfeit", title: "Counterfeit / unauthorized-reseller risk", sub: "All listings appear sourced from the brand directly or trusted independent sellers. (Separate from own-brand trademark screening — see the Intellectual Property tab.)", state: "ok" },
-      { id: "p-endorsement", title: "Endorsement / influencer / review disclosures (#ad, review authenticity)", sub: "Sponsored posts carry FTC-compliant disclosure; no fake-review signals detected.", state: "ok" },
+      { id: "p-endorsement", title: "Endorsement / influencer / review disclosures (#ad, review authenticity)", sub: "Sponsored posts carry the required FTC disclosures; no fake-review signals detected.", state: "ok" },
     ],
   },
   {
@@ -365,7 +365,7 @@ const SCAN_STAGES = [
   { label: "Crawling your storefront",     detail: "11 pages — home, product pages, policy pages" },
   { label: "Reading policy documents",     detail: "Privacy Policy · Terms of Service · Refund Policy" },
   { label: "Cataloging products",          detail: "128 SKUs across 6 collections" },
-  { label: "Detecting product categories", detail: "Cosmetics / topicals (12 SKUs) · Children's products (4 SKUs)" },
+  { label: "Detecting product categories", detail: "Cosmetics / topicals (12 SKUs) · Children's products (4 SKUs) · 1 possible match" },
 ];
 
 function OnboardingFlow({
@@ -435,7 +435,8 @@ function OnboardingFlow({
   const previewOverall = useMemo(() => computeOverall("us", previewStats.score), [previewStats.score]);
   const previewReview = baseReviewItemCounts("us").review + previewStats.review;
 
-  const detectedKeys: CategoryKey[] = ["cosmetics", "kids"];
+  const detectedKeys: CategoryKey[] = ["cosmetics", "kids"];   // ≥90% confidence — pre-checked
+  const possibleKeys: CategoryKey[] = ["supplements"];         // 70–89% confidence — suggested, unchecked
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
@@ -652,12 +653,16 @@ function OnboardingFlow({
             <div>
               <h2 className="text-[15px] font-semibold text-foreground">Confirm your product categories</h2>
               <p className="text-[12.5px] text-muted-foreground mt-1">
-                Regulated-category rules are only applied to categories you actually sell. We detected these from your catalog — uncheck anything that doesn't apply, or add categories you plan to launch.
+                Regulated-category rules are only applied to categories you actually sell. Uncheck anything that doesn't apply, or add categories you plan to launch.
+              </p>
+              <p className="text-[11.5px] text-muted-foreground mt-1.5">
+                <span className="font-semibold text-[#6c47ff]">Detected</span> = high-confidence match from your catalog, pre-checked · <span className="font-semibold text-amber-700">Possible</span> = partial signals found, please confirm.
               </p>
             </div>
             <div className="space-y-1">
               {(Object.keys(CATEGORY_LABELS) as CategoryKey[]).map(key => {
                 const detected = detectedKeys.includes(key);
+                const possible = possibleKeys.includes(key);
                 return (
                   <button
                     key={key}
@@ -678,15 +683,17 @@ function OnboardingFlow({
                       <span className={cn("text-[12.5px]", cats.has(key) ? "text-foreground font-medium" : "text-muted-foreground")}>
                         {CATEGORY_LABELS[key].label}
                       </span>
-                      {detected && CATEGORY_LABELS[key].catalogHint && (
+                      {(detected || possible) && CATEGORY_LABELS[key].catalogHint && (
                         <span className="block text-[11px] text-muted-foreground">{CATEGORY_LABELS[key].catalogHint}</span>
                       )}
                     </div>
                     <span className={cn(
                       "text-[10.5px] font-medium rounded px-1.5 py-0.5 shrink-0",
-                      detected ? "bg-[#f0edff] text-[#6c47ff]" : "bg-slate-50 text-slate-400",
+                      detected && "bg-[#f0edff] text-[#6c47ff]",
+                      possible && "bg-amber-50 text-amber-700",
+                      !detected && !possible && "bg-slate-50 text-slate-400",
                     )}>
-                      {detected ? CATEGORY_LABELS[key].meta : "not detected"}
+                      {detected || possible ? CATEGORY_LABELS[key].meta : "not detected"}
                     </span>
                   </button>
                 );
@@ -973,6 +980,7 @@ function OverviewTab({
 
   // Sections collapsed by default; expand on header click or category-card click.
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [showMethodology, setShowMethodology] = useState(false);
   const toggleSection = (key: string) => {
     setOpenSections(prev => {
       const next = new Set(prev);
@@ -1043,7 +1051,23 @@ function OverviewTab({
         <span><span className="font-bold text-amber-700">{totalReview}</span> review items</span>
         <span><span className="font-bold text-slate-500">{base.notAssessable}</span> not assessable by scan (omitted)</span>
         <span><span className="font-bold text-slate-500">{productStats.notDetectedCats}</span> categories not detected in your catalog</span>
+        <button
+          onClick={() => setShowMethodology(v => !v)}
+          className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-[#6c47ff] transition-colors"
+        >
+          ⓘ How are these scores calculated?
+          <ChevronDown size={12} className={cn("transition-transform", showMethodology && "rotate-180")} />
+        </button>
       </div>
+
+      {/* Score methodology explainer */}
+      {showMethodology && (
+        <div className="rounded-lg border border-border bg-white px-4 py-3 text-[12px] text-muted-foreground space-y-1.5">
+          <p><b className="text-foreground">Category score</b> = verified checks ÷ assessed checks (verified + review items) for the selected market. Checks marked "Not assessable" or "Not applicable" are excluded — they neither raise nor lower the score.</p>
+          <p><b className="text-foreground">Overall readiness</b> = the average of the three scored categories (Data & Privacy, Terms & Conditions, Product). Intellectual Property and Corporate Entity report a status rather than a score.</p>
+          <p>Every check behind these numbers is listed below with its evidence — expand any section for item-level detail.</p>
+        </div>
+      )}
 
       {/* Data & Privacy */}
       <SectionHeader
@@ -1343,7 +1367,7 @@ const ALL_ISSUES: Issue[] = [
   { id: "i-unqual",   title: "Unqualified authenticity guarantee over third-party goods", category: "Terms & Conditions", market: "us", marketLabel: "United States", rules: "Listing states “Authenticity Ensured — every item guaranteed genuine,” extending to independent sellers. Unqualified authenticity guarantees are a recurring enforcement and review topic under the FTC Act §5 framework.", sources: "Your product listing pages · public web research", rec: "Recommend confirming with qualified counsel whether to qualify the guarantee (scope / sellers covered)." },
   { id: "i-sens",     title: "Option to limit use of sensitive data not surfaced", category: "Data & Privacy", market: "us", marketLabel: "United States", rules: "Several US state privacy frameworks describe a consumer ability to limit use of sensitive personal data (e.g. precise location, biometric). The reviewed Privacy Policy did not surface a corresponding disclosure or control.", sources: "Your /privacy page · public web research", rec: "Recommend confirming with qualified counsel whether your markets require it and adding the disclosure if so." },
   { id: "i-tm",       title: "Trademark name similarity — “Acme Outdoor” vs registered mark", category: "Intellectual Property", market: "us", marketLabel: "United States", rules: "A USPTO trademark database search on the brand name returned a similar registered mark, “ACME OUTDOORS” (Reg. No. 5,xxx,xxx — Class 25, apparel), owned by an unrelated party.", rec: "Recommend confirming with qualified counsel whether the similarity poses an infringement risk before scaling US marketing. Annual monitoring available." },
-  { id: "i-annual",   title: "Annual report filing due — Delaware entity", category: "Corporate Entity", market: "us", marketLabel: "United States", rules: "Delaware Secretary of State record shows the entity is in good standing, with the next annual report / franchise tax due Mar 1, 2027. Filing late risks loss of good standing.", rec: "Recommend calendaring the filing; Seel Compass can monitor good-standing status on an ongoing basis." },
+  { id: "i-annual",   title: "Annual report filing due — Delaware entity", category: "Corporate Entity", market: "us", marketLabel: "United States", rules: "Delaware Secretary of State record shows the entity is in good standing, with the next annual report / franchise tax due Mar 1, 2027. Filing late risks loss of good standing.", rec: "Recommend calendaring the filing and confirming with qualified counsel whether any additional state filings apply. Seel Compass can monitor good-standing status on an ongoing basis." },
   { id: "i-urgency",  title: "Urgency / scarcity claims — countdown timers & “only X left”", category: "Product", market: "us", marketLabel: "United States", rules: "FTC has flagged unsubstantiated urgency messaging under §5 and its 2024 dark-patterns guidance. Real, verifiable scarcity is generally acceptable; simulated urgency is not.", sources: "4 PDPs on your storefront displaying countdown timers or “only 3 left” language · public web research", rec: "Recommend confirming with qualified counsel and verifying that on-site urgency signals reflect actual stock or timing." },
   { id: "i-cookies",  title: "Non-essential cookies set before consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union", rules: "On load, analytics cookies were observed being set before any consent interaction. Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.", sources: "Network trace on your storefront homepage · public web research", rec: "Recommend confirming with qualified counsel and adjusting the consent banner if needed." },
   { id: "i-dsar",     title: "DSAR response window not stated", category: "Data & Privacy", market: "eu", marketLabel: "European Union", rules: "The Privacy Policy describes data-subject rights but does not state a response timeframe for data-subject access requests. GDPR commonly references a one-month response expectation.", rec: "Recommend confirming with qualified counsel and stating the response window in your policy." },
@@ -1644,8 +1668,12 @@ function SetupTab({
                 checked={activeCats.has(key)}
                 label={CATEGORY_LABELS[key].label}
                 meta={activeCats.has(key)
-                  ? (CATEGORY_LABELS[key].meta.startsWith("detected") ? CATEGORY_LABELS[key].meta : "manually enabled")
-                  : (["cosmetics","kids"].includes(key) ? "detected · unchecked by you" : "not detected")
+                  ? (CATEGORY_LABELS[key].meta.startsWith("detected") ? CATEGORY_LABELS[key].meta
+                    : CATEGORY_LABELS[key].meta.startsWith("possible") ? "possible · confirmed by you"
+                    : "manually enabled")
+                  : (["cosmetics","kids"].includes(key) ? "detected · unchecked by you"
+                    : CATEGORY_LABELS[key].meta.startsWith("possible") ? CATEGORY_LABELS[key].meta
+                    : "not detected")
                 }
                 onToggle={() => toggleCategory(key)}
               />
