@@ -125,13 +125,14 @@
 </ul>
 
 <h3>R2 · Item 级明细 CSV 导出</h3>
-<p>现有 Download CSV 弹窗升级为<strong>两种导出格式</strong>单选，默认记住上次选择：</p>
+<p>现有 Download CSV 弹窗升级为<strong>单一「列勾选」配置</strong>（不再让商户先选格式）：列按 <code>RMA</code> / <code>Item</code> / <code>Label</code> 三组分组勾选，<strong>行粒度自动推导</strong>——勾选了任一 Item 组字段即展开为每退货商品一行，否则每 RMA 一行（界面实时提示当前粒度与预估行数）。</p>
 <table>
-  <tr><th>格式</th><th>粒度</th><th>字段</th></tr>
-  <tr><td>RMA 汇总（现状）</td><td>1 RMA = 1 行</td><td>维持现有字段不变，保证存量商户导出模板兼容</td></tr>
-  <tr><td>Item 明细 <span class="pill new">NEW</span></td><td>1 退货商品 = 1 行</td><td><code>rma_number</code> · <code>order_number</code> · <code>sku</code> · <code>item_name</code> · <code>variant</code> · <code>qty</code> · <code>return_reason</code>（含 multiple choice 选项全文）· <code>label_carrier</code> · <code>label_tracking_number</code> · <code>resolution_type</code> · <code>rma_status</code> · <code>created_at</code></td></tr>
+  <tr><th>推导结果</th><th>粒度</th><th>说明</th></tr>
+  <tr><td>未勾选 Item 组字段</td><td>1 RMA = 1 行</td><td>等价现状汇总导出；Label 字段在多包裹时以 <code>;</code> 拼接（如 <code>trk1; trk2</code>）</td></tr>
+  <tr><td>勾选任一 Item 组字段 <span class="pill new">NEW</span></td><td>1 退货商品 = 1 行</td><td>全字段集：<code>rma_number</code> · <code>order_number</code> · <code>customer</code> · <code>created_at</code> · <code>resolution_type</code> · <code>rma_status</code> ｜ <code>sku</code> · <code>item_name</code> · <code>variant</code> · <code>qty</code> · <code>return_reason</code>（含 multiple choice 选项全文）｜ <code>label_carrier</code> · <code>label_tracking_number</code>（取该商品所属包裹）</td></tr>
 </table>
 <ul>
+  <li><strong>字段勾选交互</strong>（对标 Shopify Export orders）：紧凑弹窗内一个<strong>复选框列表</strong>，按 RMA / Item / Shipping label 三组双列排布，字段显示人类可读名（CSV 表头仍用 snake_case 键名）；顶部 <code>Select all</code>（支持半选态）+ 已选计数；<code>RMA number</code> 必选置灰（Required）；<strong>不做 CSV 预览</strong>，底部一行实时提示「Exports N rows — one per return item / per RMA」；商户勾选组合按人持久化，下次打开沿用。</li>
   <li>应用当前列表的全部筛选条件与日期范围，与列表所见一致。</li>
   <li>沿用现有异步导出机制：生成完成后发送下载链接至商户邮箱；预估行数 &lt; 500 时同步直接下载。</li>
   <li>多商品 RMA 每个 line item 一行；同一 RMA 的公共字段（tracking 等）在每行重复，便于仓库用 Excel 直接 VLOOKUP。</li>
@@ -167,7 +168,7 @@
 <table>
   <tr><th>接口</th><th>改动</th><th>需求</th></tr>
   <tr><td><code>queryReturnByCondition</code></td><td>list item 增加 <code>labels: [{ carrier, trackingNumber, trackingUrl, source }]</code>；<code>queryParam</code> 支持 tracking number 匹配</td><td>R1</td></tr>
-  <tr><td><code>exportReturns</code></td><td>新增参数 <code>exportLevel: RMA | ITEM</code>（默认 <code>RMA</code>，向后兼容）；ITEM 级按 line item 展开并联表 label 信息</td><td>R2</td></tr>
+  <tr><td><code>exportReturns</code></td><td>新增参数 <code>columns: string[]</code>（缺省=现状汇总列，向后兼容；服务端校验列名白名单、强制包含 <code>rma_number</code>）；<code>exportLevel</code> 由服务端按 columns 是否含 Item 组列自动推导（RMA / ITEM），ITEM 级按 line item 展开并联表 label 信息；RMA 级多包裹 label 以 <code>;</code> 拼接；商户勾选组合存 merchant 维度偏好</td><td>R2</td></tr>
   <tr><td><code>queryReturnDetail</code></td><td><code>items[]</code> 增加 <code>sku</code>、<code>variantTitle</code>；终态 RMA 不再裁剪 <code>labelInfo</code> 节点</td><td>R3 / R4</td></tr>
   <tr><td><code>queryLatestReturnFlowConfig</code></td><td>无改动（R5 为纯前端渲染层改造）</td><td>R5</td></tr>
 </table>

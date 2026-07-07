@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Return SaaS · Issues & Rules 交互优化 · Demo（高保真）</title>
+<title>Return SaaS · Issues & Rules UX Optimizations · Demo (Hi-Fi)</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -86,7 +86,7 @@ main{ flex:1; min-width:0; padding:22px 30px 80px; }
 .btn.primary{ background:var(--link); border-color:var(--link); color:#fff; }
 .btn.primary:hover{ opacity:.88; color:#fff; }
 .btn:disabled{ background:rgba(0,0,0,.04); border-color:#d9d9d9; color:rgba(0,0,0,.25); cursor:not-allowed; box-shadow:none; }
-.btn.small{ height:26px; padding:1px 10px; font-size:13px; }
+.btn.small{ height:26px; padding:1px 10px; font-size:13px; white-space:nowrap; flex-shrink:0; }
 a.lk{ color:var(--link); text-decoration:none; cursor:pointer; }
 a.lk:hover{ opacity:.8; }
 
@@ -118,6 +118,29 @@ table.ant tbody tr:hover td{ background:#fafafa; }
 .trk .copy{ border:none; background:none; cursor:pointer; color:rgba(0,0,0,.35); font-size:12px; padding:0 2px; }
 .trk .copy:hover{ color:var(--link); }
 .trk-none{ color:rgba(0,0,0,.35); font-size:13px; }
+.trk .more{ border:none; background:#EEF0F3; color:#4d43e0; font-weight:700; font-size:11px; border-radius:99px; padding:1px 8px; cursor:pointer; margin-left:2px; }
+.trk .more:hover{ background:#E3E1FF; }
+#trk-pop{
+  position:fixed; z-index:250; display:none; min-width:330px; white-space:nowrap;
+  background:#fff; border:1px solid #EEF0F2; border-radius:8px; padding:10px 14px;
+  box-shadow:0 6px 16px rgba(0,0,0,.08), 0 3px 6px -4px rgba(0,0,0,.12), 0 9px 28px 8px rgba(0,0,0,.05);
+}
+#trk-pop .cap{ font-size:11px; font-weight:700; color:var(--gray1); letter-spacing:.04em; margin-bottom:4px; }
+.prow{ display:flex; align-items:center; gap:8px; padding:6px 0; }
+#trk-pop .prow + .prow{ border-top:1px dashed #EEF0F2; }
+.pkg-tag{
+  font-size:10px; font-weight:700; color:var(--gray1); background:#F1F2F4;
+  border:1px solid #E3E5E8; border-radius:99px; padding:1px 7px; white-space:nowrap; flex-shrink:0;
+}
+.search-in{ flex:1; border:1px solid #d9d9d9; border-radius:6px; padding:5px 11px; font-size:14px; color:var(--ink); outline:none; font-family:inherit; }
+.search-in::placeholder{ color:rgba(0,0,0,.25); }
+.search-in:focus{ border-color:var(--link); box-shadow:0 0 0 2px rgba(22,119,255,.1); }
+.sel-in{ border:1px solid #d9d9d9; border-radius:6px; padding:5px 8px; font-size:14px; color:var(--ink); background:#fff; outline:none; cursor:pointer; font-family:inherit; }
+th.sortable{ cursor:pointer; user-select:none; }
+th.sortable:hover{ background:#f0f0f0; }
+.empty-wrap{ text-align:center; padding:48px 0 56px; }
+.empty-wrap .t1{ font-size:24px; font-weight:500; }
+.empty-wrap .t2{ font-size:16px; color:var(--gray1); margin-top:4px; }
 th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 .pager{ display:flex; justify-content:flex-end; gap:6px; padding:14px 0 2px; color:var(--gray1); font-size:13px; align-items:center; }
 .pager .pg{ min-width:28px; height:28px; border:1px solid #d9d9d9; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
@@ -194,12 +217,11 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 .flow-topbar .sp{ margin-left:auto; display:flex; gap:10px; }
 #flow-wrap{ position:relative; }
 #flow-vp{
-  position:relative; height:calc(100vh - 40px - 56px - 44px); min-height:540px; background:#f5f5f5; overflow:auto;
+  position:relative; height:calc(100vh - 40px - 56px); min-height:540px; background:#f5f5f5; overflow:auto;
 }
-.flow-demo-strip{ background:#F0FDF6; border-bottom:1px solid #BBE7CF; padding:8px 16px; display:flex; align-items:center; gap:12px; font-size:12px; color:#14532D; min-height:44px; }
-.mode-switch{ margin-left:auto; display:flex; background:#fff; border:1px solid #BBE7CF; border-radius:8px; padding:2px; gap:2px; flex-shrink:0; }
-.mode-switch button{ border:none; background:none; font-size:12px; font-weight:600; color:#62666A; padding:4px 12px; border-radius:6px; cursor:pointer; }
-.mode-switch button.on{ background:var(--new); color:#fff; }
+.mode-switch{ display:flex; background:#23252c; border:1px solid #35383f; border-radius:20px; padding:2px; gap:2px; flex-shrink:0; }
+.mode-switch button{ border:none; background:none; font-size:11px; font-weight:600; color:#d1d5db; padding:3px 11px; border-radius:20px; cursor:pointer; }
+.mode-switch button.on{ background:var(--brand); color:#fff; }
 
 #flow-stage{ position:relative; transform-origin:0 0; }
 #flow-svg{ position:absolute; left:0; top:0; pointer-events:none; }
@@ -265,7 +287,18 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 /* ── Export modal（antd Modal 风格）── */
 #modal-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:120; display:none; align-items:flex-start; justify-content:center; padding-top:60px; }
 #modal-mask.open{ display:flex; }
-.modal{ width:680px; max-width:94vw; max-height:84vh; overflow-y:auto; background:#fff; border-radius:8px; padding:20px 24px; box-shadow:0 6px 16px rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12); }
+.modal{ width:480px; max-width:94vw; max-height:84vh; overflow-y:auto; background:#fff; border-radius:8px; padding:20px 24px; box-shadow:0 6px 16px rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12); }
+.chk-all{ display:flex; align-items:center; justify-content:space-between; padding:10px 2px; border-bottom:1px solid var(--split); margin-bottom:4px; }
+.chk-count{ font-size:12px; color:var(--gray1); }
+.chk-list{ display:grid; grid-template-columns:1fr 1fr; column-gap:18px; padding:2px; }
+.chk-group-h{ grid-column:1 / -1; font-size:11px; font-weight:700; letter-spacing:.05em; color:#9AA0A6; text-transform:uppercase; padding:12px 0 4px; }
+.chk{ display:flex; align-items:center; gap:8px; padding:6px 2px; font-size:14px; cursor:pointer; border-radius:6px; }
+.chk:hover{ background:#FAFAFA; }
+.chk input{ accent-color:var(--link); width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+.chk.dis{ color:rgba(0,0,0,.45); cursor:not-allowed; }
+.chk.dis input{ cursor:not-allowed; }
+.chk .req-mark{ font-size:11px; color:var(--gray2); }
+.gran-note{ font-size:12.5px; color:var(--gray1); background:#FAFAFA; border-radius:6px; padding:8px 12px; margin-top:12px; }
 .modal h2{ font-size:16px; font-weight:600; margin-bottom:4px; }
 .modal .sub{ font-size:13px; color:var(--gray1); margin-bottom:16px; }
 .opt{ display:flex; gap:12px; border:1.5px solid #e3e5e8; border-radius:8px; padding:13px 14px; margin-bottom:10px; cursor:pointer; }
@@ -276,12 +309,29 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 .opt .tt{ font-weight:600; font-size:14px; }
 .opt .ds{ font-size:12.5px; color:var(--gray1); margin-top:2px; }
 .fields{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.fld{ font-size:11px; font-family:'SF Mono',Menlo,Consolas,monospace; color:var(--gray1); background:#F4F5F7; border:1px solid #e3e5e8; border-radius:4px; padding:1px 7px; }
-.fld.new{ color:#0B5A3C; background:#EAF8F1; border-color:#C4EBD7; font-weight:600; }
+.fld{
+  font-size:11px; font-family:'SF Mono',Menlo,Consolas,monospace; color:var(--gray1);
+  background:#F4F5F7; border:1px solid #e3e5e8; border-radius:4px; padding:1px 7px;
+  cursor:pointer; user-select:none;
+}
+.fld:hover{ border-color:#91CAFF; }
+.fld.on{ color:#0958D9; background:#E6F4FF; border-color:#91CAFF; font-weight:600; }
+.fld.on::before{ content:'✓ '; }
+.fld.req{ cursor:not-allowed; }
+.fld.req::after{ content:' *'; color:#B91C1C; }
+.fld-links{ font-size:11px; color:var(--gray1); margin-left:auto; white-space:nowrap; }
+.fgroup{
+  flex-basis:auto; font-size:10px; font-weight:700; letter-spacing:.05em; color:#9AA0A6;
+  align-self:center; margin:0 2px 0 6px; text-transform:uppercase;
+}
+.fgroup:first-child{ margin-left:0; }
+.fld-links a{ color:var(--link); cursor:pointer; }
+.fields-head{ display:flex; align-items:center; margin-top:8px; }
+.fields-head .lb{ font-size:11px; color:var(--gray1); }
 .csv-prev{ margin-top:14px; border:1px solid #e3e5e8; border-radius:8px; overflow:hidden; }
 .csv-prev .cap{ font-size:11px; font-weight:700; color:var(--gray1); background:#fafafa; padding:7px 12px; border-bottom:1px solid #e3e5e8; letter-spacing:.03em; }
 .csv-prev .scroll{ overflow-x:auto; }
-.csv-prev table{ font-size:11px; min-width:820px; border-collapse:collapse; }
+.csv-prev table{ font-size:11px; min-width:1150px; border-collapse:collapse; }
 .csv-prev th{ background:#fafafa; text-align:left; padding:6px 10px; white-space:nowrap; border-bottom:1px solid #e3e5e8; font-weight:600; }
 .csv-prev td{ font-family:'SF Mono',Menlo,Consolas,monospace; color:var(--gray1); padding:6px 10px; white-space:nowrap; border-bottom:1px solid #f4f4f4; }
 .mail-note{ font-size:12.5px; color:var(--gray1); margin-top:12px; }
@@ -295,13 +345,17 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 
 <div id="demo-bar">
   <span class="pill">DEMO</span>
-  <span class="label">Return SaaS · Issues / Rules 交互优化 · 高保真 <span class="src">（样式对齐 merchant-dashboard@master 源码）</span></span>
+  <span class="label">Return SaaS · Issues / Rules UX Optimizations · Hi-Fi <span class="src">(styles matched to merchant-dashboard@master)</span></span>
   <div class="feats">
-    <span class="feat" onclick="switchTab('issues')"><span class="n">1</span>列表 <b>Tracking#</b> 列</span>
-    <span class="feat" onclick="switchTab('issues');openExport()"><span class="n">2</span><b>Item 明细</b> CSV</span>
-    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item 显示 <b>SKU</b></span>
-    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">4</span>Completed 可查 <b>Label</b></span>
-    <span class="feat" onclick="switchTab('rules')"><span class="n">5</span>Flow <b>全文 + Hover</b></span>
+    <span class="feat" onclick="switchTab('issues')"><span class="n">1</span><b>Tracking#</b> column</span>
+    <span class="feat" onclick="switchTab('issues');openExport()"><span class="n">2</span><b>Item-level</b> CSV</span>
+    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item <b>SKU</b></span>
+    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">4</span><b>Label</b> after Completed</span>
+    <span class="feat" onclick="switchTab('rules')"><span class="n">5</span>Flow <b>full text + hover</b></span>
+    <span class="mode-switch" id="flow-mode-switch" style="display:none">
+      <button id="btn-before" onclick="setMode('before')">Before</button>
+      <button id="btn-after" class="on" onclick="setMode('after')">After</button>
+    </span>
   </div>
 </div>
 
@@ -334,31 +388,36 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 
     <!-- ══════ Issues 列表 ══════ -->
     <section id="view-issues">
-      <div class="callout"><span class="n">✦</span>
-        <div><b>本页新增：</b>① <b>Tracking #</b> 列（label 运单号，可复制/点击跳轨迹）&nbsp;② Download CSV 支持 <b>Item 级明细</b>&nbsp;③ 点击行进入详情查看 <b>SKU</b> 与 <b>Completed 状态下的 Label 入口</b>（试试 <a class="lk" onclick="event.stopPropagation();showDetail('BD9LP4T2')">BD9LP4T2</a>）。</div>
-      </div>
       <div class="card">
         <div class="filters">
-          <div class="search">🔍&nbsp; RMA# / Order / Customer email / Customer name / Tracking#<span class="new-badge">NEW</span></div>
-          <div class="sel">All resolution type</div>
-          <div class="sel">All shipping status</div>
-          <div class="sel">All issue status</div>
+          <input class="search-in" id="f-q" oninput="onFilter()" placeholder="🔍  RMA# / Order / Customer email / Customer name / Tracking#">
+          <select class="sel-in" id="f-type" onchange="onFilter()">
+            <option value="">All resolution type</option><option value="Refund">Refund</option><option value="Exchange">Exchange</option>
+          </select>
+          <select class="sel-in" id="f-ship" onchange="onFilter()">
+            <option value="">All shipping status</option><option value="pre">Pre-transit</option><option value="in">In transit</option><option value="del">Delivered</option>
+          </select>
+          <select class="sel-in" id="f-status" onchange="onFilter()">
+            <option value="">All issue status</option><option>In progress</option><option>Accepted</option><option>Completed</option><option>Rejected</option>
+          </select>
         </div>
         <div class="filters2">
           <span>Date range: </span>
-          <div class="sel" style="color:rgba(0,0,0,.25)">MM/DD/YYYY&nbsp;→&nbsp;MM/DD/YYYY&nbsp;&nbsp;📅</div>
+          <select class="sel-in" id="f-range" onchange="onFilter()">
+            <option value="">All time</option><option value="1">Last 1 day</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
+          </select>
           <button class="export-btn" onclick="openExport()">
             <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0 3-3m-3 3L5 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 11v1.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-            Download CSV<span class="new-badge">明细导出</span>
+            Download CSV
           </button>
         </div>
         <div style="overflow-x:auto">
         <table class="ant">
           <thead>
             <tr>
-              <th>RMA#</th><th>Order<span class="sort">⇅</span></th><th>Customer</th><th>Created<span class="sort">⇅</span></th>
+              <th>RMA#</th><th class="sortable" onclick="setSort('order')">Order<span class="sort" id="sort-order">⇅</span></th><th>Customer</th><th class="sortable" onclick="setSort('created')">Created<span class="sort" id="sort-created">⇅</span></th>
               <th>Shipping</th><th>Type</th><th>Status</th>
-              <th class="hl">Tracking #<span class="new-badge">NEW</span></th>
+              <th>Tracking #</th>
               <th>Fraud risk</th>
             </tr>
           </thead>
@@ -379,13 +438,6 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
         <div class="sp">
           <button class="btn" disabled>Discard</button>
           <button class="btn" disabled>Publish</button>
-        </div>
-      </div>
-      <div class="flow-demo-strip">
-        <b>✦ 优化点：</b>边标签（退货原因 / Multiple choices 选项）由线上「<code style="font-family:monospace">max-w-[120px]</code> 单行截断」改为全文展示（≤3 行）+ Hover 全文浮层 + 连线高亮。
-        <div class="mode-switch">
-          <button id="btn-before" onclick="setMode('before')">Before（线上现状）</button>
-          <button id="btn-after" class="on" onclick="setMode('after')">After（优化后）</button>
         </div>
       </div>
       <div id="flow-wrap">
@@ -410,42 +462,14 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 <!-- ── Export Modal ── -->
 <div id="modal-mask">
   <div class="modal">
-    <h2>Export returns (CSV)</h2>
-    <div class="sub">选择导出格式 — 应用当前筛选与日期范围</div>
-    <div class="opt" id="opt-rma" onclick="setExport('rma')">
-      <span class="radio"></span>
-      <div>
-        <div class="tt">RMA 汇总（每个 RMA 一行）— 现状</div>
-        <div class="ds">与列表字段一致，用于总量统计</div>
-        <div class="fields">
-          <span class="fld">rma_number</span><span class="fld">order_number</span><span class="fld">customer</span>
-          <span class="fld">created_at</span><span class="fld">resolution_type</span><span class="fld">status</span>
-        </div>
-      </div>
+    <h2>Export returns</h2>
+    <div class="sub" id="exp-scope"></div>
+    <div class="chk-all">
+      <label class="chk"><input type="checkbox" id="chk-all" onchange="toggleAllFields(this.checked)"><span>Select all</span></label>
+      <span class="chk-count" id="exp-count"></span>
     </div>
-    <div class="opt sel-on" id="opt-item" onclick="setExport('item')">
-      <span class="radio"></span>
-      <div>
-        <div class="tt">Item 级明细（每个退货商品一行）<span class="new-badge">NEW</span></div>
-        <div class="ds">供仓库线下核对：一张表看全 RMA ↔ 商品 ↔ 运单，无需逐个点开 RMA</div>
-        <div class="fields">
-          <span class="fld">rma_number</span><span class="fld">order_number</span>
-          <span class="fld new">sku</span><span class="fld new">item_name</span><span class="fld new">qty</span>
-          <span class="fld new">return_reason</span><span class="fld new">label_carrier</span>
-          <span class="fld new">label_tracking_number</span><span class="fld">status</span>
-        </div>
-      </div>
-    </div>
-    <div class="csv-prev" id="csv-prev">
-      <div class="cap">PREVIEW · returns_item_detail_20260706.csv</div>
-      <div class="scroll">
-      <table>
-        <thead><tr><th>rma_number</th><th>order_number</th><th>sku</th><th>item_name</th><th>qty</th><th>return_reason</th><th>label_carrier</th><th>label_tracking_number</th><th>status</th></tr></thead>
-        <tbody id="csv-body"></tbody>
-      </table>
-      </div>
-    </div>
-    <div class="mail-note">📧 数据量较大时异步生成，下载链接将发送至 <b>ops@bassdash.com</b></div>
+    <div class="chk-list" id="chk-list"></div>
+    <div class="gran-note" id="gran-note"></div>
     <div class="modal-foot">
       <button class="btn" onclick="closeExport()">Cancel</button>
       <button class="btn primary" onclick="doExport()">Export</button>
@@ -454,32 +478,43 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 </div>
 
 <div id="flow-tip"></div>
+<div id="trk-pop" onmouseenter="clearTimeout(popTimer)" onmouseleave="hideTrkPopSoon()" onclick="event.stopPropagation()"></div>
 <div id="toast"></div>
 
 <script>
 /* ════════ 数据 ════════ */
 const RMAS = [
-  { rma:'BD7KX2M1', order:'#BD10234', customer:'Emily Carter',  created:'Jul 5, 2026, 3:12 PM', orderTs:'Jun 28, 2026, 9:04 AM', ship:'pre', type:'Refund', status:'In progress', carrier:'USPS', trk:'9400 1361 0930 0331 22',
-    items:[ {name:'Bassdash Alien UL Spinning Rod 6\'8"', vt:'Ultra Light - 2 pc', sku:'BD-ROD-AL68-UL', qty:1, reason:'Incorrect item received', price:'$89.99', emoji:'🎣'} ],
+  { rma:'BD7KX2M1', order:'#BD10234', customer:'Emily Carter',  created:'Jul 5, 2026, 3:12 PM', date:'2026-07-05', orderTs:'Jun 28, 2026, 9:04 AM', ship:'pre', type:'Refund', status:'In progress',
+    labels:[ {carrier:'USPS', trk:'9400 1361 0930 0331 22'} ],
+    items:[ {name:'Bassdash Alien UL Spinning Rod 6\'8"', vt:'Ultra Light - 2 pc', sku:'BD-ROD-AL68-UL', qty:1, li:0, reason:'Incorrect item received', price:'$89.99', emoji:'🎣'} ],
     events:[['Shipping label created, USPS awaiting item','Jul 5, 2026, 3:20 PM — SEATTLE, WA']] },
-  { rma:'BD3QW8Z5', order:'#BD10221', customer:'Jake Morrison', created:'Jul 4, 2026, 10:47 AM', orderTs:'Jun 25, 2026, 7:41 PM', ship:'in', type:'Refund', status:'Accepted', carrier:'UPS', trk:'1Z 999 AA1 01 2345 6784',
-    items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, reason:'The leg opening of the pants is too wide or too narrow', price:'$25.98', emoji:'🪝'} ],
+  { rma:'BD4RT8W2', order:'#BD10240', customer:'Marcus Chen', created:'Jul 5, 2026, 9:40 AM', date:'2026-07-05', orderTs:'Jun 30, 2026, 2:15 PM', ship:'in', type:'Refund', status:'Accepted',
+    labels:[ {carrier:'USPS', trk:'9400 1102 5545 0087 31'}, {carrier:'USPS', trk:'9400 1102 5545 0087 48'} ],
+    items:[ {name:'Bassdash Alien Baitcasting Reel', vt:'7.2:1 / Right hand', sku:'BD-REL-AL72-R', qty:1, li:0, reason:'Doesn\'t suit me (upgraded to another model)', price:'$79.99', emoji:'🎛️'},
+            {name:'Bassdash Rod Case 6\'6"', vt:'Black', sku:'BD-CSE-R66-BK', qty:1, li:1, reason:'Ordered by mistake', price:'$36.99', emoji:'🧳'} ],
+    events:[['Departed USPS regional facility (package 1 of 2)','Jul 6, 2026, 3:05 AM — TACOMA, WA'],['USPS in possession of item','Jul 5, 2026, 4:12 PM — OLYMPIA, WA']] },
+  { rma:'BD3QW8Z5', order:'#BD10221', customer:'Jake Morrison', created:'Jul 4, 2026, 10:47 AM', date:'2026-07-04', orderTs:'Jun 25, 2026, 7:41 PM', ship:'in', type:'Refund', status:'Accepted',
+    labels:[ {carrier:'UPS', trk:'1Z 999 AA1 01 2345 6784'} ],
+    items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, li:0, reason:'The leg opening of the pants is too wide or too narrow', price:'$25.98', emoji:'🪝'} ],
     events:[['Departed UPS facility','Jul 6, 2026, 2:11 AM — PORTLAND, OR'],['Origin scan','Jul 5, 2026, 6:30 PM — EUGENE, OR']] },
-  { rma:'BD9LP4T2', order:'#BD10198', customer:'Hannah Lee', created:'Jul 3, 2026, 6:55 PM', orderTs:'Jun 20, 2026, 1:22 PM', ship:'del', type:'Exchange', status:'Completed', carrier:'USPS', trk:'9405 5036 9930 0221 89',
-    items:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 42', sku:'BD-WDR-CHM-42', qty:1, reason:'The waist of the waders is too tight — need one size up', price:'$129.99', emoji:'🥾'},
-            {name:'Wading Belt 2"', vt:'Olive', sku:'BD-BLT-WD2-OL', qty:1, reason:'Ordered by mistake', price:'$15.99', emoji:'🧷'} ],
+  { rma:'BD9LP4T2', order:'#BD10198', customer:'Hannah Lee', created:'Jul 3, 2026, 6:55 PM', date:'2026-07-03', orderTs:'Jun 20, 2026, 1:22 PM', ship:'del', type:'Exchange', status:'Completed',
+    labels:[ {carrier:'USPS', trk:'9405 5036 9930 0221 89'} ],
+    items:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 42', sku:'BD-WDR-CHM-42', qty:1, li:0, reason:'The waist of the waders is too tight — need one size up', price:'$129.99', emoji:'🥾'},
+            {name:'Wading Belt 2"', vt:'Olive', sku:'BD-BLT-WD2-OL', qty:1, li:0, reason:'Ordered by mistake', price:'$15.99', emoji:'🧷'} ],
     events:[['Delivered, front desk/reception/mail room','Jul 6, 2026, 11:02 AM — KENT, WA'],
             ['Out for delivery','Jul 6, 2026, 6:10 AM — KENT, WA'],
             ['Arrived at USPS regional facility','Jul 5, 2026, 9:44 PM — SEATTLE WA DISTRIBUTION CENTER'],
             ['USPS in possession of item','Jul 4, 2026, 2:18 PM — BELLEVUE, WA']] },
-  { rma:'BD5NC7R8', order:'#BD10187', customer:'Tracey Woodard', created:'Jul 2, 2026, 7:25 PM', orderTs:'Jun 22, 2026, 8:15 AM', ship:'pre', type:'Refund', status:'In progress', carrier:null, trk:null,
-    items:[ {name:'Fishing Pliers 7.5" Titanium', vt:'Blue handle', sku:'BD-PLR-TI75-BL', qty:1, reason:'Poor quality', price:'$32.99', emoji:'🛠️'} ], events:[] },
-  { rma:'BD2VH6K9', order:'#BD10165', customer:'Miller Simon', created:'Jul 2, 2026, 10:24 AM', orderTs:'Jun 2, 2026, 4:47 PM', ship:'pre', type:'Refund', status:'Rejected', carrier:null, trk:null,
-    items:[ {name:'Topwater Frog Lure Kit (5 pk)', vt:'Assorted', sku:'BD-LUR-FRG5-AS', qty:1, reason:'Others (outside return window)', price:'$21.99', emoji:'🐸'} ], events:[] },
-  { rma:'BD8JD1X4', order:'#BD10142', customer:'Gina Whitcher', created:'Jul 1, 2026, 1:05 PM', orderTs:'Jun 18, 2026, 10:09 AM', ship:'del', type:'Refund', status:'Completed', carrier:'FedEx', trk:'7712 3456 7890',
-    items:[ {name:'Bassdash Fishing Vest V2', vt:'Khaki / L', sku:'BD-VST-V2KH-L', qty:1, reason:'The chest is too tight or too loose', price:'$45.99', emoji:'🦺'} ],
+  { rma:'BD5NC7R8', order:'#BD10187', customer:'Tracey Woodard', created:'Jul 2, 2026, 7:25 PM', date:'2026-07-02', orderTs:'Jun 22, 2026, 8:15 AM', ship:'pre', type:'Refund', status:'In progress', labels:[],
+    items:[ {name:'Fishing Pliers 7.5" Titanium', vt:'Blue handle', sku:'BD-PLR-TI75-BL', qty:1, li:0, reason:'Poor quality', price:'$32.99', emoji:'🛠️'} ], events:[] },
+  { rma:'BD2VH6K9', order:'#BD10165', customer:'Miller Simon', created:'Jul 2, 2026, 10:24 AM', date:'2026-07-02', orderTs:'Jun 2, 2026, 4:47 PM', ship:'pre', type:'Refund', status:'Rejected', labels:[],
+    items:[ {name:'Topwater Frog Lure Kit (5 pk)', vt:'Assorted', sku:'BD-LUR-FRG5-AS', qty:1, li:0, reason:'Others (outside return window)', price:'$21.99', emoji:'🐸'} ], events:[] },
+  { rma:'BD8JD1X4', order:'#BD10142', customer:'Gina Whitcher', created:'Jul 1, 2026, 1:05 PM', date:'2026-07-01', orderTs:'Jun 18, 2026, 10:09 AM', ship:'del', type:'Refund', status:'Completed',
+    labels:[ {carrier:'FedEx', trk:'7712 3456 7890'} ],
+    items:[ {name:'Bassdash Fishing Vest V2', vt:'Khaki / L', sku:'BD-VST-V2KH-L', qty:1, li:0, reason:'The chest is too tight or too loose', price:'$45.99', emoji:'🦺'} ],
     events:[['Delivered','Jul 4, 2026, 10:31 AM — KENT, WA'],['On FedEx vehicle for delivery','Jul 4, 2026, 5:02 AM — KENT, WA']] },
 ];
+const TODAY_TS = Date.parse('2026-07-06T23:59:59');
 const SHIP = { pre:{t:'Pre-transit',c:'#5E8E3E'}, in:{t:'In transit',c:'#47C1BF'}, del:{t:'Delivered',c:'#50B83C'} };
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
@@ -488,12 +523,82 @@ function toast(msg){
   el.textContent = msg; el.classList.add('show');
   clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2200);
 }
-function copyTrk(t){ navigator.clipboard && navigator.clipboard.writeText(t.replace(/\s/g,'')); toast('Tracking number 已复制'); }
-function copySku(s){ navigator.clipboard && navigator.clipboard.writeText(s); toast('SKU 已复制'); }
+function copyTrk(t){ navigator.clipboard && navigator.clipboard.writeText(t.replace(/\s/g,'')); toast('Tracking number copied'); }
+function copySku(s){ navigator.clipboard && navigator.clipboard.writeText(s); toast('SKU copied'); }
 
-/* ════════ Issues 列表 ════════ */
+/* ════════ Issues 列表：筛选 / 排序 / 多包裹展开 ════════ */
+const FILTER = { q:'', type:'', ship:'', status:'', range:'' };
+let SORT = { field:'created', asc:false };
+
+function onFilter(){
+  FILTER.q = document.getElementById('f-q').value;
+  FILTER.type = document.getElementById('f-type').value;
+  FILTER.ship = document.getElementById('f-ship').value;
+  FILTER.status = document.getElementById('f-status').value;
+  FILTER.range = document.getElementById('f-range').value;
+  renderTable();
+}
+function setSort(f){
+  SORT = SORT.field === f ? { field:f, asc:!SORT.asc } : { field:f, asc:true };
+  renderTable();
+}
+function demoSearch(q){
+  document.getElementById('f-q').value = q;
+  onFilter();
+  toast('Searching by Tracking#: ' + q);
+}
+function filteredRows(){
+  const q = FILTER.q.trim().toLowerCase().replace(/\s+/g,'');
+  return RMAS.filter(r => {
+    if (FILTER.type && r.type !== FILTER.type) return false;
+    if (FILTER.ship && r.ship !== FILTER.ship) return false;
+    if (FILTER.status && r.status !== FILTER.status) return false;
+    if (FILTER.range && (TODAY_TS - Date.parse(r.date)) / 86400e3 > +FILTER.range) return false;
+    if (q){
+      const hay = [r.rma, r.order, r.customer, ...r.labels.map(l => l.trk)].join('|').toLowerCase().replace(/\s+/g,'');
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b) => {
+    const v = x => SORT.field === 'order' ? +x.order.replace(/\D/g,'') : Date.parse(x.created);
+    return SORT.asc ? v(a) - v(b) : v(b) - v(a);
+  });
+}
+function trkFrag(lb){
+  return `<span class="car">${lb.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo: opens the carrier tracking page')">${lb.trk}</a><button class="copy" title="Copy" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button>`;
+}
+function trkCell(r){
+  const L = r.labels;
+  if (!L.length) return `<span class="trk-none">— Label not scanned</span>`;
+  if (L.length === 1) return `<span class="trk">${trkFrag(L[0])}</span>`;
+  return `<span class="trk">${trkFrag(L[0])}<button class="more" title="View all packages"
+    onmouseenter="showTrkPop(event,'${r.rma}')" onmouseleave="hideTrkPopSoon()"
+    onclick="event.stopPropagation();showTrkPop(event,'${r.rma}')">+${L.length - 1}</button></span>`;
+}
+/* 多包裹 hover 浮层（行高不变，浮层内可复制/跳轨迹） */
+let popTimer = null;
+function showTrkPop(e, rma){
+  clearTimeout(popTimer);
+  const r = RMAS.find(x => x.rma === rma);
+  const pop = document.getElementById('trk-pop');
+  pop.innerHTML = `<div class="cap">${r.labels.length} PACKAGES · ${rma}</div>` +
+    r.labels.map((lb,i) => `<div class="prow"><span class="pkg-tag">Package ${i+1}</span><span class="trk">${trkFrag(lb)}</span></div>`).join('');
+  pop.style.display = 'block';
+  const rect = e.target.getBoundingClientRect();
+  let x = rect.left - 8, y = rect.bottom + 8;
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  if (x + w > innerWidth - 12) x = innerWidth - w - 12;
+  if (y + h > innerHeight - 12) y = rect.top - h - 8;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+function hideTrkPopSoon(){
+  popTimer = setTimeout(() => { document.getElementById('trk-pop').style.display = 'none'; }, 180);
+}
 function renderTable(){
-  document.getElementById('tbody').innerHTML = RMAS.map(r => `
+  const rows = filteredRows();
+  document.getElementById('sort-order').textContent = SORT.field === 'order' ? (SORT.asc ? '↑' : '↓') : '⇅';
+  document.getElementById('sort-created').textContent = SORT.field === 'created' ? (SORT.asc ? '↑' : '↓') : '⇅';
+  document.getElementById('tbody').innerHTML = rows.length ? rows.map(r => `
     <tr onclick="showDetail('${r.rma}')">
       <td>${r.rma}</td>
       <td><a class="lk" onclick="event.stopPropagation()">${r.order} <span style="font-size:11px">↗</span></a></td>
@@ -502,11 +607,10 @@ function renderTable(){
       <td><span class="tag-ship"><span class="d" style="background:${SHIP[r.ship].c}"></span>${SHIP[r.ship].t}</span></td>
       <td>${r.type}</td>
       <td>${r.status}</td>
-      <td>${ r.trk
-        ? `<span class="trk"><span class="car">${r.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo：打开承运商轨迹页')">${r.trk}</a><button class="copy" title="Copy" onclick="event.stopPropagation();copyTrk('${r.trk}')">⧉</button></span>`
-        : `<span class="trk-none">— Label not scanned</span>` }</td>
+      <td>${trkCell(r)}</td>
       <td><span class="risk"><span class="d"></span>Low</span></td>
-    </tr>`).join('');
+    </tr>`).join('')
+    : `<tr><td colspan="9"><div class="empty-wrap"><div class="t1">No issues</div><div class="t2">You don’t have any issues yet.</div></div></td></tr>`;
 }
 
 /* ════════ RMA 详情整页（对齐 ReturnDetail/index.jsx 布局）════════ */
@@ -523,7 +627,7 @@ function showDetail(rma){
           <span class="tag-type">${r.type}</span>
         </div>
         <div class="sku-line">
-          <span class="sku-chip" onclick="copySku('${it.sku}')" title="点击复制">SKU&nbsp;·&nbsp;${it.sku}&nbsp;⧉</span><span class="new-badge">NEW</span>
+          <span class="sku-chip" onclick="copySku('${it.sku}')" title="Click to copy">SKU&nbsp;·&nbsp;${it.sku}&nbsp;⧉</span>
           <span style="font-size:12px;color:var(--gray2)">× ${it.qty}</span>
         </div>
         <div class="meta"><b>Reason: </b><span>${esc(it.reason)}</span></div>
@@ -532,9 +636,17 @@ function showDetail(rma){
     </div>`).join('');
 
   const subtotal = r.items.reduce((s,it)=> s + parseFloat(it.price.slice(1))*it.qty, 0);
+  const L = r.labels;
+  const trackLinks = L.length > 1
+    ? `<div style="margin-top:6px">${L.map((lb,i) => `
+        <div class="prow" style="border-bottom:1px dashed #EEF0F2">
+          <span class="pkg-tag">Package ${i+1}</span><span class="trk">${trkFrag(lb)}</span>
+          <a class="lk" style="margin-left:auto;font-size:12px;white-space:nowrap" onclick="toast('Demo: opens the carrier tracking page')">Track ›</a>
+        </div>`).join('')}</div>`
+    : L.map(lb => `<a class="ship-link" onclick="toast('Demo: opens the carrier tracking page')">${lb.carrier} ${lb.trk} &gt;</a>`).join('');
   const timeline = r.events.length ? `
-    <p class="ship-status" style="margin-bottom:2px">${SHIP[r.ship].t}</p>
-    ${r.trk ? `<a class="ship-link" onclick="toast('Demo：打开承运商轨迹页')">${r.carrier} ${r.trk} &gt;</a>` : ''}
+    <p class="ship-status" style="margin-bottom:2px">${SHIP[r.ship].t}${L.length > 1 ? `&nbsp;<span class="pkg-tag">${L.length} packages</span>` : ''}</p>
+    ${trackLinks}
     <div class="tl">
       ${r.events.map((e,i)=>`
         <div class="tl-item ${i===0?'first':''}">
@@ -542,20 +654,27 @@ function showDetail(rma){
           <div class="tl-bd"><div class="ds" title="${esc(e[0])}">${esc(e[0])}</div><div class="ts">${esc(e[1])}</div></div>
         </div>`).join('')}
     </div>`
-    : `<p class="ship-status" style="color:var(--gray2)">${r.trk ? SHIP[r.ship].t : 'Label not generated yet'}</p>`;
+    : `<p class="ship-status" style="color:var(--gray2)">${L.length ? SHIP[r.ship].t : 'Label not generated yet'}</p>`;
 
   // R4：线上 ShippingInfo.jsx 中该区块被 isNeedReview 门禁，Completed 不渲染；优化后终态仍展示（只读）
-  const shippingDocs = r.trk ? `
+  const shippingDocs = L.length ? `
     <hr class="hr">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <span class="sec-tt">Shipping documents${isCompleted ? '<span class="new-badge">终态仍可见</span>' : ''}</span>
-      ${!isCompleted && r.status === 'In progress' ? '<a class="lk" style="color:#2121C4;font-size:14px" onclick="toast(\'Demo：Resend label 弹窗\')">Resend</a>' : ''}
+      <span class="sec-tt">Shipping documents</span>
+      ${!isCompleted && r.status === 'In progress' ? '<a class="lk" style="color:#2121C4;font-size:14px" onclick="toast(\'Demo: opens the Resend label dialog\')">Resend</a>' : ''}
     </div>
     <div class="doc-btns">
-      <button class="btn" onclick="toast('Demo：下载 Return label PDF')">Download label</button>
-      <button class="btn" onclick="toast('Demo：下载 Packing slip')">Download packing slip</button>
+      ${L.length > 1
+        ? L.map((lb,i) => `
+          <div class="prow" style="padding:0;gap:10px">
+            <span class="pkg-tag">Package ${i+1}</span>
+            <span class="num" style="font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--gray1)">${lb.carrier} ${lb.trk}</span>
+            <button class="btn small" style="margin-left:auto" onclick="toast('Demo: downloads the return label PDF')">Label PDF</button>
+          </div>`).join('')
+        : `<button class="btn" onclick="toast('Demo: downloads the return label PDF')">Download label</button>`}
+      <button class="btn" onclick="toast('Demo: downloads the packing slip')">Download packing slip</button>
     </div>
-    ${isCompleted ? `<div class="callout" style="margin:12px 0 0"><span class="n">4</span><div>线上现状：<code>ShippingInfo.jsx</code> 中此区块由 <code>isNeedReview</code> 门禁，RMA 完结后 label / packing slip 入口消失。<b>优化后：只要 label 生成过，任何状态可见（只读）。</b></div></div>` : ''}`
+    `
     : '';
 
   document.getElementById('view-detail').innerHTML = `
@@ -566,12 +685,12 @@ function showDetail(rma){
         <div class="dt-sub"><a>Return confirmation</a><span>Created at ${r.created}</span></div>
         <div class="dt-sub"><a>${r.order}</a><span>Ordered at ${r.orderTs}</span></div>
       </div>
-      ${r.status === 'In progress' ? '<button class="btn primary" onclick="toast(\'Demo：Process items 弹窗\')">Process item(s)</button>' : ''}
+      ${r.status === 'In progress' ? '<button class="btn primary" onclick="toast(\'Demo: opens the Process items dialog\')">Process item(s)</button>' : ''}
     </div>
     <div class="dt-cols">
       <div class="dt-main">
         <div class="wcard">
-          <h3>Return item(s)<span class="new-badge">SKU 展示</span></h3>
+          <h3>Return item(s)</h3>
           ${itemsHtml}
         </div>
         <div class="wcard">
@@ -580,7 +699,7 @@ function showDetail(rma){
             ${(isCompleted ? [
               ['Refund issued and RMA completed', r.events[0] ? r.events[0][1].split(' — ')[0] : r.created],
               ['Return package delivered to warehouse', r.events[0] ? r.events[0][1].split(' — ')[0] : ''],
-              ['Return label generated (' + (r.carrier||'') + ')', r.created],
+              ['Return label generated (' + L.map(l => l.carrier).join(', ') + (L.length > 1 ? ' ×' + L.length : '') + ')', r.created],
               ['Return requested by customer', r.created],
             ] : [
               ['Return ' + r.status.toLowerCase(), r.created],
@@ -618,7 +737,7 @@ function showDetail(rma){
           </div>
           <div style="font-size:14px;color:#374151">Seel uses AI technology to evaluate return fraud risk levels.<br>Results update daily for maximum accuracy.</div>
           <div style="font-size:14px;color:#374151;margin:6px 0 14px">This return has been identified as <b style="color:#111">low</b> risk.</div>
-          <button class="btn" onclick="toast('Demo：Fraud 指标弹窗')">View full analysis</button>
+          <button class="btn" onclick="toast('Demo: opens the fraud indicators dialog')">View full analysis</button>
         </div>
         <div class="wcard p20">
           <h3 style="margin-bottom:8px">Customer</h3>
@@ -641,40 +760,96 @@ function backToList(){
 }
 
 /* ════════ Export Modal ════════ */
-let exportMode = 'item';
-function openExport(){ document.getElementById('modal-mask').classList.add('open'); renderCsvPreview(); }
+function openExport(){
+  document.getElementById('modal-mask').classList.add('open');
+  renderExportList();
+}
 function closeExport(){ document.getElementById('modal-mask').classList.remove('open'); }
-function setExport(m){
-  exportMode = m;
-  document.getElementById('opt-rma').classList.toggle('sel-on', m === 'rma');
-  document.getElementById('opt-item').classList.toggle('sel-on', m === 'item');
-  document.getElementById('csv-prev').style.display = m === 'item' ? '' : 'none';
+
+/* ── 字段勾选列表：行粒度自动推导（勾选任一 Item 组字段 → 每商品一行，否则每 RMA 一行）── */
+const EXPORT_FIELDS = [
+  {k:'rma_number', t:'RMA number', req:true, g:'RMA'},
+  {k:'order_number', t:'Order number', g:'RMA'},
+  {k:'customer', t:'Customer', g:'RMA'},
+  {k:'created_at', t:'Created date', g:'RMA'},
+  {k:'resolution_type', t:'Resolution type', g:'RMA'},
+  {k:'rma_status', t:'Status', g:'RMA'},
+  {k:'sku', t:'SKU', g:'Item'},
+  {k:'item_name', t:'Item name', g:'Item'},
+  {k:'variant', t:'Variant', g:'Item'},
+  {k:'qty', t:'Quantity', g:'Item'},
+  {k:'return_reason', t:'Return reason', g:'Item'},
+  {k:'label_carrier', t:'Carrier', g:'Shipping label'},
+  {k:'label_tracking_number', t:'Tracking number', g:'Shipping label'},
+];
+let selFields = new Set(EXPORT_FIELDS.map(f => f.k));
+const isItemLevel = () => EXPORT_FIELDS.some(f => f.g === 'Item' && selFields.has(f.k));
+function activeKeys(){ return EXPORT_FIELDS.filter(f => selFields.has(f.k)).map(f => f.k); }
+
+function renderExportList(){
+  const groups = [...new Set(EXPORT_FIELDS.map(f => f.g))];
+  document.getElementById('chk-list').innerHTML = groups.map(g =>
+    `<div class="chk-group-h">${g}</div>` + EXPORT_FIELDS.filter(f => f.g === g).map(f => `
+      <label class="chk ${f.req ? 'dis' : ''}">
+        <input type="checkbox" ${selFields.has(f.k) ? 'checked' : ''} ${f.req ? 'disabled' : ''}
+          onchange="toggleField('${f.k}')"><span>${f.t}</span>${f.req ? '<span class="req-mark">Required</span>' : ''}
+      </label>`).join('')
+  ).join('');
+  updateExportUI();
 }
-function itemRows(){
-  return RMAS.flatMap(r => r.items.map(it => [
-    r.rma, r.order.replace('#',''), it.sku, it.name, it.qty, it.reason,
-    r.carrier || '', (r.trk || '').replace(/\s/g,''), r.status
-  ]));
+function toggleField(key){
+  selFields.has(key) ? selFields.delete(key) : selFields.add(key);
+  updateExportUI();
 }
-function renderCsvPreview(){
-  document.getElementById('csv-body').innerHTML =
-    itemRows().slice(0,5).map(row => '<tr>' + row.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>').join('');
+function toggleAllFields(on){
+  selFields = new Set(on ? EXPORT_FIELDS.map(f => f.k) : EXPORT_FIELDS.filter(f => f.req).map(f => f.k));
+  renderExportList();
+}
+function updateExportUI(){
+  const n = selFields.size, total = EXPORT_FIELDS.length;
+  const all = document.getElementById('chk-all');
+  all.checked = n === total;
+  all.indeterminate = n > 0 && n < total;
+  document.getElementById('exp-count').textContent = `${n} of ${total} selected`;
+  const perItem = isItemLevel();
+  const rows = perItem ? itemRowObjs().length : filteredRows().length;
+  document.getElementById('exp-scope').textContent =
+    `${filteredRows().length} RMAs match your current filters and date range`;
+  document.getElementById('gran-note').innerHTML = perItem
+    ? `Exports <b>${rows} rows</b> — one per return item. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`
+    : `Exports <b>${rows} rows</b> — one per RMA. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`;
+}
+function itemRowObjs(){
+  return filteredRows().flatMap(r => r.items.map(it => {
+    const lb = r.labels[it.li || 0] || {};
+    return {
+      rma_number: r.rma, order_number: r.order.replace('#',''), customer: r.customer,
+      sku: it.sku, item_name: it.name, variant: it.vt, qty: it.qty, return_reason: it.reason,
+      label_carrier: lb.carrier || '', label_tracking_number: (lb.trk || '').replace(/\s/g,''),
+      resolution_type: r.type, rma_status: r.status, created_at: r.date,
+    };
+  }));
+}
+function rmaRowObjs(){
+  return filteredRows().map(r => ({
+    rma_number: r.rma, order_number: r.order.replace('#',''), customer: r.customer,
+    created_at: r.date, resolution_type: r.type, rma_status: r.status,
+    label_carrier: r.labels.map(l => l.carrier).join('; '),
+    label_tracking_number: r.labels.map(l => l.trk.replace(/\s/g,'')).join('; '),
+  }));
 }
 function doExport(){
-  let csv;
-  if (exportMode === 'item') {
-    csv = [['rma_number','order_number','sku','item_name','qty','return_reason','label_carrier','label_tracking_number','status'], ...itemRows()];
-  } else {
-    csv = [['rma_number','order_number','customer','created_at','resolution_type','status'],
-      ...RMAS.map(r => [r.rma, r.order.replace('#',''), r.customer, r.created, r.type, r.status])];
-  }
+  const keys = activeKeys();
+  const perItem = isItemLevel();
+  const objs = perItem ? itemRowObjs() : rmaRowObjs();
+  const csv = [keys, ...objs.map(o => keys.map(k => o[k]))];
   const text = csv.map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['﻿' + text], {type:'text/csv'}));
-  a.download = exportMode === 'item' ? 'returns_item_detail_20260706.csv' : 'returns_summary_20260706.csv';
+  a.download = perItem ? 'returns_item_detail_20260706.csv' : 'returns_summary_20260706.csv';
   a.click();
   closeExport();
-  toast(exportMode === 'item' ? '已导出 Item 级明细 CSV' : '已导出 RMA 汇总 CSV');
+  toast(perItem ? 'Item-level detail CSV exported' : 'RMA summary CSV exported');
 }
 
 /* ════════ Rules Flow 编辑器（对齐 Rules/Flow 源码）════════
@@ -861,6 +1036,7 @@ function switchTab(t){
   document.getElementById('main').style.padding = t === 'rules' ? '22px 30px 0' : '22px 30px 80px';
   document.getElementById('tab-issues').classList.toggle('active', t === 'issues');
   document.getElementById('tab-rules').classList.toggle('active', t === 'rules');
+  document.getElementById('flow-mode-switch').style.display = t === 'rules' ? 'flex' : 'none';
   if (t === 'rules') requestAnimationFrame(buildFlow);
 }
 
