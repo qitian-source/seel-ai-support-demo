@@ -248,11 +248,10 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
   background:#f5f5f5; font-size:12px; color:var(--ink); line-height:1.4; text-align:center; cursor:default;
 }
 .mode-before .elabel{ max-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
-/* After = 优化后：全文展示 + 自动换行(≤3行) + 白底描边 */
+/* After = 优化后：限制字符数（词边界截断+省略号，约两行）+ hover 浮层看全文 */
 .mode-after .elabel{
   max-width:142px; white-space:normal; background:#fff; border:1px solid #DFE3E8; border-radius:6px;
   padding:3px 7px; box-shadow:0 1px 3px rgba(20,22,30,.06);
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
 }
 .mode-after .elabel:hover{ border-color:var(--brand); }
 
@@ -901,6 +900,12 @@ function nodeHtml(n){
       <div class="fbody">${ACCEPT_SVG}<div class="t-ret">Return</div></div></div>`;
 }
 
+function clipLabel(s, n){
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s(,-]+$/, '') + '…';
+}
 function flatten(n, depth, list){
   n.depth = depth; list.push(n);
   (n.children||[]).forEach(c => flatten(c, depth+1, list));
@@ -958,7 +963,8 @@ function buildFlow(){
     if (c.label){
       const lb = document.createElement('div');
       lb.className = 'elabel';
-      lb.textContent = c.label;
+      /* After：限制约 42 字符（词边界截断 + …），完整文案走 hover 浮层 */
+      lb.textContent = isAfter ? clipLabel(c.label, 40) : c.label;
       lb.dataset.full = c.label;
       lb.dataset.cap = c.type === 'ret' && p.type === 'mc' ? 'OPTION' : 'RETURN REASON';
       /* Before：对齐线上 StepDefaultEdge —— 标签在 bezier 中点（t=0.5，会互相压盖，忠实现状）
