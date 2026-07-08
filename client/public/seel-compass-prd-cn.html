@@ -926,8 +926,43 @@
           <tr><td>外部 API（USPTO / Middesk）宕机</td><td>IP / Entity 模块不可用</td><td>Cache 30d · fallback UI 明确告知 · degrade gracefully</td></tr>
           <tr><td>商家把 Compass 当律师用</td><td>UPL 风险 · Seel 责任</td><td>Language filter 硬约束 · footer disclaimer · 每条 recommendation 明示 "consult counsel"</td></tr>
           <tr><td>Seel 出新产品，carve-out 未及时更新</td><td>self-harm 风险 · honeypot fail</td><td>Fingerprint 版本化 · 产品变更 checklist 里加"更新 Compass fingerprint"步骤</td></tr>
+          <tr><td>法规原文链接失效 / 官方页改版</td><td>Source 层引用不可达</td><td>优先存版本化时点 URL · 链接健康检查搭 corpus 月度 refresh · 内容实质变化触发重签（SM C）</td></tr>
         </tbody>
       </table>
+
+      <h3>12.4 数据源接入清单（v1.2）</h3>
+      <p><b>架构原则：运行时实时调用的外部 API 只有 2 个；法规原文全部在 corpus 构建时批量摄入进 rule registry，运行时零调用</b>（引用只查表渲染，不生成 —— 见 §6.12 硬约束）。</p>
+
+      <h4>A · 运行时实时调用（仅 2 个）</h4>
+      <table>
+        <thead><tr><th>源</th><th>用途</th><th>成本 / 工期</th></tr></thead>
+        <tbody>
+          <tr><td>USPTO Open Data Portal API</td><td>IP 商标名查重 + 年度重扫</td><td>免费 tier · 2–3 周</td></tr>
+          <tr><td>Middesk API（聚合各州 SoS）</td><td>Entity good-standing + 年报到期（DE / CA / NY / TX）</td><td>~$10/lookup · 1 周</td></tr>
+        </tbody>
+      </table>
+
+      <h4>B · 法规原文源（corpus 构建时摄入 → rule registry · 月度 refresh + 链接健康检查 · 全部免费公开）</h4>
+      <table>
+        <thead><tr><th>源</th><th>覆盖</th><th>版本化支持</th></tr></thead>
+        <tbody>
+          <tr><td>EUR-Lex（REST / CELEX）</td><td>GDPR · ePrivacy · Cosmetics 1223/2009 · GPSR</td><td>✅ consolidated 时点版本</td></tr>
+          <tr><td>eCFR API</td><td>16 CFR 255（Endorsement Guides）· 260（Green Guides）等 FTC 规则</td><td>✅ /on/日期 时点视图</td></tr>
+          <tr><td>uscode.house.gov</td><td>FTC Act §5 · Magnuson-Moss · CPSIA 等联邦成文法</td><td>—</td></tr>
+          <tr><td>州立法门户（CA leginfo 为主）</td><td>CPRA · Civ. Code §1723；CO / CT / VA 州法陆续</td><td>❌ 多数无（corpus 日期声明兜底）</td></tr>
+          <tr><td>ftc.gov</td><td>Staff reports / guidance（dark patterns 等）</td><td>—</td></tr>
+          <tr><td>OEHHA</td><td>Prop 65 物质清单（CSV）</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h4>C · 内部新建存储（工程量主体 · 约 1–2 周）</h4>
+      <ul>
+        <li><b>Rule registry</b>：rule id → 引用（label / 官方 URL / 市场），随 corpus 版本化 —— counsel 签署对象、报告引用的唯一来源，配 CI 引用检查（0 幻觉）</li>
+        <li><b>Evidence store</b>：per-scan 页面快照（摘录 offset + 时间戳）+ network trace —— Proof 层数据源</li>
+      </ul>
+
+      <h4>D · 已有（不新增）</h4>
+      <p class="text-sm" style="font-size:12.5px;color:var(--mid)">商家站点爬虫管线 · EasyPrivacy / DuckDuckGo Tracker Radar 追踪器清单（定期拉取）。<b>外部成本增量 = $0</b>，付费项只有原有的 Middesk。与英文法务版 PRD §9 数据表一致。</p>
     </section>
 
     <!-- 13 -->
