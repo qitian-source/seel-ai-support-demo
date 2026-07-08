@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Return SaaS · Issues & Rules UX Optimizations · Demo (Hi-Fi)</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── antd-ish tokens（对齐 merchant-dashboard 线上样式）── */
+:root{
+  --ink:rgba(0,0,0,.88);
+  --gray1:#5C5F62;      /* 线上正文次级灰 */
+  --gray2:#6D7175;      /* 线上说明灰 */
+  --border:#DFE3E8;     /* 线上卡片边框 */
+  --split:#f0f0f0;      /* antd 分割线 */
+  --link:#1677ff;       /* antd 默认链接 */
+  --brand:#645AFF;      /* Seel 品牌（loading/强调） */
+  --deep:#2E2BD8;       /* Reset to default rules 按钮 */
+  --new:#0BA35C;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+  background:#F7F8FA; color:var(--ink); font-size:14px; line-height:1.5715;
+  -webkit-font-smoothing:antialiased;
+}
+button{ font-family:inherit; }
+
+/* ── Demo banner ── */
+#demo-bar{
+  background:#15161a; color:#e5e7eb; padding:9px 20px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap; user-select:none;
+}
+#demo-bar .pill{ background:var(--brand); color:#fff; font-size:10px; font-weight:800; padding:3px 9px; border-radius:20px; letter-spacing:.06em; }
+#demo-bar .label{ font-size:12px; color:#cbd5e1; }
+#demo-bar .src{ font-size:10px; color:#8b919a; }
+#demo-bar .feats{ display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; align-items:center;}
+#demo-bar .feat{
+  font-size:11px; color:#d1d5db; background:#23252c; border:1px solid #35383f;
+  border-radius:20px; padding:4px 11px; display:flex; align-items:center; gap:6px; cursor:pointer;
+}
+#demo-bar .feat:hover{ border-color:var(--brand); }
+#demo-bar .feat .n{ background:var(--brand); color:#fff; font-weight:800; font-size:10px; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+#demo-bar .feat b{ color:#fff; font-weight:700;}
+
+/* ── App shell ── */
+#app{ display:flex; min-height:calc(100vh - 40px); }
+aside{
+  width:200px; flex-shrink:0; background:#fff; border-right:1px solid #E3E5E8;
+  padding:14px 10px; display:flex; flex-direction:column; gap:2px;
+}
+.store-sel{
+  display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+  padding:8px 10px; border-radius:8px; background:#F7F8FA; margin-bottom:14px;
+}
+.store-sel .logo{ width:18px; height:18px; border-radius:5px; background:var(--brand); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800;}
+.store-sel span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nav-item{ display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; color:#62666A; font-size:13px; cursor:default; }
+.nav-item svg{ width:15px; height:15px; opacity:.75; }
+.nav-item.active{ background:#EEEDFF; color:#4d43e0; font-weight:600; }
+.nav-sec{ font-size:10px; font-weight:700; letter-spacing:.07em; color:#9AA0A6; padding:14px 12px 4px; }
+
+main{ flex:1; min-width:0; padding:22px 30px 80px; }
+.page-head{ display:flex; align-items:baseline; gap:26px; margin-bottom:18px; }
+.page-head h1{ font-size:24px; font-weight:700; letter-spacing:-.02em; }
+.tabs{ display:flex; gap:22px; }
+.tab{ font-size:14px; color:#62666A; padding:6px 2px 8px; cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; }
+.tab.active{ color:#4d43e0; font-weight:600; border-bottom-color:#4d43e0; }
+.tab.disabled{ opacity:.45; cursor:not-allowed; }
+
+/* ── callouts / NEW ── */
+.new-badge{ display:inline-flex; align-items:center; font-size:9px; font-weight:800; letter-spacing:.05em; color:#fff; background:var(--new); border-radius:99px; padding:1px 6px; margin-left:6px; vertical-align:2px; }
+.callout{ display:flex; gap:8px; align-items:flex-start; background:#F0FDF6; border:1px solid #BBE7CF; border-radius:8px; padding:9px 12px; font-size:12px; color:#14532D; margin-bottom:14px; }
+.callout .n{ background:var(--new); color:#fff; font-weight:800; font-size:10px; flex-shrink:0; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+.callout.warn{ background:#FEF6F5; border-color:#F5CBC6; color:#7F1D1D; }
+.callout.warn .n{ background:#D1270F; }
+.callout code{ font-family:'SF Mono',Menlo,Consolas,monospace; font-size:11px; background:rgba(0,0,0,.06); padding:0 4px; border-radius:3px; }
+
+/* ── antd 风格基件 ── */
+.card{ background:#fff; border:1px solid #D8DBDF; border-radius:8px; padding:20px; }
+.btn{
+  height:32px; padding:4px 15px; border-radius:6px; border:1px solid #d9d9d9; background:#fff;
+  font-size:14px; color:var(--ink); cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,.02);
+}
+.btn:hover{ border-color:var(--link); color:var(--link); }
+.btn.primary{ background:var(--link); border-color:var(--link); color:#fff; }
+.btn.primary:hover{ opacity:.88; color:#fff; }
+.btn:disabled{ background:rgba(0,0,0,.04); border-color:#d9d9d9; color:rgba(0,0,0,.25); cursor:not-allowed; box-shadow:none; }
+.btn.small{ height:26px; padding:1px 10px; font-size:13px; white-space:nowrap; flex-shrink:0; }
+a.lk{ color:var(--link); text-decoration:none; cursor:pointer; }
+a.lk:hover{ opacity:.8; }
+
+/* ── Issues 列表（对齐 ReturnList.jsx / antd Table）── */
+.filters{ display:flex; gap:8px; margin-bottom:16px; }
+.search{ flex:1; display:flex; align-items:center; gap:8px; border:1px solid #d9d9d9; border-radius:6px; padding:5px 11px; color:rgba(0,0,0,.25); background:#fff; }
+.sel{ border:1px solid #d9d9d9; border-radius:6px; padding:5px 11px; color:var(--ink); background:#fff; display:flex; align-items:center; gap:10px; white-space:nowrap; font-size:14px; }
+.sel::after{ content:''; width:8px; height:8px; border-right:1.4px solid rgba(0,0,0,.25); border-bottom:1.4px solid rgba(0,0,0,.25); transform:rotate(45deg) translateY(-2px); }
+.filters2{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.export-btn{ margin-left:auto; display:flex; align-items:center; gap:7px; cursor:pointer; border:none; background:none; font-size:14px; color:var(--ink); }
+.export-btn:hover{ color:var(--link); }
+
+table.ant{ width:100%; border-collapse:collapse; }
+table.ant th{
+  text-align:left; font-size:14px; font-weight:600; color:var(--ink);
+  background:#fafafa; padding:12px 12px; white-space:nowrap; border-bottom:1px solid var(--split);
+}
+table.ant th .sort{ color:rgba(0,0,0,.29); font-size:10px; margin-left:4px; }
+table.ant td{ padding:13px 12px; border-bottom:1px solid var(--split); vertical-align:middle; white-space:nowrap; font-size:14px; }
+table.ant tbody tr{ cursor:pointer; }
+table.ant tbody tr:hover td{ background:#fafafa; }
+.tag-ship{ display:inline-flex; align-items:center; gap:8px; background:#E7EBF5; border:1px solid #DADEE9; border-radius:4px; padding:1px 8px; font-size:12px; color:var(--ink); }
+.tag-ship .d{ width:8px; height:8px; border-radius:2px; display:inline-block; }
+.risk{ display:inline-flex; align-items:center; gap:6px; border-radius:99px; padding:1px 10px 1px 8px; font-size:12px; background:#A4E6CB; color:var(--ink); }
+.risk .d{ width:6px; height:6px; border-radius:50%; background:#007454; }
+.trk{ display:inline-flex; align-items:center; gap:6px; }
+.trk .car{ font-size:10px; font-weight:700; color:var(--gray1); background:#F1F2F4; border-radius:4px; padding:1px 5px; }
+.trk .num{ font-family:'SF Mono',Menlo,Consolas,monospace; font-size:11.5px; letter-spacing:-.02em; color:var(--link); }
+.trk .copy{ border:none; background:none; cursor:pointer; color:rgba(0,0,0,.35); font-size:12px; padding:0 2px; }
+.trk .copy:hover{ color:var(--link); }
+.trk-none{ color:rgba(0,0,0,.35); font-size:13px; }
+.trk .more{ border:none; background:#EEF0F3; color:#4d43e0; font-weight:700; font-size:11px; border-radius:99px; padding:1px 8px; cursor:pointer; margin-left:2px; }
+.trk .more:hover{ background:#E3E1FF; }
+#trk-pop{
+  position:fixed; z-index:250; display:none; min-width:330px; white-space:nowrap;
+  background:#fff; border:1px solid #EEF0F2; border-radius:8px; padding:10px 14px;
+  box-shadow:0 6px 16px rgba(0,0,0,.08), 0 3px 6px -4px rgba(0,0,0,.12), 0 9px 28px 8px rgba(0,0,0,.05);
+}
+#trk-pop .cap{ font-size:11px; font-weight:700; color:var(--gray1); letter-spacing:.04em; margin-bottom:4px; }
+.prow{ display:flex; align-items:center; gap:8px; padding:6px 0; }
+#trk-pop .prow + .prow{ border-top:1px dashed #EEF0F2; }
+.pkg-tag{
+  font-size:10px; font-weight:700; color:var(--gray1); background:#F1F2F4;
+  border:1px solid #E3E5E8; border-radius:99px; padding:1px 7px; white-space:nowrap; flex-shrink:0;
+}
+.search-in{ flex:1; border:1px solid #d9d9d9; border-radius:6px; padding:5px 11px; font-size:14px; color:var(--ink); outline:none; font-family:inherit; }
+.search-in::placeholder{ color:rgba(0,0,0,.25); }
+.search-in:focus{ border-color:var(--link); box-shadow:0 0 0 2px rgba(22,119,255,.1); }
+.sel-in{ border:1px solid #d9d9d9; border-radius:6px; padding:5px 8px; font-size:14px; color:var(--ink); background:#fff; outline:none; cursor:pointer; font-family:inherit; }
+th.sortable{ cursor:pointer; user-select:none; }
+th.sortable:hover{ background:#f0f0f0; }
+.empty-wrap{ text-align:center; padding:48px 0 56px; }
+.empty-wrap .t1{ font-size:24px; font-weight:500; }
+.empty-wrap .t2{ font-size:16px; color:var(--gray1); margin-top:4px; }
+th.hl{ box-shadow:inset 0 2px 0 var(--new); }
+.pager{ display:flex; justify-content:flex-end; gap:6px; padding:14px 0 2px; color:var(--gray1); font-size:13px; align-items:center; }
+.pager .pg{ min-width:28px; height:28px; border:1px solid #d9d9d9; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; }
+.pager .pg.on{ border-color:var(--link); color:var(--link); }
+
+/* ── ReturnDetail 整页（对齐 ReturnDetail/index.jsx）── */
+#view-detail .dt-head{ display:flex; align-items:flex-start; margin-bottom:20px; }
+.back-btn{ flex:none; margin-right:12px; width:36px; height:36px; border-radius:4px; border:1px solid #BABFC3; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; }
+.dt-title{ font-weight:600; font-size:24px; line-height:28px; }
+.dt-title .no{ font-weight:400; }
+.tag-status{ display:inline-block; background:#D3DDEC; color:#000; border-radius:4px; padding:1px 8px; font-size:12px; vertical-align:4px; margin-left:8px; }
+.dt-sub{ display:flex; gap:8px; line-height:20px; color:var(--gray2); margin-top:8px; font-size:14px; }
+.dt-sub a{ color:var(--gray2); text-decoration:underline; }
+.dt-cols{ display:flex; gap:20px; align-items:flex-start; }
+.dt-main{ flex:1; min-width:0; }
+.dt-side{ width:35%; flex-shrink:0; }
+.wcard{ background:#fff; border:1px solid var(--border); border-radius:4px; padding:16px; margin-bottom:16px; }
+.wcard.p20{ padding:20px; }
+.wcard h3{ font-size:16px; line-height:24px; font-weight:600; }
+
+.ritem{ display:flex; gap:16px; padding:16px 0; border-bottom:1px solid var(--split); }
+.ritem:last-child{ border-bottom:none; }
+.ritem .ph{ flex:none; width:60px; height:60px; border-radius:6px; background:linear-gradient(135deg,#E8EAF0,#F5F6F8); display:flex; align-items:center; justify-content:center; font-size:24px; }
+.ritem .bd{ flex:1; min-width:0; }
+.ritem .tt-row{ display:flex; justify-content:space-between; gap:10px; }
+.ritem .tt{ font-weight:600; }
+.tag-type{ background:#E7E7E7; border-radius:4px; padding:1px 8px; font-size:12px; height:fit-content; }
+.ritem .meta{ font-size:12px; line-height:16px; margin-top:6px; }
+.ritem .meta b{ font-weight:600; }
+.ritem .meta span{ color:var(--gray1); }
+.sku-line{ margin-top:6px; display:flex; align-items:center; gap:6px; }
+.sku-chip{ display:inline-flex; align-items:center; gap:5px; font-family:'SF Mono',Menlo,Consolas,monospace; font-size:11px; color:#0B5A3C; background:#EAF8F1; border:1px solid #C4EBD7; border-radius:4px; padding:1px 7px; cursor:pointer; }
+.sku-chip:hover{ border-color:var(--new); }
+.ritem .pr{ flex:none; width:140px; text-align:right; font-size:14px; font-weight:700; }
+
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:5px 0; color:var(--ink); }
+.sum-row span:first-child{ color:var(--gray1); }
+.sum-row.total{ border-top:1px solid var(--split); margin-top:8px; padding-top:10px; font-weight:600; }
+.sum-row.total span:first-child{ color:var(--ink); }
+
+.ship-status{ font-size:14px; }
+.ship-link{ color:var(--ink); text-decoration:underline; font-size:14px; cursor:pointer; }
+.tl{ margin:18px 0 6px; }
+.tl-item{ display:flex; gap:12px; position:relative; padding-bottom:18px; }
+.tl-item::before{ content:''; position:absolute; left:7px; top:18px; bottom:0; width:2px; background:var(--split); }
+.tl-item:last-child::before{ display:none; }
+.tl-dot{ flex:none; width:16px; height:16px; border-radius:50%; border:2px solid #CCCCCC; background:#F9FAFB; z-index:1; }
+.tl-item.first .tl-dot{ border:none; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:8px; }
+.tl-bd{ min-width:0; }
+.tl-bd .ds{ font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-bd .ts{ font-size:12px; color:var(--gray2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hr{ border:none; border-top:1px solid var(--split); margin:16px 0; }
+.sec-tt{ font-weight:600; color:#1E2022; }
+.sec-tx{ color:var(--gray1); margin-top:2px; }
+.doc-btns{ display:flex; flex-direction:column; gap:14px; margin-top:10px; }
+.doc-btns .btn{ width:fit-content; }
+
+.cust-tabs{ display:flex; border-bottom:1px solid var(--split); margin-bottom:8px; gap:24px; }
+.cust-tab{ padding:6px 0 9px; font-size:14px; cursor:pointer; color:var(--gray1); border-bottom:2px solid transparent; }
+.cust-tab.on{ color:var(--link); border-bottom-color:var(--link); }
+.cust-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 2px; border-bottom:1px solid var(--split); }
+.cust-row:last-child{ border-bottom:none; }
+.cust-row .a{ color:var(--link); font-weight:500; font-size:14px; }
+.cust-row .s{ color:var(--gray2); font-size:13px; margin-top:2px; }
+
+/* ── Flow 编辑器（对齐 Rules/Flow）── */
+#view-rules{ margin:-22px -30px 0; }
+.flow-topbar{
+  background:#fff; border-bottom:1px solid #E3E5E8; height:56px; padding:0 16px;
+  display:flex; align-items:center;
+}
+.flow-exit{ width:32px; height:32px; border:none; background:none; cursor:pointer; font-size:18px; color:var(--ink); display:flex; align-items:center; justify-content:center; border-radius:6px; }
+.flow-exit:hover{ background:#f2f3f5; }
+.flow-topbar .sp{ margin-left:auto; display:flex; gap:10px; }
+#flow-wrap{ position:relative; }
+#flow-vp{
+  position:relative; height:calc(100vh - 40px - 56px); min-height:540px; background:#f5f5f5; overflow:auto;
+}
+.mode-switch{ display:flex; background:#23252c; border:1px solid #35383f; border-radius:20px; padding:2px; gap:2px; flex-shrink:0; }
+.mode-switch button{ border:none; background:none; font-size:11px; font-weight:600; color:#d1d5db; padding:3px 11px; border-radius:20px; cursor:pointer; }
+.mode-switch button.on{ background:var(--brand); color:#fff; }
+
+#flow-stage{ position:relative; transform-origin:0 0; }
+#flow-svg{ position:absolute; left:0; top:0; pointer-events:none; }
+#flow-svg path{ fill:none; stroke:#b1b1b7; stroke-width:1; }
+#flow-svg path.hl{ stroke:var(--brand); stroke-width:1.8; }
+
+.fnode{ position:absolute; display:flex; flex-direction:column; align-items:center; z-index:2; }
+.fchip{
+  background:#E4E5E7; font-size:12px; font-weight:500; border-radius:4px; padding:4px;
+  max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1;
+}
+.fbody{ position:relative; border:1px solid #fff; padding:12px 20px; border-radius:12px; background:#fff; text-align:center; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.fbody .t1{ font-weight:500; margin-bottom:8px; font-size:14px; line-height:1.2; }
+.fbody .t2{ color:#3B3B40; font-size:14px; line-height:1.2; }
+.fnode.rr .fbody{ border-radius:8px; font-weight:500; font-size:20px; line-height:36px; padding:12px 32px; }
+.fnode.ret .fbody{ background:#AEE9D1; }
+.fnode.ret .fbody .face{ width:22px; height:22px; margin:0 auto 2px; display:block; }
+.fnode.ret .fbody .t-ret{ color:#007F5F; font-size:16px; line-height:20px; font-weight:500; }
+.fnode.inp .fbody .t1{ margin-bottom:0; }
+
+/* 边标签：Before = 线上现状（StepDefaultEdge: max-w-[120px] bg #f5f5f5 单行截断） */
+.elabel{
+  position:absolute; z-index:3; transform:translate(-50%,-50%);
+  background:#f5f5f5; font-size:12px; color:var(--ink); line-height:1.4; text-align:center; cursor:default;
+}
+.mode-before .elabel{ max-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+/* After = 优化后：限制字符数（词边界截断+省略号，约两行）+ hover 浮层看全文 */
+.mode-after .elabel{
+  max-width:142px; white-space:normal; background:#fff; border:1px solid #DFE3E8; border-radius:6px;
+  padding:3px 7px; box-shadow:0 1px 3px rgba(20,22,30,.06);
+}
+.mode-after .elabel:hover{ border-color:var(--brand); }
+
+/* Reset 按钮（线上 Panel top-left） */
+#flow-reset{
+  position:absolute; left:14px; top:14px; z-index:10;
+  background:var(--deep); color:#fff; border:none; border-radius:8px; height:36px; padding:0 16px;
+  font-size:14px; font-weight:500; cursor:pointer; box-shadow:0 2px 6px rgba(46,43,216,.3);
+}
+/* Controls 左下 / MiniMap 右下（ReactFlow 默认件） */
+#flow-controls{
+  position:absolute; left:14px; bottom:14px; z-index:10; background:#fff; border-radius:4px;
+  box-shadow:0 0 2px 1px rgba(0,0,0,.08); display:flex; flex-direction:column;
+}
+#flow-controls button{ width:26px; height:26px; border:none; background:#fff; border-bottom:1px solid #eee; cursor:pointer; font-size:13px; color:#333; }
+#flow-controls button:last-child{ border-bottom:none; }
+#flow-controls button:hover{ background:#f4f4f4; }
+#flow-minimap{
+  position:absolute; right:14px; bottom:14px; z-index:10; width:200px; height:140px;
+  background:#fff; border-radius:4px; box-shadow:0 0 2px 1px rgba(0,0,0,.08); overflow:hidden;
+}
+#flow-minimap .mm{ position:absolute; background:#e2e2e2; border-radius:2px; }
+#flow-minimap .mm.g{ background:#AEE9D1; }
+
+#flow-tip{
+  position:fixed; z-index:300; max-width:280px; background:#1E2022; color:#fff; font-size:12px;
+  line-height:1.5; border-radius:8px; padding:8px 11px; pointer-events:none; display:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+#flow-tip .cap{ display:block; font-size:10px; color:#9AA0A6; margin-bottom:2px; letter-spacing:.04em; }
+
+/* ── Export modal（antd Modal 风格）── */
+#modal-mask{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:120; display:none; align-items:flex-start; justify-content:center; padding-top:60px; }
+#modal-mask.open{ display:flex; }
+.modal{ width:480px; max-width:94vw; max-height:84vh; overflow-y:auto; background:#fff; border-radius:8px; padding:20px 24px; box-shadow:0 6px 16px rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12); }
+.chk-all{ display:flex; align-items:center; justify-content:space-between; padding:10px 2px; border-bottom:1px solid var(--split); margin-bottom:4px; }
+.chk-count{ font-size:12px; color:var(--gray1); }
+.chk-list{ display:grid; grid-template-columns:1fr 1fr; column-gap:18px; padding:2px; }
+.chk-group-h{ grid-column:1 / -1; font-size:11px; font-weight:700; letter-spacing:.05em; color:#9AA0A6; text-transform:uppercase; padding:12px 0 4px; }
+.chk{ display:flex; align-items:center; gap:8px; padding:6px 2px; font-size:14px; cursor:pointer; border-radius:6px; }
+.chk:hover{ background:#FAFAFA; }
+.chk input{ accent-color:var(--link); width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+.chk.dis{ color:rgba(0,0,0,.45); cursor:not-allowed; }
+.chk.dis input{ cursor:not-allowed; }
+.chk .req-mark{ font-size:11px; color:var(--gray2); }
+.gran-note{ font-size:12.5px; color:var(--gray1); background:#FAFAFA; border-radius:6px; padding:8px 12px; margin-top:12px; }
+.modal h2{ font-size:16px; font-weight:600; margin-bottom:4px; }
+.modal .sub{ font-size:13px; color:var(--gray1); margin-bottom:16px; }
+.opt{ display:flex; gap:12px; border:1.5px solid #e3e5e8; border-radius:8px; padding:13px 14px; margin-bottom:10px; cursor:pointer; }
+.opt.sel-on{ border-color:var(--link); background:#f7faff; }
+.opt .radio{ width:16px; height:16px; border-radius:50%; border:1.5px solid #bfbfbf; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center; }
+.opt.sel-on .radio{ border-color:var(--link); }
+.opt.sel-on .radio::after{ content:''; width:8px; height:8px; border-radius:50%; background:var(--link); }
+.opt .tt{ font-weight:600; font-size:14px; }
+.opt .ds{ font-size:12.5px; color:var(--gray1); margin-top:2px; }
+.fields{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.fld{
+  font-size:11px; font-family:'SF Mono',Menlo,Consolas,monospace; color:var(--gray1);
+  background:#F4F5F7; border:1px solid #e3e5e8; border-radius:4px; padding:1px 7px;
+  cursor:pointer; user-select:none;
+}
+.fld:hover{ border-color:#91CAFF; }
+.fld.on{ color:#0958D9; background:#E6F4FF; border-color:#91CAFF; font-weight:600; }
+.fld.on::before{ content:'✓ '; }
+.fld.req{ cursor:not-allowed; }
+.fld.req::after{ content:' *'; color:#B91C1C; }
+.fld-links{ font-size:11px; color:var(--gray1); margin-left:auto; white-space:nowrap; }
+.fgroup{
+  flex-basis:auto; font-size:10px; font-weight:700; letter-spacing:.05em; color:#9AA0A6;
+  align-self:center; margin:0 2px 0 6px; text-transform:uppercase;
+}
+.fgroup:first-child{ margin-left:0; }
+.fld-links a{ color:var(--link); cursor:pointer; }
+.fields-head{ display:flex; align-items:center; margin-top:8px; }
+.fields-head .lb{ font-size:11px; color:var(--gray1); }
+.csv-prev{ margin-top:14px; border:1px solid #e3e5e8; border-radius:8px; overflow:hidden; }
+.csv-prev .cap{ font-size:11px; font-weight:700; color:var(--gray1); background:#fafafa; padding:7px 12px; border-bottom:1px solid #e3e5e8; letter-spacing:.03em; }
+.csv-prev .scroll{ overflow-x:auto; }
+.csv-prev table{ font-size:11px; min-width:1150px; border-collapse:collapse; }
+.csv-prev th{ background:#fafafa; text-align:left; padding:6px 10px; white-space:nowrap; border-bottom:1px solid #e3e5e8; font-weight:600; }
+.csv-prev td{ font-family:'SF Mono',Menlo,Consolas,monospace; color:var(--gray1); padding:6px 10px; white-space:nowrap; border-bottom:1px solid #f4f4f4; }
+.mail-note{ font-size:12.5px; color:var(--gray1); margin-top:12px; }
+.modal-foot{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+
+#toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(80px); background:#1E2022; color:#fff; font-size:12px; border-radius:8px; padding:9px 16px; transition:transform .25s ease; z-index:400; }
+#toast.show{ transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="demo-bar">
+  <span class="pill">DEMO</span>
+  <span class="label">Return SaaS · Issues / Rules UX Optimizations · Hi-Fi <span class="src">(styles matched to merchant-dashboard@master)</span></span>
+  <div class="feats">
+    <span class="feat" onclick="switchTab('issues')"><span class="n">1</span><b>Tracking#</b> column</span>
+    <span class="feat" onclick="switchTab('issues');openExport()"><span class="n">2</span><b>Item-level</b> CSV</span>
+    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item <b>SKU</b></span>
+    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">4</span><b>Label</b> after Completed</span>
+    <span class="feat" onclick="switchTab('rules')"><span class="n">5</span>Flow <b>full text + hover</b></span>
+    <span class="mode-switch" id="flow-mode-switch" style="display:none">
+      <button id="btn-before" onclick="setMode('before')">Before</button>
+      <button id="btn-after" class="on" onclick="setMode('after')">After</button>
+    </span>
+  </div>
+</div>
+
+<div id="app">
+  <aside>
+    <div class="store-sel"><span class="logo">S</span><span>bassdash-fishing-gear.mysh…</span></div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5 1.5 7v7.5h4.8V10h3.4v4.5h4.8V7L8 1.5z"/></svg>Home</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13.5h12V15H2v-1.5zM3 8h2v4H3V8zm4-4h2v8H7V4zm4 2h2v6h-2V6z"/></svg>Analytics</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z"/></svg>Orders</div>
+    <div class="nav-item active"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM9 12H7V7h2v5z"/></svg>Issues</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5 2.5 3.6v4C2.5 11 4.8 13.7 8 14.5c3.2-.8 5.5-3.5 5.5-6.9v-4L8 1.5z"/></svg>Protection</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 2h6v3h3v6h-3v3H5v-3H2V5h3V2z"/></svg>Integrations</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v8H6l-3 3V3z"/></svg>Conversation</div>
+    <div class="nav-sec">CUSTOMIZE</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z"/></svg>Widgets</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1z"/></svg>Cash back</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v10H2V3zm2 2v6h8V5H4z"/></svg>Customer Portal</div>
+    <div class="nav-item"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v8H2V4zm1 1 5 3.5L13 5"/></svg>Notifications</div>
+  </aside>
+
+  <main id="main">
+    <div class="page-head" id="page-head">
+      <h1>Issues</h1>
+      <div class="tabs">
+        <button class="tab active" id="tab-issues" onclick="switchTab('issues')">Issues</button>
+        <button class="tab" id="tab-rules" onclick="switchTab('rules')">Rules</button>
+        <button class="tab disabled">Shipping</button>
+      </div>
+    </div>
+
+    <!-- ══════ Issues 列表 ══════ -->
+    <section id="view-issues">
+      <div class="card">
+        <div class="filters">
+          <input class="search-in" id="f-q" oninput="onFilter()" placeholder="🔍  RMA# / Order / Customer email / Customer name / Tracking#">
+          <select class="sel-in" id="f-type" onchange="onFilter()">
+            <option value="">All resolution type</option><option value="Refund">Refund</option><option value="Exchange">Exchange</option>
+          </select>
+          <select class="sel-in" id="f-ship" onchange="onFilter()">
+            <option value="">All shipping status</option><option value="pre">Pre-transit</option><option value="in">In transit</option><option value="del">Delivered</option>
+          </select>
+          <select class="sel-in" id="f-status" onchange="onFilter()">
+            <option value="">All issue status</option><option>In progress</option><option>Accepted</option><option>Completed</option><option>Rejected</option>
+          </select>
+        </div>
+        <div class="filters2">
+          <span>Date range: </span>
+          <select class="sel-in" id="f-range" onchange="onFilter()">
+            <option value="">All time</option><option value="1">Last 1 day</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
+          </select>
+          <button class="export-btn" onclick="openExport()">
+            <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M8 2v8m0 0 3-3m-3 3L5 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 11v1.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Download CSV
+          </button>
+        </div>
+        <div style="overflow-x:auto">
+        <table class="ant">
+          <thead>
+            <tr>
+              <th>RMA#</th><th class="sortable" onclick="setSort('order')">Order<span class="sort" id="sort-order">⇅</span></th><th>Customer</th><th class="sortable" onclick="setSort('created')">Created<span class="sort" id="sort-created">⇅</span></th>
+              <th>Shipping</th><th>Type</th><th>Status</th>
+              <th>Tracking #</th>
+              <th>Fraud risk</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        </div>
+        <div class="pager"><span class="pg">‹</span><span class="pg on">1</span><span class="pg">›</span><span style="margin-left:6px">20 / page</span></div>
+      </div>
+    </section>
+
+    <!-- ══════ RMA 详情整页（对齐 ReturnDetail）══════ -->
+    <section id="view-detail" style="display:none"></section>
+
+    <!-- ══════ Rules Flow 编辑器 ══════ -->
+    <section id="view-rules" style="display:none">
+      <div class="flow-topbar">
+        <button class="flow-exit" onclick="switchTab('issues')" title="Exit">⎋</button>
+        <div class="sp">
+          <button class="btn" disabled>Discard</button>
+          <button class="btn" disabled>Publish</button>
+        </div>
+      </div>
+      <div id="flow-wrap">
+        <div id="flow-vp" class="mode-after">
+          <div id="flow-stage">
+            <svg id="flow-svg"></svg>
+          </div>
+        </div>
+        <button id="flow-reset">Reset to default rules</button>
+        <div id="flow-controls">
+          <button title="Zoom in">＋</button>
+          <button title="Zoom out">－</button>
+          <button title="Fit view">⤢</button>
+          <button title="Lock">🔒</button>
+        </div>
+        <div id="flow-minimap"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ── Export Modal ── -->
+<div id="modal-mask">
+  <div class="modal">
+    <h2>Export returns</h2>
+    <div class="sub" id="exp-scope"></div>
+    <div class="chk-all">
+      <label class="chk"><input type="checkbox" id="chk-all" onchange="toggleAllFields(this.checked)"><span>Select all</span></label>
+      <span class="chk-count" id="exp-count"></span>
+    </div>
+    <div class="chk-list" id="chk-list"></div>
+    <div class="gran-note" id="gran-note"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeExport()">Cancel</button>
+      <button class="btn primary" onclick="doExport()">Export</button>
+    </div>
+  </div>
+</div>
+
+<div id="flow-tip"></div>
+<div id="trk-pop" onmouseenter="clearTimeout(popTimer)" onmouseleave="hideTrkPopSoon()" onclick="event.stopPropagation()"></div>
+<div id="toast"></div>
+
+<script>
+/* ════════ 数据 ════════ */
+const RMAS = [
+  { rma:'BD7KX2M1', order:'#BD10234', customer:'Emily Carter',  created:'Jul 5, 2026, 3:12 PM', date:'2026-07-05', orderTs:'Jun 28, 2026, 9:04 AM', ship:'pre', type:'Refund', status:'In progress',
+    labels:[ {carrier:'USPS', trk:'9400 1361 0930 0331 22'} ],
+    items:[ {name:'Bassdash Alien UL Spinning Rod 6\'8"', vt:'Ultra Light - 2 pc', sku:'BD-ROD-AL68-UL', qty:1, li:0, reason:'Incorrect item received', price:'$89.99', emoji:'🎣'} ],
+    events:[['Shipping label created, USPS awaiting item','Jul 5, 2026, 3:20 PM — SEATTLE, WA']] },
+  { rma:'BD4RT8W2', order:'#BD10240', customer:'Marcus Chen', created:'Jul 5, 2026, 9:40 AM', date:'2026-07-05', orderTs:'Jun 30, 2026, 2:15 PM', ship:'in', type:'Refund', status:'Accepted',
+    labels:[ {carrier:'USPS', trk:'9400 1102 5545 0087 31'}, {carrier:'USPS', trk:'9400 1102 5545 0087 48'} ],
+    items:[ {name:'Bassdash Alien Baitcasting Reel', vt:'7.2:1 / Right hand', sku:'BD-REL-AL72-R', qty:1, li:0, reason:'Doesn\'t suit me (upgraded to another model)', price:'$79.99', emoji:'🎛️'},
+            {name:'Bassdash Rod Case 6\'6"', vt:'Black', sku:'BD-CSE-R66-BK', qty:1, li:1, reason:'Ordered by mistake', price:'$36.99', emoji:'🧳'} ],
+    events:[['Departed USPS regional facility (package 1 of 2)','Jul 6, 2026, 3:05 AM — TACOMA, WA'],['USPS in possession of item','Jul 5, 2026, 4:12 PM — OLYMPIA, WA']] },
+  { rma:'BD3QW8Z5', order:'#BD10221', customer:'Jake Morrison', created:'Jul 4, 2026, 10:47 AM', date:'2026-07-04', orderTs:'Jun 25, 2026, 7:41 PM', ship:'in', type:'Refund', status:'Accepted',
+    labels:[ {carrier:'UPS', trk:'1Z 999 AA1 01 2345 6784'} ],
+    items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, li:0, reason:'The leg opening of the pants is too wide or too narrow', price:'$25.98', emoji:'🪝'} ],
+    events:[['Departed UPS facility','Jul 6, 2026, 2:11 AM — PORTLAND, OR'],['Origin scan','Jul 5, 2026, 6:30 PM — EUGENE, OR']] },
+  { rma:'BD9LP4T2', order:'#BD10198', customer:'Hannah Lee', created:'Jul 3, 2026, 6:55 PM', date:'2026-07-03', orderTs:'Jun 20, 2026, 1:22 PM', ship:'del', type:'Exchange', status:'Completed',
+    labels:[ {carrier:'USPS', trk:'9405 5036 9930 0221 89'} ],
+    items:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 42', sku:'BD-WDR-CHM-42', qty:1, li:0, reason:'The waist of the waders is too tight — need one size up', price:'$129.99', emoji:'🥾'},
+            {name:'Wading Belt 2"', vt:'Olive', sku:'BD-BLT-WD2-OL', qty:1, li:0, reason:'Ordered by mistake', price:'$15.99', emoji:'🧷'} ],
+    events:[['Delivered, front desk/reception/mail room','Jul 6, 2026, 11:02 AM — KENT, WA'],
+            ['Out for delivery','Jul 6, 2026, 6:10 AM — KENT, WA'],
+            ['Arrived at USPS regional facility','Jul 5, 2026, 9:44 PM — SEATTLE WA DISTRIBUTION CENTER'],
+            ['USPS in possession of item','Jul 4, 2026, 2:18 PM — BELLEVUE, WA']] },
+  { rma:'BD5NC7R8', order:'#BD10187', customer:'Tracey Woodard', created:'Jul 2, 2026, 7:25 PM', date:'2026-07-02', orderTs:'Jun 22, 2026, 8:15 AM', ship:'pre', type:'Refund', status:'In progress', labels:[],
+    items:[ {name:'Fishing Pliers 7.5" Titanium', vt:'Blue handle', sku:'BD-PLR-TI75-BL', qty:1, li:0, reason:'Poor quality', price:'$32.99', emoji:'🛠️'} ], events:[] },
+  { rma:'BD2VH6K9', order:'#BD10165', customer:'Miller Simon', created:'Jul 2, 2026, 10:24 AM', date:'2026-07-02', orderTs:'Jun 2, 2026, 4:47 PM', ship:'pre', type:'Refund', status:'Rejected', labels:[],
+    items:[ {name:'Topwater Frog Lure Kit (5 pk)', vt:'Assorted', sku:'BD-LUR-FRG5-AS', qty:1, li:0, reason:'Others (outside return window)', price:'$21.99', emoji:'🐸'} ], events:[] },
+  { rma:'BD8JD1X4', order:'#BD10142', customer:'Gina Whitcher', created:'Jul 1, 2026, 1:05 PM', date:'2026-07-01', orderTs:'Jun 18, 2026, 10:09 AM', ship:'del', type:'Refund', status:'Completed',
+    labels:[ {carrier:'FedEx', trk:'7712 3456 7890'} ],
+    items:[ {name:'Bassdash Fishing Vest V2', vt:'Khaki / L', sku:'BD-VST-V2KH-L', qty:1, li:0, reason:'The chest is too tight or too loose', price:'$45.99', emoji:'🦺'} ],
+    events:[['Delivered','Jul 4, 2026, 10:31 AM — KENT, WA'],['On FedEx vehicle for delivery','Jul 4, 2026, 5:02 AM — KENT, WA']] },
+];
+const TODAY_TS = Date.parse('2026-07-06T23:59:59');
+const SHIP = { pre:{t:'Pre-transit',c:'#5E8E3E'}, in:{t:'In transit',c:'#47C1BF'}, del:{t:'Delivered',c:'#50B83C'} };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+function copyTrk(t){ navigator.clipboard && navigator.clipboard.writeText(t.replace(/\s/g,'')); toast('Tracking number copied'); }
+function copySku(s){ navigator.clipboard && navigator.clipboard.writeText(s); toast('SKU copied'); }
+
+/* ════════ Issues 列表：筛选 / 排序 / 多包裹展开 ════════ */
+const FILTER = { q:'', type:'', ship:'', status:'', range:'' };
+let SORT = { field:'created', asc:false };
+
+function onFilter(){
+  FILTER.q = document.getElementById('f-q').value;
+  FILTER.type = document.getElementById('f-type').value;
+  FILTER.ship = document.getElementById('f-ship').value;
+  FILTER.status = document.getElementById('f-status').value;
+  FILTER.range = document.getElementById('f-range').value;
+  renderTable();
+}
+function setSort(f){
+  SORT = SORT.field === f ? { field:f, asc:!SORT.asc } : { field:f, asc:true };
+  renderTable();
+}
+function demoSearch(q){
+  document.getElementById('f-q').value = q;
+  onFilter();
+  toast('Searching by Tracking#: ' + q);
+}
+function filteredRows(){
+  const q = FILTER.q.trim().toLowerCase().replace(/\s+/g,'');
+  return RMAS.filter(r => {
+    if (FILTER.type && r.type !== FILTER.type) return false;
+    if (FILTER.ship && r.ship !== FILTER.ship) return false;
+    if (FILTER.status && r.status !== FILTER.status) return false;
+    if (FILTER.range && (TODAY_TS - Date.parse(r.date)) / 86400e3 > +FILTER.range) return false;
+    if (q){
+      const hay = [r.rma, r.order, r.customer, ...r.labels.map(l => l.trk)].join('|').toLowerCase().replace(/\s+/g,'');
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b) => {
+    const v = x => SORT.field === 'order' ? +x.order.replace(/\D/g,'') : Date.parse(x.created);
+    return SORT.asc ? v(a) - v(b) : v(b) - v(a);
+  });
+}
+function trkFrag(lb){
+  return `<span class="car">${lb.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo: opens the carrier tracking page')">${lb.trk}</a><button class="copy" title="Copy" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button>`;
+}
+function trkCell(r){
+  const L = r.labels;
+  if (!L.length) return `<span class="trk-none">— Label not scanned</span>`;
+  if (L.length === 1) return `<span class="trk">${trkFrag(L[0])}</span>`;
+  return `<span class="trk">${trkFrag(L[0])}<button class="more" title="View all packages"
+    onmouseenter="showTrkPop(event,'${r.rma}')" onmouseleave="hideTrkPopSoon()"
+    onclick="event.stopPropagation();showTrkPop(event,'${r.rma}')">+${L.length - 1}</button></span>`;
+}
+/* 多包裹 hover 浮层（行高不变，浮层内可复制/跳轨迹） */
+let popTimer = null;
+function showTrkPop(e, rma){
+  clearTimeout(popTimer);
+  const r = RMAS.find(x => x.rma === rma);
+  const pop = document.getElementById('trk-pop');
+  pop.innerHTML = `<div class="cap">${r.labels.length} PACKAGES · ${rma}</div>` +
+    r.labels.map((lb,i) => `<div class="prow"><span class="pkg-tag">Package ${i+1}</span><span class="trk">${trkFrag(lb)}</span></div>`).join('');
+  pop.style.display = 'block';
+  const rect = e.target.getBoundingClientRect();
+  let x = rect.left - 8, y = rect.bottom + 8;
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  if (x + w > innerWidth - 12) x = innerWidth - w - 12;
+  if (y + h > innerHeight - 12) y = rect.top - h - 8;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+function hideTrkPopSoon(){
+  popTimer = setTimeout(() => { document.getElementById('trk-pop').style.display = 'none'; }, 180);
+}
+function renderTable(){
+  const rows = filteredRows();
+  document.getElementById('sort-order').textContent = SORT.field === 'order' ? (SORT.asc ? '↑' : '↓') : '⇅';
+  document.getElementById('sort-created').textContent = SORT.field === 'created' ? (SORT.asc ? '↑' : '↓') : '⇅';
+  document.getElementById('tbody').innerHTML = rows.length ? rows.map(r => `
+    <tr onclick="showDetail('${r.rma}')">
+      <td>${r.rma}</td>
+      <td><a class="lk" onclick="event.stopPropagation()">${r.order} <span style="font-size:11px">↗</span></a></td>
+      <td>${esc(r.customer)}</td>
+      <td>${r.created}</td>
+      <td><span class="tag-ship"><span class="d" style="background:${SHIP[r.ship].c}"></span>${SHIP[r.ship].t}</span></td>
+      <td>${r.type}</td>
+      <td>${r.status}</td>
+      <td>${trkCell(r)}</td>
+      <td><span class="risk"><span class="d"></span>Low</span></td>
+    </tr>`).join('')
+    : `<tr><td colspan="9"><div class="empty-wrap"><div class="t1">No issues</div><div class="t2">You don’t have any issues yet.</div></div></td></tr>`;
+}
+
+/* ════════ RMA 详情整页（对齐 ReturnDetail/index.jsx 布局）════════ */
+function showDetail(rma){
+  const r = RMAS.find(x => x.rma === rma); if(!r) return;
+  switchTab('issues');
+  const isCompleted = r.status === 'Completed';
+  const itemsHtml = r.items.map(it => `
+    <div class="ritem">
+      <div class="ph">${it.emoji}</div>
+      <div class="bd">
+        <div class="tt-row">
+          <span class="tt">${esc(it.name)} - ${esc(it.vt)}</span>
+          <span class="tag-type">${r.type}</span>
+        </div>
+        <div class="sku-line">
+          <span class="sku-chip" onclick="copySku('${it.sku}')" title="Click to copy">SKU&nbsp;·&nbsp;${it.sku}&nbsp;⧉</span>
+          <span style="font-size:12px;color:var(--gray2)">× ${it.qty}</span>
+        </div>
+        <div class="meta"><b>Reason: </b><span>${esc(it.reason)}</span></div>
+      </div>
+      <div class="pr">${it.price} ▾</div>
+    </div>`).join('');
+
+  const subtotal = r.items.reduce((s,it)=> s + parseFloat(it.price.slice(1))*it.qty, 0);
+  const L = r.labels;
+  const trackLinks = L.length > 1
+    ? `<div style="margin-top:6px">${L.map((lb,i) => `
+        <div class="prow" style="border-bottom:1px dashed #EEF0F2">
+          <span class="pkg-tag">Package ${i+1}</span><span class="trk">${trkFrag(lb)}</span>
+          <a class="lk" style="margin-left:auto;font-size:12px;white-space:nowrap" onclick="toast('Demo: opens the carrier tracking page')">Track ›</a>
+        </div>`).join('')}</div>`
+    : L.map(lb => `<a class="ship-link" onclick="toast('Demo: opens the carrier tracking page')">${lb.carrier} ${lb.trk} &gt;</a>`).join('');
+  const timeline = r.events.length ? `
+    <p class="ship-status" style="margin-bottom:2px">${SHIP[r.ship].t}${L.length > 1 ? `&nbsp;<span class="pkg-tag">${L.length} packages</span>` : ''}</p>
+    ${trackLinks}
+    <div class="tl">
+      ${r.events.map((e,i)=>`
+        <div class="tl-item ${i===0?'first':''}">
+          <div class="tl-dot">${i===0?'✓':''}</div>
+          <div class="tl-bd"><div class="ds" title="${esc(e[0])}">${esc(e[0])}</div><div class="ts">${esc(e[1])}</div></div>
+        </div>`).join('')}
+    </div>`
+    : `<p class="ship-status" style="color:var(--gray2)">${L.length ? SHIP[r.ship].t : 'Label not generated yet'}</p>`;
+
+  // R4：线上 ShippingInfo.jsx 中该区块被 isNeedReview 门禁，Completed 不渲染；优化后终态仍展示（只读）
+  const shippingDocs = L.length ? `
+    <hr class="hr">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="sec-tt">Shipping documents</span>
+      ${!isCompleted && r.status === 'In progress' ? '<a class="lk" style="color:#2121C4;font-size:14px" onclick="toast(\'Demo: opens the Resend label dialog\')">Resend</a>' : ''}
+    </div>
+    <div class="doc-btns">
+      ${L.length > 1
+        ? L.map((lb,i) => `
+          <div class="prow" style="padding:0;gap:10px">
+            <span class="pkg-tag">Package ${i+1}</span>
+            <span class="num" style="font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--gray1)">${lb.carrier} ${lb.trk}</span>
+            <button class="btn small" style="margin-left:auto" onclick="toast('Demo: downloads the return label PDF')">Label PDF</button>
+          </div>`).join('')
+        : `<button class="btn" onclick="toast('Demo: downloads the return label PDF')">Download label</button>`}
+      <button class="btn" onclick="toast('Demo: downloads the packing slip')">Download packing slip</button>
+    </div>
+    `
+    : '';
+
+  document.getElementById('view-detail').innerHTML = `
+    <div class="dt-head">
+      <button class="back-btn" onclick="backToList()">←</button>
+      <div style="flex:1">
+        <div class="dt-title">RMA#<span class="no">${r.rma}</span><span class="tag-status">${r.status}</span></div>
+        <div class="dt-sub"><a>Return confirmation</a><span>Created at ${r.created}</span></div>
+        <div class="dt-sub"><a>${r.order}</a><span>Ordered at ${r.orderTs}</span></div>
+      </div>
+      ${r.status === 'In progress' ? '<button class="btn primary" onclick="toast(\'Demo: opens the Process items dialog\')">Process item(s)</button>' : ''}
+    </div>
+    <div class="dt-cols">
+      <div class="dt-main">
+        <div class="wcard">
+          <h3>Return item(s)</h3>
+          ${itemsHtml}
+        </div>
+        <div class="wcard">
+          <h3 style="margin-bottom:10px">Activity</h3>
+          <div class="tl" style="margin-top:6px">
+            ${(isCompleted ? [
+              ['Refund issued and RMA completed', r.events[0] ? r.events[0][1].split(' — ')[0] : r.created],
+              ['Return package delivered to warehouse', r.events[0] ? r.events[0][1].split(' — ')[0] : ''],
+              ['Return label generated (' + L.map(l => l.carrier).join(', ') + (L.length > 1 ? ' ×' + L.length : '') + ')', r.created],
+              ['Return requested by customer', r.created],
+            ] : [
+              ['Return ' + r.status.toLowerCase(), r.created],
+              ['Return requested by customer', r.created],
+            ]).map((e,i)=>`
+              <div class="tl-item ${i===0?'first':''}">
+                <div class="tl-dot">${i===0?'✓':''}</div>
+                <div class="tl-bd"><div class="ds">${e[0]}</div><div class="ts">${e[1]}</div></div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="dt-side">
+        <div class="wcard p20">
+          <h3 style="margin-bottom:15px">Summary</h3>
+          <div class="sum-row"><span>Item(s) subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+          <div class="sum-row"><span>Return shipping fee</span><span>-$8.50</span></div>
+          <div class="sum-row"><span>Tax</span><span>$${(subtotal*0.101).toFixed(2)}</span></div>
+          <div class="sum-row total"><span>${r.type === 'Exchange' ? 'Exchange credit' : 'Refund total'}</span><span>$${(subtotal*1.101-8.5).toFixed(2)}</span></div>
+        </div>
+        <div class="wcard p20">
+          <h3 style="margin-bottom:16px">Return shipping info</h3>
+          ${timeline}
+          <hr class="hr">
+          <div class="sec-tt">Ship from</div>
+          <div class="sec-tx">${esc(r.customer)}, 2201 4th Ave, Seattle, WA, 98121, US</div>
+          <hr class="hr">
+          <div class="sec-tt">Shipping to</div>
+          <div class="sec-tx">Bassdash Returns, 19240 80th Ave S, Kent, WA, 98032, US</div>
+          ${shippingDocs}
+        </div>
+        <div class="wcard p20" style="border-radius:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:16px">🛡️</span><span style="font-weight:600;font-size:16px">Fraud risk assessment</span>
+          </div>
+          <div style="font-size:14px;color:#374151">Seel uses AI technology to evaluate return fraud risk levels.<br>Results update daily for maximum accuracy.</div>
+          <div style="font-size:14px;color:#374151;margin:6px 0 14px">This return has been identified as <b style="color:#111">low</b> risk.</div>
+          <button class="btn" onclick="toast('Demo: opens the fraud indicators dialog')">View full analysis</button>
+        </div>
+        <div class="wcard p20">
+          <h3 style="margin-bottom:8px">Customer</h3>
+          <div style="font-size:14px">${esc(r.customer)}</div>
+          <div style="font-size:13px;color:var(--gray2);margin-bottom:10px">${r.customer.toLowerCase().replace(/\s/g,'.')}@gmail.com</div>
+          <div class="cust-tabs"><span class="cust-tab on">Order</span><span class="cust-tab">Return</span></div>
+          <div class="cust-row">
+            <div><div class="a">${r.order} ↗</div><div class="s">$${(subtotal*1.4).toFixed(2)} ｜ ${r.orderTs}</div></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('view-issues').style.display = 'none';
+  document.getElementById('view-detail').style.display = '';
+  window.scrollTo(0,0);
+}
+function backToList(){
+  document.getElementById('view-detail').style.display = 'none';
+  document.getElementById('view-issues').style.display = '';
+}
+
+/* ════════ Export Modal ════════ */
+function openExport(){
+  document.getElementById('modal-mask').classList.add('open');
+  renderExportList();
+}
+function closeExport(){ document.getElementById('modal-mask').classList.remove('open'); }
+
+/* ── 字段勾选列表：行粒度自动推导（勾选任一 Item 组字段 → 每商品一行，否则每 RMA 一行）── */
+const EXPORT_FIELDS = [
+  {k:'rma_number', t:'RMA number', req:true, g:'RMA'},
+  {k:'order_number', t:'Order number', g:'RMA'},
+  {k:'customer', t:'Customer', g:'RMA'},
+  {k:'created_at', t:'Created date', g:'RMA'},
+  {k:'resolution_type', t:'Resolution type', g:'RMA'},
+  {k:'rma_status', t:'Status', g:'RMA'},
+  {k:'sku', t:'SKU', g:'Item'},
+  {k:'item_name', t:'Item name', g:'Item'},
+  {k:'variant', t:'Variant', g:'Item'},
+  {k:'qty', t:'Quantity', g:'Item'},
+  {k:'return_reason', t:'Return reason', g:'Item'},
+  {k:'label_carrier', t:'Carrier', g:'Shipping label'},
+  {k:'label_tracking_number', t:'Tracking number', g:'Shipping label'},
+];
+let selFields = new Set(EXPORT_FIELDS.map(f => f.k));
+const isItemLevel = () => EXPORT_FIELDS.some(f => f.g === 'Item' && selFields.has(f.k));
+function activeKeys(){ return EXPORT_FIELDS.filter(f => selFields.has(f.k)).map(f => f.k); }
+
+function renderExportList(){
+  const groups = [...new Set(EXPORT_FIELDS.map(f => f.g))];
+  document.getElementById('chk-list').innerHTML = groups.map(g =>
+    `<div class="chk-group-h">${g}</div>` + EXPORT_FIELDS.filter(f => f.g === g).map(f => `
+      <label class="chk ${f.req ? 'dis' : ''}">
+        <input type="checkbox" ${selFields.has(f.k) ? 'checked' : ''} ${f.req ? 'disabled' : ''}
+          onchange="toggleField('${f.k}')"><span>${f.t}</span>${f.req ? '<span class="req-mark">Required</span>' : ''}
+      </label>`).join('')
+  ).join('');
+  updateExportUI();
+}
+function toggleField(key){
+  selFields.has(key) ? selFields.delete(key) : selFields.add(key);
+  updateExportUI();
+}
+function toggleAllFields(on){
+  selFields = new Set(on ? EXPORT_FIELDS.map(f => f.k) : EXPORT_FIELDS.filter(f => f.req).map(f => f.k));
+  renderExportList();
+}
+function updateExportUI(){
+  const n = selFields.size, total = EXPORT_FIELDS.length;
+  const all = document.getElementById('chk-all');
+  all.checked = n === total;
+  all.indeterminate = n > 0 && n < total;
+  document.getElementById('exp-count').textContent = `${n} of ${total} selected`;
+  const perItem = isItemLevel();
+  const rows = perItem ? itemRowObjs().length : filteredRows().length;
+  document.getElementById('exp-scope').textContent =
+    `${filteredRows().length} RMAs match your current filters and date range`;
+  document.getElementById('gran-note').innerHTML = perItem
+    ? `Exports <b>${rows} rows</b> — one per return item. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`
+    : `Exports <b>${rows} rows</b> — one per RMA. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`;
+}
+function itemRowObjs(){
+  return filteredRows().flatMap(r => r.items.map(it => {
+    const lb = r.labels[it.li || 0] || {};
+    return {
+      rma_number: r.rma, order_number: r.order.replace('#',''), customer: r.customer,
+      sku: it.sku, item_name: it.name, variant: it.vt, qty: it.qty, return_reason: it.reason,
+      label_carrier: lb.carrier || '', label_tracking_number: (lb.trk || '').replace(/\s/g,''),
+      resolution_type: r.type, rma_status: r.status, created_at: r.date,
+    };
+  }));
+}
+function rmaRowObjs(){
+  return filteredRows().map(r => ({
+    rma_number: r.rma, order_number: r.order.replace('#',''), customer: r.customer,
+    created_at: r.date, resolution_type: r.type, rma_status: r.status,
+    label_carrier: r.labels.map(l => l.carrier).join('; '),
+    label_tracking_number: r.labels.map(l => l.trk.replace(/\s/g,'')).join('; '),
+  }));
+}
+function doExport(){
+  const keys = activeKeys();
+  const perItem = isItemLevel();
+  const objs = perItem ? itemRowObjs() : rmaRowObjs();
+  const csv = [keys, ...objs.map(o => keys.map(k => o[k]))];
+  const text = csv.map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿' + text], {type:'text/csv'}));
+  a.download = perItem ? 'returns_item_detail_20260706.csv' : 'returns_summary_20260706.csv';
+  a.click();
+  closeExport();
+  toast(perItem ? 'Item-level detail CSV exported' : 'RMA summary CSV exported');
+}
+
+/* ════════ Rules Flow 编辑器（对齐 Rules/Flow 源码）════════
+   节点/边样式对齐：ReturnRequestStep / ReturnReasonStep / InputStep / ReturnStep / StepDefaultEdge
+   布局对齐 utils.jsx：dagre TB, ranksep=120, nodesep=20（此处用等价分层树布局） */
+const ACCEPT_SVG = '<svg class="face" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" fill="#007F5F"/><path d="M6.8 11.4l2.7 2.7 5.7-5.7" stroke="#AEE9D1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* 树定义：type: rr / mc / inp / ret；label = 入边文案 */
+const FLOW_TREE = {
+  id:'root', type:'rr', children:[
+    { id:'reason', type:'mc', chip:'Return reason', options:7, children:[
+      { id:'mcA', type:'mc', chip:'Multiple choices', options:4, label:"Doesn't suit me (size or fit issue with tops)", children:[
+        { id:'a1', type:'ret', label:'The chest is too tight or too loose' },
+        { id:'a2', type:'ret', label:'The shoulder does not fit well' },
+        { id:'a3', type:'ret', label:'The length is too long or too short' },
+        { id:'a4', type:'ret', label:'The sleeve length is not right' },
+      ]},
+      { id:'mcB', type:'mc', chip:'Multiple choices', options:5, label:"Doesn't suit me (size or fit issue with pants)", children:[
+        { id:'b1', type:'ret', label:'The waist of the pants is too tight or too loose' },
+        { id:'b2', type:'ret', label:'The inseam of the pants is too long or too short' },
+        { id:'b3', type:'ret', label:'The thigh of the pants is too tight' },
+        { id:'b4', type:'ret', label:'The front rise of the pants is too high or too low' },
+        { id:'b5', type:'ret', label:'The leg opening of the pants is too wide or too narrow' },
+      ]},
+      { id:'inp', type:'inp', chip:'Merchant custom', label:'Parcel damaged on arrival (photo required)', children:[
+        { id:'i1', type:'ret', label:'' },
+      ]},
+      { id:'r1', type:'ret', label:'Looks different to image on site' },
+      { id:'r2', type:'ret', label:'Arrived too late' },
+      { id:'r3', type:'ret', label:'Incorrect item received' },
+      { id:'r4', type:'ret', label:'Poor quality' },
+    ]},
+  ]
+};
+const RANK_Y = [40, 190, 360, 560];   /* 分层 y（近似 dagre ranksep=120） */
+let SLOT_W = 158;                      /* 叶子槽宽 */
+const flowEdges = []; /* {labelEl, pathEl, full} */
+
+function nodeHtml(n){
+  if (n.type === 'rr') return `<div class="fnode rr" id="fn-${n.id}"><div class="fbody">Return request</div></div>`;
+  if (n.type === 'mc') return `<div class="fnode" id="fn-${n.id}">
+      <div class="fchip">${esc(n.chip)}</div>
+      <div class="fbody"><div class="t1">Multiple choices</div><div class="t2">${n.options} options</div></div></div>`;
+  if (n.type === 'inp') return `<div class="fnode inp" id="fn-${n.id}">
+      <div class="fchip">${esc(n.chip)}</div>
+      <div class="fbody"><div class="t1">Image</div></div></div>`;
+  return `<div class="fnode ret" id="fn-${n.id}">
+      <div class="fchip">Return</div>
+      <div class="fbody">${ACCEPT_SVG}<div class="t-ret">Return</div></div></div>`;
+}
+
+function clipLabel(s, n){
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > n * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s(,-]+$/, '') + '…';
+}
+function flatten(n, depth, list){
+  n.depth = depth; list.push(n);
+  (n.children||[]).forEach(c => flatten(c, depth+1, list));
+  return list;
+}
+
+function layoutFlow(){
+  /* 叶子从左到右排槽位；父节点取子节点中心均值 */
+  let slot = 0;
+  const assign = (n) => {
+    if (!n.children || !n.children.length){ n.cx = (slot++ + .5) * SLOT_W + 100; return n.cx; }
+    const xs = n.children.map(assign);
+    n.cx = xs.reduce((a,b)=>a+b,0)/xs.length;
+    return n.cx;
+  };
+  assign(FLOW_TREE);
+  return slot; /* 总槽数 */
+}
+
+function buildFlow(){
+  const stage = document.getElementById('flow-stage');
+  stage.querySelectorAll('.fnode,.elabel').forEach(el => el.remove());
+  flowEdges.length = 0;
+
+  const isAfter = document.getElementById('flow-vp').classList.contains('mode-after');
+  SLOT_W = isAfter ? 172 : 128;
+  const slots = layoutFlow();
+  const W = slots * SLOT_W + 200, H = 700;
+  stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  const svg = document.getElementById('flow-svg');
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.style.width = W+'px'; svg.style.height = H+'px';
+  svg.innerHTML = '';
+
+  const all = flatten(FLOW_TREE, 0, []);
+  /* 直连 Return（depth2 的 ret）与其它 rank2 节点同层 */
+  stage.insertAdjacentHTML('beforeend', all.map(nodeHtml).join(''));
+  all.forEach(n => {
+    const el = document.getElementById('fn-' + n.id);
+    const y = RANK_Y[n.depth];
+    el.style.left = Math.round(n.cx - el.offsetWidth/2) + 'px';
+    el.style.top = y + 'px';
+    n._el = el;
+  });
+
+  /* 边 + 中点标签（对齐 StepDefaultEdge：bezier 中点，translate(-50%,-50%)） */
+  const mkEdge = (p, c) => {
+    const pe = p._el, ce = c._el;
+    const sx = p.cx, sy = pe.offsetTop + pe.offsetHeight;
+    const tx = c.cx, ty = ce.offsetTop;
+    const my = (sy + ty) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M ${sx} ${sy} C ${sx} ${my}, ${tx} ${my}, ${tx} ${ty}`);
+    svg.appendChild(path);
+    if (c.label){
+      const lb = document.createElement('div');
+      lb.className = 'elabel';
+      /* After：限制约 42 字符（词边界截断 + …），完整文案走 hover 浮层 */
+      lb.textContent = isAfter ? clipLabel(c.label, 40) : c.label;
+      lb.dataset.full = c.label;
+      lb.dataset.cap = c.type === 'ret' && p.type === 'mc' ? 'OPTION' : 'RETURN REASON';
+      /* Before：对齐线上 StepDefaultEdge —— 标签在 bezier 中点（t=0.5，会互相压盖，忠实现状）
+         After：标签移到 t=0.8（靠近目标节点，横向间距≈槽宽，不压盖） */
+      const t = isAfter ? 0.8 : 0.5;
+      const mt = 1 - t;
+      const bx = sx*(mt**3 + 3*t*mt*mt) + tx*(3*t*t*mt + t**3);
+      const by = sy*(mt**3) + my*(3*t*mt*mt + 3*t*t*mt) + ty*(t**3);
+      lb.style.left = bx + 'px';
+      lb.style.top = by + 'px';
+      stage.appendChild(lb);
+      flowEdges.push({ labelEl: lb, pathEl: path });
+      bindTip(lb, path);
+    }
+  };
+  const walk = (n) => (n.children||[]).forEach(c => { mkEdge(n, c); walk(c); });
+  walk(FLOW_TREE);
+  buildMinimap(all);
+  /* 初始视口对准 Return reason 节点（fitView 近似） */
+  const vp = document.getElementById('flow-vp');
+  const reason = all.find(n => n.id === 'reason');
+  if (reason) vp.scrollLeft = Math.max(0, reason.cx - vp.clientWidth / 2);
+  vp.scrollTop = 0;
+}
+
+function buildMinimap(all){
+  const mm = document.getElementById('flow-minimap');
+  mm.querySelectorAll('.mm').forEach(e => e.remove());
+  const W = parseInt(document.getElementById('flow-stage').style.width), H = 700;
+  const k = Math.min(190/W, 130/H);
+  all.forEach(n => {
+    const el = n._el;
+    const d = document.createElement('div');
+    d.className = 'mm' + (n.type === 'ret' ? ' g' : '');
+    d.style.left = (el.offsetLeft*k + 5) + 'px';
+    d.style.top = (el.offsetTop*k + 5) + 'px';
+    d.style.width = Math.max(3, el.offsetWidth*k) + 'px';
+    d.style.height = Math.max(3, el.offsetHeight*k) + 'px';
+    mm.appendChild(d);
+  });
+}
+
+const tip = document.getElementById('flow-tip');
+function bindTip(el, path){
+  el.addEventListener('mouseenter', e => {
+    tip.innerHTML = `<span class="cap">${el.dataset.cap}</span>${esc(el.dataset.full)}`;
+    tip.style.display = 'block'; moveTip(e);
+    path.classList.add('hl');
+  });
+  el.addEventListener('mousemove', moveTip);
+  el.addEventListener('mouseleave', () => { tip.style.display = 'none'; path.classList.remove('hl'); });
+}
+function moveTip(e){
+  const w = tip.offsetWidth || 200;
+  let x = e.clientX + 14, y = e.clientY + 16;
+  if (x + w > window.innerWidth - 12) x = e.clientX - w - 12;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+
+function setMode(m){
+  const vp = document.getElementById('flow-vp');
+  vp.classList.toggle('mode-before', m === 'before');
+  vp.classList.toggle('mode-after', m === 'after');
+  document.getElementById('btn-before').classList.toggle('on', m === 'before');
+  document.getElementById('btn-after').classList.toggle('on', m === 'after');
+  buildFlow();
+}
+
+/* ════════ Tab 切换 ════════ */
+function switchTab(t){
+  document.getElementById('view-issues').style.display = t === 'issues' ? '' : 'none';
+  document.getElementById('view-detail').style.display = 'none';
+  document.getElementById('view-rules').style.display = t === 'rules' ? '' : 'none';
+  document.getElementById('page-head').style.display = t === 'rules' ? 'none' : '';
+  document.getElementById('main').style.padding = t === 'rules' ? '22px 30px 0' : '22px 30px 80px';
+  document.getElementById('tab-issues').classList.toggle('active', t === 'issues');
+  document.getElementById('tab-rules').classList.toggle('active', t === 'rules');
+  document.getElementById('flow-mode-switch').style.display = t === 'rules' ? 'flex' : 'none';
+  if (t === 'rules') requestAnimationFrame(buildFlow);
+}
+
+renderTable();
+</script>
+</body>
+</html>
