@@ -49,6 +49,7 @@ interface Ctrl {
   defaultOnState?: State;       // state when category dep is toggled ON (defaults to state)
   catKey?: CategoryKey;         // category dependency
   market?: Market;              // omit = both
+  issueId?: string;             // same finding in the Review Items work queue (single entity, two projections)
   ev?: {
     rules?: string;
     sources?: SourceRef[];
@@ -98,7 +99,7 @@ const DP_ITEMS: Ctrl[] = [
   },
   {
     id: "dp2", title: "Option to limit use of sensitive data (location / biometric)",
-    sub: "Element not found on reviewed pages.", state: "warn",
+    sub: "Element not found on reviewed pages.", state: "warn", issueId: "i-sens",
     ev: {
       rules: "Several US state privacy frameworks describe a consumer ability to limit the use of sensitive personal data.",
       sources: [
@@ -138,7 +139,7 @@ const DP_ITEMS: Ctrl[] = [
   },
   {
     id: "dp5", title: "Non-essential cookies set before consent",
-    sub: "Analytics cookies observed before a consent choice.", state: "warn", market: "eu",
+    sub: "Analytics cookies observed before a consent choice.", state: "warn", market: "eu", issueId: "i-cookies",
     ev: {
       rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.",
       sources: [
@@ -170,7 +171,7 @@ const TC_ITEMS: Ctrl[] = [
   },
   {
     id: "tc2", title: "Unqualified authenticity guarantee over third-party goods",
-    sub: "Listing language may extend an absolute guarantee.", state: "warn",
+    sub: "Listing language may extend an absolute guarantee.", state: "warn", issueId: "i-unqual",
     ev: {
       rules: "Unqualified authenticity guarantees that extend to third-party sellers are a recurring enforcement and review topic under the FTC Act §5 framework.",
       sources: [
@@ -218,7 +219,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
       {
         id: "p-cosmetics", title: "Cosmetics / topicals — EU product notification & Responsible Person",
         sub: "Sunscreen SKUs detected. EU Responsible Person disclosure missing on 3 listings.",
-        state: "warn", catKey: "cosmetics", defaultOnState: "warn", market: "eu",
+        state: "warn", catKey: "cosmetics", defaultOnState: "warn", market: "eu", issueId: "i-cosmetics",
         ev: {
           rules: "EU Cosmetic Products Regulation commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.",
           sources: [{ label: "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009R1223" }],
@@ -303,7 +304,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
       { id: "p-coo",     title: "Country-of-origin / sourcing disclosure surfaced", sub: "Manufacturing country stated on PDPs where required.", state: "ok" },
       {
         id: "p-urgency", title: "Urgency / scarcity claims (countdown timers, “only X left”)",
-        sub: "Countdown timers & “only 3 left” on 4 PDPs — substantiation not confirmed.", state: "warn",
+        sub: "Countdown timers & “only 3 left” on 4 PDPs — substantiation not confirmed.", state: "warn", issueId: "i-urgency",
         ev: {
           rules: "Real, verifiable scarcity is generally acceptable; simulated urgency is a recurring FTC review topic under §5 and its dark-patterns guidance.",
           sources: [
@@ -450,12 +451,19 @@ function ProofBlock({ proof }: { proof: Proof }) {
   );
 }
 
-function ControlRow({ ctrl, activeCats }: { ctrl: Ctrl; activeCats: Set<CategoryKey> }) {
+function ControlRow({ ctrl, activeCats, issueStatuses, onManageIssue }: {
+  ctrl: Ctrl;
+  activeCats: Set<CategoryKey>;
+  issueStatuses?: Record<string, IssueStatus>;
+  onManageIssue?: (issueId: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const state = effState(ctrl, activeCats);
   const hasEv = !!ctrl.ev && state !== "skip";
   const isSkipped = state === "skip";
   const sub = isSkipped ? "Not applicable — category not in your catalog. Rules skipped." : ctrl.sub;
+  // Status echo: same finding entity as the Review Items work queue
+  const issueStatus = state === "warn" && ctrl.issueId ? (issueStatuses?.[ctrl.issueId] ?? "open") : undefined;
   return (
     <div className={cn("border border-border rounded-lg bg-white overflow-hidden", isSkipped && "opacity-70")}>
       <button
@@ -471,6 +479,11 @@ function ControlRow({ ctrl, activeCats }: { ctrl: Ctrl; activeCats: Set<Category
           <div className="text-[13px] font-medium text-foreground">{ctrl.title}</div>
           {sub && <div className="text-[12px] text-muted-foreground mt-0.5">{sub}</div>}
         </div>
+        {issueStatus && issueStatus !== "open" && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0 bg-[#f0edff] text-[#6c47ff] border-[#dcd0ff]">
+            {STATUS_LABELS[issueStatus]}
+          </span>
+        )}
         <StateBadge state={state} />
         {hasEv && (
           <ChevronDown
@@ -492,6 +505,16 @@ function ControlRow({ ctrl, activeCats }: { ctrl: Ctrl; activeCats: Set<Category
           {ctrl.ev.rec && (
             <div className="border-l-2 border-[#6c47ff] pl-3 mt-2">
               <p className="text-[#6c47ff]">{ctrl.ev.rec}</p>
+            </div>
+          )}
+          {state === "warn" && ctrl.issueId && onManageIssue && (
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => onManageIssue(ctrl.issueId!)}
+                className="text-[11.5px] font-semibold text-[#6c47ff] hover:underline"
+              >
+                Manage in Review Items →
+              </button>
             </div>
           )}
         </div>
@@ -998,6 +1021,15 @@ export default function CompassPage() {
     setIssueStatuses(prev => ({ ...prev, [id]: status }));
   };
 
+  // Jump from an Overview checklist row to the same finding in the Review Items work queue
+  const [focusIssueId, setFocusIssueId] = useState<string | null>(null);
+  const manageIssue = (issueId: string) => {
+    const iss = ALL_ISSUES.find(i => i.id === issueId);
+    if (iss) setMarket(iss.market);
+    setFocusIssueId(issueId);
+    setTab("issues");
+  };
+
   if (!onboarded) {
     return (
       <div className="flex-1 overflow-y-auto bg-[#fafafa]">
@@ -1079,6 +1111,8 @@ export default function CompassPage() {
             productFilter={productFilter} setProductFilter={setProductFilter}
             collapsedGroups={collapsedGroups} toggleGroupCollapse={toggleGroupCollapse}
             goTo={setTab}
+            issueStatuses={issueStatuses}
+            onManageIssue={manageIssue}
           />
         )}
         {tab === "issues" && (
@@ -1087,6 +1121,7 @@ export default function CompassPage() {
             activeCats={activeCats}
             productStats={productStats}
             issueStatuses={issueStatuses} setIssueStatus={setIssueStatus}
+            focusIssueId={focusIssueId}
           />
         )}
         {tab === "ip" && <IpTab />}
@@ -1115,6 +1150,7 @@ export default function CompassPage() {
 function OverviewTab({
   market, setMarket, activeCats, productStats, overallScore,
   productFilter, setProductFilter, collapsedGroups, toggleGroupCollapse, goTo,
+  issueStatuses, onManageIssue,
 }: {
   market: Market;
   setMarket: (m: Market) => void;
@@ -1126,6 +1162,8 @@ function OverviewTab({
   collapsedGroups: Set<string>;
   toggleGroupCollapse: (key: string) => void;
   goTo: (t: SubTab) => void;
+  issueStatuses: Record<string, IssueStatus>;
+  onManageIssue: (issueId: string) => void;
 }) {
   const dpItems = forMarket(DP_ITEMS, market);
   const tcItems = forMarket(TC_ITEMS, market);
@@ -1233,7 +1271,7 @@ function OverviewTab({
         onToggle={() => toggleSection("dp")}
       />
       {openSections.has("dp") && (
-        <div className="space-y-2">{dpItems.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} />)}</div>
+        <div className="space-y-2">{dpItems.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} issueStatuses={issueStatuses} onManageIssue={onManageIssue} />)}</div>
       )}
 
       {/* Terms & Conditions */}
@@ -1246,7 +1284,7 @@ function OverviewTab({
         onToggle={() => toggleSection("tc")}
       />
       {openSections.has("tc") && (
-        <div className="space-y-2">{tcItems.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} />)}</div>
+        <div className="space-y-2">{tcItems.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} issueStatuses={issueStatuses} onManageIssue={onManageIssue} />)}</div>
       )}
 
       {/* Product */}
@@ -1306,7 +1344,7 @@ function OverviewTab({
                 />
                 {!collapsed && (
                   <div className="space-y-2">
-                    {filtered.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} />)}
+                    {filtered.map(c => <ControlRow key={c.id} ctrl={c} activeCats={activeCats} issueStatuses={issueStatuses} onManageIssue={onManageIssue} />)}
                   </div>
                 )}
               </div>
@@ -1598,7 +1636,7 @@ const ALL_ISSUES: Issue[] = [
 ];
 
 function IssuesTab({
-  market, setMarket, activeCats, issueStatuses, setIssueStatus,
+  market, setMarket, activeCats, issueStatuses, setIssueStatus, focusIssueId,
 }: {
   market: Market;
   setMarket: (m: Market) => void;
@@ -1606,10 +1644,20 @@ function IssuesTab({
   productStats: ProductStats;
   issueStatuses: Record<string, IssueStatus>;
   setIssueStatus: (id: string, status: IssueStatus) => void;
+  focusIssueId?: string | null;
 }) {
   const items = ALL_ISSUES
     .filter(i => i.market === market)
     .filter(i => !i.gatedByCat || activeCats.has(i.gatedByCat));
+
+  /* Scroll to the finding jumped from Overview ("Manage in Review Items →") */
+  useEffect(() => {
+    if (!focusIssueId) return;
+    const t = setTimeout(() => {
+      document.getElementById(`issue-${focusIssueId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+    return () => clearTimeout(t);
+  }, [focusIssueId]);
 
   const groups = CATEGORY_ORDER
     .map(cat => ({ cat, items: items.filter(i => i.category === cat) }))
@@ -1633,6 +1681,7 @@ function IssuesTab({
             items={g.items}
             issueStatuses={issueStatuses}
             setIssueStatus={setIssueStatus}
+            focusIssueId={focusIssueId}
           />
         ))}
       </div>
@@ -1641,12 +1690,13 @@ function IssuesTab({
 }
 
 function IssueGroup({
-  cat, items, issueStatuses, setIssueStatus,
+  cat, items, issueStatuses, setIssueStatus, focusIssueId,
 }: {
   cat: string;
   items: Issue[];
   issueStatuses: Record<string, IssueStatus>;
   setIssueStatus: (id: string, status: IssueStatus) => void;
+  focusIssueId?: string | null;
 }) {
   const [open, setOpen] = useState(true);
   return (
@@ -1670,6 +1720,7 @@ function IssueGroup({
               issue={it}
               status={issueStatuses[it.id] ?? "open"}
               onStatusChange={s => setIssueStatus(it.id, s)}
+              focused={it.id === focusIssueId}
             />
           ))}
         </div>
@@ -1686,14 +1737,18 @@ const STATUS_LABELS: Record<IssueStatus, string> = {
 };
 
 function IssueRow({
-  issue, status, onStatusChange,
+  issue, status, onStatusChange, focused,
 }: {
   issue: Issue;
   status: IssueStatus;
   onStatusChange: (s: IssueStatus) => void;
+  focused?: boolean;
 }) {
   return (
-    <div className="px-4 py-3 space-y-3 bg-[#fafbfc]">
+    <div
+      id={`issue-${issue.id}`}
+      className={cn("px-4 py-3 space-y-3 bg-[#fafbfc] scroll-mt-4", focused && "ring-2 ring-inset ring-[#6c47ff] bg-[#faf8ff]")}
+    >
       <div className="text-[13px] font-semibold text-foreground">{issue.title}</div>
       <div>
         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Relevant Rules and Context</div>
