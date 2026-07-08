@@ -484,11 +484,11 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 /* ════════ 数据 ════════ */
 const RMAS = [
   { rma:'BD7KX2M1', order:'#BD10234', customer:'Emily Carter',  created:'Jul 5, 2026, 3:12 PM', date:'2026-07-05', orderTs:'Jun 28, 2026, 9:04 AM', ship:'pre', type:'Refund', status:'In progress',
-    labels:[ {carrier:'USPS', trk:'9400 1361 0930 0331 22'} ],
+    labels:[ {carrier:'USPS', trk:'9300 1208 4550 0031 9489 63'} ],
     items:[ {name:'Bassdash Alien UL Spinning Rod 6\'8"', vt:'Ultra Light - 2 pc', sku:'BD-ROD-AL68-UL', qty:1, li:0, reason:'Incorrect item received', price:'$89.99', emoji:'🎣'} ],
     events:[['Shipping label created, USPS awaiting item','Jul 5, 2026, 3:20 PM — SEATTLE, WA']] },
   { rma:'BD4RT8W2', order:'#BD10240', customer:'Marcus Chen', created:'Jul 5, 2026, 9:40 AM', date:'2026-07-05', orderTs:'Jun 30, 2026, 2:15 PM', ship:'in', type:'Refund', status:'Accepted',
-    labels:[ {carrier:'USPS', trk:'9400 1102 5545 0087 31'}, {carrier:'USPS', trk:'9400 1102 5545 0087 48'} ],
+    labels:[ {carrier:'USPS', trk:'9300 1208 4550 0087 2231 04'}, {carrier:'USPS', trk:'9300 1208 4550 0087 2231 11'} ],
     items:[ {name:'Bassdash Alien Baitcasting Reel', vt:'7.2:1 / Right hand', sku:'BD-REL-AL72-R', qty:1, li:0, reason:'Doesn\'t suit me (upgraded to another model)', price:'$79.99', emoji:'🎛️'},
             {name:'Bassdash Rod Case 6\'6"', vt:'Black', sku:'BD-CSE-R66-BK', qty:1, li:1, reason:'Ordered by mistake', price:'$36.99', emoji:'🧳'} ],
     events:[['Departed USPS regional facility (package 1 of 2)','Jul 6, 2026, 3:05 AM — TACOMA, WA'],['USPS in possession of item','Jul 5, 2026, 4:12 PM — OLYMPIA, WA']] },
@@ -497,7 +497,7 @@ const RMAS = [
     items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, li:0, reason:'The leg opening of the pants is too wide or too narrow', price:'$25.98', emoji:'🪝'} ],
     events:[['Departed UPS facility','Jul 6, 2026, 2:11 AM — PORTLAND, OR'],['Origin scan','Jul 5, 2026, 6:30 PM — EUGENE, OR']] },
   { rma:'BD9LP4T2', order:'#BD10198', customer:'Hannah Lee', created:'Jul 3, 2026, 6:55 PM', date:'2026-07-03', orderTs:'Jun 20, 2026, 1:22 PM', ship:'del', type:'Exchange', status:'Completed',
-    labels:[ {carrier:'USPS', trk:'9405 5036 9930 0221 89'} ],
+    labels:[ {carrier:'USPS', trk:'9300 5036 9930 0221 4407 89'} ],
     items:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 42', sku:'BD-WDR-CHM-42', qty:1, li:0, reason:'The waist of the waders is too tight — need one size up', price:'$129.99', emoji:'🥾'},
             {name:'Wading Belt 2"', vt:'Olive', sku:'BD-BLT-WD2-OL', qty:1, li:0, reason:'Ordered by mistake', price:'$15.99', emoji:'🧷'} ],
     events:[['Delivered, front desk/reception/mail room','Jul 6, 2026, 11:02 AM — KENT, WA'],
@@ -564,7 +564,7 @@ function filteredRows(){
   });
 }
 function trkFrag(lb){
-  return `<span class="car">${lb.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo: opens the carrier tracking page')">${lb.trk}</a><button class="copy" title="Copy" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button>`;
+  return `<span class="car">${lb.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo: opens the carrier tracking page')">${lb.trk}</a><button class="copy" title="Copy tracking number" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button><button class="copy" title="Download return label (PDF)" onclick="event.stopPropagation();toast('Demo: downloads the return label PDF')">⤓</button>`;
 }
 function trkCell(r){
   const L = r.labels;

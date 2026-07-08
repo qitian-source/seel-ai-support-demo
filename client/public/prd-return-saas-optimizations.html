@@ -110,7 +110,7 @@
 <h2 id="scope">2 · 需求概览</h2>
 <table>
   <tr><th>#</th><th>需求</th><th>一句话价值</th><th>优先级</th></tr>
-  <tr><td><strong>R1</strong></td><td>Issues 列表展示运单号</td><td>不点开 RMA 就能拿到 tracking，多包裹也看得全</td><td><span class="pill p0">P0</span></td></tr>
+  <tr><td><strong>R1</strong></td><td>Issues 列表展示逆向面单运单号（可下载）</td><td>逆向单号从「3 步 + 人肉读面单」变成最外层直取，查轨迹/入库/下载一步到位</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R2</strong></td><td>导出自选字段（含商品级明细）</td><td>一张表完成仓库核对，字段自己挑</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R3</strong></td><td>退货商品展示 SKU</td><td>商家用自己的编码体系识别商品</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R4</strong></td><td>完结 RMA 保留面单与运单入口</td><td>完结后仍可回查、下载，支持对账与申诉</td><td><span class="pill p1">P1</span></td></tr>
@@ -120,13 +120,21 @@
 
 <h2 id="r1">3 · 需求详述</h2>
 
-<h3>R1 · Issues 列表展示运单号</h3>
-<div class="story">作为商家运营，我在 Issues 列表就能看到每个 RMA 的退货运单号，复制去承运商官网查件，不需要逐个点开详情。</div>
+<h3>R1 · Issues 列表展示逆向面单运单号（可下载）</h3>
+<div class="story">作为商家运营/仓库，我在 Issues 列表就能拿到 Seel 打印的逆向物流面单运单号——复制去查逆向轨迹、对着入库退件，还能直接下载面单，不需要逐个点开详情。</div>
+<h4>现状问题</h4>
+<p>逆向运单号目前藏得很深，商家拿到它至少 3 步：点开 RMA 详情 → 找到 Shipping documents 区块 → Download label 下载面单 → 再从面单图片上人肉读出条码下方的运单号。查逆向轨迹和入库退件是仓库的高频日常动作，这条路径完全不可用。</p>
 <h4>需求描述</h4>
 <ul>
-  <li>Issues 列表在 <strong>Status 与 Fraud risk 之间</strong>新增 <strong>Tracking #</strong> 列，展示该 RMA 退货面单对应的运单号，附承运商标识（USPS / UPS / FedEx…）。</li>
-  <li>单元格支持：<strong>一键复制</strong>（复制去空格的纯单号）；<strong>点击单号</strong>跳转承运商轨迹页；两个操作都不触发行点击进详情。</li>
-  <li><strong>多包裹</strong>（一个 RMA 拆多个包裹寄回）：默认只展示第一个运单号 + <code>+N</code> 徽标，<strong>hover 徽标弹出浮层</strong>逐行列出全部包裹（Package 1 / 2…，各带承运商、单号、复制），鼠标可移入浮层操作；行高不因多包裹变化。</li>
+  <li>Issues 列表在 <strong>Status 与 Fraud risk 之间</strong>新增 <strong>Tracking #</strong> 列，展示 <strong>Seel 生成的逆向物流面单（return label）上的运单号</strong>（即面单条码对应的单号，如 USPS Ground Advantage 的 9300 开头单号），附承运商标识；商家自传面单的 RMA 同样展示其面单运单号。</li>
+  <li>单元格三个行内操作，均不触发行点击进详情：
+    <ul>
+      <li><strong>一键复制</strong>运单号（复制去空格的纯单号）；</li>
+      <li><strong>点击单号</strong>跳转承运商轨迹页，查逆向物流轨迹；</li>
+      <li><strong>下载面单</strong>（PDF）——在最外层直接拿到面单，无需进详情。</li>
+    </ul>
+  </li>
+  <li><strong>多包裹</strong>（一个 RMA 拆多个包裹寄回）：默认只展示第一个运单号 + <code>+N</code> 徽标，<strong>hover 徽标弹出浮层</strong>逐行列出全部包裹（Package 1 / 2…，各带承运商、单号、复制、面单下载），鼠标可移入浮层操作；行高不因多包裹变化。</li>
   <li>顶部搜索框支持按<strong>运单号</strong>查询（空格不敏感），placeholder 同步提示。</li>
 </ul>
 <h4>边界</h4>
@@ -136,8 +144,9 @@
 </ul>
 <h4>验收标准</h4>
 <ol>
-  <li>有运单的 RMA 可复制、可跳轨迹页；无运单显示占位文案。</li>
-  <li>双包裹 RMA hover <code>+N</code> 出现浮层且两个单号均可复制；移出后浮层消失；行高与其他行一致。</li>
+  <li>列内运单号与该 RMA 面单条码上的单号一致（Seel 生成与商家自传两种来源均验证）。</li>
+  <li>有运单的 RMA 在列表内可复制、可跳轨迹页、<strong>可直接下载面单 PDF</strong>（与详情页下载的为同一文件）；无运单显示占位文案。</li>
+  <li>双包裹 RMA hover <code>+N</code> 出现浮层，两个包裹的单号均可复制、面单均可下载；移出后浮层消失；行高与其他行一致。</li>
   <li>搜索框输入运单号（带或不带空格）能命中对应 RMA。</li>
 </ol>
 
