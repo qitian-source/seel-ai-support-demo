@@ -858,9 +858,23 @@
             <td>~$10 / lookup</td>
             <td>1 week</td>
           </tr>
+          <tr>
+            <td><b>Source layer — rule registry (v1.2)</b></td>
+            <td>Official primary texts, ingested at <b>corpus build time</b> (not runtime): EUR-Lex REST/CELEX (GDPR, ePrivacy, Cosmetics 1223/2009, GPSR) · eCFR API (16 CFR 255/260 etc.) · uscode.house.gov (FTC Act, Mag-Moss, CPSIA) · CA leginfo (CPRA, Civ. Code) + other state legislature portals · ftc.gov (guidance/staff reports) · OEHHA (Prop 65 list)</td>
+            <td>None — all public/free; batch ingestion + monthly link-health check</td>
+            <td>$0</td>
+            <td>1–2 weeks (registry schema + ingestion + CI citation check)</td>
+          </tr>
+          <tr>
+            <td><b>Proof layer — evidence store (v1.2)</b></td>
+            <td>Internal: crawler page snapshots (excerpt offsets, timestamps) + network traces (cookie observations)</td>
+            <td>Merchant scan authorization + domain verification (§5.4)</td>
+            <td>$0 (storage)</td>
+            <td>Part of scan pipeline</td>
+          </tr>
         </tbody>
       </table>
-      <p style="font-size:12.5px;color:var(--mid)">Regulatory corpus is <b>counsel-signed</b> per State Machine C — not per-report authored.</p>
+      <p style="font-size:12.5px;color:var(--mid)">Regulatory corpus is <b>counsel-signed</b> per State Machine C — not per-report authored. <b>Runtime external calls are limited to USPTO and Middesk/SoS</b>; the source layer makes zero runtime API calls — citations render from the signed registry (§5.6).</p>
     </section>
 
     <!-- 10. Cadence -->
