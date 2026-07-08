@@ -24,6 +24,23 @@ type IssueStatus = "open" | "acknowledged" | "in_remediation" | "resolved";
 type ProductFilter = "all" | "review" | "verified" | "na";
 type CategoryKey = "cosmetics" | "kids" | "alcohol" | "cbd" | "tobacco" | "firearms" | "supplements" | "pharma";
 
+/* Source & proof layer.
+   Sources come from the counsel-signed rule registry — never generated at scan time.
+   Proof is the per-scan evidence: pages checked, timestamps, excerpts, observations. */
+const CORPUS_VERSION = "v2026.06";
+
+interface SourceRef {
+  label: string;   // e.g. "🇪🇺 GDPR — Art. 7(3)"
+  url?: string;    // official primary text only (EUR-Lex, eCFR, ftc.gov, leginfo…)
+}
+
+interface Proof {
+  pages?: string;        // what was checked / searched
+  checkedAt?: string;    // scan timestamp
+  excerpt?: string;      // verbatim capture from the merchant's page
+  observation?: string;  // structured observation (incl. absence proof)
+}
+
 interface Ctrl {
   id: string;
   title: string;
@@ -34,8 +51,8 @@ interface Ctrl {
   market?: Market;              // omit = both
   ev?: {
     rules?: string;
-    reviewed?: string;
-    sources?: string;
+    sources?: SourceRef[];
+    proof?: Proof;
     rec?: string;
   };
 }
@@ -69,7 +86,14 @@ const DP_ITEMS: Ctrl[] = [
     sub: "Found in Privacy Policy, §4 “Your Rights”.", state: "ok",
     ev: {
       rules: "CCPA/CPRA and GDPR frameworks commonly expect consumers to be told how to access, correct, delete, and port their data.",
-      reviewed: "Pulled the Privacy Policy linked in the site footer; the four rights are described in /privacy · §4 Your Rights. Language appears consistent with industry-standard disclosure.",
+      sources: [
+        { label: "🇺🇸 CPRA — Cal. Civ. Code §1798.100–.121", url: "https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?division=3.&part=4.&lawCode=CIV&title=1.81.5" },
+        { label: "🇪🇺 GDPR — Art. 15–20", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
+      ],
+      proof: {
+        pages: "yourstore.com/privacy · §4 “Your Rights”", checkedAt: "Jun 17, 2026",
+        excerpt: "You may request access to, correction of, or deletion of the personal information we hold about you, or ask for a copy in a portable format.",
+      },
     },
   },
   {
@@ -77,29 +101,54 @@ const DP_ITEMS: Ctrl[] = [
     sub: "Element not found on reviewed pages.", state: "warn",
     ev: {
       rules: "Several US state privacy frameworks describe a consumer ability to limit the use of sensitive personal data.",
-      sources: "your /privacy page · public web research",
+      sources: [
+        { label: "🇺🇸 CPRA — §1798.121 “Right to Limit”", url: "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.121." },
+        { label: "🇺🇸 Other state frameworks — CO · CT · VA" },
+      ],
+      proof: {
+        pages: "yourstore.com/privacy · /cookie-policy · /terms — 3 pages searched", checkedAt: "Jun 17, 2026",
+        observation: "No limit-use-of-sensitive-data disclosure or control found on any searched page.",
+      },
       rec: "Review item: limit-use-of-sensitive-data disclosure appears to be missing. Recommend confirming with qualified counsel whether your markets require it and, if so, adding the disclosure.",
     },
   },
   {
     id: "dp3", title: "Data retention periods actually enforced",
     sub: "Not assessable by an automated scan — operational record.", state: "na",
-    ev: { rules: "A point-in-time scan of public pages can read a stated retention period but cannot verify it is enforced operationally. Omitted rather than assumed either way." },
+    ev: {
+      rules: "A point-in-time scan of public pages can read a stated retention period but cannot verify it is enforced operationally. Omitted rather than assumed either way.",
+      sources: [
+        { label: "🇪🇺 GDPR — Art. 5(1)(e) storage limitation", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
+        { label: "🇺🇸 CPRA — §1798.100(a)(3)", url: "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100." },
+      ],
+      proof: { pages: "yourstore.com/privacy · §7 “Data Retention”", checkedAt: "Jun 17, 2026", observation: "A stated retention period was read; operational enforcement is outside what a public-page scan can verify." },
+    },
   },
   {
     id: "dp4", title: "Lawful basis for processing stated (GDPR Art. 6)",
     sub: "Found in Privacy Policy, §2 “How we use your data”.", state: "ok", market: "eu",
     ev: {
       rules: "GDPR commonly expects a stated lawful basis (consent, contract, legitimate interest) for each processing purpose.",
-      reviewed: "Privacy Policy /privacy · §2 names a lawful basis per purpose.",
+      sources: [{ label: "🇪🇺 GDPR — Art. 6", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" }],
+      proof: {
+        pages: "yourstore.com/privacy · §2 “How we use your data”", checkedAt: "Jun 17, 2026",
+        excerpt: "We process your order information to perform our contract with you; marketing emails are sent only with your consent.",
+      },
     },
   },
   {
     id: "dp5", title: "Non-essential cookies set before consent",
     sub: "Analytics cookies observed before a consent choice.", state: "warn", market: "eu",
     ev: {
-      rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent. On load, analytics cookies were observed being set before any consent interaction.",
-      sources: "network trace on your storefront homepage · public web research",
+      rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.",
+      sources: [
+        { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058" },
+        { label: "🇪🇺 GDPR — Art. 7 consent conditions", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
+      ],
+      proof: {
+        pages: "yourstore.com homepage — network trace", checkedAt: "Jun 17, 2026",
+        observation: "3 cookies set before any consent interaction: _ga, _fbp, _hjid (t+0.8 s after page load).",
+      },
       rec: "Review item: cookies set pre-consent. Recommend confirming with qualified counsel and adjusting the consent banner if needed.",
     },
   },
@@ -110,20 +159,42 @@ const TC_ITEMS: Ctrl[] = [
   {
     id: "tc1", title: "Governing law & dispute-resolution clause present",
     sub: "Found in Terms of Service, §12.", state: "ok",
-    ev: { reviewed: "Terms of Service /terms · §12 Governing Law names the governing jurisdiction and a dispute-resolution path." },
+    ev: {
+      rules: "Standard consumer-contract practice expects merchants to state which law governs and how disputes are resolved.",
+      sources: [{ label: "Consumer-contract disclosure norms — FTC staff guidance" }],
+      proof: {
+        pages: "yourstore.com/terms · §12 “Governing Law”", checkedAt: "Jun 17, 2026",
+        excerpt: "These Terms are governed by the laws of the State of Delaware. Any dispute will first be raised with our support team before formal proceedings.",
+      },
+    },
   },
   {
     id: "tc2", title: "Unqualified authenticity guarantee over third-party goods",
     sub: "Listing language may extend an absolute guarantee.", state: "warn",
     ev: {
-      rules: "Product listing states “Authenticity Ensured — every item guaranteed genuine.” Unqualified authenticity guarantees that extend to third-party sellers are a recurring enforcement and review topic under the FTC Act §5 framework.",
+      rules: "Unqualified authenticity guarantees that extend to third-party sellers are a recurring enforcement and review topic under the FTC Act §5 framework.",
+      sources: [
+        { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
+        { label: "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50", url: "https://uscode.house.gov/view.xhtml?path=/prelim@title15/chapter50&edition=prelim" },
+      ],
+      proof: {
+        pages: "yourstore.com product listing pages", checkedAt: "Jun 17, 2026",
+        excerpt: "Authenticity Ensured — every item guaranteed genuine.",
+      },
       rec: "Review item: unqualified guarantee. Recommend confirming with qualified counsel whether the guarantee should be qualified (e.g. scope, sellers covered).",
     },
   },
   {
     id: "tc3", title: "Refunds honored within the stated window",
     sub: "Not assessable by an automated scan — timing / operational.", state: "na",
-    ev: { rules: "A scan can read the stated refund window but cannot verify refunds are honored within it. Omitted, not guessed." },
+    ev: {
+      rules: "A scan can read the stated refund window but cannot verify refunds are honored within it. Omitted, not guessed.",
+      sources: [{ label: "🇺🇸 CA Civ. Code §1723 — refund-policy disclosure", url: "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1723." }],
+      proof: {
+        pages: "yourstore.com/refund-policy", checkedAt: "Jun 17, 2026",
+        observation: "A 30-day refund window is stated; whether refunds are honored within it is operational and outside a point-in-time scan.",
+      },
+    },
   },
 ];
 
@@ -149,8 +220,12 @@ const PRODUCT_GROUPS: SubGroup[] = [
         sub: "Sunscreen SKUs detected. EU Responsible Person disclosure missing on 3 listings.",
         state: "warn", catKey: "cosmetics", defaultOnState: "warn", market: "eu",
         ev: {
-          rules: "EU Cosmetic Products Regulation (EC) 1223/2009 commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.",
-          reviewed: "Sampled 3 sunscreen product pages (SKU prefix SUN-). None surface a Responsible Person disclosure. UK listings would require an equivalent under the UK Cosmetic Regulation.",
+          rules: "EU Cosmetic Products Regulation commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.",
+          sources: [{ label: "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009R1223" }],
+          proof: {
+            pages: "3 sunscreen PDPs (SKU prefix SUN-)", checkedAt: "Jun 17, 2026",
+            observation: "No Responsible Person disclosure found on any sampled page. UK listings would require an equivalent under the UK Cosmetics Regulation.",
+          },
           rec: "Review item: Responsible Person disclosure appears to be missing on cosmetics SKUs shipped into the EU. Recommend confirming with qualified counsel.",
         },
       },
@@ -162,18 +237,45 @@ const PRODUCT_GROUPS: SubGroup[] = [
     items: [
       { id: "p-health",  title: "Health / disease / efficacy claims are substantiated", sub: "No unsubstantiated health claims found on sampled PDPs.", state: "ok" },
       { id: "p-origin",  title: "Country-of-origin claims are accurate (e.g., “Made in USA”)", sub: "No unsupported country-of-origin claims found.", state: "ok" },
-      { id: "p-green",   title: "Environmental / “green” claims — “eco,” “natural,” “sustainable”", sub: "Language aligns with FTC Green Guides guidance.", state: "ok" },
+      {
+        id: "p-green", title: "Environmental / “green” claims — “eco,” “natural,” “sustainable”",
+        sub: "Language aligns with FTC Green Guides guidance.", state: "ok",
+        ev: {
+          rules: "FTC Green Guides describe how environmental claims are commonly expected to be qualified and substantiated.",
+          sources: [{ label: "🇺🇸 FTC Green Guides — 16 CFR Part 260", url: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-260" }],
+          proof: { pages: "sampled PDPs and collection pages", checkedAt: "Jun 17, 2026", observation: "“Recycled shell fabric (78%)” is quantified and product-specific; no unqualified “eco-friendly” claims found." },
+        },
+      },
       { id: "p-pricing", title: "Reference / discount pricing displays a prior-price basis", sub: "“Was $X” references an actual sold-at price within the prior 90 days.", state: "ok" },
     ],
   },
   {
     key: "safety", title: "Product safety, conformity & disclosures", count: 6,
     items: [
-      { id: "p-kids-safety", title: "Children's products / toys — safety standards & choking-hazard rules", sub: "Kids' outdoor gear detected. Age labels and small-parts warnings present.", state: "ok", catKey: "kids", defaultOnState: "ok" },
+      {
+        id: "p-kids-safety", title: "Children's products / toys — safety standards & choking-hazard rules",
+        sub: "Kids' outdoor gear detected. Age labels and small-parts warnings present.", state: "ok", catKey: "kids", defaultOnState: "ok",
+        ev: {
+          rules: "US children's-product frameworks commonly expect age grading and small-parts warnings on toys and kids' gear.",
+          sources: [
+            { label: "🇺🇸 CPSIA — 15 U.S.C. §2056a", url: "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title15-section2056a&num=0&edition=prelim" },
+            { label: "🇺🇸 ASTM F963 toy-safety standard" },
+          ],
+          proof: { pages: "4 kids' outdoor gear PDPs", checkedAt: "Jun 17, 2026", observation: "Age labels and small-parts warnings present on every sampled page." },
+        },
+      },
       { id: "p-ce-ukca",     title: "CE / UKCA conformity markings displayed where required", sub: "Markings shown on regulated goods sold into EU / UK.", state: "ok" },
       { id: "p-gpsr",        title: "EU Responsible Person named for goods sold into the EU (GPSR)", sub: "Named for general merchandise. Cosmetics-specific gap tracked above.", state: "ok" },
       { id: "p-inci",        title: "Allergen / ingredient / INCI labeling on ingestibles & cosmetics", sub: "INCI ingredient lists present on all sampled cosmetic PDPs.", state: "ok", catKey: "cosmetics", defaultOnState: "ok" },
-      { id: "p-prop65",      title: "Prop 65 / EU REACH substance-restriction signals", sub: "Prop 65 warnings surfaced on relevant CA-shipping listings.", state: "ok" },
+      {
+        id: "p-prop65", title: "Prop 65 / EU REACH substance-restriction signals",
+        sub: "Prop 65 warnings surfaced on relevant CA-shipping listings.", state: "ok",
+        ev: {
+          rules: "California Prop 65 commonly expects a clear warning before exposing consumers to listed substances.",
+          sources: [{ label: "🇺🇸 Prop 65 — Cal. H&S Code §25249.6 (OEHHA)", url: "https://oehha.ca.gov/proposition-65" }],
+          proof: { pages: "CA-shipping listings", checkedAt: "Jun 17, 2026", observation: "Prop 65 warnings surfaced on the relevant CA-shipping listings." },
+        },
+      },
       { id: "p-hazmat",      title: "Restricted-shipment / hazmat — batteries, aerosols, flammables", sub: "Battery-containing SKUs carry the required transport disclosures.", state: "ok" },
     ],
   },
@@ -181,7 +283,15 @@ const PRODUCT_GROUPS: SubGroup[] = [
     key: "ip-mkt", title: "IP & marketing integrity", count: 2,
     items: [
       { id: "p-counterfeit", title: "Counterfeit / unauthorized-reseller risk", sub: "All listings appear sourced from the brand directly or trusted independent sellers. (Separate from own-brand trademark screening — see the Intellectual Property tab.)", state: "ok" },
-      { id: "p-endorsement", title: "Endorsement / influencer / review disclosures (#ad, review authenticity)", sub: "Sponsored posts carry the required FTC disclosures; no fake-review signals detected.", state: "ok" },
+      {
+        id: "p-endorsement", title: "Endorsement / influencer / review disclosures (#ad, review authenticity)",
+        sub: "Sponsored posts carry the required FTC disclosures; no fake-review signals detected.", state: "ok",
+        ev: {
+          rules: "FTC Endorsement Guides commonly expect material connections between a brand and endorsers to be clearly disclosed.",
+          sources: [{ label: "🇺🇸 FTC Endorsement Guides — 16 CFR Part 255", url: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-255" }],
+          proof: { pages: "linked social posts + on-site review sections", checkedAt: "Jun 17, 2026", observation: "Sponsored posts carry #ad disclosures; no fake-review signals detected." },
+        },
+      },
     ],
   },
   {
@@ -195,8 +305,15 @@ const PRODUCT_GROUPS: SubGroup[] = [
         id: "p-urgency", title: "Urgency / scarcity claims (countdown timers, “only X left”)",
         sub: "Countdown timers & “only 3 left” on 4 PDPs — substantiation not confirmed.", state: "warn",
         ev: {
-          rules: "FTC has flagged unsubstantiated urgency messaging under §5 and its 2024 dark-patterns guidance. Real, verifiable scarcity is generally acceptable; simulated urgency is not.",
-          reviewed: "4 PDPs display “only 3 left” or countdown timers. Backing inventory data was not cross-checked in this scan.",
+          rules: "Real, verifiable scarcity is generally acceptable; simulated urgency is a recurring FTC review topic under §5 and its dark-patterns guidance.",
+          sources: [
+            { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
+            { label: "🇺🇸 FTC staff report — Bringing Dark Patterns to Light (2022)", url: "https://www.ftc.gov/reports/bringing-dark-patterns-light" },
+          ],
+          proof: {
+            pages: "4 PDPs on your storefront", checkedAt: "Jun 17, 2026",
+            observation: "Countdown timers and “only 3 left” messaging present; backing inventory data was not cross-checked in this scan.",
+          },
           rec: "Review item: verify the on-site urgency signals reflect actual stock or timing. Recommend confirming with qualified counsel.",
         },
       },
@@ -286,6 +403,53 @@ function StateBadge({ state }: { state: State }) {
   );
 }
 
+/* ── Source & proof blocks (shared by checklist rows and review items) ── */
+function SourcesBlock({ sources }: { sources: SourceRef[] }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Sources</div>
+      <div className="flex flex-wrap gap-1.5">
+        {sources.map((s, i) => s.url ? (
+          <a
+            key={i} href={s.url} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-foreground hover:border-[#6c47ff] hover:text-[#6c47ff] transition-colors"
+          >
+            {s.label} <span className="opacity-60">↗</span>
+          </a>
+        ) : (
+          <span key={i} className="inline-flex items-center text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-muted-foreground">
+            {s.label}
+          </span>
+        ))}
+      </div>
+      <p className="text-[10.5px] text-muted-foreground mt-1.5">
+        Rule corpus {CORPUS_VERSION} · reference only — how these rules apply to you depends on facts a scan can't assess.
+      </p>
+    </div>
+  );
+}
+
+function ProofBlock({ proof }: { proof: Proof }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">What We Reviewed — Proof</div>
+      {proof.pages && (
+        <div className="text-[12px] text-foreground">
+          <span className="text-muted-foreground">Checked:</span> {proof.pages}
+          {proof.checkedAt && <span className="text-muted-foreground"> · {proof.checkedAt}</span>}
+        </div>
+      )}
+      {proof.excerpt && (
+        <blockquote className="border-l-2 border-slate-300 pl-3 mt-1.5 text-[12px] italic text-foreground">
+          “{proof.excerpt}”
+          <span className="block not-italic text-[10.5px] text-muted-foreground mt-0.5">— captured from your page</span>
+        </blockquote>
+      )}
+      {proof.observation && <p className="text-[12px] text-foreground mt-1">{proof.observation}</p>}
+    </div>
+  );
+}
+
 function ControlRow({ ctrl, activeCats }: { ctrl: Ctrl; activeCats: Set<CategoryKey> }) {
   const [open, setOpen] = useState(false);
   const state = effState(ctrl, activeCats);
@@ -316,25 +480,15 @@ function ControlRow({ ctrl, activeCats }: { ctrl: Ctrl; activeCats: Set<Category
         )}
       </button>
       {open && ctrl.ev && (
-        <div className="border-t border-border bg-[#fafbfc] px-4 py-3 text-[12.5px] text-foreground space-y-2">
+        <div className="border-t border-border bg-[#fafbfc] px-4 py-3 text-[12.5px] text-foreground space-y-3">
           {ctrl.ev.rules && (
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Relevant Rules and Context</div>
               <p className="text-foreground">{ctrl.ev.rules}</p>
             </div>
           )}
-          {ctrl.ev.reviewed && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">What was reviewed</div>
-              <p className="text-foreground">{ctrl.ev.reviewed}</p>
-            </div>
-          )}
-          {ctrl.ev.sources && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Sources searched</div>
-              <p className="text-muted-foreground italic">{ctrl.ev.sources}</p>
-            </div>
-          )}
+          {ctrl.ev.sources && ctrl.ev.sources.length > 0 && <SourcesBlock sources={ctrl.ev.sources} />}
+          {ctrl.ev.proof && <ProofBlock proof={ctrl.ev.proof} />}
           {ctrl.ev.rec && (
             <div className="border-l-2 border-[#6c47ff] pl-3 mt-2">
               <p className="text-[#6c47ff]">{ctrl.ev.rec}</p>
@@ -1358,21 +1512,89 @@ interface Issue {
   market: Market;
   marketLabel: string;
   rules: string;
-  sources?: string;
+  sources?: SourceRef[];
+  proof?: Proof;
   rec: string;
   gatedByCat?: CategoryKey; // if unchecked, this issue disappears
 }
 
 const ALL_ISSUES: Issue[] = [
-  { id: "i-unqual",   title: "Unqualified authenticity guarantee over third-party goods", category: "Terms & Conditions", market: "us", marketLabel: "United States", rules: "Listing states “Authenticity Ensured — every item guaranteed genuine,” extending to independent sellers. Unqualified authenticity guarantees are a recurring enforcement and review topic under the FTC Act §5 framework.", sources: "Your product listing pages · public web research", rec: "Recommend confirming with qualified counsel whether to qualify the guarantee (scope / sellers covered)." },
-  { id: "i-sens",     title: "Option to limit use of sensitive data not surfaced", category: "Data & Privacy", market: "us", marketLabel: "United States", rules: "Several US state privacy frameworks describe a consumer ability to limit use of sensitive personal data (e.g. precise location, biometric). The reviewed Privacy Policy did not surface a corresponding disclosure or control.", sources: "Your /privacy page · public web research", rec: "Recommend confirming with qualified counsel whether your markets require it and adding the disclosure if so." },
-  { id: "i-tm",       title: "Trademark name similarity — “Acme Outdoor” vs registered mark", category: "Intellectual Property", market: "us", marketLabel: "United States", rules: "A USPTO trademark database search on the brand name returned a similar registered mark, “ACME OUTDOORS” (Reg. No. 5,xxx,xxx — Class 25, apparel), owned by an unrelated party.", rec: "Recommend confirming with qualified counsel whether the similarity poses an infringement risk before scaling US marketing. Annual monitoring available." },
-  { id: "i-annual",   title: "Annual report filing due — Delaware entity", category: "Corporate Entity", market: "us", marketLabel: "United States", rules: "Delaware Secretary of State record shows the entity is in good standing, with the next annual report / franchise tax due Mar 1, 2027. Filing late risks loss of good standing.", rec: "Recommend calendaring the filing and confirming with qualified counsel whether any additional state filings apply. Seel Compass can monitor good-standing status on an ongoing basis." },
-  { id: "i-urgency",  title: "Urgency / scarcity claims — countdown timers & “only X left”", category: "Product", market: "us", marketLabel: "United States", rules: "FTC has flagged unsubstantiated urgency messaging under §5 and its 2024 dark-patterns guidance. Real, verifiable scarcity is generally acceptable; simulated urgency is not.", sources: "4 PDPs on your storefront displaying countdown timers or “only 3 left” language · public web research", rec: "Recommend confirming with qualified counsel and verifying that on-site urgency signals reflect actual stock or timing." },
-  { id: "i-cookies",  title: "Non-essential cookies set before consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union", rules: "On load, analytics cookies were observed being set before any consent interaction. Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.", sources: "Network trace on your storefront homepage · public web research", rec: "Recommend confirming with qualified counsel and adjusting the consent banner if needed." },
-  { id: "i-dsar",     title: "DSAR response window not stated", category: "Data & Privacy", market: "eu", marketLabel: "European Union", rules: "The Privacy Policy describes data-subject rights but does not state a response timeframe for data-subject access requests. GDPR commonly references a one-month response expectation.", rec: "Recommend confirming with qualified counsel and stating the response window in your policy." },
-  { id: "i-withdraw", title: "No clear mechanism to withdraw consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union", rules: "Consent is collected at signup, but the reviewed pages do not surface an equally easy way to withdraw it. GDPR commonly expects withdrawing consent to be as easy as giving it.", rec: "Recommend confirming with qualified counsel and adding a self-serve withdrawal control." },
-  { id: "i-cosmetics",title: "Cosmetics — EU Responsible Person disclosure missing", category: "Product", market: "eu", marketLabel: "European Union", rules: "EU Cosmetic Products Regulation (EC) 1223/2009 commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.", sources: "3 sunscreen product pages (SKU prefix SUN-) on your storefront · public web research", rec: "Recommend confirming with qualified counsel and surfacing a Responsible Person disclosure on cosmetics SKUs sold into the EU.", gatedByCat: "cosmetics" },
+  {
+    id: "i-unqual", title: "Unqualified authenticity guarantee over third-party goods", category: "Terms & Conditions", market: "us", marketLabel: "United States",
+    rules: "Listing language extends an absolute authenticity guarantee to independent sellers. Unqualified authenticity guarantees are a recurring enforcement and review topic under the FTC Act §5 framework.",
+    sources: [
+      { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
+      { label: "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50", url: "https://uscode.house.gov/view.xhtml?path=/prelim@title15/chapter50&edition=prelim" },
+    ],
+    proof: { pages: "yourstore.com product listing pages", checkedAt: "Jun 17, 2026", excerpt: "Authenticity Ensured — every item guaranteed genuine." },
+    rec: "Recommend confirming with qualified counsel whether to qualify the guarantee (scope / sellers covered).",
+  },
+  {
+    id: "i-sens", title: "Option to limit use of sensitive data not surfaced", category: "Data & Privacy", market: "us", marketLabel: "United States",
+    rules: "Several US state privacy frameworks describe a consumer ability to limit use of sensitive personal data (e.g. precise location, biometric).",
+    sources: [
+      { label: "🇺🇸 CPRA — §1798.121 “Right to Limit”", url: "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.121." },
+      { label: "🇺🇸 Other state frameworks — CO · CT · VA" },
+    ],
+    proof: { pages: "yourstore.com/privacy · /cookie-policy · /terms — 3 pages searched", checkedAt: "Jun 17, 2026", observation: "No limit-use-of-sensitive-data disclosure or control found on any searched page." },
+    rec: "Recommend confirming with qualified counsel whether your markets require it and adding the disclosure if so.",
+  },
+  {
+    id: "i-tm", title: "Trademark name similarity — “Acme Outdoor” vs registered mark", category: "Intellectual Property", market: "us", marketLabel: "United States",
+    rules: "A search of the USPTO trademark database on the brand name returned a similar registered mark owned by an unrelated party.",
+    sources: [{ label: "🇺🇸 USPTO trademark database — text search", url: "https://tmsearch.uspto.gov/" }],
+    proof: { pages: "USPTO query “acme outdoor” + close variants, filtered by relevant Nice classes", checkedAt: "Jun 17, 2026", observation: "Similar registered mark found: ACME OUTDOORS · Class 25 (apparel) · Reg. No. 5,xxx,xxx · unrelated owner." },
+    rec: "Recommend confirming with qualified counsel whether the similarity poses an infringement risk before scaling US marketing. Annual monitoring available.",
+  },
+  {
+    id: "i-annual", title: "Annual report filing due — Delaware entity", category: "Corporate Entity", market: "us", marketLabel: "United States",
+    rules: "Delaware entities are expected to file an annual report and franchise tax to remain in good standing; filing late risks loss of good standing.",
+    sources: [{ label: "🇺🇸 Delaware Division of Corporations — entity records", url: "https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx" }],
+    proof: { pages: "Delaware SoS entity record", checkedAt: "Jun 17, 2026", observation: "Status: good standing. Next annual report / franchise tax due Mar 1, 2027." },
+    rec: "Recommend calendaring the filing and confirming with qualified counsel whether any additional state filings apply. Seel Compass can monitor good-standing status on an ongoing basis.",
+  },
+  {
+    id: "i-urgency", title: "Urgency / scarcity claims — countdown timers & “only X left”", category: "Product", market: "us", marketLabel: "United States",
+    rules: "Real, verifiable scarcity is generally acceptable; simulated urgency is a recurring FTC review topic under §5 and its dark-patterns guidance.",
+    sources: [
+      { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
+      { label: "🇺🇸 FTC staff report — Bringing Dark Patterns to Light (2022)", url: "https://www.ftc.gov/reports/bringing-dark-patterns-light" },
+    ],
+    proof: { pages: "4 PDPs on your storefront", checkedAt: "Jun 17, 2026", observation: "Countdown timers and “only 3 left” messaging present; backing inventory data was not cross-checked in this scan." },
+    rec: "Recommend confirming with qualified counsel and verifying that on-site urgency signals reflect actual stock or timing.",
+  },
+  {
+    id: "i-cookies", title: "Non-essential cookies set before consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union",
+    rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.",
+    sources: [
+      { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058" },
+      { label: "🇪🇺 GDPR — Art. 7 consent conditions", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
+    ],
+    proof: { pages: "yourstore.com homepage — network trace", checkedAt: "Jun 17, 2026", observation: "3 cookies set before any consent interaction: _ga, _fbp, _hjid (t+0.8 s after page load)." },
+    rec: "Recommend confirming with qualified counsel and adjusting the consent banner if needed.",
+  },
+  {
+    id: "i-dsar", title: "DSAR response window not stated", category: "Data & Privacy", market: "eu", marketLabel: "European Union",
+    rules: "GDPR commonly references a one-month response expectation for data-subject access requests.",
+    sources: [{ label: "🇪🇺 GDPR — Art. 12(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" }],
+    proof: { pages: "yourstore.com/privacy · §4", checkedAt: "Jun 17, 2026", observation: "Data-subject rights are described, but no response timeframe is stated for access requests." },
+    rec: "Recommend confirming with qualified counsel and stating the response window in your policy.",
+  },
+  {
+    id: "i-withdraw", title: "No clear mechanism to withdraw consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union",
+    rules: "GDPR commonly expects withdrawing consent to be as easy as giving it.",
+    sources: [{ label: "🇪🇺 GDPR — Art. 7(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" }],
+    proof: { pages: "yourstore.com account pages · /privacy — searched for a withdrawal control", checkedAt: "Jun 17, 2026", observation: "Consent is collected at signup; no self-serve withdrawal control found on the reviewed pages." },
+    rec: "Recommend confirming with qualified counsel and adding a self-serve withdrawal control.",
+  },
+  {
+    id: "i-cosmetics", title: "Cosmetics — EU Responsible Person disclosure missing", category: "Product", market: "eu", marketLabel: "European Union",
+    rules: "EU Cosmetic Products Regulation commonly expects an EU-based Responsible Person to be identified for cosmetic products marketed into the EU.",
+    sources: [{ label: "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009R1223" }],
+    proof: { pages: "3 sunscreen PDPs (SKU prefix SUN-)", checkedAt: "Jun 17, 2026", observation: "No Responsible Person disclosure found on any sampled page." },
+    rec: "Recommend confirming with qualified counsel and surfacing a Responsible Person disclosure on cosmetics SKUs sold into the EU.",
+    gatedByCat: "cosmetics",
+  },
 ];
 
 function IssuesTab({
@@ -1471,18 +1693,14 @@ function IssueRow({
   onStatusChange: (s: IssueStatus) => void;
 }) {
   return (
-    <div className="px-4 py-3 space-y-2 bg-[#fafbfc]">
+    <div className="px-4 py-3 space-y-3 bg-[#fafbfc]">
       <div className="text-[13px] font-semibold text-foreground">{issue.title}</div>
       <div>
         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Relevant Rules and Context</div>
         <p className="text-[12.5px] text-foreground mt-0.5">{issue.rules}</p>
       </div>
-      {issue.sources && (
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sources searched</div>
-          <p className="text-[12.5px] text-muted-foreground italic mt-0.5">{issue.sources}</p>
-        </div>
-      )}
+      {issue.sources && issue.sources.length > 0 && <SourcesBlock sources={issue.sources} />}
+      {issue.proof && <ProofBlock proof={issue.proof} />}
       <div className="border-l-2 border-[#6c47ff] pl-3 text-[12.5px] text-[#6c47ff]">{issue.rec}</div>
       <div className="flex items-center gap-1 pt-1">
         {(["open", "acknowledged", "in_remediation", "resolved"] as IssueStatus[]).map(s => {
@@ -1526,7 +1744,8 @@ function IpTab() {
         <CardContent className="p-5 space-y-3">
           <h3 className="text-[14px] font-semibold text-foreground">Trademark name screening — “Acme Outdoor”</h3>
           <p className="text-[12.5px] text-muted-foreground">Searched the USPTO trademark database for the brand name and close variants, filtered by relevant goods/services class.</p>
-          <RowKV k="Database searched" v="USPTO TESS — text search" />
+          <RowKV k="Database searched" v={<a href="https://tmsearch.uspto.gov/" target="_blank" rel="noreferrer" className="text-[#6c47ff] hover:underline">USPTO trademark database — text search ↗</a>} />
+          <RowKV k="Checked"           v="Jun 17, 2026" />
           <RowKV k="Brand name"        v="Acme Outdoor" />
           <RowKV k="Similar registered mark found" v={<span className="text-amber-700">ACME OUTDOORS · Class 25 · Reg. 5,xxx,xxx</span>} />
           <RowKV k="Owner"                v="Unrelated third party" />
@@ -1569,6 +1788,7 @@ function EntityTab() {
         <CardContent className="p-5 space-y-3">
           <h3 className="text-[14px] font-semibold text-foreground">Good-standing check — Delaware SoS</h3>
           <p className="text-[12.5px] text-muted-foreground">Queried the Delaware Secretary of State portal for status and filing currency.</p>
+          <RowKV k="Source" v={<a href="https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx" target="_blank" rel="noreferrer" className="text-[#6c47ff] hover:underline">Delaware Division of Corporations — entity search ↗</a>} />
           <RowKV k="Status" v={<span className="text-emerald-700 font-medium">Good standing</span>} />
           <RowKV k="Annual report / franchise tax" v={<span className="text-amber-700 font-medium">Due Mar 1, 2027</span>} />
           <RowKV k="Last checked" v="Jun 17, 2026" />
@@ -1581,9 +1801,9 @@ function EntityTab() {
 /* ── History tab ── */
 function HistoryTab() {
   const history = [
-    { date: "Jun 17, 2026", tag: "latest", score: 89, pages: 11, delta: "+2", new: "+2 new (cosmetics EU RP, urgency claims)", resolved: "2 resolved (age screen, affiliate disclosure)" },
-    { date: "Jun 10, 2026", tag: null,     score: 87, pages: 11, delta: "+2", new: "+2 new",  resolved: "1 resolved" },
-    { date: "Jun 3, 2026",  tag: null,     score: 85, pages: 10, delta: null, new: "first baseline · 5 review items opened", resolved: null },
+    { date: "Jun 17, 2026", tag: "latest", score: 89, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new (cosmetics EU RP, urgency claims)", resolved: "2 resolved (age screen, affiliate disclosure)" },
+    { date: "Jun 10, 2026", tag: null,     score: 87, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new",  resolved: "1 resolved" },
+    { date: "Jun 3, 2026",  tag: null,     score: 85, pages: 10, corpus: "v2026.05", delta: null, new: "first baseline · 5 review items opened", resolved: null },
   ];
   return (
     <>
@@ -1604,6 +1824,7 @@ function HistoryTab() {
                 <div className="text-[12.5px] text-muted-foreground mt-1">
                   <span className="font-bold text-[#6c47ff] mr-2">{h.score}%</span>
                   {h.pages} pages checked
+                  <span className="text-slate-400 ml-2">· rule corpus {h.corpus}</span>
                   {h.delta && <span className="text-emerald-700 font-medium mx-2">▲ {h.delta}</span>}
                   {h.new && <span className="text-amber-700 font-medium mx-2">{h.new}</span>}
                   {h.resolved && <span className="text-[#6c47ff] font-medium mx-2">{h.resolved}</span>}

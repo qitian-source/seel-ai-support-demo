@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Seel Compass — PRD & State Machines · Draft v1.1</title>
+<title>Seel Compass — PRD & State Machines · Draft v1.2</title>
 <style>
   :root{
     --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
@@ -144,11 +144,11 @@
     <div class="mark">🧭</div>
     <div class="title">
       <span>Seel Compass — PRD & State Machines</span>
-      <small>Draft v1.1 · Go-Global Readiness · For Counsel Review</small>
+      <small>Draft v1.2 · Go-Global Readiness · For Counsel Review</small>
     </div>
   </div>
   <div class="topbar-right">
-    <span class="pill">Draft v1.1</span>
+    <span class="pill">Draft v1.2</span>
     <span class="pill warn">Counsel review needed</span>
     <a href="#open-items" style="color:#DDD6FE">Jump to open items →</a>
   </div>
@@ -203,7 +203,7 @@
         <p style="margin-bottom:0"><b>Explicit non-goal:</b> Compass is <b>not</b> a substitute for legal counsel. Every review item includes a "recommend confirming with qualified counsel" line.</p>
       </div>
 
-      <p><b>Status:</b> Draft v1.1 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist, omit-not-label carve-out). v1.1 (7/6) adds the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan architecture, and async report generation (§7).</p>
+      <p><b>Status:</b> Draft v1.2 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist, omit-not-label carve-out). v1.1 (7/6) added the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan, async report generation (§7). <b>v1.2 (7/6) adds the source &amp; proof layer (§5.6)</b>: every finding shows the rule citations it derives from — rendered only from the counsel-signed registry — plus structured scan evidence.</p>
       <p><b>Predecessor:</b> Replaces the earlier <i>Compliance LLP Product Implementation Spec</i>; that document is superseded.</p>
     </section>
 
@@ -451,6 +451,35 @@
         <li>Any LLM-vs-merchant conflict (for future audit if a merchant claims a category doesn't apply when the agent detected it)</li>
       </ul>
       <p>Retention: engagement length + 3 years. Not surfaced to merchant. Available to counsel on request.</p>
+
+      <h3>5.6 Source &amp; proof layer (new in v1.2)</h3>
+      <p>Every finding surfaces two distinct layers, and the distinction is itself a legal safeguard: <b>citations attach to rules, never to conclusions</b>.</p>
+      <table>
+        <thead><tr><th>Layer</th><th>Answers</th><th>Contents</th><th>Provenance</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Source</b></td>
+            <td>"What rule does this check derive from?"</td>
+            <td>Framework + article citation chips linking to <b>official primary texts only</b> (EUR-Lex, eCFR, ftc.gov, leginfo, USPTO, State SoS)</td>
+            <td>Rule registry — versioned with the corpus, counsel-signed (SM C)</td>
+          </tr>
+          <tr>
+            <td><b>Proof</b></td>
+            <td>"What did the scan observe on my site?"</td>
+            <td>Pages checked + timestamp · verbatim excerpts ("captured from your page") · structured observations, including <b>absence proof</b> for missing-element findings ("3 pages searched — not found")</td>
+            <td>Per-scan evidence store, version-stamped</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note legal">
+        <b>Hard constraint — citations are rendered, never generated:</b> the LLM maps page evidence to a rule ID at scan time; the citation text and links are looked up from the signed registry. The model <b>never</b> produces a legal citation at runtime. A hallucinated citation is treated as a build-breaking defect (CI check), same severity class as a language-rule violation.
+      </div>
+      <ul>
+        <li><b>Temporal anchor:</b> citations carry no individual dates. One block-level line — <i>"Rule corpus v2026.06 · reference only — how these rules apply to you depends on facts a scan can't assess"</i> — anchors all citations to the corpus version, which is exactly the object counsel signs. Proof carries the scan date separately: "rules as of corpus date, your site as of scan date."</li>
+        <li><b>Versioned links:</b> where the official source supports point-in-time URLs (EUR-Lex consolidated versions, eCFR date views), the registry stores the version the corpus ingested; otherwise the current official URL plus the corpus-date semantics. Link health is checked in the monthly corpus refresh (§10); a materially changed source triggers the SM C re-sign path.</li>
+        <li><b>Internal sign-off, zero external endorsement:</b> merchants see the corpus version number only. No "counsel-reviewed" or "legal-approved" labels appear anywhere in the merchant UI — exposing counsel as named endorsers would increase reliance and UPL exposure. Sign-off records live in the internal audit log (§5.5).</li>
+        <li><b>Scope note for counsel:</b> the source layer makes the corpus sign-off object concrete — what you sign now includes the merchant-visible citation registry. See §12 items 3, 9, 10.</li>
+      </ul>
     </section>
 
     <!-- 6. State machines -->
@@ -792,7 +821,7 @@
         <thead><tr><th>Tab</th><th>Contents</th></tr></thead>
         <tbody>
           <tr><td><b>Overview</b></td><td>6 score cards · delta · market pill · summary counts · D&P / T&C / Product checklists — <b>sections collapsed by default</b>, header shows verified/review counts; clicking a score card auto-expands and scrolls to its section; inline "How are these scores calculated?" methodology explainer</td></tr>
-          <tr><td><b>Review Items</b></td><td>Consolidated across all categories, grouped by category, collapsible</td></tr>
+          <tr><td><b>Review Items</b></td><td>Consolidated across all categories, grouped by category, collapsible — each item shows rule-citation sources (from the signed registry, §5.6) + structured scan proof</td></tr>
           <tr><td><b>Intellectual Property</b></td><td>Trademark screening panel + ongoing monitoring</td></tr>
           <tr><td><b>Corporate Entity</b></td><td>Entity questionnaire + State SoS good-standing readout</td></tr>
           <tr><td><b>History</b></td><td>Version-stamped review timeline with score / delta / new / resolved</td></tr>
@@ -902,8 +931,8 @@
           </tr>
           <tr>
             <td>3</td>
-            <td><b>Initial regulatory corpus sign-off</b> (US + EU)</td>
-            <td><a href="#legal-safeguards">§5.3</a></td>
+            <td><b>Initial regulatory corpus sign-off</b> (US + EU) — <b>scope expanded in v1.2:</b> now includes the merchant-visible citation registry (§5.6)</td>
+            <td><a href="#legal-safeguards">§5.3 / §5.6</a></td>
             <td><span class="block">Blocks launch</span></td>
           </tr>
           <tr>
@@ -935,6 +964,18 @@
             <td>Support ticket review — confirm Phase 2 candidacy (Michael 6/25 raised)</td>
             <td><a href="#out-of-scope">§3</a></td>
             <td><span class="nice">Nice-to-have</span></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><b>Citation granularity</b> (v1.2) — article-level vs statute-level citations to merchants; phrasing convention for the US state-law patchwork (e.g. "CPRA §1798.121 (CA) + other state frameworks")</td>
+            <td><a href="#legal-safeguards">§5.6</a></td>
+            <td><span class="block">Blocks source layer</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><b>Temporal anchor &amp; versioned links</b> (v1.2) — confirm corpus-version date as the single "as of" anchor + point-in-time official links approach</td>
+            <td><a href="#legal-safeguards">§5.6</a></td>
+            <td><span class="block">Blocks source layer</span></td>
           </tr>
         </tbody>
       </table>
@@ -1047,7 +1088,7 @@
 </div>
 
 <footer>
-  Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · PRD Draft v1.1 · © 2026
+  Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · PRD Draft v1.2 · © 2026
 </footer>
 
 </body>

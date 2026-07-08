@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Seel Compass — 产品需求文档（PRD）· Draft v1.1</title>
+<title>Seel Compass — 产品需求文档（PRD）· Draft v1.2</title>
 <style>
   :root{
     --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
@@ -132,11 +132,11 @@
     <div class="mark">🧭</div>
     <div class="title">
       <span>Seel Compass — 产品需求文档（PRD）</span>
-      <small>Draft v1.1 · Go-Global Readiness · 产品需求定义</small>
+      <small>Draft v1.2 · Go-Global Readiness · 产品需求定义</small>
     </div>
   </div>
   <div class="topbar-right">
-    <span class="pill">Draft v1.1</span>
+    <span class="pill">Draft v1.2</span>
     <span class="pill blue">PRD · 中文</span>
     <a href="/seel-compass-prd.html" style="color:#DDD6FE">English (counsel) 版 →</a>
   </div>
@@ -484,6 +484,25 @@
       <div class="note info">
         <b>两段式扫描（为什么报告不是立刻出）：</b>确认品类后进入异步的<b>报告生成</b>阶段（应用市场规则集 + 编写 findings，约 10 分钟）。产品内显示 "Generating your first report…"，商家可离开页面，完成后邮件通知。这样重量级规则计算只跑一次、只对商家<b>确认过</b>的品类跑 —— 不会存在一份 scope 仅由 AI 识别（未经商家确认）决定的报告。
       </div>
+
+      <h3>6.12 Source & Proof 层（v1.2 新增）</h3>
+      <p><b>要解决的问题：</b>商家（和他们的律师）要能看到每一项判断依据什么法规、我们在他们站上看到了什么。两层拆开呈现，且这个拆分本身是法务结构：<b>引用挂在规则上，不挂在结论上</b>。</p>
+      <table>
+        <thead><tr><th>层</th><th>回答</th><th>内容</th><th>来源</th></tr></thead>
+        <tbody>
+          <tr><td><b>Source</b></td><td>这条检查依据什么规则</td><td>法规名 + 条款号 chips，链接<b>只指官方一手文本</b>（EUR-Lex / eCFR / ftc.gov / leginfo / USPTO / 州 SoS）</td><td>rule registry，随 corpus 版本化、counsel 签署</td></tr>
+          <tr><td><b>Proof</b></td><td>扫描在商家站上看到了什么</td><td>扫了哪些页 + 时间戳 · 页面原文摘录（"captured from your page"）· 结构化观测，含缺失类的<b>缺席证明</b>（"3 pages searched — not found"）</td><td>每次扫描的证据存储，版本戳</td></tr>
+        </tbody>
+      </table>
+      <div class="note danger">
+        <b>硬约束 —— 引用只渲染、不生成：</b>LLM 在扫描时只做"页面证据 → rule id"的映射；引用文本和链接从签署过的 registry 查表渲染。<b>运行时 LLM 永不产生法条引用</b>。幻觉引用视为 build-breaking 缺陷（CI 检查），严重级别等同语言禁词违规。
+      </div>
+      <ul>
+        <li><b>时效锚点：</b>单条引用不标日期；Sources 块统一一行 "Rule corpus v2026.06 · reference only…" —— corpus 版本日期即全部引用的"截至日"，和 counsel 签署对象完全一致。Proof 块单独带扫描日期。</li>
+        <li><b>版本化链接：</b>官方源支持时点 URL 的（EUR-Lex consolidated、eCFR 日期视图）存 corpus 摄入版本；不支持的存当前官方链接、由 corpus 日期声明兜底。链接健康检查搭 corpus 月度 refresh。</li>
+        <li><b>对内签署、对外零背书：</b>商家只看到 corpus 版本号；UI 任何地方不出现 "counsel-reviewed" 类标签（暴露法务具名 = 增加 reliance 和 UPL 风险）。签署记录只在内部 audit log。</li>
+        <li><b>对签署范围的影响：</b>corpus 签署对象从"内部规则文本"扩大为"含商家可见引用 registry"—— 已同步进英文版 §12（item 3 扩围 + 新增 item 9 引用粒度、item 10 时效锚点）。</li>
+      </ul>
     </section>
 
     <!-- 7 -->
@@ -633,6 +652,7 @@
         <li><b>Score hero：</b>6 张同尺寸卡片一行并排（Overall 89% + Data & Privacy 92 + T&C 86 + Product 88 + IP Review + Entity Good standing）。IP 和 Entity 卡右上带 "US" 徽标。</li>
         <li><b>Section 默认折叠：</b>Overview 的 D&P / T&C / Product 三个 section 默认收起，标题行显示 emoji · 类目名 · verified/review 统计 · chevron；点击标题展开/收起</li>
         <li><b>评分方法说明：</b>summary 行内 "ⓘ How are these scores calculated?" 可展开评分口径（类目分 = verified ÷ assessed，Not assessable / N/A 不计入；Overall = 三个记分类目均值）—— 回应 Michael 6/11 "score 算法可查"</li>
+        <li><b>Evidence pane 四段结构（v1.2）：</b>Relevant rules and context → Sources（引用 chips + corpus 版本行）→ What we reviewed — Proof（页面 + 时间戳 + 摘录/观测）→ Recommendation（counsel 语收尾）</li>
         <li><b>Category cards 可点击：</b>点击卡片自动展开对应 section 并平滑滚动（Overview 内锚）；IP / Entity 卡切换到对应 tab</li>
         <li><b>Onboarding wizard：</b>顶部 5 步 step indicator（已完成 ✓ / 当前高亮 / 未到灰色）；授权 checkbox 未勾选时 Continue 禁用；DNS TXT record 可一键复制；生成中页有 spinner + "约 10 分钟 · 可离开 · 邮件通知" 提示</li>
         <li><b>Checklist 项：</b>每一条可点击展开 evidence pane，含"相关规则背景 / 已核查内容 / 检索来源 / 建议"四个区域</li>
@@ -766,6 +786,19 @@
           <li>品类确认页预勾选识别结果并附 catalog 证据；商家可增删</li>
           <li>确认品类后进入异步生成态：页面明示约 10 分钟 + 可离开 + 邮件通知；完成后报告在 Compass 下等待</li>
           <li>onboarding 里确认的品类 set 与 dashboard 的规则范围一致（分数 / badge / N-A 项全联动）</li>
+        </ul>
+      </div>
+
+      <div class="accept">
+        <b>AC-12 · Source & Proof 层（v1.2 新增）</b>
+        <ul>
+          <li>每条有 evidence 的 check 展示结构化 Sources（法规名 + 条款号 + 官方一手文本链接）</li>
+          <li>引用只来自 rule registry 查表 —— 运行时 LLM 生成引用次数 = 0（硬约束，CI 检查）</li>
+          <li>Sources 块显示统一 corpus 版本行 + "reference only" 微声明</li>
+          <li>缺失类 review item 展示缺席证明（searched N pages — not found）；行为类展示观测记录（如 cookie trace）</li>
+          <li>Verified 项展示商家页面原文摘录（"captured from your page"）</li>
+          <li>商家 UI 全站搜不到 "counsel-reviewed" / "legal-approved" 类标签</li>
+          <li>History 每个 scan 节点标注 rule corpus 版本</li>
         </ul>
       </div>
 
@@ -988,7 +1021,7 @@
 </div>
 
 <footer>
-  Seel Compass · by Seel Inc. · 产品需求文档 Draft v1.1 · 仅供内部产品/研发/法务使用 · © 2026
+  Seel Compass · by Seel Inc. · 产品需求文档 Draft v1.2 · 仅供内部产品/研发/法务使用 · © 2026
 </footer>
 
 </body>
