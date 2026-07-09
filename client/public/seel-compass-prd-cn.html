@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Seel Compass — 产品需求文档（PRD）· Draft v1.2</title>
+<title>Seel Compass — 产品需求文档（PRD）· Draft v1.3</title>
 <style>
   :root{
     --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
@@ -132,11 +132,11 @@
     <div class="mark">🧭</div>
     <div class="title">
       <span>Seel Compass — 产品需求文档（PRD）</span>
-      <small>Draft v1.2 · Go-Global Readiness · 产品需求定义</small>
+      <small>Draft v1.3 · Go-Global Readiness · 产品需求定义</small>
     </div>
   </div>
   <div class="topbar-right">
-    <span class="pill">Draft v1.2</span>
+    <span class="pill">Draft v1.3</span>
     <span class="pill blue">PRD · 中文</span>
     <a href="/seel-compass-prd.html" style="color:#DDD6FE">English (counsel) 版 →</a>
   </div>
@@ -146,7 +146,7 @@
   <div class="inner">
     <div class="icon">📄</div>
     <div class="text">
-      <b>本文档目的：</b>定义 Seel Compass Phase 1 的产品需求 —— 我们要做什么产品、给谁用、解决什么问题、如何验收、如何衡量成功。<b>面向：</b>产品 / 设计 / 研发 / 法务 · <b>作者：</b>Tammy · <b>Reviewers：</b>Alex · Zack · Michael / Jenny · <b>关联文档：</b><a href="/seel-compass-prd.html">法务版 PRD (English)</a>
+      <b>本文档目的：</b>定义 Seel Compass Phase 1 的产品需求 —— 我们要做什么产品、给谁用、解决什么问题、如何验收、如何衡量成功。<b>面向：</b>产品 / 设计 / 研发 / 法务 · <b>作者：</b>Tammy · <b>Reviewers：</b>Alex · Zack · Michael / Jenny · <b>关联文档：</b><a href="/seel-compass-prd.html">法务版 PRD (English)</a><br><b>v1.3（7/8）更新（Michael 反馈）：</b>self-harm 从"运行时压制"改为"authoring 时整体 scope-out"（§6.12/8.4）· registry 加解释依据字段应对判例问题 · onboarding 前置 counsel 版免责声明。
     </div>
   </div>
 </div>
@@ -313,7 +313,7 @@
 
       <div class="story">
         <div class="role">US-8 · 法务 · Seel 自伤保护</div>
-        <div class="text">作为 Seel 法务，我需要<b>产品不会把 Seel 自己的售后保障 / opt-out 机制标为合规问题</b>—— 因为那样等于 Seel 承认自家产品有问题、且给 plaintiff 律师留了书面证据。</div>
+        <div class="text">作为 Seel 法务，我需要<b>产品不会把 Seel 自己的售后保障 / opt-out 机制标为风险</b>—— 且实现方式上，那些只会命中 Seel 产品模式的规则应<b>从方法论里整体移除</b>（对所有商家都不查），而不是"查了再针对 Seel 隐藏"。后者的选择性隐藏本身就是可被 argue 成误导的积极行为（Michael 7/8）。</div>
       </div>
     </section>
 
@@ -505,6 +505,8 @@
         <li><b>版本化链接：</b>官方源支持时点 URL 的（EUR-Lex consolidated、eCFR 日期视图）存 corpus 摄入版本；不支持的存当前官方链接、由 corpus 日期声明兜底。链接健康检查搭 corpus 月度 refresh。</li>
         <li><b>对内签署、对外零背书：</b>商家只看到 corpus 版本号；UI 任何地方不出现 "counsel-reviewed" 类标签（暴露法务具名 = 增加 reliance 和 UPL 风险）。签署记录只在内部 audit log。</li>
         <li><b>对签署范围的影响：</b>corpus 签署对象从"内部规则文本"扩大为"含商家可见引用 registry"—— 已同步进英文版 §12（item 3 扩围 + 新增 item 9 引用粒度、item 10 时效锚点）。</li>
+        <li><b>解释依据字段（v1.3，Michael 7/8）：</b>很多风险在成文法条文里并不清晰，而是在解释该法的<b>判例 / 机构指南</b>里发展出来的，裸条文未必直接适用。因此 registry 每条带一个 <code>解释依据</code> 字段（条文 / 法规 / 机构指南 / 判例执法）；规则实际活在解释层的，引用指向控制性指南或执法综述、而非裸条款，叙述层承载解释。逐条可在 registry 审、也是 counsel 签署内容的一部分。</li>
+        <li><b>可审 registry（draft）：</b><a href="https://app.notion.com/p/3983b4ed17a281ff9c60cf33a9ab451a">🗂️ Seel Compass — Rule Citation Registry</a>——商家可见的 rule→引用映射，从当前 findings seed，含逐条解释依据列供 counsel 标注。</li>
       </ul>
     </section>
 
@@ -671,11 +673,14 @@
         <ul style="margin-top:6px">
           <li>使用 "violates" / "illegal" / "non-compliant" / "deceptive" / "unlawful"</li>
           <li>使用 "you must" / "must comply" 等指令式动词</li>
-          <li>暴露"Seel-provided component" 标签</li>
+          <li>暴露"Seel-provided component" 标签（v1.3 起也不存在这类判断——scope-out 规则根本不跑）</li>
           <li>暴露"checkout-flow analysis is out of scope" 之类的负向声明</li>
           <li>Discuss / Chat tab 可见（即使是 disabled 状态也不行）</li>
-          <li>缺少 footer disclaimer</li>
+          <li>缺少 footer disclaimer（含 onboarding 第一屏的 counsel 版免责声明）</li>
         </ul>
+      </div>
+      <div class="note info">
+        <b>Self-harm 处理方式（v1.3，Michael 7/8）：</b>只会命中 Seel 产品模式的规则（默认加购披露 / opt-out 可见性 / 运费险费用披露）在 corpus 层就<b>整体移除</b>，对所有商家都不查——没有运行时压制、没有指纹识别、没有白名单。只有 in-scope / out-of-scope 两态。详见法务 PRD §5.2。
       </div>
 
       <h3>8.5 品牌与视角</h3>
@@ -813,12 +818,13 @@
         <b>AC-Legal（必须 100% 通过）</b>
         <ul>
           <li>UI 里搜不到 "violates" / "illegal" / "non-compliant" / "deceptive" 等禁词</li>
+          <li>onboarding 第一屏（scan 之前）逐字展示 counsel 版免责声明（Michael 7/8）</li>
           <li>每个 tab 都有 footer disclaimer</li>
           <li>IP tab 有 "name-only, not FTO" in-context disclaimer</li>
           <li>Entity tab 有 "informational only, confirm with counsel" 提示</li>
           <li>商家 report 里搜不到 "Seel-provided component" 或类似标签</li>
           <li>Honeypot 回归测试：Seel 自营 demo 店 + 5 个匿名化 Seel 使用商家页 = 0 个 red finding</li>
-          <li>Michael + Jenny 已签署 corpus + skip-rule whitelist</li>
+          <li>Michael + Jenny 已签署 corpus + scope-out 规则集（含商家可见引用 registry）</li>
         </ul>
       </div>
 
@@ -902,7 +908,7 @@
       <div class="note danger">
         以下三项任何一项未完成，Phase 1 不能对外部商家开放：
         <ol style="margin-top:6px">
-          <li><b>Michael + Jenny 签署 corpus + skip-rule whitelist</b>（见 <a href="/seel-compass-prd.html#open-items">法务 PRD §12</a>）</li>
+          <li><b>Michael + Jenny 签署 corpus + scope-out 规则集</b>（见 <a href="/seel-compass-prd.html#open-items">法务 PRD §12</a>）</li>
           <li><b>Honeypot 回归测试全绿</b>（Seel 自营页 + 已知 Seel 商家页 = 0 red finding）</li>
           <li><b>Michael 抽检</b>首 5 份对商家的 report 无 language / framing 违规</li>
         </ol>
@@ -925,7 +931,7 @@
           <tr><td>品类识别准确率不够</td><td>商家负担重 · 信任下降</td><td>Fine-tune LLM prompt · 提高 confidence 门槛 · 加多个 signal（catalog + PDP + tags）</td></tr>
           <tr><td>外部 API（USPTO / Middesk）宕机</td><td>IP / Entity 模块不可用</td><td>Cache 30d · fallback UI 明确告知 · degrade gracefully</td></tr>
           <tr><td>商家把 Compass 当律师用</td><td>UPL 风险 · Seel 责任</td><td>Language filter 硬约束 · footer disclaimer · 每条 recommendation 明示 "consult counsel"</td></tr>
-          <tr><td>Seel 出新产品，carve-out 未及时更新</td><td>self-harm 风险 · honeypot fail</td><td>Fingerprint 版本化 · 产品变更 checklist 里加"更新 Compass fingerprint"步骤</td></tr>
+          <tr><td>Seel 出新产品，出现新的会命中自家模式的规则类别</td><td>self-harm 风险 · honeypot fail</td><td>新品类规则进 corpus 前走 counsel scope 评审（是否该整体 scope-out）· honeypot 集合随新品更新 · CI 回归拦截</td></tr>
           <tr><td>法规原文链接失效 / 官方页改版</td><td>Source 层引用不可达</td><td>优先存版本化时点 URL · 链接健康检查搭 corpus 月度 refresh · 内容实质变化触发重签（SM C）</td></tr>
         </tbody>
       </table>
@@ -988,8 +994,8 @@
         </div>
         <div class="milestone">
           <div class="wk">M4 · Week 7–8</div>
-          <div class="goal">Self-harm carve-out + Honeypot</div>
-          <div class="deliv">Fingerprint set · skip whitelist · CI 回归测试全绿</div>
+          <div class="goal">Self-harm scope-out + Honeypot</div>
+          <div class="deliv">scope-out 规则集从 corpus 移除并 counsel 签署 · CI 回归确认 out-of-scope 类别零产出</div>
         </div>
         <div class="milestone">
           <div class="wk">M5 · Week 8–10</div>
@@ -1011,7 +1017,7 @@
         <li>首 5 份对外部商家的 report 由 Michael 抽检 · 无 framing / language 违规</li>
         <li>Honeypot 回归测试全绿</li>
         <li>PDF 导出可用</li>
-        <li>Corpus 已签 · skip-rule whitelist 已签</li>
+        <li>Corpus 已签 · scope-out 规则集已签</li>
       </ol>
 
       <h3>13.3 灰度策略</h3>
@@ -1035,7 +1041,7 @@
           <tr><td><b>Not Assessable</b></td><td>规则本身无法通过一次性静态扫描核查（例如"退款是否在承诺期内履行"）</td></tr>
           <tr><td><b>N/A</b></td><td>规则涉及的品类商家不销售（例如商家不卖酒精类，酒精规则不评估）</td></tr>
           <tr><td><b>Corpus</b></td><td>法条 + 规则的完整集合，法务签署的对象</td></tr>
-          <tr><td><b>Carve-out</b></td><td>Self-harm 避免机制，识别到 Seel 自家组件时跳过特定规则评估</td></tr>
+          <tr><td><b>Scope-out</b></td><td>Self-harm 避免机制（v1.3）：只会命中 Seel 产品模式的规则从 corpus 层整体移除，对所有商家都不查——非"识别到 Seel 就隐藏"</td></tr>
           <tr><td><b>Honeypot</b></td><td>回归测试用的固定商家页面集合</td></tr>
           <tr><td><b>Nice class</b></td><td>商标国际分类的 45 大类，商标查重时按相关类过滤</td></tr>
           <tr><td><b>DSAR</b></td><td>Data Subject Access Request，用户数据访问请求（GDPR / CCPA 概念）</td></tr>
@@ -1062,7 +1068,7 @@
 </div>
 
 <footer>
-  Seel Compass · by Seel Inc. · 产品需求文档 Draft v1.2 · 仅供内部产品/研发/法务使用 · © 2026
+  Seel Compass · by Seel Inc. · 产品需求文档 Draft v1.3 · 仅供内部产品/研发/法务使用 · © 2026
 </footer>
 
 </body>
