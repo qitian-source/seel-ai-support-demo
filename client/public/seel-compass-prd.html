@@ -181,6 +181,7 @@
     <a href="#phase">11. Phase 1 vs Phase 2</a>
     <a href="#open-items" class="legal">12. Open items for counsel ⭐</a>
     <a href="#metrics">13. Success metrics</a>
+    <a href="#architecture" class="legal">14. Production architecture ⭐</a>
     <h4>Appendix</h4>
     <a href="#appendix-a">A. Michael's 24-item list</a>
     <a href="#appendix-b">B. Related docs</a>
@@ -1004,6 +1005,100 @@
             <li>Steady-state spot-check volume (~5%)</li>
           </ol>
         </div>
+      </div>
+    </section>
+
+    <!-- 14. Production architecture -->
+    <section id="architecture">
+      <h2>14. Production architecture ⭐ <span style="font-size:13px;font-weight:600;color:var(--seel-d)">(new in v1.3)</span></h2>
+      <p class="lede">The merchant dashboard demo is a mock. This section defines how the real system is built so the legal guarantees above (citations rendered not generated, counsel-signed corpus, no runtime suppression) hold in production, not just on paper.</p>
+
+      <h3>14.1 Three layers + an evidence store</h3>
+      <p>Today rules, analysis, citations, and presentation are entangled in the demo's React source. Production separates them:</p>
+      <table>
+        <thead><tr><th>Layer</th><th>Responsibility</th><th>Who owns it</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>① Rule &amp; citation registry</b> (the "law")</td>
+            <td>Authoritative record. Per rule: <code>rule_id · category · market · assertion text · citations[] (label, official URL, point-in-time URL, interpretive_basis) · scope (in/out) · status · corpus_version · sign-off record</code>. <b>Single source of truth</b> — not in React code, not in Notion.</td>
+            <td>Counsel-signed (SM C, §6.3)</td>
+          </tr>
+          <tr>
+            <td><b>② Rule engine / scan pipeline</b> (the "analysis")</td>
+            <td>The LLM's job is <b>strictly bounded</b>: given a page and the in-scope rule set from a signed corpus version, output <code>rule_id + verdict (verified / review / not-assessable) + evidence (excerpt or observation)</code>. It <b>never</b> writes citations or legal conclusions.</td>
+            <td>Engineering</td>
+          </tr>
+          <tr>
+            <td><b>③ Report / presentation</b> (the "projection")</td>
+            <td>Single finding entity → two projections (Overview checklist + Review Items queue, §6.4 / §8), status echo, corpus-version stamp, Source/Proof panes. Citation text is a <b>deterministic lookup</b> of the finding's <code>rule_id</code> against the registry — never model output.</td>
+            <td>Engineering / Product</td>
+          </tr>
+          <tr>
+            <td><b>+ Evidence store</b> (the "proof")</td>
+            <td>Per-scan page snapshots (excerpt offsets, timestamps) + network traces. Backs the Proof layer (§5.6) and per-report provenance.</td>
+            <td>Engineering</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="diagram">
+        <div class="diagram-title"><span class="letter">·</span> Data flow — citations never originate in the model</div>
+        <svg viewBox="0 0 900 150" xmlns="http://www.w3.org/2000/svg">
+          <defs><marker id="arrar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#7C3AED"/></marker></defs>
+          <g font-family="-apple-system,'Segoe UI'" font-size="11">
+            <rect x="10" y="55" width="150" height="48" rx="9" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5"/>
+            <text x="85" y="76" text-anchor="middle" fill="#334155" font-weight="700">Crawled pages</text>
+            <text x="85" y="91" text-anchor="middle" fill="#64748B">+ evidence store</text>
+            <line x1="160" y1="79" x2="198" y2="79" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arrar)"/>
+            <rect x="200" y="45" width="200" height="68" rx="9" fill="#EEF2FF" stroke="#6366F1" stroke-width="1.5"/>
+            <text x="300" y="70" text-anchor="middle" fill="#4338CA" font-weight="700">② Rule engine (LLM)</text>
+            <text x="300" y="86" text-anchor="middle" fill="#4338CA">emits rule_id + verdict</text>
+            <text x="300" y="100" text-anchor="middle" fill="#4338CA">+ evidence only</text>
+            <line x1="400" y1="79" x2="438" y2="79" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arrar)"/>
+            <rect x="440" y="45" width="200" height="68" rx="9" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+            <text x="540" y="70" text-anchor="middle" fill="#5B21B6" font-weight="700">③ Render (lookup)</text>
+            <text x="540" y="86" text-anchor="middle" fill="#5B21B6">rule_id → citation text</text>
+            <text x="540" y="100" text-anchor="middle" fill="#5B21B6">deterministic, not generated</text>
+            <line x1="640" y1="79" x2="678" y2="79" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#arrar)"/>
+            <rect x="680" y="55" width="150" height="48" rx="9" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="755" y="76" text-anchor="middle" fill="#166534" font-weight="700">Merchant report</text>
+            <text x="755" y="91" text-anchor="middle" fill="#166534">finding + source + proof</text>
+            <path d="M 540,45 C 540,10 300,10 300,20 L 300,44" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrar)"/>
+            <text x="420" y="14" text-anchor="middle" fill="#64748B">① signed registry feeds both engine's rule set and render's citations</text>
+          </g>
+        </svg>
+      </div>
+
+      <h3>14.2 Registry as version-controlled files; sign-off = an approved PR</h3>
+      <div class="note info">
+        <b>Recommendation:</b> store the registry as structured files (YAML/JSON) in a repository, and make <b>counsel sign-off equal an approved pull request</b>. One mechanism does the work of three:
+      </div>
+      <ul>
+        <li><b>Sign-off workflow</b> = PR Draft → counsel review → <b>approve</b>. The approval record is the signature. This <i>is</i> State Machine C (§6.3) implemented on tooling that already exists.</li>
+        <li><b>Audit trail</b> = git history — every citation change, who made it, who approved it, immutable. Replaces the need for a bespoke sign-off log.</li>
+        <li><b>Corpus version</b> = a release tag (e.g. <code>v2026.06</code>). "In production" = the latest signed tag; the scan pipeline only ever pulls a signed tag.</li>
+        <li><b>No drift</b> = the demo/mock and the production pipeline both read the <b>same</b> registry source. The demo becomes a consumer, not a second copy — this closes the three-copy drift risk flagged in §5.6.</li>
+        <li>Counsel review a <b>rendered, readable diff</b> (the current Notion registry view, generated from the files) — not raw YAML. Review venue is flexible; the single source is not.</li>
+      </ul>
+
+      <h3>14.3 Grounding &amp; anti-hallucination gates (CI)</h3>
+      <ul>
+        <li><b>Grounding gate:</b> a finding with no attached evidence, or referencing a <code>rule_id</code> not present in the signed corpus, is rejected — it cannot render. Build fails.</li>
+        <li><b>No-generated-citation check:</b> confirms every citation string in output maps to a registry entry (§5.6 hard constraint) — a hallucinated citation is a build-breaking defect, same severity class as a language-rule violation.</li>
+        <li><b>Honeypot regression:</b> every registry change runs the scan against the honeypot set (Seel demo storefront + anonymized Seel-using merchant pages + non-Seel controls) and confirms no scope-out-category finding and no banned-language output (§6.2).</li>
+        <li><b>LLM error class is bounded:</b> the engine can mis-map evidence to a rule (a false positive/negative), caught by the 5% counsel spot-check and the N=5 new-category gate (§5.3). It can <b>never</b> invent law — the worst case is a missed or spurious <i>match</i>, never a fabricated <i>citation</i>.</li>
+      </ul>
+
+      <h3>14.4 Update lifecycle &amp; governance</h3>
+      <ul>
+        <li><b>Triggers:</b> statute/case-law developments · new market or category · broken/moved official links.</li>
+        <li><b>Every update</b> → PR → counsel review → approve → new tag. Nothing reaches a merchant except through a signed tag (re-sign target ≤ 5 business days, §5.3).</li>
+        <li><b>Case-law drift (Michael 7/8):</b> rules whose <code>interpretive_basis = case law &amp; enforcement</code> are flagged for scheduled re-review — they drift fastest and the operative rule is not fixed in statutory text (§5.6).</li>
+        <li><b>Link health:</b> monthly automated check (§10); a materially changed source triggers the re-sign path.</li>
+        <li><b>History provenance:</b> each scan stamps the corpus version used (visible in the merchant's History tab); that version resolves to the signed tag → approval record.</li>
+      </ul>
+
+      <div class="note legal">
+        <b>What this architecture guarantees, end to end:</b> every citation a merchant sees traces to a counsel-approved tag; the model cannot originate legal text; scope decisions are uniform and made at authoring time (no runtime suppression); and there is exactly one source of truth for what the rules are.
       </div>
     </section>
 
