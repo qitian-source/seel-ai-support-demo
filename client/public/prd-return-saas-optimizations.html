@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.0</title>
+<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.1</title>
 <style>
   :root {
     --brand: #645AFF; --brand-d:#4d43e0; --dark:#1E293B; --mid:#475569;
@@ -69,8 +69,8 @@
 
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel · Return SaaS</div>
-  <span class="topbar-tag">PRD v2.0</span>
-  <span class="topbar-date">2026-07-07 · qi.tian@seel.com</span>
+  <span class="topbar-tag">PRD v2.1</span>
+  <span class="topbar-date">2026-07-09 · qi.tian@seel.com</span>
 </div>
 
 <div class="wrap">
@@ -86,7 +86,8 @@
   </div>
 </div>
 
-<div class="changelog"><b>v2.0（2026-07-07）相对 v1.0 的变化</b>：需求评审 + 原型迭代后收敛——① 导出从「两种格式单选」简化为<strong>单一字段勾选列表</strong>（行粒度自动推导，去掉预览）；② 多包裹 RMA 明确为 <strong>hover 浮层</strong>方案；③ Rules 画布标签明确为<strong>限字符截断 + hover 全文</strong>（不做整段全文平铺）；④ 界面语言全英文；⑤ 删除技术实现细节，另见技术评审文档。</div>
+<div class="changelog"><b>v2.1（2026-07-09）评审调整</b>：① <strong>不做承运商轨迹跳转</strong>——列表与详情中的运单号仅展示 + 复制，不做外链；② 详情页操作按钮<strong>与线上保持一致</strong>（右上 More actions / Reject / Process，不新增改动）；③ 导出流程定为「下载 → 选择字段 → <strong>走邮箱发送</strong>」——一律异步生成、链接发商户邮箱，不做浏览器即时下载；④ <strong>不做灰度</strong>，直接全量发布。</div>
+<div class="changelog" style="background:#F8FAFC;border-color:var(--border);color:var(--soft)"><b>v2.0（2026-07-07）相对 v1.0 的变化</b>：① 导出从「两种格式单选」简化为单一字段勾选列表（行粒度自动推导，去掉预览）；② 多包裹 RMA 明确为 hover 浮层方案；③ Rules 画布标签明确为限字符截断 + hover 全文（不做整段全文平铺）；④ 界面语言全英文；⑤ 删除技术实现细节，另见技术评审文档。</div>
 
 <h2 id="bg">1 · 背景</h2>
 
@@ -127,13 +128,13 @@
 <h4>需求描述</h4>
 <ul>
   <li>Issues 列表在 <strong>Status 与 Fraud risk 之间</strong>新增 <strong>Tracking #</strong> 列，展示 <strong>Seel 生成的逆向物流面单（return label）上的运单号</strong>（即面单条码对应的单号，如 USPS Ground Advantage 的 9300 开头单号），附承运商标识；商家自传面单的 RMA 同样展示其面单运单号。</li>
-  <li>单元格三个行内操作，均不触发行点击进详情：
+  <li>单元格两个行内操作，均不触发行点击进详情：
     <ul>
-      <li><strong>一键复制</strong>运单号（复制去空格的纯单号）；</li>
-      <li><strong>点击单号</strong>跳转承运商轨迹页，查逆向物流轨迹；</li>
+      <li><strong>一键复制</strong>运单号（复制去空格的纯单号，商家自行粘贴到承运商官网查逆向轨迹）；</li>
       <li><strong>下载面单</strong>（PDF）——在最外层直接拿到面单，无需进详情。</li>
     </ul>
   </li>
+  <li>运单号<strong>不做承运商轨迹页跳转</strong>（v2.1 评审结论），纯文本展示。</li>
   <li><strong>多包裹</strong>（一个 RMA 拆多个包裹寄回）：默认只展示第一个运单号 + <code>+N</code> 徽标，<strong>hover 徽标弹出浮层</strong>逐行列出全部包裹（Package 1 / 2…，各带承运商、单号、复制、面单下载），鼠标可移入浮层操作；行高不因多包裹变化。</li>
   <li>顶部搜索框支持按<strong>运单号</strong>查询（空格不敏感），placeholder 同步提示。</li>
 </ul>
@@ -145,7 +146,7 @@
 <h4>验收标准</h4>
 <ol>
   <li>列内运单号与该 RMA 面单条码上的单号一致（Seel 生成与商家自传两种来源均验证）。</li>
-  <li>有运单的 RMA 在列表内可复制、可跳轨迹页、<strong>可直接下载面单 PDF</strong>（与详情页下载的为同一文件）；无运单显示占位文案。</li>
+  <li>有运单的 RMA 在列表内可复制、<strong>可直接下载面单 PDF</strong>（与详情页下载的为同一文件）；单号无外链；无运单显示占位文案。</li>
   <li>双包裹 RMA hover <code>+N</code> 出现浮层，两个包裹的单号均可复制、面单均可下载；移出后浮层消失；行高与其他行一致。</li>
   <li>搜索框输入运单号（带或不带空格）能命中对应 RMA。</li>
 </ol>
@@ -172,7 +173,7 @@
   <li>不做 CSV 预览表（评审结论：保持弹窗简洁）。</li>
   <li>Return reason 输出消费者所选选项的<strong>完整文案</strong>；有补充说明时拼接在后。</li>
   <li>商家的勾选组合<strong>按人记住</strong>，下次打开弹窗沿用。</li>
-  <li>数据量大时异步生成，下载链接发送至商户邮箱（沿用现有机制），弹窗内有说明文案。</li>
+  <li><strong>交付方式：一律走邮箱发送</strong>（v2.1 评审结论）——点击 Export 即提交异步导出任务，弹窗关闭并提示已提交；文件生成后将下载链接发送至商户邮箱（弹窗底部明示收件邮箱）；<strong>不做浏览器即时下载</strong>。</li>
 </ul>
 <h4>字段清单</h4>
 <table>
@@ -188,6 +189,7 @@
   <li>列表筛选「Completed」再导出：文件只含 Completed 的 RMA。</li>
   <li>取消 Select all：仅保留 RMA number；再全选恢复 13 列。</li>
   <li>关闭弹窗重新打开（同一账号）：上次勾选组合保留。</li>
+  <li>点击 Export：弹窗关闭并出现「已提交」提示，浏览器<strong>不发生</strong>直接下载；商户邮箱在生成完成后收到下载链接，文件内容与勾选一致。</li>
 </ol>
 
 <h3>R3 · 退货商品展示 SKU</h3>
@@ -264,7 +266,7 @@
   <tr><td>Phase 1</td><td>R1 + R3（列表运单列、SKU 展示）</td><td>纯增量展示，先行发布</td></tr>
   <tr><td>Phase 2</td><td>R2（自选字段导出）</td><td>含异步导出链路改造</td></tr>
   <tr><td>Phase 3</td><td>R4 + R5（终态入口、画布可读性）</td><td>随后跟进</td></tr>
-  <tr><td>灰度</td><td>bassdash、aelfriceden 两家反馈商户先行开启，收集一轮反馈后全量</td><td>1 周</td></tr>
+  <tr><td>发布方式</td><td><strong>全量直接发布，不做灰度</strong>（v2.1 评审结论）</td><td>—</td></tr>
 </table>
 
 <p style="margin-top:40px;font-size:12.5px;color:var(--soft)">附：<a href="./return_saas_optimizations_demo.html" target="_blank">可交互原型（覆盖 R1–R5 全部交互，Rules 画布含 Before/After 对比）</a>　·　技术实现方案见研发技术评审文档（v1.0 PRD 中的接口与源码分析已移交研发）。</p>

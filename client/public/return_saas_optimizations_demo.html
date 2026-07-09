@@ -85,6 +85,10 @@ main{ flex:1; min-width:0; padding:22px 30px 80px; }
 .btn:hover{ border-color:var(--link); color:var(--link); }
 .btn.primary{ background:var(--link); border-color:var(--link); color:#fff; }
 .btn.primary:hover{ opacity:.88; color:#fff; }
+.btn.danger{ background:#F04438; border-color:#F04438; color:#fff; }
+.btn.danger:hover{ opacity:.88; color:#fff; }
+.btn.process{ background:var(--deep); border-color:var(--deep); color:#fff; }
+.btn.process:hover{ opacity:.88; color:#fff; }
 .btn:disabled{ background:rgba(0,0,0,.04); border-color:#d9d9d9; color:rgba(0,0,0,.25); cursor:not-allowed; box-shadow:none; }
 .btn.small{ height:26px; padding:1px 10px; font-size:13px; white-space:nowrap; flex-shrink:0; }
 a.lk{ color:var(--link); text-decoration:none; cursor:pointer; }
@@ -564,7 +568,7 @@ function filteredRows(){
   });
 }
 function trkFrag(lb){
-  return `<span class="car">${lb.carrier}</span><a class="num lk" onclick="event.stopPropagation();toast('Demo: opens the carrier tracking page')">${lb.trk}</a><button class="copy" title="Copy tracking number" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button><button class="copy" title="Download return label (PDF)" onclick="event.stopPropagation();toast('Demo: downloads the return label PDF')">⤓</button>`;
+  return `<span class="car">${lb.carrier}</span><span class="num">${lb.trk}</span><button class="copy" title="Copy tracking number" onclick="event.stopPropagation();copyTrk('${lb.trk}')">⧉</button><button class="copy" title="Download return label (PDF)" onclick="event.stopPropagation();toast('Demo: downloads the return label PDF')">⤓</button>`;
 }
 function trkCell(r){
   const L = r.labels;
@@ -640,9 +644,9 @@ function showDetail(rma){
     ? `<div style="margin-top:6px">${L.map((lb,i) => `
         <div class="prow" style="border-bottom:1px dashed #EEF0F2">
           <span class="pkg-tag">Package ${i+1}</span><span class="trk">${trkFrag(lb)}</span>
-          <a class="lk" style="margin-left:auto;font-size:12px;white-space:nowrap" onclick="toast('Demo: opens the carrier tracking page')">Track ›</a>
         </div>`).join('')}</div>`
-    : L.map(lb => `<a class="ship-link" onclick="toast('Demo: opens the carrier tracking page')">${lb.carrier} ${lb.trk} &gt;</a>`).join('');
+    : L.map(lb => `<span class="ship-status" style="color:var(--gray1)">${lb.carrier} ${lb.trk}
+        <button class="copy" style="border:none;background:none;cursor:pointer;color:rgba(0,0,0,.35)" title="Copy tracking number" onclick="copyTrk('${lb.trk}')">⧉</button></span>`).join('');
   const timeline = r.events.length ? `
     <p class="ship-status" style="margin-bottom:2px">${SHIP[r.ship].t}${L.length > 1 ? `&nbsp;<span class="pkg-tag">${L.length} packages</span>` : ''}</p>
     ${trackLinks}
@@ -684,7 +688,12 @@ function showDetail(rma){
         <div class="dt-sub"><a>Return confirmation</a><span>Created at ${r.created}</span></div>
         <div class="dt-sub"><a>${r.order}</a><span>Ordered at ${r.orderTs}</span></div>
       </div>
-      ${r.status === 'In progress' ? '<button class="btn primary" onclick="toast(\'Demo: opens the Process items dialog\')">Process item(s)</button>' : ''}
+      ${r.status === 'In progress' ? `
+      <div style="display:flex;gap:10px;flex:none;align-items:flex-start">
+        <button class="btn" onclick="toast('Demo: opens the More actions menu')">More actions&nbsp;▾</button>
+        <button class="btn danger" onclick="toast('Demo: opens the Reject flow')">Reject</button>
+        <button class="btn process" onclick="toast('Demo: opens the Process dialog')">Process</button>
+      </div>` : ''}
     </div>
     <div class="dt-cols">
       <div class="dt-main">
@@ -814,9 +823,8 @@ function updateExportUI(){
   const rows = perItem ? itemRowObjs().length : filteredRows().length;
   document.getElementById('exp-scope').textContent =
     `${filteredRows().length} RMAs match your current filters and date range`;
-  document.getElementById('gran-note').innerHTML = perItem
-    ? `Exports <b>${rows} rows</b> — one per return item. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`
-    : `Exports <b>${rows} rows</b> — one per RMA. A download link will be sent to <b>ops@bassdash.com</b> for large exports.`;
+  document.getElementById('gran-note').innerHTML =
+    `Exports <b>${rows} rows</b> — one per ${perItem ? 'return item' : 'RMA'}. The download link will be sent to <b>ops@bassdash.com</b>.`;
 }
 function itemRowObjs(){
   return filteredRows().flatMap(r => r.items.map(it => {
@@ -829,26 +837,10 @@ function itemRowObjs(){
     };
   }));
 }
-function rmaRowObjs(){
-  return filteredRows().map(r => ({
-    rma_number: r.rma, order_number: r.order.replace('#',''), customer: r.customer,
-    created_at: r.date, resolution_type: r.type, rma_status: r.status,
-    label_carrier: r.labels.map(l => l.carrier).join('; '),
-    label_tracking_number: r.labels.map(l => l.trk.replace(/\s/g,'')).join('; '),
-  }));
-}
+/* 导出不做浏览器即时下载：提交异步任务，完成后下载链接发送至商户邮箱 */
 function doExport(){
-  const keys = activeKeys();
-  const perItem = isItemLevel();
-  const objs = perItem ? itemRowObjs() : rmaRowObjs();
-  const csv = [keys, ...objs.map(o => keys.map(k => o[k]))];
-  const text = csv.map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿' + text], {type:'text/csv'}));
-  a.download = perItem ? 'returns_item_detail_20260706.csv' : 'returns_summary_20260706.csv';
-  a.click();
   closeExport();
-  toast(perItem ? 'Item-level detail CSV exported' : 'RMA summary CSV exported');
+  toast('Export started — the download link will be sent to ops@bassdash.com');
 }
 
 /* ════════ Rules Flow 编辑器（对齐 Rules/Flow 源码）════════
