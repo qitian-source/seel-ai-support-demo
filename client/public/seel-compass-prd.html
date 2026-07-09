@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Seel Compass — PRD & State Machines · Draft v1.2</title>
+<title>Seel Compass — PRD & State Machines · Draft v1.3</title>
 <style>
   :root{
     --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
@@ -144,11 +144,11 @@
     <div class="mark">🧭</div>
     <div class="title">
       <span>Seel Compass — PRD & State Machines</span>
-      <small>Draft v1.2 · Go-Global Readiness · For Counsel Review</small>
+      <small>Draft v1.3 · Go-Global Readiness · For Counsel Review</small>
     </div>
   </div>
   <div class="topbar-right">
-    <span class="pill">Draft v1.2</span>
+    <span class="pill">Draft v1.3</span>
     <span class="pill warn">Counsel review needed</span>
     <a href="#open-items" style="color:#DDD6FE">Jump to open items →</a>
   </div>
@@ -203,7 +203,7 @@
         <p style="margin-bottom:0"><b>Explicit non-goal:</b> Compass is <b>not</b> a substitute for legal counsel. Every review item includes a "recommend confirming with qualified counsel" line.</p>
       </div>
 
-      <p><b>Status:</b> Draft v1.2 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist, omit-not-label carve-out). v1.1 (7/6) added the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan, async report generation (§7). <b>v1.2 (7/6) adds the source &amp; proof layer (§5.6)</b>: every finding shows the rule citations it derives from — rendered only from the counsel-signed registry — plus structured scan evidence.</p>
+      <p><b>Status:</b> Draft v1.3 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist). v1.1 (7/6) added the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan, async report generation (§7). v1.2 (7/6) added the source &amp; proof layer (§5.6). <b>v1.3 (7/8) incorporates Michael's review:</b> self-harm handling changed from runtime suppression to authoring-time scope-out (§5.2, SM B); an interpretive-basis field added to citations for the case-law-vs-statute gap (§5.6); the counsel-drafted intro disclaimer now shows before the scan (§5.1).</p>
       <p><b>Predecessor:</b> Replaces the earlier <i>Compliance LLP Product Implementation Spec</i>; that document is superseded.</p>
     </section>
 
@@ -396,17 +396,36 @@
         <li><b>Always</b> used for review items: <code>Review item: …  Recommend confirming with qualified counsel whether …</code></li>
         <li>Persistent footer on every report tab: <i>"Informational only — not legal advice, and not a law firm. Review items point to relevant rules and recommend confirming with qualified counsel."</i></li>
         <li>Category-specific scope disclaimers in-context (IP tab: "name-only, not FTO"; Entity: "informational only, confirm with counsel or tax advisor")</li>
+        <li><b>Intro disclaimer (counsel-drafted, Michael 7/8)</b> — shown on the first onboarding screen, before any scan runs, verbatim: <i>"This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan."</i> <span style="color:var(--mid)">(Note: this counsel-drafted text uses "compliance" in the disclaiming sense — "not a determination of compliance." To reconcile with the 6/18 direction to drop "compliance" from outward product language, confirm with Jenny; recommendation is to keep counsel's disclaimer wording as-is.)</span></li>
       </ul>
 
-      <h3>5.2 Self-harm carve-out — omit, not label</h3>
+      <h3>5.2 Self-harm handling — scope out, don't suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/8)</span></h3>
       <div class="note info">
-        An agent trained to detect legal risk in merchant operations will, by default, flag Seel's own product model. The design isolates this <b>without creating a discoverable admission</b>. See <a href="#sm-b">State Machine B (§6.2)</a>.
+        An agent trained to detect risk signals in merchant operations will, by default, flag Seel's own product model where it is embedded on the merchant's page. <b>v1.2 handles this at corpus-authoring time, not at scan time.</b> Earlier drafts ran every rule and then suppressed the finding on Seel components (an "omit-not-label" whitelist). Counsel's guidance (7/8): running a rule everywhere and then selectively removing its result on Seel's own product is an <b>affirmative act</b> that could be characterized as misleading. So the whitelist is removed.
       </div>
+      <div class="note legal">
+        <b>Invariant — only two states, no third:</b> a rule is either <b>in scope</b> (it runs uniformly for every merchant and its findings belong to the merchant) or <b>out of scope</b> (it does not exist in the methodology and is checked for no one). There is no "runs-but-hidden" state. Nothing is suppressed at scan time.
+      </div>
+      <table>
+        <thead><tr><th>Rule type</th><th>Examples</th><th>Treatment</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Exists only to catch the pattern Seel's product uses</b></td>
+            <td>Default-enabled add-on disclosure · opt-out-flow visibility · shipping-insurance fee display</td>
+            <td><b>Removed from the corpus entirely.</b> Checked for no merchant. Same logic as the checkout-flow analysis already removed on 6/18 — these live in the checkout surface that is out of scope.</td>
+          </tr>
+          <tr>
+            <td><b>General rule that may incidentally touch a Seel component</b></td>
+            <td>General cookie-consent rule firing on a cookie set by an embedded Seel widget</td>
+            <td><b>Runs normally, no Seel-specific handling.</b> The finding belongs to the merchant — it is their page and their embedded choice. No suppression.</td>
+          </tr>
+        </tbody>
+      </table>
       <ul>
-        <li>Seel-provided components are <b>omitted from the report entirely</b> — no "Seel-provided" label, no "skipped" marker, not visible in merchant's report</li>
-        <li>Fingerprint match is logged <b>internally</b> for audit; audit log is not surfaced to merchant</li>
-        <li>Checkout flow is <b>not crawled at all</b> — no paper trail of analysis exists</li>
-        <li>Carve-out is narrow: applies only to a whitelisted set of rules that would otherwise mis-fire on Seel's product model. Everything else on the merchant's page is evaluated normally.</li>
+        <li>Consequence: Compass will not surface default-enabled-add-on / opt-out / fee-display review items for <i>any</i> merchant. This is an accepted, uniform scoping decision — not a Seel-specific one.</li>
+        <li>The fingerprint-detection + skip-whitelist + suppression machinery (former State Machine B) is <b>deleted</b>. No audit log of suppressions is needed because no suppression occurs.</li>
+        <li>Checkout flow remains <b>not crawled at all</b> (unchanged) — no paper trail of analysis exists.</li>
+        <li><b>Open for counsel confirmation:</b> (a) that the removed set above is the complete list of "scope-out" rules; (b) that when a general in-scope rule fires on a page containing a Seel component, surfacing the finding as the merchant's page behavior (evidence may reference the Seel-set cookie/copy) is the correct treatment. See <a href="#open-items">§12 item 2</a>.</li>
       </ul>
 
       <h3>5.3 Counsel involvement model — middle path (proposed)</h3>
@@ -444,12 +463,11 @@
 
       <h3>5.5 Audit log — internal only</h3>
       <ul>
-        <li>Fingerprint matches (which Seel components on which pages)</li>
-        <li>Skip-rule applications (which rules omitted)</li>
-        <li>Corpus version + LLM/prompt version applied</li>
+        <li>Corpus version + LLM/prompt version applied to each scan</li>
         <li>Category-detection outcomes vs merchant declarations</li>
         <li>Any LLM-vs-merchant conflict (for future audit if a merchant claims a category doesn't apply when the agent detected it)</li>
       </ul>
+      <p style="font-size:12.5px;color:var(--mid)">Note (v1.2): the former "fingerprint matches" and "skip-rule applications" entries are gone — with suppression removed (§5.2), there is nothing of that kind to log.</p>
       <p>Retention: engagement length + 3 years. Not surfaced to merchant. Available to counsel on request.</p>
 
       <h3>5.6 Source &amp; proof layer (new in v1.2)</h3>
@@ -473,6 +491,9 @@
       </table>
       <div class="note legal">
         <b>Hard constraint — citations are rendered, never generated:</b> the LLM maps page evidence to a rule ID at scan time; the citation text and links are looked up from the signed registry. The model <b>never</b> produces a legal citation at runtime. A hallucinated citation is treated as a build-breaking defect (CI check), same severity class as a language-rule violation.
+      </div>
+      <div class="note info">
+        <b>Interpretive basis — the citation is an anchor, not the whole rule (per Michael 7/8):</b> a risk is often not clearly defined in the black-letter statute; it develops in the case law and agency guidance interpreting the statute, so the bare statutory text may not apply straightforwardly. Each registry entry therefore carries an <b>interpretive-basis field</b> — <code>statute</code> / <code>regulation</code> / <code>agency guidance</code> / <code>case law &amp; enforcement</code> — and where the operative rule lives in interpretation rather than in the text, the citation points to the controlling guidance or enforcement synthesis (not just the bare section) and the "Relevant rules and context" narrative carries the interpretive gloss. This classification is reviewable per-rule in the citation registry (§9) and is part of what counsel signs.
       </div>
       <ul>
         <li><b>Temporal anchor:</b> citations carry no individual dates. One block-level line — <i>"Rule corpus v2026.06 · reference only — how these rules apply to you depends on facts a scan can't assess"</i> — anchors all citations to the corpus version, which is exactly the object counsel signs. Proof carries the scan date separately: "rules as of corpus date, your site as of scan date."</li>
@@ -545,102 +566,37 @@
 
       <!-- SM B -->
       <div id="sm-b"></div>
-      <h3>6.2 Self-harm carve-out — omit, not label</h3>
+      <h3>6.2 Self-harm handling — scope out, not suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/8)</span></h3>
+      <div class="note legal">
+        <b>The former decision tree is removed.</b> v1.1 described a per-page, per-rule tree: detect a Seel fingerprint → check a skip-whitelist → omit the finding. Per counsel's 7/8 guidance, that "run-then-suppress" path is itself the exposure — selectively removing a result on Seel's own product is an affirmative act. v1.2 replaces the whole mechanism with a single authoring-time rule (see §5.2).
+      </div>
       <div class="diagram">
-        <div class="diagram-title"><span class="letter">B</span> Carve-out decision tree (per page, per rule)</div>
-        <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+        <div class="diagram-title"><span class="letter">B</span> Two states only — decided at corpus-authoring time, not at scan time</div>
+        <svg viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/>
-            </marker>
-            <marker id="arr3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M0,0 L10,5 L0,10 Z" fill="#DC2626"/>
-            </marker>
-            <marker id="arr3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M0,0 L10,5 L0,10 Z" fill="#16A34A"/>
-            </marker>
+            <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#5B21B6"/></marker>
           </defs>
           <g font-family="-apple-system,'Segoe UI'" font-size="12">
-            <!-- Start -->
-            <rect x="340" y="10" width="220" height="38" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5"/>
-            <text x="450" y="34" text-anchor="middle" fill="#334155" font-weight="700">Page discovered by crawler</text>
-            <line x1="450" y1="48" x2="450" y2="70" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
-
-            <!-- Decision 1: crawler excluded (checkout)? -->
-            <path d="M 450 70 L 620 108 L 450 146 L 280 108 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
-            <text x="450" y="105" text-anchor="middle" fill="#B45309" font-weight="700">1. In crawler excluded set?</text>
-            <text x="450" y="122" text-anchor="middle" fill="#B45309" font-size="10.5">(e.g., any checkout page)</text>
-
-            <!-- Yes → SKIP (never fetched) -->
-            <line x1="620" y1="108" x2="720" y2="108" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arr3r)"/>
-            <text x="670" y="99" text-anchor="middle" fill="#DC2626" font-weight="700" font-size="11">Yes</text>
-            <rect x="720" y="82" width="160" height="52" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
-            <text x="800" y="102" text-anchor="middle" fill="#DC2626" font-weight="800">SKIP</text>
-            <text x="800" y="118" text-anchor="middle" fill="#DC2626" font-size="10.5">page never fetched</text>
-            <text x="800" y="130" text-anchor="middle" fill="#DC2626" font-size="10.5">no analysis · no log</text>
-
-            <!-- No ↓ -->
-            <text x="460" y="163" fill="#5B21B6" font-weight="700" font-size="11">No ↓</text>
-            <line x1="450" y1="146" x2="450" y2="182" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
-
-            <!-- Decision 2: Seel fingerprint match? -->
-            <path d="M 450 182 L 620 220 L 450 258 L 280 220 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
-            <text x="450" y="217" text-anchor="middle" fill="#B45309" font-weight="700">2. Seel fingerprint on page?</text>
-            <text x="450" y="234" text-anchor="middle" fill="#B45309" font-size="10.5">widget DOM · copy · CDN · SKU</text>
-
-            <!-- No → normal ruleset -->
-            <line x1="280" y1="220" x2="180" y2="220" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arr3g)"/>
-            <text x="230" y="211" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11">No</text>
-            <rect x="20" y="194" width="160" height="52" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
-            <text x="100" y="214" text-anchor="middle" fill="#16A34A" font-weight="800">Full ruleset</text>
-            <text x="100" y="230" text-anchor="middle" fill="#16A34A" font-size="10.5">evaluate normally</text>
-            <text x="100" y="242" text-anchor="middle" fill="#16A34A" font-size="10.5">produce findings</text>
-
-            <!-- Yes ↓ (also log to audit) -->
-            <text x="460" y="275" fill="#5B21B6" font-weight="700" font-size="11">Yes ↓ (log to audit)</text>
-            <line x1="450" y1="258" x2="450" y2="298" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arr3)"/>
-
-            <!-- Decision 3: rule on skip whitelist? -->
-            <path d="M 450 298 L 620 338 L 450 378 L 280 338 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
-            <text x="450" y="335" text-anchor="middle" fill="#B45309" font-weight="700">3. For each rule:</text>
-            <text x="450" y="352" text-anchor="middle" fill="#B45309" font-size="10.5">on skip whitelist?</text>
-
-            <!-- No → normal -->
-            <line x1="280" y1="338" x2="180" y2="338" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arr3g)"/>
-            <text x="230" y="329" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11">No</text>
-            <rect x="20" y="312" width="160" height="52" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
-            <text x="100" y="332" text-anchor="middle" fill="#16A34A" font-weight="800">Evaluate rule</text>
-            <text x="100" y="348" text-anchor="middle" fill="#16A34A" font-size="10.5">produce finding</text>
-            <text x="100" y="360" text-anchor="middle" fill="#16A34A" font-size="10.5">normally</text>
-
-            <!-- Yes → OMIT -->
-            <line x1="620" y1="338" x2="720" y2="338" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arr3r)"/>
-            <text x="670" y="329" text-anchor="middle" fill="#DC2626" font-weight="700" font-size="11">Yes</text>
-            <rect x="720" y="300" width="170" height="76" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="2"/>
-            <text x="805" y="322" text-anchor="middle" fill="#DC2626" font-weight="800">OMIT</text>
-            <text x="805" y="337" text-anchor="middle" fill="#DC2626" font-size="10.5">no finding produced</text>
-            <text x="805" y="349" text-anchor="middle" fill="#DC2626" font-size="10.5">no "Seel-provided" label</text>
-            <text x="805" y="361" text-anchor="middle" fill="#DC2626" font-size="10.5">log to audit (internal)</text>
-            <text x="805" y="371" text-anchor="middle" fill="#DC2626" font-size="10.5">merchant does not see</text>
-
-            <!-- Skip whitelist detail -->
-            <rect x="120" y="410" width="660" height="130" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1"/>
-            <text x="450" y="435" text-anchor="middle" fill="#5B21B6" font-weight="800">Initial skip-rule whitelist (requires counsel sign-off)</text>
-            <text x="450" y="459" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Default-enabled add-on clearly disclosed"  →  Seel post-purchase protection is default-on by design</text>
-            <text x="450" y="478" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Opt-out consent flow visible at decision point"  →  Seel opt-out is a one-click product standard</text>
-            <text x="450" y="497" text-anchor="middle" fill="#5B21B6" font-size="11.5">• "Shipping insurance fee shown pre-checkout"  →  Seel fee is disclosed at a different surface</text>
-            <text x="450" y="522" text-anchor="middle" fill="#5B21B6" font-size="11" font-style="italic">Additions to this list require counsel review per State Machine C.</text>
+            <rect x="330" y="14" width="240" height="46" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5"/>
+            <text x="450" y="34" text-anchor="middle" fill="#334155" font-weight="700">Rule authored / reviewed</text>
+            <text x="450" y="50" text-anchor="middle" fill="#64748B" font-size="10.5">counsel-signed corpus (SM C)</text>
+            <line x1="450" y1="60" x2="250" y2="92" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arrb)"/>
+            <line x1="450" y1="60" x2="650" y2="92" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#arrb)"/>
+            <rect x="60" y="96" width="330" height="86" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+            <text x="225" y="120" text-anchor="middle" fill="#16A34A" font-weight="800">IN SCOPE</text>
+            <text x="225" y="140" text-anchor="middle" fill="#166534" font-size="11">runs uniformly for every merchant</text>
+            <text x="225" y="156" text-anchor="middle" fill="#166534" font-size="11">findings belong to the merchant</text>
+            <text x="225" y="172" text-anchor="middle" fill="#166534" font-size="11">no Seel-specific handling, ever</text>
+            <rect x="510" y="96" width="330" height="86" rx="10" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+            <text x="675" y="120" text-anchor="middle" fill="#DC2626" font-weight="800">OUT OF SCOPE</text>
+            <text x="675" y="140" text-anchor="middle" fill="#991B1B" font-size="11">not in the methodology at all</text>
+            <text x="675" y="156" text-anchor="middle" fill="#991B1B" font-size="11">checked for no one</text>
+            <text x="675" y="172" text-anchor="middle" fill="#991B1B" font-size="11">e.g. default-on add-on / opt-out / fee display</text>
           </g>
         </svg>
-        <div class="diagram-legend">
-          <span><i class="k" style="background:#F0FDF4;border:1px solid #16A34A"></i>normal path (produce finding)</span>
-          <span><i class="k" style="background:#FEF2F2;border:1px solid #DC2626"></i>omit path (no output)</span>
-          <span><i class="k" style="background:#FFFBEB;border:1px solid #B45309"></i>decision node</span>
-          <span><i class="k" style="background:#F5F3FF;border:1px solid #7C3AED"></i>config data</span>
-        </div>
         <div class="diagram-notes">
-          <b>CI honeypot regression:</b> every corpus / methodology change must produce zero red findings on the honeypot set (Seel demo storefront + anonymized real Seel-using merchant pages + non-Seel control pages). Build fails otherwise.<br>
-          <b>Boundary:</b> the carve-out only suppresses these specific rules on pages with a Seel fingerprint. All other rules on Seel-touching pages, and all rules on non-Seel pages, run normally.
+          <b>No suppression, no fingerprinting, no skip-whitelist, no suppression audit log.</b> Rules that would only fire on Seel's product model are simply absent from the corpus, uniformly.<br>
+          <b>CI honeypot regression (retained, reframed):</b> every corpus / methodology change runs against the honeypot set (Seel demo storefront + anonymized real Seel-using merchant pages + non-Seel control pages) to confirm no scope-out-category finding ever appears. Build fails otherwise.
         </div>
       </div>
 
@@ -875,6 +831,7 @@
         </tbody>
       </table>
       <p style="font-size:12.5px;color:var(--mid)">Regulatory corpus is <b>counsel-signed</b> per State Machine C — not per-report authored. <b>Runtime external calls are limited to USPTO and Middesk/SoS</b>; the source layer makes zero runtime API calls — citations render from the signed registry (§5.6).</p>
+      <p style="font-size:12.5px;color:var(--mid)"><b>Citation registry (draft for review):</b> <a href="https://app.notion.com/p/3983b4ed17a281ff9c60cf33a9ab451a">🗂️ Seel Compass — Rule Citation Registry</a> — the merchant-visible rule→citation mapping, seeded from the current findings, with the per-rule interpretive-basis column for counsel markup.</p>
     </section>
 
     <!-- 10. Cadence -->
@@ -939,7 +896,7 @@
           </tr>
           <tr>
             <td>2</td>
-            <td><b>Skip-rule whitelist</b> for self-harm carve-out — approve initial 3-rule set + governance for future additions</td>
+            <td><b>Scope-out rule set</b> (revised per 7/8, was "skip-rule whitelist") — confirm (a) the complete list of rule categories removed from the corpus entirely (default-on add-on / opt-out / fee display), and (b) that a general in-scope rule firing on a page containing a Seel component is surfaced as the merchant's page behavior. No runtime suppression exists.</td>
             <td><a href="#sm-b">§5.2 / SM B</a></td>
             <td><span class="block">Blocks launch</span></td>
           </tr>
@@ -1102,7 +1059,7 @@
 </div>
 
 <footer>
-  Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · PRD Draft v1.2 · © 2026
+  Seel Compass · by Seel Inc. (a Delaware corporation) — informational only, not legal advice, not a law firm. Your partner for global expansion and readiness. · PRD Draft v1.3 · © 2026
 </footer>
 
 </body>
