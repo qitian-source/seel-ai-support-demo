@@ -506,7 +506,7 @@
         <li><b>版本化链接：</b>官方源支持时点 URL 的（EUR-Lex consolidated、eCFR 日期视图）存 corpus 摄入版本；不支持的存当前官方链接、由 corpus 日期声明兜底。链接健康检查搭 corpus 月度 refresh。</li>
         <li><b>对内签署、对外零背书：</b>商家只看到 corpus 版本号；UI 任何地方不出现 "counsel-reviewed" 类标签（暴露法务具名 = 增加 reliance 和 UPL 风险）。签署记录只在内部 audit log。</li>
         <li><b>对签署范围的影响：</b>corpus 签署对象从"内部规则文本"扩大为"含商家可见引用 registry"—— 已同步进英文版 §12（item 3 扩围 + 新增 item 9 引用粒度、item 10 时效锚点）。</li>
-        <li><b>解释依据字段（v1.3，Michael 7/8）：</b>很多风险在成文法条文里并不清晰，而是在解释该法的<b>判例 / 机构指南</b>里发展出来的，裸条文未必直接适用。因此 registry 每条带一个 <code>解释依据</code> 字段（条文 / 法规 / 机构指南 / 判例执法）；规则实际活在解释层的，引用指向控制性指南或执法综述、而非裸条款，叙述层承载解释。逐条可在 registry 审、也是 counsel 签署内容的一部分。</li>
+        <li><b>解释依据字段（v1.3，Michael 7/8）：</b>很多风险在成文法条文里并不清晰，而是在解释该法的<b>判例 / 机构指南</b>里发展出来的，裸条文未必直接适用。因此 registry 每条带一个 <code>解释依据</code> 字段（条文 / 法规 / 机构指南 / 判例执法）；规则实际活在解释层的，引用指向控制性指南或执法综述、而非裸条款，叙述层承载解释。逐条可在 registry 审、也是 counsel 签署内容的一部分。商家端 Source pane 上,该依据以引用 chip 旁的小标签呈现（<code>STATUTE</code> / <code>GUIDANCE</code> / <code>CASE&nbsp;LAW</code>），让解释层差异在实际分析里可见,而不只在 registry 里。</li>
         <li><b>可审 registry（draft）：</b><a href="https://app.notion.com/p/3983b4ed17a281ff9c60cf33a9ab451a">🗂️ Seel Compass — Rule Citation Registry</a>——商家可见的 rule→引用映射，从当前 findings seed，含逐条解释依据列供 counsel 标注。</li>
       </ul>
     </section>

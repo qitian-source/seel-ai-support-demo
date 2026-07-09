@@ -31,10 +31,47 @@ type CategoryKey = "cosmetics" | "kids" | "alcohol" | "cbd" | "tobacco" | "firea
    Proof is the per-scan evidence: pages checked, timestamps, excerpts, observations. */
 const CORPUS_VERSION = "v2026.06";
 
+/* Interpretive basis (Michael 7/8): where the operative rule actually lives.
+   A risk isn't always in the black-letter statute — it can develop in agency
+   guidance or case law interpreting it. Kept in a central map (the demo's
+   stand-in for the counsel-signed registry field), looked up by citation label. */
+type Basis = "statute" | "regulation" | "guidance" | "case law";
+
 interface SourceRef {
   label: string;   // e.g. "🇪🇺 GDPR — Art. 7(3)"
   url?: string;    // official primary text only (EUR-Lex, eCFR, ftc.gov, leginfo…)
+  basis?: Basis;   // override; otherwise resolved from CITATION_BASIS by label
 }
+
+const CITATION_BASIS: Record<string, Basis> = {
+  // Black-letter primary legislation
+  "🇪🇺 GDPR — Art. 6": "statute",
+  "🇪🇺 GDPR — Art. 7(3)": "statute",
+  "🇪🇺 GDPR — Art. 7 consent conditions": "statute",
+  "🇪🇺 GDPR — Art. 12(3)": "statute",
+  "🇪🇺 GDPR — Art. 15–20": "statute",
+  "🇪🇺 GDPR — Art. 5(1)(e) storage limitation": "statute",
+  "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)": "statute",
+  "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19": "statute",
+  "🇺🇸 CPRA — Cal. Civ. Code §1798.100–.121": "statute",
+  "🇺🇸 CPRA — §1798.100(a)(3)": "statute",
+  "🇺🇸 CPRA — §1798.121 “Right to Limit”": "statute",
+  "🇺🇸 Other state frameworks — CO · CT · VA": "statute",
+  "🇺🇸 CA Civ. Code §1723 — refund-policy disclosure": "statute",
+  "🇺🇸 CPSIA — 15 U.S.C. §2056a": "statute",
+  "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50": "statute",
+  "🇺🇸 Prop 65 — Cal. H&S Code §25249.6 (OEHHA)": "statute",
+  // Administrative rules / mandatory standards
+  "🇺🇸 ASTM F963 toy-safety standard": "regulation",
+  // Agency interpretive guidance
+  "🇺🇸 FTC Green Guides — 16 CFR Part 260": "guidance",
+  "🇺🇸 FTC Endorsement Guides — 16 CFR Part 255": "guidance",
+  "🇺🇸 FTC staff report — Bringing Dark Patterns to Light (2022)": "guidance",
+  "Consumer-contract disclosure norms — FTC staff guidance": "guidance",
+  // Rule lives in enforcement / case law, not the bare statutory text (Michael's example)
+  "🇺🇸 FTC Act §5 — 15 U.S.C. §45": "case law",
+  // Note: pure data-source lookups (USPTO db, State SoS) carry no interpretive basis — intentionally absent.
+};
 
 interface Proof {
   pages?: string;        // what was checked / searched
@@ -407,26 +444,42 @@ function StateBadge({ state }: { state: State }) {
 }
 
 /* ── Source & proof blocks (shared by checklist rows and review items) ── */
+function BasisTag({ basis }: { basis: Basis }) {
+  const cls = basis === "case law" ? "bg-indigo-50 text-indigo-600"
+    : basis === "guidance" ? "bg-amber-50 text-amber-700"
+    : "bg-slate-100 text-slate-500";
+  return (
+    <span className={cn("ml-1 text-[9px] font-semibold uppercase tracking-wide rounded px-1 py-px whitespace-nowrap", cls)}>
+      {basis}
+    </span>
+  );
+}
+
 function SourcesBlock({ sources }: { sources: SourceRef[] }) {
+  const anyBasis = sources.some(s => (s.basis ?? CITATION_BASIS[s.label]));
   return (
     <div>
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Sources</div>
       <div className="flex flex-wrap gap-1.5">
-        {sources.map((s, i) => s.url ? (
-          <a
-            key={i} href={s.url} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-foreground hover:border-[#6c47ff] hover:text-[#6c47ff] transition-colors"
-          >
-            {s.label} <span className="opacity-60">↗</span>
-          </a>
-        ) : (
-          <span key={i} className="inline-flex items-center text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-muted-foreground">
-            {s.label}
-          </span>
-        ))}
+        {sources.map((s, i) => {
+          const basis = s.basis ?? CITATION_BASIS[s.label];
+          return s.url ? (
+            <a
+              key={i} href={s.url} target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-foreground hover:border-[#6c47ff] hover:text-[#6c47ff] transition-colors"
+            >
+              {s.label}{basis && <BasisTag basis={basis} />} <span className="opacity-60">↗</span>
+            </a>
+          ) : (
+            <span key={i} className="inline-flex items-center text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-muted-foreground">
+              {s.label}{basis && <BasisTag basis={basis} />}
+            </span>
+          );
+        })}
       </div>
       <p className="text-[10.5px] text-muted-foreground mt-1.5">
         Rule corpus {CORPUS_VERSION} · reference only — how these rules apply to you depends on facts a scan can't assess.
+        {anyBasis && <> The tag on each citation marks where the rule lives — statute, regulation, agency guidance, or case&nbsp;law &amp; enforcement.</>}
       </p>
     </div>
   );
