@@ -475,7 +475,7 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
     <div class="gran-note" id="gran-note"></div>
     <div class="modal-foot">
       <button class="btn" onclick="closeExport()">Cancel</button>
-      <button class="btn primary" onclick="doExport()">Export</button>
+      <button class="btn process" onclick="doExport()">Export</button>
     </div>
   </div>
 </div>
@@ -824,7 +824,8 @@ function updateExportUI(){
   document.getElementById('exp-scope').textContent =
     `${filteredRows().length} RMAs match your current filters and date range`;
   document.getElementById('gran-note').innerHTML =
-    `Exports <b>${rows} rows</b> — one per ${perItem ? 'return item' : 'RMA'}. The download link will be sent to <b>ops@bassdash.com</b>.`;
+    `Exports <b>${rows} rows</b> — one per ${perItem ? 'return item' : 'RMA'}.<br>` +
+    `The export process may take several minutes depending on the amount of data. Once completed, we'll send a download link to your email: <b>support@bassdash.com</b>`;
 }
 function itemRowObjs(){
   return filteredRows().flatMap(r => r.items.map(it => {
@@ -840,7 +841,7 @@ function itemRowObjs(){
 /* 导出不做浏览器即时下载：提交异步任务，完成后下载链接发送至商户邮箱 */
 function doExport(){
   closeExport();
-  toast('Export started — the download link will be sent to ops@bassdash.com');
+  toast('Export started — we\'ll send a download link to support@bassdash.com');
 }
 
 /* ════════ Rules Flow 编辑器（对齐 Rules/Flow 源码）════════
