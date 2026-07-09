@@ -167,6 +167,7 @@
     <a href="#scope">11. 范围（in / out）</a>
     <a href="#dep-risk" class="hot">12. 依赖与风险</a>
     <a href="#release">13. 发布计划</a>
+    <a href="#architecture" class="hot">14. 生产技术设计</a>
     <h4>附录</h4>
     <a href="#glossary">A. 术语表</a>
     <a href="#related">B. 关联文档</a>
@@ -1027,6 +1028,57 @@
         <li><b>Beta（邀请制）：</b>5–10 个外部商家 · Michael 抽检前 5 份 report · 收集 NPS 与 report 质量数据</li>
         <li><b>Public invite-only：</b>持续扩容邀请码（不做 public open sign-up）</li>
       </ol>
+    </section>
+
+    <!-- 14. 生产技术设计 -->
+    <section id="architecture">
+      <h2>14. 生产技术设计（v1.3 新增）</h2>
+      <p>商家 dashboard 里的是 demo mock。这一节定义正式版怎么建,好让前面那些法律保证（引用只渲染不生成、corpus 由 counsel 签署、无运行时压制）在生产里真的成立,而不只是写在纸上。</p>
+
+      <h3>14.1 三层 + 一个证据存储</h3>
+      <p>现在规则/分析/引用/展示全糊在 demo 代码里。正式版拆开:</p>
+      <table>
+        <thead><tr><th>层</th><th>职责</th><th>归属</th></tr></thead>
+        <tbody>
+          <tr><td><b>① Rule &amp; citation registry（法律层）</b></td><td>权威数据。每条:<code>rule_id · 类目 · 市场 · 断言措辞 · 引用[]（label, 官方URL, 版本化URL, 解释依据）· scope(in/out) · status · corpus 版本 · 签署记录</code>。<b>唯一真源</b>——不在 React 代码、不在 Notion</td><td>counsel 签署（SM C）</td></tr>
+          <tr><td><b>② Rule engine / 扫描管线（分析层）</b></td><td>LLM 职责<b>被死死限定</b>:给定页面 + 签署版本的 in-scope 规则集,输出 <code>rule_id + 判定 + 证据</code>。<b>永不</b>写引用、不下法律结论</td><td>工程</td></tr>
+          <tr><td><b>③ Report / 展示层（投影）</b></td><td>单一 finding 实体 → 两投影 + 状态回流 + corpus 版本戳 + Source/Proof。引用文字是拿 rule_id 去 registry <b>确定性查表</b>拼的,不是模型输出</td><td>工程 / 产品</td></tr>
+          <tr><td><b>+ Evidence store（证据层）</b></td><td>每次扫描的页面快照（摘录 offset + 时间戳）+ network trace,支撑 Proof + provenance</td><td>工程</td></tr>
+        </tbody>
+      </table>
+
+      <h3>14.2 Registry = 版本控制文件,签署 = 批准的 PR</h3>
+      <div class="note info">
+        <b>推荐做法:</b>registry 存成仓库里的结构化文件（YAML/JSON）,<b>counsel 签署 = approve 一个 PR</b>。一个机制干三件事:
+      </div>
+      <ul>
+        <li><b>签署流程</b> = PR Draft → counsel review → approve,approve 记录即签名。这就是 State Machine C,跑在现成工具上</li>
+        <li><b>审计链</b> = git history:每条引用谁改的、谁批的、什么时候,不可篡改</li>
+        <li><b>corpus 版本</b> = release tag（如 <code>v2026.06</code>）。"In production" = 最新签署 tag,管线只拉签过字的 tag</li>
+        <li><b>防漂移</b> = demo 和正式管线读<b>同一份</b> registry 源,demo 变成消费者而非第二份拷贝——消掉 §6.12 说的三拷贝漂移隐患</li>
+        <li>counsel 审的是<b>渲染后的可读 diff</b>（就是现在那个 Notion registry 视图,从文件自动生成）,不是原始 YAML。审阅地点灵活,真源唯一</li>
+      </ul>
+
+      <h3>14.3 Grounding / 防幻觉门（CI）</h3>
+      <ul>
+        <li><b>Grounding 门:</b>finding 没有 evidence、或引用了签署版本里不存在的 rule_id → 拒绝渲染,build 失败</li>
+        <li><b>引用零幻觉校验:</b>输出里每个引用串都必须能映射到 registry 条目;幻觉引用 = build-breaking 缺陷,等同语言禁词违规</li>
+        <li><b>Honeypot 回归:</b>registry 每次改动跑扫描过 honeypot,确认 scope-out 类别零 finding、零禁词</li>
+        <li><b>LLM 错误被限界:</b>引擎顶多把证据误映射到某规则（false positive/negative）,由 5% 抽检 + N=5 gate 兜;它<b>永远编不出法条</b>——最坏是漏匹配/错匹配,绝不是伪造引用</li>
+      </ul>
+
+      <h3>14.4 更新生命周期与治理</h3>
+      <ul>
+        <li><b>触发:</b>成文法/判例演进 · 加新市场或品类 · 官方链接失效/迁移</li>
+        <li><b>每次更新</b> → PR → counsel review → approve → 新 tag。除签署 tag 外任何东西都到不了商家（re-sign 目标 ≤5 工作日）</li>
+        <li><b>判例漂移（Michael 7/8）:</b><code>解释依据 = case law</code> 的规则标记为定时复审——这类漂移最快、规则不固定在条文里</li>
+        <li><b>链接健康:</b>月度自动检查;实质变化触发重签</li>
+        <li><b>History provenance:</b>每次 scan 标注所用 corpus 版本（商家 History tab 可见）→ 解析到签署 tag → 批准记录</li>
+      </ul>
+
+      <div class="note danger">
+        <b>这套架构端到端保证:</b>商家看到的每条引用都能追溯到 counsel 批准的 tag;模型无法原创法律文字;scope 决定统一且在 authoring 时定（无运行时压制）;"规则是什么"有且只有一个真源。
+      </div>
     </section>
 
     <!-- Appendix A -->
