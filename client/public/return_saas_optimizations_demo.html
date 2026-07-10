@@ -352,7 +352,7 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
   <div class="feats">
     <span class="feat" onclick="switchTab('issues')"><span class="n">1</span><b>Tracking#</b> column</span>
     <span class="feat" onclick="switchTab('issues');openExport()"><span class="n">2</span><b>Item-level</b> CSV</span>
-    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item <b>SKU</b></span>
+    <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item <b>SKU ID</b></span>
     <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">4</span><b>Label</b> after Completed</span>
     <span class="feat" onclick="switchTab('rules')"><span class="n">5</span>Flow <b>full text + hover</b></span>
     <span class="mode-switch" id="flow-mode-switch" style="display:none">
@@ -527,7 +527,7 @@ function toast(msg){
   clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2200);
 }
 function copyTrk(t){ navigator.clipboard && navigator.clipboard.writeText(t.replace(/\s/g,'')); toast('Tracking number copied'); }
-function copySku(s){ navigator.clipboard && navigator.clipboard.writeText(s); toast('SKU copied'); }
+function copySku(s){ navigator.clipboard && navigator.clipboard.writeText(s); toast('SKU ID copied'); }
 
 /* ════════ Issues 列表：筛选 / 排序 / 多包裹展开 ════════ */
 const FILTER = { q:'', type:'', ship:'', status:'', range:'' };
@@ -630,7 +630,7 @@ function showDetail(rma){
           <span class="tag-type">${r.type}</span>
         </div>
         <div class="sku-line">
-          <span class="sku-chip" onclick="copySku('${it.sku}')" title="Click to copy">SKU&nbsp;·&nbsp;${it.sku}&nbsp;⧉</span>
+          <span class="sku-chip" onclick="copySku('${it.sku}')" title="Click to copy">SKU ID&nbsp;·&nbsp;${it.sku}&nbsp;⧉</span>
           <span style="font-size:12px;color:var(--gray2)">× ${it.qty}</span>
         </div>
         <div class="meta"><b>Reason: </b><span>${esc(it.reason)}</span></div>
@@ -782,7 +782,7 @@ const EXPORT_FIELDS = [
   {k:'created_at', t:'Created date', g:'RMA'},
   {k:'resolution_type', t:'Resolution type', g:'RMA'},
   {k:'rma_status', t:'Status', g:'RMA'},
-  {k:'sku', t:'SKU', g:'Item'},
+  {k:'sku', t:'SKU ID', g:'Item'},
   {k:'item_name', t:'Item name', g:'Item'},
   {k:'variant', t:'Variant', g:'Item'},
   {k:'qty', t:'Quantity', g:'Item'},

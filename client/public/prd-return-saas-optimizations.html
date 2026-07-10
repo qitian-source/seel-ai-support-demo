@@ -70,7 +70,7 @@
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel · Return SaaS</div>
   <span class="topbar-tag">PRD v2.1</span>
-  <span class="topbar-date">2026-07-09 · qi.tian@seel.com</span>
+  <span class="topbar-date">2026-07-10 · qi.tian@seel.com</span>
 </div>
 
 <div class="wrap">
@@ -78,7 +78,7 @@
 <div class="cover">
   <span class="cover-badge">Merchant Dashboard · Return 模块 · 产品需求文档</span>
   <div class="cover-title">【Return SaaS】Issues & Rules 体验优化</div>
-  <div class="cover-sub">让商家不点开 RMA 也能完成仓库核对：列表带运单号、导出自选字段、退货商品带 SKU、完结单据可回查；让服饰商家在规则画布上一眼看全每个退货选项。</div>
+  <div class="cover-sub">让商家不点开 RMA 也能完成仓库核对：列表带运单号、导出自选字段、退货商品带 SKU ID、完结单据可回查；让服饰商家在规则画布上一眼看全每个退货选项。</div>
   <div class="cover-meta">
     <div class="cover-meta-item"><span class="cover-meta-label">需求来源</span><span class="cover-meta-value">bassdash · aelfriceden（商户一线反馈）</span></div>
     <div class="cover-meta-item"><span class="cover-meta-label">影响范围</span><span class="cover-meta-value">商家后台 · Issues 列表 / RMA 详情 / Rules 画布</span></div>
@@ -86,7 +86,7 @@
   </div>
 </div>
 
-<div class="changelog"><b>v2.1（2026-07-09）评审调整</b>：① <strong>不做承运商轨迹跳转</strong>——列表与详情中的运单号仅展示 + 复制，不做外链；② 详情页操作按钮<strong>与线上保持一致</strong>（右上 More actions / Reject / Process，不新增改动）；③ 导出流程定为「下载 → 选择字段 → <strong>走邮箱发送</strong>」——一律异步生成、链接发商户邮箱，不做浏览器即时下载；④ <strong>不做灰度</strong>，直接全量发布。</div>
+<div class="changelog"><b>v2.1（2026-07-10）评审调整</b>：① <strong>不做承运商轨迹跳转</strong>——列表与详情中的运单号仅展示 + 复制，不做外链；② 详情页操作按钮<strong>与线上保持一致</strong>（右上 More actions / Reject / Process，不新增改动）；③ 导出流程定为「下载 → 选择字段 → <strong>走邮箱发送</strong>」——一律异步生成、链接发商户邮箱，不做浏览器即时下载；④ <strong>不做灰度</strong>，直接全量发布；⑤ R3 明确展示的是<strong>商品 SKU ID</strong>（店铺后台变体 SKU 编码）；⑥ 导出<strong>不做「勾选组合按人记住」</strong>，本期移除该需求。</div>
 <div class="changelog" style="background:#F8FAFC;border-color:var(--border);color:var(--soft)"><b>v2.0（2026-07-07）相对 v1.0 的变化</b>：① 导出从「两种格式单选」简化为单一字段勾选列表（行粒度自动推导，去掉预览）；② 多包裹 RMA 明确为 hover 浮层方案；③ Rules 画布标签明确为限字符截断 + hover 全文（不做整段全文平铺）；④ 界面语言全英文；⑤ 删除技术实现细节，另见技术评审文档。</div>
 
 <h2 id="bg">1 · 背景</h2>
@@ -113,7 +113,7 @@
   <tr><th>#</th><th>需求</th><th>一句话价值</th><th>优先级</th></tr>
   <tr><td><strong>R1</strong></td><td>Issues 列表展示逆向面单运单号（可下载）</td><td>逆向单号从「3 步 + 人肉读面单」变成最外层直取，查轨迹/入库/下载一步到位</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R2</strong></td><td>导出自选字段（含商品级明细）</td><td>一张表完成仓库核对，字段自己挑</td><td><span class="pill p0">P0</span></td></tr>
-  <tr><td><strong>R3</strong></td><td>退货商品展示 SKU</td><td>商家用自己的编码体系识别商品</td><td><span class="pill p0">P0</span></td></tr>
+  <tr><td><strong>R3</strong></td><td>退货商品展示 SKU ID</td><td>商家用自己的编码体系识别商品</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R4</strong></td><td>完结 RMA 保留面单与运单入口</td><td>完结后仍可回查、下载，支持对账与申诉</td><td><span class="pill p1">P1</span></td></tr>
   <tr><td><strong>R5</strong></td><td>Rules 画布选项文案可读</td><td>一屏看全规则，hover 看全文</td><td><span class="pill p1">P1</span></td></tr>
 </table>
@@ -172,7 +172,6 @@
   </li>
   <li>不做 CSV 预览表（评审结论：保持弹窗简洁）。</li>
   <li>Return reason 输出消费者所选选项的<strong>完整文案</strong>；有补充说明时拼接在后。</li>
-  <li>商家的勾选组合<strong>按人记住</strong>，下次打开弹窗沿用。</li>
   <li><strong>交付方式：一律走邮箱发送</strong>（v2.1 评审结论）——点击 Export 即提交异步导出任务，弹窗关闭并提示已提交；文件生成后将下载链接发送至商户邮箱（弹窗底部明示收件邮箱）；<strong>不做浏览器即时下载</strong>。</li>
 </ul>
 <h4>字段清单</h4>
@@ -188,26 +187,26 @@
   <li>取消全部 Item 字段后导出：行数等于 RMA 数，双包裹运单以 <code>;</code> 拼接在一格。</li>
   <li>列表筛选「Completed」再导出：文件只含 Completed 的 RMA。</li>
   <li>取消 Select all：仅保留 RMA number；再全选恢复 13 列。</li>
-  <li>关闭弹窗重新打开（同一账号）：上次勾选组合保留。</li>
   <li>点击 Export：弹窗关闭并出现「已提交」提示，浏览器<strong>不发生</strong>直接下载；商户邮箱在生成完成后收到下载链接，文件内容与勾选一致。</li>
 </ol>
 
-<h3>R3 · 退货商品展示 SKU</h3>
-<div class="story">作为商家，消费者提交的每个退货商品我都能直接看到 SKU，用自己的编码体系快速识别是哪个货。</div>
+<h3>R3 · 退货商品展示 SKU ID</h3>
+<div class="story">作为商家，消费者提交的每个退货商品我都能直接看到该商品的 <strong>SKU ID</strong>，用自己的编码体系快速识别是哪个货。</div>
 <h4>需求描述</h4>
 <ul>
-  <li>RMA 详情页 Return item(s) 中，每个商品在名称/变体下方展示 <strong>SKU 标签</strong>（等宽字体、点击复制）。</li>
-  <li>SKU 同步出现在：<strong>Process item(s) 处理弹窗</strong>、<strong>Packing slip 装箱单</strong>、以及 R2 的导出字段中——凡是商家要「认货」的地方都有。</li>
+  <li>此处展示的是商品的 <strong>SKU ID</strong>（即店铺后台商品变体的 SKU 编码，如 <code>BD-WDR-CHM-42</code>），而非商品名/标题。</li>
+  <li>RMA 详情页 Return item(s) 中，每个商品在名称/变体下方展示 <strong>SKU ID 标签</strong>（等宽字体、点击复制）。</li>
+  <li>SKU ID 同步出现在：<strong>Process item(s) 处理弹窗</strong>、<strong>Packing slip 装箱单</strong>、以及 R2 的导出字段中——凡是商家要「认货」的地方都有。</li>
 </ul>
 <h4>边界</h4>
 <ul>
-  <li>商品 SKU 为空时回退展示变体 ID；仍为空则不展示该标签（不出现空壳）。</li>
+  <li>商品 SKU ID 为空时回退展示变体 ID；仍为空则不展示该标签（不出现空壳）。</li>
 </ul>
 <h4>验收标准</h4>
 <ol>
-  <li>详情页 / 处理弹窗 / 装箱单三处 SKU 一致且与商家店铺后台一致。</li>
-  <li>点击 SKU 标签复制成功并有提示。</li>
-  <li>无 SKU 商品按回退规则展示，无空标签。</li>
+  <li>详情页 / 处理弹窗 / 装箱单三处 SKU ID 一致，且与商家店铺后台该变体的 SKU 编码一致。</li>
+  <li>点击 SKU ID 标签复制成功并有提示。</li>
+  <li>无 SKU ID 商品按回退规则展示，无空标签。</li>
 </ol>
 
 <h3>R4 · 完结 RMA 保留面单与运单入口</h3>
@@ -263,7 +262,7 @@
 <h2 id="plan">6 · 发布计划</h2>
 <table>
   <tr><th>阶段</th><th>内容</th><th>说明</th></tr>
-  <tr><td>Phase 1</td><td>R1 + R3（列表运单列、SKU 展示）</td><td>纯增量展示，先行发布</td></tr>
+  <tr><td>Phase 1</td><td>R1 + R3（列表运单列、SKU ID 展示）</td><td>纯增量展示，先行发布</td></tr>
   <tr><td>Phase 2</td><td>R2（自选字段导出）</td><td>含异步导出链路改造</td></tr>
   <tr><td>Phase 3</td><td>R4 + R5（终态入口、画布可读性）</td><td>随后跟进</td></tr>
   <tr><td>发布方式</td><td><strong>全量直接发布，不做灰度</strong>（v2.1 评审结论）</td><td>—</td></tr>
