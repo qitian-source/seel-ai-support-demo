@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.1</title>
+<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.3</title>
 <style>
   :root {
     --brand: #645AFF; --brand-d:#4d43e0; --dark:#1E293B; --mid:#475569;
@@ -69,7 +69,7 @@
 
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel · Return SaaS</div>
-  <span class="topbar-tag">PRD v2.1</span>
+  <span class="topbar-tag">PRD v2.3</span>
   <span class="topbar-date">2026-07-10 · qi.tian@seel.com</span>
 </div>
 
@@ -77,15 +77,16 @@
 
 <div class="cover">
   <span class="cover-badge">Merchant Dashboard · Return 模块 · 产品需求文档</span>
-  <div class="cover-title">【Return SaaS】Issues & Rules 体验优化</div>
-  <div class="cover-sub">让商家不点开 RMA 也能完成仓库核对：列表带运单号、导出自选字段、退货商品带 SKU ID、完结单据可回查；让服饰商家在规则画布上一眼看全每个退货选项。</div>
+  <div class="cover-title">【Return SaaS】Issues & Rules & 换货 体验优化</div>
+  <div class="cover-sub">让商家不点开 RMA 也能完成仓库核对：列表带运单号、导出自选字段、退货商品带 SKU ID、完结单据可回查；让服饰商家在规则画布上一眼看全每个退货选项；让消费者在换货选品页用搜索快速找到想换的商品。</div>
   <div class="cover-meta">
     <div class="cover-meta-item"><span class="cover-meta-label">需求来源</span><span class="cover-meta-value">bassdash · aelfriceden（商户一线反馈）</span></div>
-    <div class="cover-meta-item"><span class="cover-meta-label">影响范围</span><span class="cover-meta-value">商家后台 · Issues 列表 / RMA 详情 / Rules 画布</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">影响范围</span><span class="cover-meta-value">商家后台 · Issues 列表 / RMA 详情 / Rules 画布；消费者端换货选品页</span></div>
     <div class="cover-meta-item"><span class="cover-meta-label">交互 Demo</span><span class="cover-meta-value"><a href="./return_saas_optimizations_demo.html" target="_blank">可交互原型 ↗</a></span></div>
   </div>
 </div>
 
+<div class="changelog"><b>v2.3（2026-07-10）R6 改向</b>：R6 由「换货页留言让商家配货」改为 <strong>换货选品页加模糊搜索框</strong>——消费者在 Choose new item 页搜商品名 / SKU 快速定位要换的商品。移除留言区、<code>exchangeNote</code> 字段、商家端换货留言 callout；Continue 校验维持「必须选到商品」。</div>
 <div class="changelog"><b>v2.1（2026-07-10）评审调整</b>：① <strong>不做承运商轨迹跳转</strong>——列表与详情中的运单号仅展示 + 复制，不做外链；② 详情页操作按钮<strong>与线上保持一致</strong>（右上 More actions / Reject / Process，不新增改动）；③ 导出流程定为「下载 → 选择字段 → <strong>走邮箱发送</strong>」——一律异步生成、链接发商户邮箱，不做浏览器即时下载；④ <strong>不做灰度</strong>，直接全量发布；⑤ R3 明确展示的是<strong>商品 SKU ID</strong>（店铺后台变体 SKU 编码）；⑥ 导出<strong>不做「勾选组合按人记住」</strong>，本期移除该需求。</div>
 <div class="changelog" style="background:#F8FAFC;border-color:var(--border);color:var(--soft)"><b>v2.0（2026-07-07）相对 v1.0 的变化</b>：① 导出从「两种格式单选」简化为单一字段勾选列表（行粒度自动推导，去掉预览）；② 多包裹 RMA 明确为 hover 浮层方案；③ Rules 画布标签明确为限字符截断 + hover 全文（不做整段全文平铺）；④ 界面语言全英文；⑤ 删除技术实现细节，另见技术评审文档。</div>
 
@@ -116,6 +117,7 @@
   <tr><td><strong>R3</strong></td><td>退货商品展示 SKU ID</td><td>商家用自己的编码体系识别商品</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R4</strong></td><td>完结 RMA 保留面单与运单入口</td><td>完结后仍可回查、下载，支持对账与申诉</td><td><span class="pill p1">P1</span></td></tr>
   <tr><td><strong>R5</strong></td><td>Rules 画布选项文案可读</td><td>一屏看全规则，hover 看全文</td><td><span class="pill p1">P1</span></td></tr>
+  <tr><td><strong>R6</strong></td><td>换货选品页加搜索框（模糊搜索）</td><td>消费者搜商品名 / SKU 快速找到想换的商品，不用滚动翻找</td><td><span class="pill p0">P0</span></td></tr>
 </table>
 <p>界面语言：全英文（面向海外商家，与商家后台现有语言一致）。</p>
 
@@ -160,7 +162,6 @@
       <li>字段按 <strong>RMA / Item / Shipping label</strong> 三组分区、双列排布，显示人类可读名称（如 SKU、Tracking number、Return reason）；</li>
       <li>顶部 <strong>Select all</strong>（支持半选状态）+ 右侧已选计数（如 <code>13 of 13 selected</code>）；</li>
       <li><strong>RMA number 为必选</strong>，置灰不可取消，标注 Required；</li>
-      <li>弹窗标题下一行说明当前范围：<code>N RMAs match your current filters and date range</code>——导出永远跟随列表当前的筛选与日期范围。</li>
     </ul>
   </li>
   <li><strong>行粒度自动推导，商家无需选择格式</strong>：
@@ -242,6 +243,33 @@
   <li>该改动纯展示层：商家已发布的 flow 配置内容不发生任何变化。</li>
 </ol>
 
+<h3>R6 · 换货选品页加搜索框（模糊搜索）</h3>
+<div class="story">作为消费者，我选换货时目录商品一屏屏翻很慢、也难找到想要的款/色/码——我直接在选品页搜商品名或 SKU，快速定位到要换的商品。</div>
+<h4>现状问题</h4>
+<p>换货商品选择（saas_return 的 <code>exchangeSelection</code> 步骤，即消费者端「Choose new item」页）只有一个商品网格，没有搜索。目录商品多时消费者只能滚动翻找，找不到就「Skip Exchange」放弃或将就选一个——换货转化和体验都受损。</p>
+<h4>需求描述（消费者端 · Choose new item 页）</h4>
+<ul>
+  <li>在页面标题「Choose new item」下方、商品网格上方，新增一个<strong>搜索框</strong>，placeholder：<em>Search products</em>。</li>
+  <li><strong>模糊搜索（仅 product 名，不搜 SKU）</strong>：输入即时过滤商品网格，仅匹配<strong>商品名</strong>；<strong>按词命中、顺序无关</strong>——查询拆成多个词，每个词都出现即算命中（如 <code>hoodie camo</code>、<code>camo hoodie</code> 都能命中「Boxy CAMO Hoodie」）；大小写 / 空格 / 连字符不敏感，支持部分词，无需完整。</li>
+  <li>搜索框右侧有<strong>清除按钮</strong>（有输入时出现），一键清空恢复全部商品。</li>
+  <li>无匹配结果时，网格区展示空状态文案 <em>No products match "…". Try another keyword or SKU.</em></li>
+  <li>搜索<strong>不改变选择逻辑</strong>：过滤后照常点选商品加入换货；已选商品在过滤/清空后选中态保持。</li>
+</ul>
+<h4>不做（本次范围收敛）</h4>
+<ul>
+  <li>不做「换不到就留言让商家配货」的方案（曾评估，v2.3 改为搜索方向）——因此<strong>无</strong>消费者留言区、<strong>无</strong> <code>exchangeNote</code> 字段、<strong>无</strong>商家端换货留言 callout。</li>
+  <li>Continue 校验维持原样：<strong>必须选到换货商品</strong>才能继续（不引入「留言即可继续」）。</li>
+</ul>
+<h4>验收标准</h4>
+<ol>
+  <li>选品页出现搜索框；输入商品名关键词即时过滤出对应商品。</li>
+  <li><strong>按词命中、顺序无关</strong>：<code>camo hoodie</code> 与 <code>hoodie camo</code> 均命中同一商品；跨词（如 <code>purple hood</code>）亦可。</li>
+  <li><strong>不匹配 SKU</strong>：输入 SKU 片段（如 <code>ae-hd-camo</code>）不命中商品（仅按商品名搜索）。</li>
+  <li>无匹配时展示空状态文案；点清除按钮恢复全部商品。</li>
+  <li>过滤状态下选中商品，清空搜索后该商品仍为选中态。</li>
+  <li>未选任何商品时 Continue 置灰并提示 <em>Select an item to exchange for.</em>；选到商品后可继续。</li>
+</ol>
+
 <h2 id="oos">4 · 非本期范围</h2>
 <ul>
   <li>消费者端（Return portal）展示 SKU——本期仅商家侧。</li>
@@ -257,6 +285,7 @@
   <tr><td>详情页打开频次</td><td>bassdash 等核对型商户的「列表 → 详情」点击次数应显著下降（核对不再需要点开）</td></tr>
   <tr><td>Tracking 复制/跳转次数</td><td>列表列与详情页分开统计，验证 R1 价值</td></tr>
   <tr><td>画布标签 hover 次数</td><td>验证 R5 hover 方案被实际使用</td></tr>
+  <tr><td>换货搜索使用率 / 搜后转化</td><td>换货步骤中使用搜索框的比例、搜索后成功选到商品并 Continue 的转化；对比上线前后换货 Skip 率是否下降</td></tr>
 </table>
 
 <h2 id="plan">6 · 发布计划</h2>
@@ -265,10 +294,11 @@
   <tr><td>Phase 1</td><td>R1 + R3（列表运单列、SKU ID 展示）</td><td>纯增量展示，先行发布</td></tr>
   <tr><td>Phase 2</td><td>R2（自选字段导出）</td><td>含异步导出链路改造</td></tr>
   <tr><td>Phase 3</td><td>R4 + R5（终态入口、画布可读性）</td><td>随后跟进</td></tr>
+  <tr><td>Phase 4</td><td>R6（换货选品页搜索框）</td><td>纯消费者端（RC）前端改造，前端目录内过滤 / 或接商品搜索接口</td></tr>
   <tr><td>发布方式</td><td><strong>全量直接发布，不做灰度</strong>（v2.1 评审结论）</td><td>—</td></tr>
 </table>
 
-<p style="margin-top:40px;font-size:12.5px;color:var(--soft)">附：<a href="./return_saas_optimizations_demo.html" target="_blank">可交互原型（覆盖 R1–R5 全部交互，Rules 画布含 Before/After 对比）</a>　·　技术实现方案见研发技术评审文档（v1.0 PRD 中的接口与源码分析已移交研发）。</p>
+<p style="margin-top:40px;font-size:12.5px;color:var(--soft)">附：<a href="./return_saas_optimizations_demo.html" target="_blank">可交互原型（覆盖 R1–R6 全部交互：商家端 Issues/详情/导出/Rules 画布，消费者端换货选品搜索）</a>　·　技术实现方案见研发技术评审文档（v1.0 PRD 中的接口与源码分析已移交研发）。</p>
 
 </div>
 </body>

@@ -178,6 +178,7 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 .sku-line{ margin-top:6px; display:flex; align-items:center; gap:6px; }
 .sku-chip{ display:inline-flex; align-items:center; gap:5px; font-family:'SF Mono',Menlo,Consolas,monospace; font-size:11px; color:#0B5A3C; background:#EAF8F1; border:1px solid #C4EBD7; border-radius:4px; padding:1px 7px; cursor:pointer; }
 .sku-chip:hover{ border-color:var(--new); }
+.ex-empty{ font-size:13px; color:var(--gray1); font-style:italic; padding:6px 2px; }
 .ritem .pr{ flex:none; width:140px; text-align:right; font-size:14px; font-weight:700; }
 
 .sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:5px 0; color:var(--ink); }
@@ -342,6 +343,41 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 
 #toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(80px); background:#1E2022; color:#fff; font-size:12px; border-radius:8px; padding:9px 16px; transition:transform .25s ease; z-index:400; }
 #toast.show{ transform:translateX(-50%) translateY(0); }
+
+/* ══════ Consumer 手机 mockup ══════ */
+#consumer-mask{ position:fixed; inset:0; background:rgba(17,18,20,.55); z-index:300; display:none; align-items:center; justify-content:center; padding:24px; }
+#consumer-mask.open{ display:flex; }
+.phone{ width:390px; max-width:94vw; height:740px; max-height:92vh; background:#fff; border-radius:30px; box-shadow:0 20px 60px rgba(0,0,0,.35); overflow:hidden; position:relative; display:flex; flex-direction:column; border:6px solid #111; }
+.phone-notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:22px; background:#111; border-radius:0 0 14px 14px; z-index:5; }
+.cs-app{ flex:1; display:flex; flex-direction:column; min-height:0; font-family:'Georgia','Times New Roman',serif; }
+.cs-head{ display:flex; align-items:center; padding:22px 18px 10px; flex-shrink:0; }
+.cs-close{ font-size:13px; color:#111; border:1px solid #ddd; border-radius:16px; padding:4px 12px; cursor:pointer; font-family:-apple-system,sans-serif; }
+.cs-title{ flex:1; text-align:center; font-size:17px; font-weight:700; color:#111; }
+.cs-cart{ font-size:18px; }
+.cs-body{ flex:1; overflow-y:auto; padding:6px 18px 12px; min-height:0; }
+.cs-step{ text-align:center; font-size:19px; font-weight:700; color:#111; margin:8px 0 16px; }
+.cs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.cs-prod{ cursor:pointer; border:2px solid transparent; border-radius:10px; padding:6px; transition:border-color .12s; }
+.cs-prod.sel{ border-color:#111; }
+.cs-prod .img{ aspect-ratio:1; background:linear-gradient(135deg,#f0f0f0,#e2e2e2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:38px; position:relative; }
+.cs-prod.sel .img::after{ content:'✓'; position:absolute; top:6px; right:6px; width:22px; height:22px; background:#111; color:#fff; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; font-family:-apple-system,sans-serif; }
+.cs-prod .nm{ font-size:13px; color:#111; text-align:center; margin-top:8px; line-height:1.3; font-family:'Georgia',serif; }
+.cs-prod .sku{ font-size:10px; color:#9AA0A6; text-align:center; font-family:'SF Mono',monospace; margin-top:2px; }
+.cs-prod .pr{ font-size:13px; color:#6b7280; text-align:center; margin-top:2px; }
+.cs-search{ display:flex; align-items:center; gap:8px; background:#F2F2F4; border:1px solid #E7E7EA; border-radius:12px; padding:10px 14px; margin-bottom:16px; font-family:-apple-system,sans-serif; }
+.cs-search-ic{ font-size:14px; opacity:.55; }
+.cs-search input{ flex:1; border:none; background:none; outline:none; font-size:14px; color:#111; font-family:-apple-system,sans-serif; }
+.cs-search input::placeholder{ color:#9AA0A6; }
+.cs-search-x{ font-size:13px; color:#9AA0A6; cursor:pointer; padding:0 2px; }
+.cs-search-x:hover{ color:#111; }
+.cs-noresult{ text-align:center; font-size:13px; color:#6b7280; padding:28px 8px; font-family:-apple-system,sans-serif; }
+.cs-hint{ font-size:12.5px; color:#B91C1C; margin-top:10px; min-height:18px; font-family:-apple-system,sans-serif; text-align:center; }
+.cs-foot{ display:flex; gap:12px; padding:12px 18px 18px; flex-shrink:0; border-top:1px solid #f0f0f0; background:#fff; }
+.cs-btn{ flex:1; border-radius:14px; padding:13px 0; font-size:15px; cursor:pointer; font-family:'Georgia',serif; }
+.cs-btn.back{ background:#fff; border:1px solid #ccc; color:#111; }
+.cs-btn.continue{ background:#DDE3F0; border:none; color:#111; }
+.cs-btn.continue.ready{ background:#111; color:#fff; }
+.cs-btn.continue:disabled{ opacity:1; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -355,6 +391,7 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
     <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">3</span>Item <b>SKU ID</b></span>
     <span class="feat" onclick="showDetail('BD9LP4T2')"><span class="n">4</span><b>Label</b> after Completed</span>
     <span class="feat" onclick="switchTab('rules')"><span class="n">5</span>Flow <b>full text + hover</b></span>
+    <span class="feat" onclick="openConsumer()"><span class="n">6</span>Consumer <b>exchange search</b></span>
     <span class="mode-switch" id="flow-mode-switch" style="display:none">
       <button id="btn-before" onclick="setMode('before')">Before</button>
       <button id="btn-after" class="on" onclick="setMode('after')">After</button>
@@ -466,7 +503,6 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 <div id="modal-mask">
   <div class="modal">
     <h2>Export returns</h2>
-    <div class="sub" id="exp-scope"></div>
     <div class="chk-all">
       <label class="chk"><input type="checkbox" id="chk-all" onchange="toggleAllFields(this.checked)"><span>Select all</span></label>
       <span class="chk-count" id="exp-count"></span>
@@ -482,6 +518,37 @@ th.hl{ box-shadow:inset 0 2px 0 var(--new); }
 
 <div id="flow-tip"></div>
 <div id="trk-pop" onmouseenter="clearTimeout(popTimer)" onmouseleave="hideTrkPopSoon()" onclick="event.stopPropagation()"></div>
+
+<!-- ══════ Consumer 端 · Choose new item（手机 mockup）══════ -->
+<div id="consumer-mask" onclick="closeConsumer()">
+  <div class="phone" onclick="event.stopPropagation()">
+    <div class="phone-notch"></div>
+    <div class="cs-app">
+      <div class="cs-head">
+        <span class="cs-close" onclick="closeConsumer()">Close</span>
+        <span class="cs-title">Start a Return/Exchange</span>
+        <span class="cs-cart">🛒</span>
+      </div>
+      <div class="cs-body">
+        <div class="cs-step">Choose new item</div>
+        <!-- R6 搜索框（模糊搜索商品名 / SKU）-->
+        <div class="cs-search">
+          <span class="cs-search-ic">🔍</span>
+          <input id="cs-q" oninput="csFilter()" placeholder="Search products">
+          <span class="cs-search-x" id="cs-x" onclick="csClearSearch()" style="display:none">✕</span>
+        </div>
+        <div class="cs-grid" id="cs-grid"></div>
+        <div class="cs-noresult" id="cs-noresult" style="display:none">No products match “<span id="cs-q-echo"></span>”. Try another keyword or SKU.</div>
+        <div class="cs-hint" id="cs-hint"></div>
+      </div>
+      <div class="cs-foot">
+        <button class="cs-btn back" onclick="toast('Demo: back to resolution')">Back</button>
+        <button class="cs-btn continue" id="cs-continue" onclick="csContinue()">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -496,12 +563,14 @@ const RMAS = [
     items:[ {name:'Bassdash Alien Baitcasting Reel', vt:'7.2:1 / Right hand', sku:'BD-REL-AL72-R', qty:1, li:0, reason:'Doesn\'t suit me (upgraded to another model)', price:'$79.99', emoji:'🎛️'},
             {name:'Bassdash Rod Case 6\'6"', vt:'Black', sku:'BD-CSE-R66-BK', qty:1, li:1, reason:'Ordered by mistake', price:'$36.99', emoji:'🧳'} ],
     events:[['Departed USPS regional facility (package 1 of 2)','Jul 6, 2026, 3:05 AM — TACOMA, WA'],['USPS in possession of item','Jul 5, 2026, 4:12 PM — OLYMPIA, WA']] },
-  { rma:'BD3QW8Z5', order:'#BD10221', customer:'Jake Morrison', created:'Jul 4, 2026, 10:47 AM', date:'2026-07-04', orderTs:'Jun 25, 2026, 7:41 PM', ship:'in', type:'Refund', status:'Accepted',
+  { rma:'BD3QW8Z5', order:'#BD10221', customer:'Jake Morrison', created:'Jul 4, 2026, 10:47 AM', date:'2026-07-04', orderTs:'Jun 25, 2026, 7:41 PM', ship:'in', type:'Exchange', status:'Accepted',
     labels:[ {carrier:'UPS', trk:'1Z 999 AA1 01 2345 6784'} ],
-    items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, li:0, reason:'The leg opening of the pants is too wide or too narrow', price:'$25.98', emoji:'🪝'} ],
+    newItems:[ {name:'Bassdash Alien Baitcasting Reel', vt:'7.2:1 / Left hand', sku:'BD-REL-AL72-L', qty:1, price:'$79.99', emoji:'🎣'} ],
+    items:[ {name:'Tungsten Jig Heads 3/8 oz (12 pk)', vt:'Green Pumpkin', sku:'BD-JIG-TG38-12', qty:2, li:0, reason:'Wrong item received', price:'$25.98', emoji:'🪝'} ],
     events:[['Departed UPS facility','Jul 6, 2026, 2:11 AM — PORTLAND, OR'],['Origin scan','Jul 5, 2026, 6:30 PM — EUGENE, OR']] },
   { rma:'BD9LP4T2', order:'#BD10198', customer:'Hannah Lee', created:'Jul 3, 2026, 6:55 PM', date:'2026-07-03', orderTs:'Jun 20, 2026, 1:22 PM', ship:'del', type:'Exchange', status:'Completed',
     labels:[ {carrier:'USPS', trk:'9300 5036 9930 0221 4407 89'} ],
+    newItems:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 44', sku:'BD-WDR-CHM-44', qty:1, price:'$129.99', emoji:'🥾'} ],
     items:[ {name:'Bassdash Breathable Chest Waders', vt:'Brown / Size 42', sku:'BD-WDR-CHM-42', qty:1, li:0, reason:'The waist of the waders is too tight — need one size up', price:'$129.99', emoji:'🥾'},
             {name:'Wading Belt 2"', vt:'Olive', sku:'BD-BLT-WD2-OL', qty:1, li:0, reason:'Ordered by mistake', price:'$15.99', emoji:'🧷'} ],
     events:[['Delivered, front desk/reception/mail room','Jul 6, 2026, 11:02 AM — KENT, WA'],
@@ -701,6 +770,20 @@ function showDetail(rma){
           <h3>Return item(s)</h3>
           ${itemsHtml}
         </div>
+        ${r.type === 'Exchange' ? `
+        <div class="wcard">
+          <h3 style="margin-bottom:12px">New item(s)</h3>
+          ${(r.newItems && r.newItems.length) ? r.newItems.map(it => `
+            <div class="ritem">
+              <div class="ph">${it.emoji}</div>
+              <div class="bd">
+                <div class="tt-row"><span class="tt">${esc(it.name)} - ${esc(it.vt)}</span></div>
+                <div class="sku-line"><span class="sku-chip">SKU ID&nbsp;·&nbsp;${it.sku}</span><span style="font-size:12px;color:var(--gray2)">× ${it.qty}</span></div>
+              </div>
+              <div class="pr">${it.price}</div>
+            </div>`).join('')
+            : `<div class="ex-empty">No exchange item selected.</div>`}
+        </div>` : ''}
         <div class="wcard">
           <h3 style="margin-bottom:10px">Activity</h3>
           <div class="tl" style="margin-top:6px">
@@ -821,8 +904,6 @@ function updateExportUI(){
   document.getElementById('exp-count').textContent = `${n} of ${total} selected`;
   const perItem = isItemLevel();
   const rows = perItem ? itemRowObjs().length : filteredRows().length;
-  document.getElementById('exp-scope').textContent =
-    `${filteredRows().length} RMAs match your current filters and date range`;
   document.getElementById('gran-note').innerHTML =
     `Exports <b>${rows} rows</b> — one per ${perItem ? 'return item' : 'RMA'}.<br>` +
     `The export process may take several minutes depending on the amount of data. Once completed, we'll send a download link to your email: <b>support@bassdash.com</b>`;
@@ -1037,6 +1118,96 @@ function switchTab(t){
   document.getElementById('tab-rules').classList.toggle('active', t === 'rules');
   document.getElementById('flow-mode-switch').style.display = t === 'rules' ? 'flex' : 'none';
   if (t === 'rules') requestAnimationFrame(buildFlow);
+}
+
+/* ════════ Consumer 端 · Choose new item + 模糊搜索 ════════ */
+const CS_PRODUCTS = [
+  { name:'AERC Soft Oversized Running Tee', sku:'AERC-TEE-WHT-M', price:'$49.95', emoji:'👕' },
+  { name:'Button Panel Long Sleeve Tee', sku:'AE-LST-BLK-M', price:'$49.95', emoji:'🥼' },
+  { name:'Washed Denim Wide Shorts', sku:'AE-SHR-DNM-32', price:'$59.95', emoji:'🩳' },
+  { name:'Heart Embroidered Sweatpants', sku:'AE-SWP-BLK-L', price:'$64.95', emoji:'👖' },
+  { name:'Boxy CAMO Hood Zip Up', sku:'AE-HD-CAMO-ZIP-M', price:'$69.95', emoji:'🧥' },
+  { name:'Boxy CAMO Hoodie - Purple', sku:'AE-HD-CAMO-PPL-L', price:'$69.95', emoji:'🧥' },
+  { name:'Vintage Wash Cargo Pants', sku:'AE-PNT-CRG-30', price:'$74.95', emoji:'👖' },
+  { name:'Knit Beanie - Black', sku:'AE-ACC-BNE-BLK', price:'$24.95', emoji:'🧢' },
+  { name:'Oversized Graphic Tee - White', sku:'AE-TEE-GRA-WHT-L', price:'$44.95', emoji:'👕' },
+  { name:'Fleece Zip Jacket - Grey', sku:'AE-JKT-FLC-GRY-M', price:'$89.95', emoji:'🧥' },
+];
+let csSelected = new Set();
+let csQuery = '';
+
+// 模糊匹配：只搜 product 名（不搜 SKU）；按词命中、顺序无关，大小写不敏感
+// 例 "hoodie camo" / "camo hoodie" / "purple hood" 都能命中「Boxy CAMO Hoodie」
+function csMatch(p, q){
+  const query = (q || '').trim();
+  if (!query) return true;
+  const norm = s => s.toLowerCase().replace(/[\s\-_]/g,'');
+  const hay = norm(p.name);
+  return query.split(/\s+/).every(tok => hay.includes(norm(tok)));
+}
+function csVisibleIdx(){
+  return CS_PRODUCTS.map((p,i)=>i).filter(i => csMatch(CS_PRODUCTS[i], csQuery));
+}
+
+function openConsumer(){
+  csSelected = new Set();
+  csQuery = '';
+  document.getElementById('cs-q').value = '';
+  document.getElementById('cs-x').style.display = 'none';
+  csRenderGrid();
+  csUpdate();
+  document.getElementById('consumer-mask').classList.add('open');
+}
+function closeConsumer(){ document.getElementById('consumer-mask').classList.remove('open'); }
+
+function csRenderGrid(){
+  const idx = csVisibleIdx();
+  const grid = document.getElementById('cs-grid');
+  const nores = document.getElementById('cs-noresult');
+  if (!idx.length){
+    grid.innerHTML = '';
+    nores.style.display = '';
+    document.getElementById('cs-q-echo').textContent = csQuery;
+    return;
+  }
+  nores.style.display = 'none';
+  grid.innerHTML = idx.map(i => `
+    <div class="cs-prod ${csSelected.has(i) ? 'sel' : ''}" id="cs-p-${i}" onclick="csToggle(${i})">
+      <div class="img">${CS_PRODUCTS[i].emoji}</div>
+      <div class="nm">${esc(CS_PRODUCTS[i].name)}</div>
+      <div class="sku">${CS_PRODUCTS[i].sku}</div>
+      <div class="pr">${CS_PRODUCTS[i].price}</div>
+    </div>`).join('');
+}
+function csFilter(){
+  csQuery = document.getElementById('cs-q').value.trim();
+  document.getElementById('cs-x').style.display = csQuery ? '' : 'none';
+  csRenderGrid();
+}
+function csClearSearch(){
+  csQuery = '';
+  document.getElementById('cs-q').value = '';
+  document.getElementById('cs-x').style.display = 'none';
+  csRenderGrid();
+}
+function csToggle(i){
+  csSelected.has(i) ? csSelected.delete(i) : csSelected.add(i);
+  const el = document.getElementById('cs-p-' + i);
+  if (el) el.classList.toggle('sel', csSelected.has(i));
+  csUpdate();
+}
+function csUpdate(){
+  // 校验：必须选到换货商品才能 Continue
+  const ready = csSelected.size > 0;
+  const btn = document.getElementById('cs-continue');
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', ready);
+  document.getElementById('cs-hint').textContent = ready ? '' : 'Select an item to exchange for.';
+}
+function csContinue(){
+  if (csSelected.size === 0) return;
+  closeConsumer();
+  toast('Continue — ' + csSelected.size + ' item(s) selected');
 }
 
 renderTable();
