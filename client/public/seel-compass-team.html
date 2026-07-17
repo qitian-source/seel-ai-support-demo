@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — What We're Building & Who Owns What</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0; --bg:#F8FAFC; --card:#fff;
+    --eng:#4338CA; --eng-bg:#EEF2FF; --eng-br:#C7D2FE;
+    --legal:#B45309; --legal-bg:#FFFBEB; --legal-br:#FDE68A;
+    --prod:#0E7490; --prod-bg:#ECFEFF; --prod-br:#A5F3FC;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+  code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12.5px;color:#334155}
+  .topbar{background:#0A0A1A;color:#fff;padding:14px 28px;display:flex;align-items:center;gap:12px}
+  .topbar .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:17px}
+  .topbar .title{font-weight:800;letter-spacing:.02em}
+  .topbar small{display:block;font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 28px 70px}
+  .lede{font-size:15px;color:var(--mid);margin:6px 0 22px}
+  .lede b{color:var(--ink)}
+  h2{font-size:16px;font-weight:800;margin:30px 0 12px;padding-top:16px;border-top:2px solid var(--border)}
+  h2:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+
+  /* module row */
+  .mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .mod{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .mod .h{font-weight:700;font-size:13px;margin-bottom:4px}
+  .mod .d{font-size:11.5px;color:var(--sub);line-height:1.45}
+  .mod .m{font-size:10px;font-weight:700;color:var(--seel-d);background:var(--seel-l);border-radius:99px;padding:1px 7px;display:inline-block;margin-top:6px}
+
+  /* pipeline */
+  .pipe{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin:4px 0;overflow-x:auto}
+  .pipe svg{display:block;max-width:100%;height:auto;min-width:640px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--sub)}
+  .legend .k{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+
+  /* lanes */
+  .lanes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:840px){.lanes{grid-template-columns:1fr}}
+  .lane{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+  .lane .lh{padding:11px 15px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .lane.eng .lh{background:var(--eng-bg);color:var(--eng);border-bottom:1px solid var(--eng-br)}
+  .lane.legal .lh{background:var(--legal-bg);color:var(--legal);border-bottom:1px solid var(--legal-br)}
+  .lane.prod .lh{background:var(--prod-bg);color:var(--prod);border-bottom:1px solid var(--prod-br)}
+  .lane .lh .role{font-size:10.5px;font-weight:600;opacity:.8;margin-left:auto;text-transform:uppercase;letter-spacing:.04em}
+  .lane ul{list-style:none;padding:12px 15px;display:flex;flex-direction:column;gap:10px}
+  .lane li{font-size:12.5px;color:var(--ink);padding-left:16px;position:relative;line-height:1.45}
+  .lane li::before{content:"";position:absolute;left:0;top:6px;width:6px;height:6px;border-radius:2px}
+  .lane.eng li::before{background:var(--eng)}
+  .lane.legal li::before{background:var(--legal)}
+  .lane.prod li::before{background:var(--prod)}
+  .lane li b{display:block;font-size:12.5px;margin-bottom:1px}
+  .lane li span{color:var(--sub);font-size:11.5px}
+
+  .status{background:var(--seel-l);border:1px solid #DDD6FE;border-radius:12px;padding:16px 20px;margin-top:22px}
+  .status h3{font-size:13.5px;color:var(--seel-d);margin-bottom:10px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .step{background:#fff;border:1px solid var(--border);border-radius:9px;padding:10px 13px;font-size:12px}
+  .step .t{font-weight:700;font-size:12px;margin-bottom:3px}
+  .step.done .t{color:var(--ok)}
+  .step.now .t{color:var(--legal)}
+  .step.next .t{color:var(--eng)}
+  .step .s{color:var(--sub);font-size:11px;line-height:1.4}
+  .note{font-size:11.5px;color:var(--mid);margin-top:14px;padding:10px 14px;background:#fff;border-left:3px solid var(--seel);border-radius:0 8px 8px 0}
+  footer{color:var(--sub);font-size:11px;margin-top:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="mark">🧭</div>
+  <div>
+    <div class="title">Seel Compass — What We're Building & Who Owns What</div>
+    <small>Team one-pager · Product / Engineering / Legal · maps to PRD v1.3</small>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="lede">Compass scans a merchant's public storefront and returns an <b>objective, structured readiness baseline</b> across five go-global categories — it points to relevant rules and recommends counsel review, and <b>never renders a legal conclusion</b>. Closer to a SOC-2 readiness check than a legal opinion.</p>
+
+  <h2>1 · What it assesses — 5 modules</h2>
+  <div class="mods">
+    <div class="mod"><div class="h">🔒 Data & Privacy</div><div class="d">Privacy-policy wording + cookie behavior</div><div class="m">site crawl · US+EU</div></div>
+    <div class="mod"><div class="h">📄 Terms & Conditions</div><div class="d">ToS / refund / warranty language</div><div class="m">site crawl · US+EU</div></div>
+    <div class="mod"><div class="h">🛍️ Product</div><div class="d">Regulated categories (detection) · claims · safety/labeling · IP/marketing · consumer protection</div><div class="m">site crawl · US+EU</div></div>
+    <div class="mod"><div class="h">™️ Intellectual Property</div><div class="d">Brand-name screen vs registered trademarks</div><div class="m">USPTO API · US</div></div>
+    <div class="mod"><div class="h">🏛️ Corporate Entity</div><div class="d">Good-standing + annual-report status</div><div class="m">Questionnaire + State SoS · US</div></div>
+  </div>
+
+  <h2>2 · How it runs — and where citations come from</h2>
+  <div class="pipe">
+    <svg viewBox="0 0 900 210" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#7C3AED"/></marker></defs>
+      <g font-family="-apple-system,'Segoe UI'" font-size="11.5">
+        <!-- registry -->
+        <rect x="300" y="12" width="300" height="52" rx="10" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+        <text x="450" y="34" text-anchor="middle" fill="#B45309" font-weight="800">① Rule & Citation Registry</text>
+        <text x="450" y="51" text-anchor="middle" fill="#92610a" font-size="10.5">the "law" — legal reviews & signs · versioned</text>
+        <!-- registry feeds engine and render -->
+        <path d="M340,64 C300,90 250,96 210,110" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+        <path d="M560,64 C620,92 660,96 690,110" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+        <text x="450" y="86" text-anchor="middle" fill="#64748B" font-size="10">feeds the rule set ↙   and the citations ↘</text>
+
+        <!-- pipeline row -->
+        <rect x="20" y="112" width="150" height="62" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.4"/>
+        <text x="95" y="136" text-anchor="middle" fill="#334155" font-weight="700">Crawl + evidence</text>
+        <text x="95" y="152" text-anchor="middle" fill="#64748B" font-size="10.5">pages, snapshots,</text>
+        <text x="95" y="165" text-anchor="middle" fill="#64748B" font-size="10.5">timestamps</text>
+        <line x1="170" y1="143" x2="204" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+
+        <rect x="206" y="112" width="196" height="62" rx="10" fill="#EEF2FF" stroke="#4338CA" stroke-width="1.5"/>
+        <text x="304" y="134" text-anchor="middle" fill="#4338CA" font-weight="800">② Scan engine (LLM)</text>
+        <text x="304" y="150" text-anchor="middle" fill="#4338CA" font-size="10.5">emits rule_id + verdict</text>
+        <text x="304" y="163" text-anchor="middle" fill="#4338CA" font-size="10.5">+ evidence — no citations</text>
+        <line x1="402" y1="143" x2="436" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+
+        <rect x="438" y="112" width="196" height="62" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+        <text x="536" y="134" text-anchor="middle" fill="#5B21B6" font-weight="800">③ Render (lookup)</text>
+        <text x="536" y="150" text-anchor="middle" fill="#5B21B6" font-size="10.5">rule_id → citation text</text>
+        <text x="536" y="163" text-anchor="middle" fill="#5B21B6" font-size="10.5">deterministic, not generated</text>
+        <line x1="634" y1="143" x2="668" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+
+        <rect x="670" y="112" width="210" height="62" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+        <text x="775" y="136" text-anchor="middle" fill="#166534" font-weight="800">Merchant report</text>
+        <text x="775" y="152" text-anchor="middle" fill="#166534" font-size="10.5">finding + source + proof</text>
+        <text x="775" y="165" text-anchor="middle" fill="#166534" font-size="10.5">+ counsel-review line</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i class="k" style="background:#FFFBEB;border:1px solid #B45309"></i>Legal-owned</span>
+      <span><i class="k" style="background:#EEF2FF;border:1px solid #4338CA"></i>Engineering</span>
+      <span><i class="k" style="background:#F5F3FF;border:1px solid #7C3AED"></i>Product / Eng</span>
+      <span>Key rule: <b>the model never writes a citation</b> — it only points at a rule; the citation text comes from the signed registry.</span>
+    </div>
+  </div>
+
+  <h2>3 · Who does what</h2>
+  <div class="lanes">
+    <div class="lane legal">
+      <div class="lh">🧑‍⚖️ Legal <span class="role">reviews & signs</span></div>
+      <ul>
+        <li><b>The registry</b><span>Every rule: what it checks, the citation, and the interpretive basis. This is the sign-off object.</span></li>
+        <li><b>Scope decisions</b><span>What's in vs out (e.g. checkout removed; Seel-product rules scoped out).</span></li>
+        <li><b>Language & disclaimers</b><span>Banned words, counsel-review line, intro disclaimer wording.</span></li>
+        <li><b>Involvement model</b><span>Re-sign cadence, spot-check %, new-category gate.</span></li>
+        <li style="color:var(--sub)"><b style="color:var(--legal)">NOT their job</b><span>The software, UI, pipeline, integrations.</span></li>
+      </ul>
+    </div>
+    <div class="lane eng">
+      <div class="lh">🛠️ Engineering <span class="role">builds the real system</span></div>
+      <ul>
+        <li><b>Registry as versioned files</b><span>YAML/JSON in a repo. Legal sign-off = an approved PR; a release tag = the corpus version scans pull from.</span></li>
+        <li><b>Citation rendering = lookup</b><span>Findings render citation text by rule_id from the signed registry. The model must never produce a citation.</span></li>
+        <li><b>Scan engine</b><span>LLM maps page evidence → rule_id + verdict (verified / review / not-assessable) + evidence excerpt. Nothing else.</span></li>
+        <li><b>Grounding / anti-hallucination CI</b><span>Reject any finding with no evidence or an unknown rule_id; a hallucinated citation fails the build. Honeypot regression on every corpus change.</span></li>
+        <li><b>Coverage reconciliation</b><span>Every check the UI counts must be a registry rule and clickable in the report — no "58 checked" that isn't enumerated (Michael's #1).</span></li>
+        <li><b>Evidence store</b><span>Per-scan page snapshots + timestamps + network traces — powers the Proof layer and provenance.</span></li>
+        <li><b>Integrations & ingestion</b><span>USPTO (trademark), Middesk (SoS DE/CA/NY/TX), corpus ingestion from EUR-Lex / eCFR / uscode / leginfo / FTC / OEHHA + monthly link-health check.</span></li>
+      </ul>
+    </div>
+    <div class="lane prod">
+      <div class="lh">🧭 Product <span class="role">owns experience</span></div>
+      <ul>
+        <li><b>Onboarding</b><span>Authorization + DNS domain verification + category confirmation.</span></li>
+        <li><b>Report UX</b><span>Overview + Review-Items projections of one finding, Source/Proof panes, status tracking, scoring display.</span></li>
+        <li><b>Category detection UX</b><span>Detected / possible / not-detected confirmation flow.</span></li>
+        <li><b>The demo (done)</b><span>Live mock of the full experience — the spec eng builds against.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>4 · Where we are → what unblocks launch</h2>
+  <div class="status">
+    <h3>Critical path</h3>
+    <div class="steps">
+      <div class="step done"><div class="t">✅ Demo — done</div><div class="s">Full experience live as a mock. Product side is defined.</div></div>
+      <div class="step now"><div class="t">◐ Registry — in legal review</div><div class="s">Michael reviewing content: coverage, citations, framing. Legal's active task.</div></div>
+      <div class="step next"><div class="t">→ Eng — build the real system</div><div class="s">Turn the mock into the pipeline above (registry files, engine, grounding gates, integrations). Non-legal tracks can start in parallel now.</div></div>
+      <div class="step next"><div class="t">→ Launch</div><div class="s">After the corpus is signed + eng build lands. Nothing ships to a merchant before the corpus is signed.</div></div>
+    </div>
+    <div class="note">
+      <b>The one hand-off that gates everything:</b> the registry is the boundary between legal and engineering. Legal approves <i>what</i> the rules and citations are; engineering builds a system that renders <i>only</i> what's in the signed registry and can never invent legal text. Get the registry signed, and both the build and launch are unblocked.
+    </div>
+  </div>
+
+  <footer>Seel Compass · team one-pager · maps to PRD v1.3 · informational, not legal advice</footer>
+</div>
+</body>
+</html>
