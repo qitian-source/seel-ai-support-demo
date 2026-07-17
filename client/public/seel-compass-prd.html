@@ -204,7 +204,7 @@
         <p style="margin-bottom:0"><b>Explicit non-goal:</b> Compass is <b>not</b> a substitute for legal counsel. Every review item includes a "recommend confirming with qualified counsel" line.</p>
       </div>
 
-      <p><b>Status:</b> Draft v1.3 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist). v1.1 (7/6) added the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan, async report generation (§7). v1.2 (7/6) added the source &amp; proof layer (§5.6). <b>v1.3 (7/8) incorporates Michael's review:</b> self-harm handling changed from runtime suppression to authoring-time scope-out (§5.2, SM B); an interpretive-basis field added to citations for the case-law-vs-statute gap (§5.6); the counsel-drafted intro disclaimer now shows before the scan (§5.1).</p>
+      <p><b>Status:</b> Draft v1.3 — incorporates the 6/18 vision recap and 6/25 Michael review feedback (24-item Product checklist). v1.1 (7/6) added the merchant onboarding flow: scan authorization + domain-ownership verification (§5.4), two-phase scan, async report generation (§7). v1.2 (7/6) added the source &amp; proof layer (§5.6). <b>v1.3 (7/17) incorporates Michael's review:</b> self-harm handling changed from runtime suppression to authoring-time scope-out (§5.2, SM B); an interpretive-basis field added to citations for the case-law-vs-statute gap (§5.6); the counsel-drafted intro disclaimer now shows before the scan (§5.1).</p>
       <p><b>Predecessor:</b> Replaces the earlier <i>Compliance LLP Product Implementation Spec</i>; that document is superseded.</p>
     </section>
 
@@ -397,12 +397,12 @@
         <li><b>Always</b> used for review items: <code>Review item: …  Recommend confirming with qualified counsel whether …</code></li>
         <li>Persistent footer on every report tab: <i>"Informational only — not legal advice, and not a law firm. Review items point to relevant rules and recommend confirming with qualified counsel."</i></li>
         <li>Category-specific scope disclaimers in-context (IP tab: "name-only, not FTO"; Entity: "informational only, confirm with counsel or tax advisor")</li>
-        <li><b>Intro disclaimer (counsel-drafted, Michael 7/8)</b> — shown on the first onboarding screen, before any scan runs, verbatim: <i>"This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan."</i> <span style="color:var(--mid)">(Note: this counsel-drafted text uses "compliance" in the disclaiming sense — "not a determination of compliance." To reconcile with the 6/18 direction to drop "compliance" from outward product language, confirm with Jenny; recommendation is to keep counsel's disclaimer wording as-is.)</span></li>
+        <li><b>Intro disclaimer (counsel-drafted, Michael 7/17)</b> — shown on the first onboarding screen, before any scan runs, verbatim: <i>"This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan."</i> <span style="color:var(--mid)">(Note: this counsel-drafted text uses "compliance" in the disclaiming sense — "not a determination of compliance." To reconcile with the 6/18 direction to drop "compliance" from outward product language, confirm with Jenny; recommendation is to keep counsel's disclaimer wording as-is.)</span></li>
       </ul>
 
-      <h3>5.2 Self-harm handling — scope out, don't suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/8)</span></h3>
+      <h3>5.2 Self-harm handling — scope out, don't suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/17)</span></h3>
       <div class="note info">
-        An agent trained to detect risk signals in merchant operations will, by default, flag Seel's own product model where it is embedded on the merchant's page. <b>v1.2 handles this at corpus-authoring time, not at scan time.</b> Earlier drafts ran every rule and then suppressed the finding on Seel components (an "omit-not-label" whitelist). Counsel's guidance (7/8): running a rule everywhere and then selectively removing its result on Seel's own product is an <b>affirmative act</b> that could be characterized as misleading. So the whitelist is removed.
+        An agent trained to detect risk signals in merchant operations will, by default, flag Seel's own product model where it is embedded on the merchant's page. <b>v1.2 handles this at corpus-authoring time, not at scan time.</b> Earlier drafts ran every rule and then suppressed the finding on Seel components (an "omit-not-label" whitelist). Counsel's guidance (7/17): running a rule everywhere and then selectively removing its result on Seel's own product is an <b>affirmative act</b> that could be characterized as misleading. So the whitelist is removed.
       </div>
       <div class="note legal">
         <b>Invariant — only two states, no third:</b> a rule is either <b>in scope</b> (it runs uniformly for every merchant and its findings belong to the merchant) or <b>out of scope</b> (it does not exist in the methodology and is checked for no one). There is no "runs-but-hidden" state. Nothing is suppressed at scan time.
@@ -494,7 +494,7 @@
         <b>Hard constraint — citations are rendered, never generated:</b> the LLM maps page evidence to a rule ID at scan time; the citation text and links are looked up from the signed registry. The model <b>never</b> produces a legal citation at runtime. A hallucinated citation is treated as a build-breaking defect (CI check), same severity class as a language-rule violation.
       </div>
       <div class="note info">
-        <b>Interpretive basis — the citation is an anchor, not the whole rule (per Michael 7/8):</b> a risk is often not clearly defined in the black-letter statute; it develops in the case law and agency guidance interpreting the statute, so the bare statutory text may not apply straightforwardly. Each registry entry therefore carries an <b>interpretive-basis field</b> — <code>statute</code> / <code>regulation</code> / <code>agency guidance</code> / <code>case law &amp; enforcement</code> — and where the operative rule lives in interpretation rather than in the text, the citation points to the controlling guidance or enforcement synthesis (not just the bare section) and the "Relevant rules and context" narrative carries the interpretive gloss. This classification is reviewable per-rule in the citation registry (§9) and is part of what counsel signs. In the merchant-facing Source pane it appears as a subtle tag on each citation chip (e.g. <code>STATUTE</code>, <code>GUIDANCE</code>, <code>CASE&nbsp;LAW</code>), so the interpretive gap is visible in the actual analysis, not just in the registry.
+        <b>Interpretive basis — the citation is an anchor, not the whole rule (per Michael 7/17):</b> a risk is often not clearly defined in the black-letter statute; it develops in the case law and agency guidance interpreting the statute, so the bare statutory text may not apply straightforwardly. Each registry entry therefore carries an <b>interpretive-basis field</b> — <code>statute</code> / <code>regulation</code> / <code>agency guidance</code> / <code>case law &amp; enforcement</code> — and where the operative rule lives in interpretation rather than in the text, the citation points to the controlling guidance or enforcement synthesis (not just the bare section) and the "Relevant rules and context" narrative carries the interpretive gloss. This classification is reviewable per-rule in the citation registry (§9) and is part of what counsel signs. In the merchant-facing Source pane it appears as a subtle tag on each citation chip (e.g. <code>STATUTE</code>, <code>GUIDANCE</code>, <code>CASE&nbsp;LAW</code>), so the interpretive gap is visible in the actual analysis, not just in the registry.
       </div>
       <ul>
         <li><b>Temporal anchor:</b> citations carry no individual dates. One block-level line — <i>"Rule corpus v2026.06 · reference only — how these rules apply to you depends on facts a scan can't assess"</i> — anchors all citations to the corpus version, which is exactly the object counsel signs. Proof carries the scan date separately: "rules as of corpus date, your site as of scan date."</li>
@@ -567,9 +567,9 @@
 
       <!-- SM B -->
       <div id="sm-b"></div>
-      <h3>6.2 Self-harm handling — scope out, not suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/8)</span></h3>
+      <h3>6.2 Self-harm handling — scope out, not suppress <span style="font-size:12px;font-weight:600;color:var(--seel-d)">(revised per Michael 7/17)</span></h3>
       <div class="note legal">
-        <b>The former decision tree is removed.</b> v1.1 described a per-page, per-rule tree: detect a Seel fingerprint → check a skip-whitelist → omit the finding. Per counsel's 7/8 guidance, that "run-then-suppress" path is itself the exposure — selectively removing a result on Seel's own product is an affirmative act. v1.2 replaces the whole mechanism with a single authoring-time rule (see §5.2).
+        <b>The former decision tree is removed.</b> v1.1 described a per-page, per-rule tree: detect a Seel fingerprint → check a skip-whitelist → omit the finding. Per counsel's 7/17 guidance, that "run-then-suppress" path is itself the exposure — selectively removing a result on Seel's own product is an affirmative act. v1.2 replaces the whole mechanism with a single authoring-time rule (see §5.2).
       </div>
       <div class="diagram">
         <div class="diagram-title"><span class="letter">B</span> Two states only — decided at corpus-authoring time, not at scan time</div>
@@ -897,7 +897,7 @@
           </tr>
           <tr>
             <td>2</td>
-            <td><b>Scope-out rule set</b> (revised per 7/8, was "skip-rule whitelist") — confirm (a) the complete list of rule categories removed from the corpus entirely (default-on add-on / opt-out / fee display), and (b) that a general in-scope rule firing on a page containing a Seel component is surfaced as the merchant's page behavior. No runtime suppression exists.</td>
+            <td><b>Scope-out rule set</b> (revised per 7/17, was "skip-rule whitelist") — confirm (a) the complete list of rule categories removed from the corpus entirely (default-on add-on / opt-out / fee display), and (b) that a general in-scope rule firing on a page containing a Seel component is surfaced as the merchant's page behavior. No runtime suppression exists.</td>
             <td><a href="#sm-b">§5.2 / SM B</a></td>
             <td><span class="block">Blocks launch</span></td>
           </tr>
@@ -1092,7 +1092,7 @@
       <ul>
         <li><b>Triggers:</b> statute/case-law developments · new market or category · broken/moved official links.</li>
         <li><b>Every update</b> → PR → counsel review → approve → new tag. Nothing reaches a merchant except through a signed tag (re-sign target ≤ 5 business days, §5.3).</li>
-        <li><b>Case-law drift (Michael 7/8):</b> rules whose <code>interpretive_basis = case law &amp; enforcement</code> are flagged for scheduled re-review — they drift fastest and the operative rule is not fixed in statutory text (§5.6).</li>
+        <li><b>Case-law drift (Michael 7/17):</b> rules whose <code>interpretive_basis = case law &amp; enforcement</code> are flagged for scheduled re-review — they drift fastest and the operative rule is not fixed in statutory text (§5.6).</li>
         <li><b>Link health:</b> monthly automated check (§10); a materially changed source triggers the re-sign path.</li>
         <li><b>History provenance:</b> each scan stamps the corpus version used (visible in the merchant's History tab); that version resolves to the signed tag → approval record.</li>
       </ul>
