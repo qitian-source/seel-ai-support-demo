@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review Agent v2 — Merchant Dashboard Demo</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --indigo: #4f46e5; --purple: #6C47FF; --purple-10: rgba(108,71,255,.1);
+  --green: #00B67A; --green-10: rgba(0,182,122,.1);
+  --amber: #F59E0B; --amber-bg: #FFFAE8; --amber-bd: #F2D49B; --amber-tx: #BB4D00;
+  --up: #047857; --down: #DC2626;
+  --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+  --gray-400: #9CA3AF; --gray-500: #8C9196; --gray-600: #6D7175;
+  --gray-800: #1F2937; --gray-900: #111827;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: #fff; color: var(--gray-900); font-size: 14px;
+}
+.topbar {
+  height: 56px; border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; gap: 14px; padding: 0 20px;
+  position: sticky; top: 0; background: #fff; z-index: 30;
+}
+.topbar .logo {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--purple); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.topbar .store {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 600; color: var(--gray-800); cursor: default;
+}
+.topbar .store .caret { color: var(--gray-400); font-size: 11px; }
+.demo-tag {
+  margin-left: auto; font-size: 11px; font-weight: 700;
+  background: var(--purple-10); color: var(--purple);
+  border-radius: 20px; padding: 4px 12px; letter-spacing: .3px;
+}
+
+.shell { display: flex; min-height: calc(100vh - 56px); }
+
+/* ── Sidebar ── */
+.sidenav {
+  width: 232px; flex-shrink: 0; border-right: 1px solid var(--gray-200);
+  padding: 18px 12px; position: sticky; top: 56px;
+  height: calc(100vh - 56px); overflow-y: auto;
+}
+.sn-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--gray-400); padding: 14px 12px 6px;
+}
+.sn-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px; border-radius: 10px; margin-bottom: 1px;
+  font-size: 14px; color: var(--gray-800); cursor: default;
+}
+.sn-item .ico { width: 18px; text-align: center; font-size: 14px; opacity: .65; }
+.sn-item:hover { background: var(--gray-50); }
+.sn-item.active { background: #ECE9FE; color: #4338CA; font-weight: 600; }
+.sn-item.active .ico { opacity: 1; }
+
+/* ── Main ── */
+.main { flex: 1; min-width: 0; }
+.page-head { padding: 22px 28px 0; border-bottom: 1px solid var(--gray-200); }
+.page-title-row { display: flex; align-items: baseline; gap: 22px; }
+.page-title { font-size: 26px; font-weight: 800; letter-spacing: -.4px; }
+.page-tab {
+  font-size: 15px; font-weight: 600; color: var(--gray-500);
+  padding-bottom: 12px; border-bottom: 2.5px solid transparent; cursor: pointer;
+}
+.page-tab:hover { color: var(--gray-800); }
+.page-tab.active { color: var(--indigo); border-color: var(--indigo); }
+.content { padding: 24px 28px 60px; background: var(--gray-50); min-height: 100%; }
+.stack { display: flex; flex-direction: column; gap: 20px; }
+.settings-stack { max-width: 720px; display: flex; flex-direction: column; gap: 20px; }
+
+.card {
+  background: #fff; border: 1px solid var(--gray-200); border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03); overflow: hidden;
+}
+.card-head {
+  padding: 16px 20px; border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.card-head h2 { font-size: 15px; font-weight: 700; }
+.card-head .sub { font-size: 12px; color: var(--gray-600); margin-top: 2px; font-weight: 400; }
+.card-body { padding: 18px 20px; }
+
+/* ── Time range (sales-agent style) ── */
+.ctrl-row { display: flex; align-items: center; gap: 10px; }
+.ctrl-row .lbl { font-size: 13px; color: var(--gray-600); }
+.range-wrap { position: relative; }
+.range-btn {
+  border: 1px solid var(--gray-200); border-radius: 9px; background: #fff;
+  font-size: 13px; font-weight: 600; color: var(--gray-800);
+  padding: 8px 14px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.range-btn:hover { background: var(--gray-50); }
+.range-panel {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 45;
+  width: 250px; background: #fff; border: 1px solid var(--gray-200); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.12); padding: 8px;
+}
+.range-panel.open { display: block; }
+.rp-opt { padding: 9px 12px; border-radius: 8px; font-size: 13.5px; cursor: pointer; color: var(--gray-900); }
+.rp-opt:hover { background: var(--gray-50); }
+.rp-opt.active { color: var(--indigo); font-weight: 600; }
+.rp-sep { height: 1px; background: var(--gray-100); margin: 8px 4px; }
+.rp-label { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gray-500); padding: 4px 12px 6px; }
+.rp-field { padding: 0 12px 8px; }
+.rp-field span { display: block; font-size: 11.5px; color: var(--gray-500); margin-bottom: 4px; }
+.rp-field input { width: 100%; border: 1px solid var(--gray-200); border-radius: 8px; padding: 7px 10px; font-size: 12.5px; color: var(--gray-800); outline: none; font-family: inherit; }
+.rp-field input:focus { border-color: var(--indigo); }
+.rp-apply {
+  display: block; margin: 4px 12px 6px auto; border: none; border-radius: 8px;
+  background: #C7C3F4; color: #fff; font-size: 12.5px; font-weight: 700;
+  padding: 8px 18px; cursor: pointer;
+}
+.rp-apply.ready { background: var(--indigo); }
+
+/* ── Hover hint tooltips ── */
+.tip { position: relative; cursor: help; }
+.tip::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: var(--gray-900); color: #fff;
+  font-size: 11.5px; line-height: 1.5; font-weight: 500;
+  text-transform: none; letter-spacing: 0; text-align: left; white-space: normal;
+  padding: 8px 11px; border-radius: 8px; width: max-content; max-width: 250px;
+  opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 70;
+}
+.tip::before {
+  content: ''; position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--gray-900);
+  opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 70;
+}
+.tip:hover::after, .tip:hover::before { opacity: 1; }
+
+/* ── KPI big numbers (sales-agent style) ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+@media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+.kpi {
+  background: #fff; border: 1px solid var(--gray-200); border-radius: 12px;
+  padding: 16px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.kpi .k-label { font-size: 12.5px; color: var(--gray-600); display: flex; align-items: center; gap: 5px; }
+.kpi .k-label .info { cursor: help; color: var(--gray-400); font-size: 11px; }
+.kpi .k-val { font-size: 27px; font-weight: 800; letter-spacing: -.4px; margin: 8px 0 6px; }
+.kpi .k-delta { font-size: 11.5px; }
+.kpi .k-delta b { font-weight: 700; }
+.kpi .k-delta.up b { color: var(--up); }
+.kpi .k-delta.down b { color: var(--down); }
+.kpi .k-delta .vs { color: var(--gray-400); }
+.kpi .k-delta .low { color: var(--amber-tx); font-weight: 600; }
+
+/* off banner */
+.off-banner {
+  display: none; align-items: center; gap: 10px;
+  background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber-tx);
+  border-radius: 12px; padding: 13px 16px; font-size: 13px; font-weight: 600;
+}
+.off-banner.show { display: flex; }
+.off-banner a { color: var(--amber-tx); font-weight: 700; }
+
+/* toggle */
+.switch { position: relative; width: 44px; height: 24px; border-radius: 20px; background: var(--indigo); cursor: pointer; transition: background .2s; flex-shrink: 0; }
+.switch.off { background: var(--gray-200); }
+.switch .knob { position: absolute; top: 2px; left: 22px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .2s; }
+.switch.off .knob { left: 2px; }
+
+/* ── Setup (single card hosts all settings) ── */
+.cl-item { border-top: 1px solid var(--gray-100); }
+.cl-item:first-child { border-top: none; }
+.cl-head { display: flex; align-items: center; gap: 12px; padding: 15px 0; cursor: pointer; }
+.cl-head.static { cursor: default; }
+.cl-check {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900;
+}
+.cl-check.done { background: #ECFDF5; color: #047857; }
+.cl-check.todo { background: var(--gray-100); color: var(--gray-400); }
+.cl-name { font-size: 13.5px; font-weight: 600; flex: 1; }
+.cl-status { font-size: 12px; color: var(--gray-500); }
+.cl-chevron { font-size: 11px; color: var(--gray-400); width: 14px; text-align: center; }
+.cl-detail { padding: 2px 0 18px 34px; }
+
+/* Trustpilot inside setup */
+.tp-row { display: flex; align-items: center; gap: 12px; }
+.tp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.tp-url { flex: 1; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-visit { font-size: 12px; color: var(--green); text-decoration: none; font-weight: 600; flex-shrink: 0; }
+.tp-status { display: flex; align-items: center; gap: 7px; margin-top: 9px; font-size: 11.5px; color: #047857; font-weight: 600; }
+.edit-btn { border: none; background: none; font-size: 12px; color: var(--gray-600); cursor: pointer; flex-shrink: 0; }
+.edit-btn:hover { color: var(--gray-900); }
+
+/* Limit inside setup */
+.preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+.preset {
+  border: 1px solid var(--gray-200); border-radius: 10px; background: #fff;
+  padding: 12px 6px; text-align: center; cursor: pointer; transition: all .12s;
+}
+.preset:hover { background: var(--gray-50); }
+.preset.active { border-color: rgba(108,71,255,.4); background: var(--purple-10); }
+.preset .p-name { font-size: 13px; font-weight: 700; }
+.preset.active .p-name { color: var(--purple); }
+.preset .p-val { font-size: 10px; color: var(--gray-600); margin-top: 5px; }
+.limit-note { display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 14px; font-size: 12px; border: 1px solid; }
+.limit-note.capped { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber-tx); }
+.limit-note.unlimited { background: #ECFDF5; border-color: #A7F3D0; color: #047857; }
+.save-hint { font-size: 11px; color: var(--gray-400); margin-top: 9px; }
+.save-hint.saved { color: #047857; font-weight: 600; }
+
+/* Invite message inside setup */
+.msg-ta { width: 100%; border: 1px solid var(--gray-200); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--gray-900); resize: vertical; min-height: 64px; outline: none; }
+.msg-ta:focus { border-color: var(--purple); }
+.msg-actions { display: flex; align-items: center; gap: 14px; margin-top: 9px; }
+.reset-link { font-size: 12px; color: var(--gray-500); cursor: pointer; text-decoration: underline; background: none; border: none; }
+.reset-link:hover { color: var(--gray-800); }
+
+/* Low-star follow-up */
+.fu-tag { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 1px 7px; font-size: 10.5px; font-weight: 700; background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber-tx); margin-left: 6px; vertical-align: 1px; }
+.fu-box { border: 1px solid var(--amber-bd); background: var(--amber-bg); border-radius: 12px; padding: 14px 16px; }
+.fu-box .fu-text { font-size: 12.5px; color: var(--amber-tx); line-height: 1.55; margin-bottom: 10px; }
+.fu-box.handled { border-color: #A7F3D0; background: #ECFDF5; }
+.fu-box.handled .fu-text { color: #047857; margin-bottom: 0; }
+.fu-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 9px; padding: 8px 13px; font-size: 12.5px; font-weight: 700; cursor: pointer; border: 1px solid; text-decoration: none; }
+.fu-btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.fu-btn.primary:hover { background: #009966; }
+.fu-btn.ghost { background: #fff; border-color: var(--gray-200); color: var(--gray-600); }
+.fu-btn.ghost:hover { background: var(--gray-50); }
+
+/* ── Funnel ── */
+.fn-row { padding: 11px 0; }
+.fn-row + .fn-row { border-top: 1px dashed var(--gray-100); }
+.fn-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.fn-name { font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--gray-600); display: flex; align-items: center; gap: 7px; }
+.fn-name .dot { width: 8px; height: 8px; border-radius: 3px; }
+.fn-name .info { cursor: help; color: var(--gray-400); font-weight: 400; font-size: 11px; }
+.fn-val { font-size: 20px; font-weight: 800; }
+.fn-bar { height: 8px; border-radius: 5px; background: var(--gray-100); overflow: hidden; }
+.fn-bar i { display: block; height: 100%; border-radius: 5px; transition: width .45s cubic-bezier(.22,.61,.36,1); }
+.fn-conv { font-size: 11px; color: var(--gray-500); margin-top: 5px; }
+.fn-conv b { color: var(--gray-800); }
+.fn-conv .low { color: var(--amber-tx); font-weight: 600; }
+.fn-note {
+  margin-top: 14px; padding: 10px 12px; border-radius: 9px;
+  background: var(--gray-50); border: 1px dashed var(--gray-200);
+  font-size: 11.5px; color: var(--gray-500); line-height: 1.55;
+}
+.fn-note b { color: var(--gray-600); }
+
+/* ── Sessions ── */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--gray-200); background: #fff; }
+.search-box { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 220px; border: 1px solid var(--gray-200); border-radius: 10px; padding: 8px 12px; background: var(--gray-50); }
+.search-box input { border: none; outline: none; background: transparent; font-size: 13px; width: 100%; color: var(--gray-900); }
+.search-box .mag { color: var(--gray-400); font-size: 13px; }
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.f-chip { border: 1px solid var(--gray-200); background: #fff; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--gray-600); padding: 6px 13px; cursor: pointer; }
+.f-chip:hover { background: var(--gray-50); }
+.f-chip.active { background: var(--gray-900); border-color: var(--gray-900); color: #fff; }
+
+.tbl-head, .tbl-row { display: grid; grid-template-columns: 1.2fr .9fr 1.05fr .8fr 2fr; gap: 10px; padding: 12px 20px; align-items: center; }
+.tbl-head { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--gray-600); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+.tbl-row { border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+.tbl-row:last-child { border-bottom: none; }
+.tbl-row.clickable { cursor: pointer; }
+.tbl-row.clickable:hover { background: #FAFAFF; }
+.t-cust { font-weight: 600; }
+.t-conv { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--purple); }
+.t-date { font-size: 12px; color: var(--gray-600); }
+.badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+.badge .bd { width: 6px; height: 6px; border-radius: 50%; }
+.badge.invited  { background: var(--gray-100); color: var(--gray-600); } .badge.invited .bd { background: var(--gray-400); }
+.badge.clicked  { background: #EEF2FF; color: #4338CA; } .badge.clicked .bd { background: var(--indigo); }
+.badge.reviewed { background: #ECFDF5; color: #047857; } .badge.reviewed .bd { background: var(--green); }
+.badge.expired  { background: #FFF7ED; color: #C2410C; } .badge.expired .bd { background: #FB923C; }
+.stars { display: inline-flex; gap: 1px; font-size: 12px; letter-spacing: 1px; }
+.stars .on { color: var(--green); } .stars .off { color: var(--gray-200); }
+.t-review { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.t-review .txt { font-size: 12px; color: var(--gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-empty { color: var(--gray-400); font-size: 12px; }
+.empty-state { padding: 48px 20px; text-align: center; color: var(--gray-500); font-size: 13px; }
+.tbl-foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--gray-200); font-size: 12px; color: var(--gray-600); }
+
+/* ── Drawer ── */
+.overlay { position: fixed; inset: 0; background: rgba(17,24,39,.35); opacity: 0; pointer-events: none; transition: opacity .22s; z-index: 40; }
+.overlay.show { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: -460px; width: 440px; max-width: 94vw; height: 100vh;
+  background: #fff; z-index: 50; box-shadow: -12px 0 40px rgba(0,0,0,.14);
+  transition: right .26s cubic-bezier(.22,.61,.36,1);
+  display: flex; flex-direction: column;
+}
+.drawer.show { right: 0; }
+.dw-head { padding: 18px 22px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.dw-head h3 { font-size: 16px; font-weight: 800; }
+.dw-head .sub { font-size: 12px; color: var(--gray-600); margin-top: 3px; }
+.dw-close { border: none; background: var(--gray-100); color: var(--gray-600); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.dw-close:hover { background: var(--gray-200); }
+.dw-body { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; }
+.dw-sec-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--gray-400); margin-bottom: 8px; }
+
+.timeline { border-left: 2px solid var(--gray-100); margin-left: 5px; padding-left: 16px; display: flex; flex-direction: column; gap: 12px; }
+.tl-item { position: relative; }
+.tl-item .tl-dot { position: absolute; left: -22.5px; top: 3px; width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1.5px var(--gray-200); background: #d1d5db; }
+.tl-item.done .tl-dot { background: var(--green); box-shadow: 0 0 0 1.5px var(--green); }
+.tl-item .tl-name { font-size: 13px; font-weight: 600; }
+.tl-item .tl-ts { font-size: 11.5px; color: var(--gray-500); margin-top: 1px; }
+
+.summary-box { border: 1px solid var(--gray-200); border-radius: 12px; padding: 14px 16px; background: #fff; }
+.summary-box .sm-text { font-size: 12.5px; line-height: 1.6; color: var(--gray-600); }
+.summary-box .sm-link { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--purple); text-decoration: none; font-weight: 600; }
+
+.review-box { border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; background: var(--gray-50); }
+.review-box .rv-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.review-box .rv-text { font-size: 13px; line-height: 1.65; color: var(--gray-800); }
+.attr-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: 700; background: #EEF2FF; color: #4338CA; }
+.bill-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 5px 10px; font-size: 11px; font-weight: 700; }
+.bill-chip.yes { background: #ECFDF5; color: #047857; }
+.bill-chip.no  { background: var(--gray-100); color: var(--gray-600); }
+.tp-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--green); color: #fff; text-decoration: none;
+  border-radius: 10px; padding: 11px; font-size: 13.5px; font-weight: 700;
+}
+.tp-btn:hover { background: #009966; }
+.tp-mini { width: 18px; height: 18px; background: #fff; color: var(--green); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 12.5px; }
+.kv .k { color: var(--gray-500); } .kv .v { color: var(--gray-800); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">🦭</div>
+  <div class="store">🏪 gravastar-com.myshopify.com <span class="caret">▲▼</span></div>
+  <div class="demo-tag">REVIEW AGENT V2 · DEMO</div>
+</div>
+
+<div class="shell">
+
+<nav class="sidenav">
+  <div class="sn-item"><span class="ico">🏠</span>Home</div>
+  <div class="sn-item"><span class="ico">📈</span>Analytics</div>
+  <div class="sn-item"><span class="ico">🛍</span>Orders</div>
+  <div class="sn-item"><span class="ico">🛡</span>Protection</div>
+  <div class="sn-item"><span class="ico">🔗</span>Integrations</div>
+  <div class="sn-item"><span class="ico">💬</span>Conversation</div>
+  <div class="sn-label">Workforce</div>
+  <div class="sn-item"><span class="ico">🎧</span>Support agent</div>
+  <div class="sn-item"><span class="ico">📊</span>Sales agent</div>
+  <div class="sn-item"><span class="ico">🗣</span>VOC agent</div>
+  <div class="sn-item active"><span class="ico">⭐</span>Review agent</div>
+  <div class="sn-label">Customize</div>
+  <div class="sn-item"><span class="ico">🧩</span>Widgets</div>
+  <div class="sn-item"><span class="ico">💵</span>Cash back</div>
+  <div class="sn-item"><span class="ico">🖥</span>Customer portal</div>
+  <div class="sn-item"><span class="ico">✉️</span>Notifications</div>
+</nav>
+
+<main class="main">
+  <div class="page-head">
+    <div class="page-title-row">
+      <h1 class="page-title">Review agent</h1>
+      <span class="page-tab active" id="tab-btn-performance" onclick="App.setTab('performance')">Performance</span>
+      <span class="page-tab" id="tab-btn-settings" onclick="App.setTab('settings')">Settings</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ PERFORMANCE TAB ══ -->
+    <div id="tab-performance" class="stack">
+
+      <div class="off-banner" id="off-banner">
+        ⏸ Review Agent is off — no new invites are being sent. Historical data remains available.
+        <a href="javascript:void(0)" onclick="App.setTab('settings')">Go to Settings →</a>
+      </div>
+
+      <!-- Time range (matches the MD global control) -->
+      <div class="ctrl-row">
+        <span class="lbl">Time range</span>
+        <div class="range-wrap">
+          <button class="range-btn" onclick="App.toggleRangePanel(event)">📅 <span id="range-label">Last 30 days</span> <span style="font-size:9px;color:var(--gray-500)">▼</span></button>
+          <div class="range-panel" id="range-panel">
+            <div class="rp-opt" data-key="yesterday" onclick="App.pickRange('yesterday')">Yesterday</div>
+            <div class="rp-opt" data-key="7d" onclick="App.pickRange('7d')">Last 7 days</div>
+            <div class="rp-opt" data-key="30d" onclick="App.pickRange('30d')">Last 30 days</div>
+            <div class="rp-opt" data-key="90d" onclick="App.pickRange('90d')">Last 90 days</div>
+            <div class="rp-sep"></div>
+            <div class="rp-label">Custom range</div>
+            <div class="rp-field"><span>From</span><input type="date" id="rp-from" oninput="App.checkCustom()"></div>
+            <div class="rp-field"><span>To</span><input type="date" id="rp-to" oninput="App.checkCustom()"></div>
+            <button class="rp-apply" id="rp-apply" onclick="App.applyCustom()">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Big numbers -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- Funnel -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Conversion Funnel</h2>
+            <div class="sub">Cohort by invite date · Shown → Click → Review → 5-Star</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="funnel-rows"></div>
+          <div class="fn-note" id="fn-note"></div>
+        </div>
+      </div>
+
+      <!-- Invited Sessions -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>Invited Sessions</h2>
+            <div class="sub" id="sess-count"></div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="mag">🔍</span>
+            <input id="search-input" placeholder="Search customer, order ID or conversation ID…" oninput="App.setSearch(this.value)">
+          </div>
+          <div class="filter-chips" id="filter-chips"></div>
+        </div>
+
+        <div class="tbl-head">
+          <span>Customer</span><span>Conversation</span><span>Invited</span><span>Outcome</span><span>Review</span>
+        </div>
+        <div id="tbl-body"></div>
+
+        <div class="tbl-foot">
+          <span id="foot-info"></span>
+          <span>‹ &nbsp;1&nbsp; ›</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ SETTINGS TAB ══ -->
+    <div id="tab-settings" style="display:none">
+      <div class="settings-stack">
+
+        <!-- Setup hosts ALL settings: each step contains its own config -->
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h2>Setup</h2>
+              <div class="sub">Everything configurable in one place — invite message ships with a default</div>
+            </div>
+          </div>
+          <div class="card-body" id="setup-body" style="padding-top:4px;padding-bottom:4px"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- ── Drawer ── -->
+<div class="overlay" id="overlay" onclick="App.closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="dw-head">
+    <div>
+      <h3 id="dw-name">—</h3>
+      <div class="sub" id="dw-sub">—</div>
+    </div>
+    <button class="dw-close" onclick="App.closeDrawer()">✕</button>
+  </div>
+  <div class="dw-body" id="dw-body"></div>
+</aside>
+
+<script>
+const App = (() => {
+
+  // ── Mock data ──────────────────────────────────────────────
+  // Funnel is cohorted by invite date: downstream events count toward
+  // the invite's cohort regardless of when they happen.
+  const FUNNEL = {
+    "yesterday": { shown: 18, clicks: 6, reviews: 1, five: 1, pending: 2,
+             delta: { shown:-5.3, clicks:+20.0, ctr:+26.6, reviews:0.0, rate:-16.7, five:0.0 } },
+    "7d":  { shown: 142,  clicks: 45,  reviews: 6,  five: 5,  pending: 3,
+             delta: { shown:-12.3, clicks:-8.9, ctr:+3.8, reviews:-14.3, rate:-6.0, five:-16.7 } },
+    "30d": { shown: 630,  clicks: 187, reviews: 23, five: 18, pending: 3,
+             delta: { shown:+8.2, clicks:+12.4, ctr:+3.9, reviews:+21.1, rate:+7.7, five:+28.6 } },
+    "90d": { shown: 1420, clicks: 398, reviews: 51, five: 40, pending: 3,
+             delta: { shown:+64.1, clicks:+58.7, ctr:-3.3, reviews:+75.9, rate:+10.8, five:+81.8 } },
+  };
+  FUNNEL.custom = FUNNEL["30d"];
+  const RANGE_LABELS = { yesterday: "Yesterday", "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days" };
+  const LOW_SAMPLE = 20;
+
+  // Outcome definitions — surfaced as hover hints on badges and filter chips
+  const OUTCOME_TIPS = {
+    all:      "Every session where the invite card was shown",
+    invited:  "Invite card shown in the widget — customer hasn't clicked yet. Stays here; never expires",
+    clicked:  "Customer clicked through to Trustpilot — 12h attribution window is open",
+    reviewed: "A Trustpilot review was matched back to this session (name / timing / content signals)",
+    expired:  "Clicked, but no review matched within 12h — attribution closed",
+  };
+
+  const SESSIONS = [
+    { customer:"zuledres",          conv:"conv-10420", order:"10420", date:"Jul 13, 2026 · 9:41 AM",  outcome:"invited" },
+    { customer:"Devilled92",        conv:"conv-10342", order:"10342", date:"Jul 12, 2026 · 4:20 PM",  outcome:"clicked",
+      clickedAt:"Jul 12, 2026 · 4:24 PM" },
+    { customer:"faizymuhammad01",   conv:"conv-10388", order:"10388", date:"Jul 12, 2026 · 11:02 AM", outcome:"invited" },
+    { customer:"Jaedewilliams",     conv:"conv-10371", order:"10371", date:"Jul 11, 2026 · 6:37 PM",  outcome:"expired",
+      clickedAt:"Jul 11, 2026 · 6:40 PM" },
+    { customer:"leonardoleconag",   conv:"conv-10401", order:"10401", date:"Jul 11, 2026 · 2:15 PM",  outcome:"invited" },
+    { customer:"Sarah Chen",        conv:"conv-10234", order:"10234", date:"Jul 10, 2026 · 10:32 AM", outcome:"reviewed",
+      clickedAt:"Jul 10, 2026 · 10:36 AM", reviewedAt:"Jul 10, 2026 · 10:54 AM", rating:5, tier:"High", basis:"Name + timing (18 min) + content",
+      summary:"Customer couldn't pair Mars Pro after the 2.1 firmware update. Ava identified the version conflict and guided a reset — resolved in 4 messages.",
+      review:"Ava from GravaStar support solved my Mars Pro pairing issue in under two minutes. She knew exactly which firmware version caused it and walked me through the fix step by step. Best support chat I've ever used — no waiting, no runaround." },
+    { customer:"Pyper-7",           conv:"conv-10412", order:"10412", date:"Jul 10, 2026 · 9:05 AM",  outcome:"invited" },
+    { customer:"David Wang",        conv:"conv-10245", order:"10245", date:"Jul 9, 2026 · 5:15 PM",   outcome:"reviewed",
+      clickedAt:"Jul 9, 2026 · 5:19 PM", reviewedAt:"Jul 9, 2026 · 6:38 PM", rating:5, tier:"Medium", basis:"Timing (79 min) + content",
+      summary:"Shipping status inquiry for order 10245. Agent surfaced a carrier delay proactively and confirmed next-day delivery.",
+      review:"Had a shipping question about my Deep-Space Edition order. The AI agent tracked it down instantly and even flagged a carrier delay before I asked. Speaker arrived next day. Impressed with both the product and the service." },
+    { customer:"Mike Thompson",     conv:"conv-10289", order:"10289", date:"Jul 8, 2026 · 7:22 PM",   outcome:"clicked",
+      clickedAt:"Jul 8, 2026 · 7:29 PM" },
+    { customer:"Jennifer Martinez", conv:"conv-10267", order:"10267", date:"Jul 8, 2026 · 12:48 PM",  outcome:"reviewed",
+      clickedAt:"Jul 8, 2026 · 12:52 PM", reviewedAt:"Jul 8, 2026 · 1:05 PM", rating:5, tier:"High", basis:"Name + timing (13 min) + content",
+      summary:"Warranty claim for a damaged speaker grille. Agent verified coverage and arranged a same-day replacement shipment.",
+      review:"Support resolved my warranty claim without me having to send a single email. The chat agent pulled up my order, confirmed coverage, and shipped a replacement grille the same day. This is how customer service should work." },
+    { customer:"Sophie Nguyen",     conv:"conv-10384", order:"10384", date:"Jul 7, 2026 · 5:50 PM",   outcome:"reviewed",
+      clickedAt:"Jul 7, 2026 · 5:58 PM", reviewedAt:"Jul 7, 2026 · 8:12 PM", rating:3, tier:"Medium", basis:"Timing (2.2 h) + content",
+      summary:"Return request due to a hardware rattle. Agent issued the return label instantly; product QC issue flagged to VOC agent.",
+      review:"The support chat was quick and my return label arrived fast, which I appreciated. Three stars because the speaker itself had a rattle out of the box — service was great, product QC less so." },
+    { customer:"Robert Kim",        conv:"conv-10315", order:"10315", date:"Jul 6, 2026 · 3:30 AM",   outcome:"reviewed",
+      clickedAt:"Jul 6, 2026 · 3:33 AM", reviewedAt:"Jul 6, 2026 · 6:40 AM", rating:5, tier:"High", basis:"Order ID in review + content",
+      summary:"Speaker unresponsive after a failed firmware update at 2 AM. Agent walked through recovery mode; device fully restored.",
+      review:"Order 10315 — firmware update bricked my speaker at 2 AM and the chat agent un-bricked it while I watched. Recovery mode instructions were perfect. Shoutout to whoever trained this thing." },
+    { customer:"Linda Park",        conv:"conv-10329", order:"10329", date:"Jul 5, 2026 · 9:33 PM",   outcome:"expired",
+      clickedAt:"Jul 5, 2026 · 9:36 PM" },
+    { customer:"Amy Liu",           conv:"conv-10301", order:"10301", date:"Jul 5, 2026 · 8:05 AM",   outcome:"reviewed",
+      clickedAt:"Jul 5, 2026 · 8:09 AM", reviewedAt:"Jul 5, 2026 · 8:24 AM", rating:5, tier:"High", basis:"Name + timing (15 min) + content",
+      summary:"Pre-sales question on stereo-pairing two Mars Pros. Agent confirmed the feature and an upcoming latency improvement.",
+      review:"Asked about pairing two Mars Pros for stereo. Got a clear answer plus a heads-up that a firmware update the next week would improve latency. It did. Great product, better support." },
+  ];
+
+  const PRESETS = [
+    { key:"starter",   name:"Starter",   val:10,  label:"10 / day" },
+    { key:"growth",    name:"Growth",    val:30,  label:"30 / day" },
+    { key:"standard",  name:"Standard",  val:50,  label:"50 / day" },
+    { key:"max",       name:"Max",       val:100, label:"100 / day" },
+    { key:"unlimited", name:"∞",         val:0,   label:"Unlimited" },
+  ];
+
+  const OUTCOMES = [
+    { key:"all",      label:"All" },
+    { key:"invited",  label:"Invited" },
+    { key:"clicked",  label:"Clicked" },
+    { key:"reviewed", label:"Reviewed" },
+    { key:"expired",  label:"Expired" },
+  ];
+
+  // ── State ──────────────────────────────────────────────────
+  const DEFAULT_MSG = "How was your conversation today? Share your experience to help others find GravaStar.";
+  let state = { on:true, tab:"performance", range:"30d", limit:10, filter:"all", search:"", expanded:null, inviteMsg: DEFAULT_MSG };
+  const $ = id => document.getElementById(id);
+
+  // ── Tabs ───────────────────────────────────────────────────
+  function setTab(tab) {
+    state.tab = tab;
+    $("tab-performance").style.display = tab === "performance" ? "flex" : "none";
+    $("tab-settings").style.display    = tab === "settings"    ? "block" : "none";
+    $("tab-btn-performance").classList.toggle("active", tab === "performance");
+    $("tab-btn-settings").classList.toggle("active", tab === "settings");
+  }
+
+  // ── Helpers ────────────────────────────────────────────────
+  function pct(num, den) { return den ? Math.round(num / den * 100) : 0; }
+  function conv(num, den, unit) {
+    if (!den) return `—`;
+    if (den < LOW_SAMPLE) return `<b>${num}/${den}</b> ${unit} · <span class="low" title="Denominator below ${LOW_SAMPLE} — percentage not statistically meaningful">low sample</span>`;
+    return `<b>${pct(num, den)}%</b> ${unit}`;
+  }
+  function deltaHtml(v) {
+    if (v == null) return `<span class="vs">—</span>`;
+    const sign = v > 0 ? "+" : "";
+    return `<b>${sign}${v.toFixed(1)}%</b> <span class="vs">vs previous</span>`;
+  }
+
+  // ── KPI big numbers (structure mirrors Sales agent Analytics) ──
+  function renderKpis() {
+    const d = FUNNEL[state.range];
+    const lowCtr  = d.shown  < LOW_SAMPLE, lowRate = d.clicks < LOW_SAMPLE;
+    const cards = [
+      { label:"Invites Shown",  tip:"Sessions where the review invite card was displayed in the widget",
+        val:d.shown.toLocaleString(),  delta:d.delta.shown },
+      { label:"Invite Clicks",  tip:"Users who clicked through to Trustpilot",
+        val:d.clicks.toLocaleString(), delta:d.delta.clicks },
+      { label:"CTR",            tip:"Invite clicks ÷ invites shown",
+        val: lowCtr ? `${d.clicks}/${d.shown}` : `${pct(d.clicks, d.shown)}%`, delta:d.delta.ctr, low:lowCtr },
+      { label:"Reviews",        tip:"Trustpilot reviews attributed back to an invited session",
+        val:d.reviews.toLocaleString(), delta:d.delta.reviews },
+      { label:"Review Rate",    tip:"Attributed reviews ÷ invite clicks",
+        val: lowRate ? `${d.reviews}/${d.clicks}` : `${pct(d.reviews, d.clicks)}%`, delta:d.delta.rate, low:lowRate },
+      { label:"5-Star Reviews", tip:"Attributed reviews rated 5 stars",
+        val:d.five.toLocaleString(), delta:d.delta.five },
+    ];
+    $("kpi-grid").innerHTML = cards.map(c => `
+      <div class="kpi">
+        <div class="k-label">${c.label} <span class="info tip" data-tip="${c.tip}">ⓘ</span></div>
+        <div class="k-val">${c.val}</div>
+        <div class="k-delta ${c.delta > 0 ? "up" : "down"}">${c.low ? `<span class="low">low sample</span>` : deltaHtml(c.delta)}</div>
+      </div>`).join("");
+  }
+
+  // ── Funnel ─────────────────────────────────────────────────
+  function renderFunnel() {
+    const d = FUNNEL[state.range];
+    const rows = [
+      { name:"Invites Shown", tip:"Sessions where the review invite card was displayed in the widget",
+        val:d.shown, color:"#6C47FF", conv:`All eligible sessions in this cohort` },
+      { name:"Invite Clicks", tip:"Users who clicked through to Trustpilot. CTR = clicks ÷ shown",
+        val:d.clicks, color:"#4f46e5", conv:conv(d.clicks, d.shown, "CTR of shown") },
+      { name:"Attributed Reviews", tip:"Trustpilot reviews matched back to an invited session. Rate = reviews ÷ clicks",
+        val:d.reviews, color:"#00B67A", conv:conv(d.reviews, d.clicks, "of clicks") },
+      { name:"5-Star Reviews", tip:"Share of attributed reviews rated 5 stars",
+        val:d.five, color:"#F59E0B", conv:conv(d.five, d.reviews, "of reviews") },
+    ];
+    $("funnel-rows").innerHTML = rows.map(r => {
+      const w = Math.max(3, Math.round(r.val / d.shown * 100));
+      return `<div class="fn-row">
+        <div class="fn-top">
+          <span class="fn-name"><span class="dot" style="background:${r.color}"></span>${r.name}<span class="info tip" data-tip="${r.tip}">ⓘ</span></span>
+          <span class="fn-val">${r.val.toLocaleString()}</span>
+        </div>
+        <div class="fn-bar"><i style="width:${w}%;background:${r.color}"></i></div>
+        <div class="fn-conv">${r.conv}</div>
+      </div>`;
+    }).join("");
+    $("fn-note").innerHTML = `📐 <b>Cohort by invite date</b> — clicks and reviews count toward the day the invite was shown. Most reviews arrive within hours of the click; invites clicked in the last 12h are still inside the attribution window: <b>${d.pending} pending</b>.`;
+  }
+
+  // ── Time range control (matches the MD global picker) ──────
+  function refresh() { renderKpis(); renderFunnel(); renderTable(); }
+  function toggleRangePanel(e) {
+    if (e) e.stopPropagation();
+    const p = $("range-panel");
+    p.classList.toggle("open");
+    document.querySelectorAll(".rp-opt").forEach(o => o.classList.toggle("active", o.dataset.key === state.range));
+  }
+  function pickRange(k) {
+    state.range = k;
+    $("range-label").textContent = RANGE_LABELS[k];
+    $("range-panel").classList.remove("open");
+    refresh();
+  }
+  function checkCustom() {
+    $("rp-apply").classList.toggle("ready", !!($("rp-from").value && $("rp-to").value));
+  }
+  function applyCustom() {
+    const f = $("rp-from").value, t = $("rp-to").value;
+    if (!f || !t) return;
+    state.range = "custom";
+    $("range-label").textContent = `${f} – ${t}`;
+    $("range-panel").classList.remove("open");
+    refresh();
+  }
+  document.addEventListener("click", ev => {
+    const w = document.querySelector(".range-wrap");
+    if (w && !w.contains(ev.target)) $("range-panel").classList.remove("open");
+  });
+  const setRange = pickRange; // back-compat alias
+
+  // ── Settings: single Setup card hosts all config ───────────
+  let saveTimer = null;
+  function renderSetup() {
+    const unlimited = state.limit === 0;
+    const steps = [
+      {
+        key:"tp", done:true, name:"Connect your Trustpilot page",
+        status:"Verified · gravastar.com", expandable:true,
+        detail:`
+          <div class="tp-row">
+            <span class="tp-dot"></span>
+            <span class="tp-url">https://www.trustpilot.com/review/gravastar.com</span>
+            <button class="edit-btn" onclick="event.stopPropagation()">✏️ Edit</button>
+            <a class="tp-visit" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer" onclick="event.stopPropagation()">↗ Visit</a>
+          </div>
+          <div class="tp-status">✓ Verified · Page reachable · Last crawled 2 hours ago</div>`,
+      },
+      {
+        key:"limit", done:true, name:"Set a daily invite limit",
+        status: unlimited ? "∞ Unlimited" : `${state.limit}/day`, expandable:true,
+        detail:`
+          <div class="preset-grid">${PRESETS.map(p => `
+            <button class="preset ${p.val === state.limit ? "active" : ""}" onclick="event.stopPropagation();App.setLimit(${p.val})">
+              <p class="p-name">${p.name}</p>
+              <p class="p-val">${p.label}</p>
+            </button>`).join("")}
+          </div>
+          <div class="limit-note ${unlimited ? "unlimited" : "capped"}">${unlimited
+            ? "✓&nbsp; Unlimited · Every eligible session triggers an invite"
+            : `⚠️&nbsp; Capped at ${state.limit}/day · Over-limit sessions are dropped (no queue) · Resets at midnight UTC`}
+          </div>
+          <div class="save-hint" id="save-hint">Changes save automatically</div>`,
+      },
+      {
+        key:"message", done:true, name:"Invite card message",
+        status: state.inviteMsg === DEFAULT_MSG ? "Default" : "Customized", expandable:true,
+        detail:`
+          <textarea class="msg-ta" oninput="App.setMsg(this.value)" onclick="event.stopPropagation()">${state.inviteMsg}</textarea>
+          <div class="msg-actions">
+            <button class="reset-link" onclick="event.stopPropagation();App.resetMsg()">Reset to default</button>
+            <div class="save-hint" id="msg-hint" style="margin-top:0">Changes save automatically</div>
+          </div>`,
+      },
+      {
+        key:"switch", done:state.on, name:"Turn on Review Agent",
+        status: state.on ? "On · sending invites" : "Off · invites paused", expandable:false,
+        right:`<div class="switch ${state.on ? "" : "off"}" onclick="event.stopPropagation();App.toggleAgent()"><div class="knob"></div></div>`,
+      },
+    ];
+    $("setup-body").innerHTML = steps.map(s => `
+      <div class="cl-item">
+        <div class="cl-head ${s.expandable ? "" : "static"}" ${s.expandable ? `onclick="App.toggleStep('${s.key}')"` : ""}>
+          <span class="cl-check ${s.done ? "done" : "todo"}">${s.done ? "✓" : "·"}</span>
+          <span class="cl-name">${s.name}</span>
+          <span class="cl-status" id="status-${s.key}">${s.status}</span>
+          ${s.right || ""}
+          ${s.expandable ? `<span class="cl-chevron">${state.expanded === s.key ? "▾" : "▸"}</span>` : ""}
+        </div>
+        ${s.expandable && state.expanded === s.key ? `<div class="cl-detail">${s.detail}</div>` : ""}
+      </div>`).join("");
+  }
+
+  function toggleStep(key) {
+    state.expanded = state.expanded === key ? null : key;
+    renderSetup();
+  }
+
+  function setLimit(v) {
+    state.limit = v;
+    renderSetup();
+    flashSaved("save-hint");
+  }
+
+  function flashSaved(id) {
+    const hint = $(id);
+    if (!hint) return;
+    hint.textContent = "✓ Saved";
+    hint.classList.add("saved");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const h = $(id);
+      if (h) { h.textContent = "Changes save automatically"; h.classList.remove("saved"); }
+    }, 1800);
+  }
+
+  // Invite message: targeted DOM updates so the textarea keeps focus while typing
+  function setMsg(v) {
+    state.inviteMsg = v;
+    const status = $("status-message");
+    if (status) status.textContent = v === DEFAULT_MSG ? "Default" : "Customized";
+    flashSaved("msg-hint");
+  }
+  function resetMsg() {
+    state.inviteMsg = DEFAULT_MSG;
+    renderSetup();
+  }
+
+  // ── Sessions ───────────────────────────────────────────────
+  function filtered() {
+    const q = state.search.trim().toLowerCase();
+    return SESSIONS.filter(s => {
+      if (state.filter !== "all" && s.outcome !== state.filter) return false;
+      if (!q) return true;
+      return s.customer.toLowerCase().includes(q) || s.conv.toLowerCase().includes(q) || s.order.includes(q);
+    });
+  }
+
+  function starsHtml(n) {
+    return `<span class="stars">${[1,2,3,4,5].map(i =>
+      `<span class="${i <= n ? "on" : "off"}">★</span>`).join("")}</span>`;
+  }
+
+  function renderChips() {
+    const counts = { all: SESSIONS.length };
+    SESSIONS.forEach(s => counts[s.outcome] = (counts[s.outcome] || 0) + 1);
+    $("filter-chips").innerHTML = OUTCOMES.map(o => `
+      <button class="f-chip tip ${state.filter === o.key ? "active" : ""}" data-tip="${OUTCOME_TIPS[o.key]}" onclick="App.setFilter('${o.key}')">
+        ${o.label} ${counts[o.key] ? `· ${counts[o.key]}` : "· 0"}
+      </button>`).join("");
+  }
+
+  function renderTable() {
+    const rows = filtered();
+    $("sess-count").textContent = `${FUNNEL[state.range].shown.toLocaleString()} invited sessions in this cohort · matches "Invites Shown"`;
+    $("foot-info").textContent = `${rows.length} of ${SESSIONS.length} on this page`;
+    if (!rows.length) {
+      $("tbl-body").innerHTML = `<div class="empty-state">No invited sessions match your search or filter</div>`;
+      return;
+    }
+    $("tbl-body").innerHTML = rows.map(s => {
+      const idx = SESSIONS.indexOf(s);
+      const badge = `<span class="badge tip ${s.outcome}" data-tip="${OUTCOME_TIPS[s.outcome]}"><span class="bd"></span>${s.outcome.charAt(0).toUpperCase() + s.outcome.slice(1)}</span>`;
+      const fuTag = s.outcome === "reviewed" && s.rating < 5 && !s.handled ? `<span class="fu-tag">⚑ Needs follow-up</span>` : "";
+      const review = s.outcome === "reviewed"
+        ? `<div class="t-review"><span>${starsHtml(s.rating)}${fuTag}</span><span class="txt">${s.review}</span></div>`
+        : `<span class="t-empty">—</span>`;
+      return `<div class="tbl-row ${s.outcome === "reviewed" ? "clickable" : ""}" ${s.outcome === "reviewed" ? `onclick="App.openDrawer(${idx})"` : ""}>
+        <span class="t-cust">${s.customer}</span>
+        <span class="t-conv">↗ ${s.conv}</span>
+        <span class="t-date">${s.date}</span>
+        <span>${badge}</span>
+        ${review}
+      </div>`;
+    }).join("");
+  }
+
+  function setFilter(f) { state.filter = f; renderChips(); renderTable(); }
+  function setSearch(q) { state.search = q; renderTable(); }
+
+  // ── Drawer ─────────────────────────────────────────────────
+  function openDrawer(idx) {
+    const s = SESSIONS[idx];
+    $("dw-name").textContent = s.customer;
+    $("dw-sub").textContent = `${s.conv} · Order #${s.order}`;
+    const billed = s.rating === 5;
+    $("dw-body").innerHTML = `
+      <div>
+        <div class="dw-sec-label">Status Timeline</div>
+        <div class="timeline">
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Invite shown</div><div class="tl-ts">${s.date}</div></div>
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Invite clicked → Trustpilot</div><div class="tl-ts">${s.clickedAt}</div></div>
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Review attributed</div><div class="tl-ts">${s.reviewedAt}</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="dw-sec-label">Conversation Summary</div>
+        <div class="summary-box">
+          <div class="sm-text">${s.summary}</div>
+          <a class="sm-link" href="javascript:void(0)">Open full conversation in Support agent ↗</a>
+        </div>
+      </div>
+      <div>
+        <div class="dw-sec-label">Trustpilot Review</div>
+        <div class="review-box">
+          <div class="rv-top">
+            ${starsHtml(s.rating)}
+            <span class="attr-chip tip" data-tip="Match signals: ${s.basis}. Attribution window is 12h after the click — most reviews arrive within hours.">🎯 ${s.tier} confidence</span>
+          </div>
+          <div class="rv-text">${s.review}</div>
+        </div>
+      </div>
+      ${s.rating < 5 ? `
+      <div>
+        <div class="dw-sec-label">Follow-up</div>
+        ${s.handled
+          ? `<div class="fu-box handled"><div class="fu-text">✓ Marked as handled</div></div>`
+          : `<div class="fu-box">
+              <div class="fu-text">⚑ Low-star review — a public reply within 24h protects your Trustpilot profile. The product feedback may be worth flagging to your team.</div>
+              <div style="display:flex;gap:8px">
+                <a class="fu-btn primary" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">Reply on Trustpilot ↗</a>
+                <button class="fu-btn ghost" onclick="App.markHandled(${idx})">Mark as handled</button>
+              </div>
+            </div>`}
+      </div>` : ""}
+      <div>
+        <div class="dw-sec-label">Billing</div>
+        <span class="bill-chip ${billed ? "yes" : "no"}">${billed ? "✓ 5-star review · Billed $5" : "1–4 star review · Not billed"}</span>
+      </div>
+      <div>
+        <div class="dw-sec-label">Details</div>
+        <div class="kv">
+          <span class="k">Confidence</span><span class="v">${s.tier}</span>
+          <span class="k">Match signals</span><span class="v">${s.basis}</span>
+          <span class="k">Attributed at</span><span class="v">${s.reviewedAt}</span>
+        </div>
+      </div>
+      <a class="tp-btn" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">
+        <span class="tp-mini">T</span> View on Trustpilot
+      </a>`;
+    $("overlay").classList.add("show");
+    $("drawer").classList.add("show");
+  }
+  function closeDrawer() {
+    $("overlay").classList.remove("show");
+    $("drawer").classList.remove("show");
+  }
+
+  function markHandled(idx) {
+    SESSIONS[idx].handled = true;
+    renderTable();
+    openDrawer(idx);
+  }
+
+  // ── Agent toggle: pausing invites never hides historical data ──
+  function toggleAgent() {
+    state.on = !state.on;
+    $("off-banner").classList.toggle("show", !state.on);
+    renderSetup();
+  }
+
+  // ── Init ───────────────────────────────────────────────────
+  renderKpis(); renderFunnel(); renderSetup(); renderChips(); renderTable();
+
+  return { setTab, setRange, pickRange, toggleRangePanel, checkCustom, applyCustom, setLimit, setFilter, setSearch, openDrawer, closeDrawer, toggleAgent, toggleStep, setMsg, resetMsg, markHandled };
+})();
+</script>
+</body>
+</html>

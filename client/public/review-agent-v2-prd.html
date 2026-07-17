@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seel Review Agent — v2 迭代 PRD</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple: #6c47ff;
+  --purple-light: #ede9fe;
+  --green: #00B67A;
+  --green-light: #d1fae5;
+  --green-dark: #065f46;
+  --indigo: #4f46e5;
+  --indigo-light: #eef2ff;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: #fafafa;
+  color: var(--gray-800);
+  line-height: 1.6;
+}
+
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 228px; flex-shrink: 0;
+  background: white;
+  border-right: 1px solid var(--gray-200);
+  padding: 28px 0;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 9px;
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--gray-100);
+  margin-bottom: 16px;
+}
+.sidebar-logo .s-logo {
+  width: 30px; height: 30px; background: var(--purple);
+  border-radius: 7px; display: flex; align-items: center;
+  justify-content: center; color: white; font-weight: 800; font-size: 13px;
+  flex-shrink: 0;
+}
+.sidebar-logo .s-name { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+.sidebar-logo .s-sub  { font-size: 10px; color: var(--gray-400); margin-top: 1px; }
+
+.nav-section { padding: 4px 12px; margin-bottom: 2px; }
+.nav-section-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--gray-400); padding: 0 8px; margin-bottom: 4px;
+}
+.nav-link {
+  display: block; padding: 6px 8px; border-radius: 7px;
+  font-size: 12px; color: var(--gray-600); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.nav-link:hover { background: var(--gray-100); color: var(--gray-900); }
+.nav-link.active { background: var(--purple-light); color: var(--purple); font-weight: 600; }
+.nav-num { font-size: 10px; color: var(--gray-400); margin-right: 5px; }
+
+/* ── Main ── */
+.main { flex: 1; min-width: 0; padding: 48px 56px 80px; max-width: 900px; }
+
+/* ── Cover ── */
+.cover {
+  background: linear-gradient(135deg, #4f46e5 0%, #6c47ff 100%);
+  border-radius: 16px; padding: 40px 44px; margin-bottom: 48px;
+  color: white;
+}
+.cover-eyebrow {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; opacity: .7; margin-bottom: 12px;
+}
+.cover-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+.cover-sub { font-size: 14px; opacity: .85; margin-bottom: 28px; line-height: 1.55; }
+.cover-meta {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,.2); padding-top: 20px;
+}
+.cover-meta-item { font-size: 11px; }
+.cover-meta-item .key { opacity: .6; margin-bottom: 2px; }
+.cover-meta-item .val { font-weight: 600; font-size: 12px; }
+.status-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.15); border-radius: 20px;
+  padding: 3px 10px; font-size: 11px; font-weight: 600;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+
+/* ── Sections ── */
+section { margin-bottom: 52px; }
+section:last-child { margin-bottom: 0; }
+
+.section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  padding-bottom: 12px; border-bottom: 1.5px solid var(--gray-200);
+}
+.section-num {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: var(--purple); color: white; font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-title { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+
+h3 {
+  font-size: 13px; font-weight: 700; color: var(--gray-800);
+  margin: 20px 0 8px;
+}
+p {
+  font-size: 13px; color: var(--gray-600); line-height: 1.7; margin-bottom: 10px;
+}
+p:last-child { margin-bottom: 0; }
+code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+/* ── Info cards ── */
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.info-card {
+  background: white; border: 1.5px solid var(--gray-200);
+  border-radius: 12px; padding: 16px;
+}
+.info-card .ic-icon { font-size: 22px; margin-bottom: 8px; }
+.info-card .ic-title { font-size: 12px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+.info-card .ic-desc  { font-size: 11px; color: var(--gray-400); line-height: 1.5; }
+
+/* ── Demo block ── */
+.demo-block {
+  background: var(--gray-900); border-radius: 12px; padding: 20px 24px;
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.demo-block .url {
+  font-family: 'SF Mono', Menlo, Monaco, monospace;
+  font-size: 13px; color: #a5f3fc; flex: 1;
+}
+.demo-block .open-btn {
+  background: var(--purple); color: white; border: none; border-radius: 8px;
+  padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+  text-decoration: none; white-space: nowrap;
+}
+.demo-block .open-btn:hover { background: #5a38e0; }
+
+/* ── Code block ── */
+.code-block {
+  background: var(--gray-900); border-radius: 10px;
+  padding: 16px 20px; font-family: 'SF Mono', Menlo, Monaco, monospace;
+  font-size: 12px; line-height: 1.8; margin-bottom: 14px; overflow-x: auto;
+}
+.code-block .c-comment { color: #6b7280; }
+.code-block .c-key     { color: #f472b6; }
+.code-block .c-val     { color: #a5f3fc; }
+.code-block .c-str     { color: #fde68a; }
+
+/* ── Flow steps ── */
+.flow-chain { display: flex; flex-direction: column; gap: 0; margin-bottom: 14px; }
+.flow-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: white; border: 1.5px solid var(--gray-200); border-radius: 12px;
+  padding: 14px 18px;
+}
+.flow-step + .flow-step { margin-top: 24px; position: relative; }
+.flow-step + .flow-step::before {
+  content: '↓'; position: absolute; top: -22px; left: 30px;
+  color: var(--gray-400); font-size: 14px; font-weight: 700;
+}
+.flow-step .fs-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--purple-light); color: var(--purple);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; margin-top: 1px;
+}
+.flow-step .fs-title { font-size: 12.5px; font-weight: 700; color: var(--gray-900); margin-bottom: 3px; }
+.flow-step .fs-desc { font-size: 11.5px; color: var(--gray-600); line-height: 1.6; }
+.flow-step .fs-drop { font-size: 10.5px; color: #991b1b; background: #fee2e2; border-radius: 6px; padding: 2px 8px; display: inline-block; margin-top: 6px; font-weight: 600; }
+
+/* ── Contrast box ── */
+.contrast-box {
+  background: #fffbeb; border: 1.5px solid #fde68a;
+  border-radius: 12px; padding: 16px 20px; margin-bottom: 14px;
+  font-size: 12px;
+}
+.contrast-box .cb-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: #78350f; margin-bottom: 12px;
+}
+.contrast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.contrast-col .cc-hdr {
+  font-size: 11px; font-weight: 700; margin-bottom: 6px; padding: 4px 10px;
+  border-radius: 6px;
+}
+.contrast-col.v1 .cc-hdr { background: #fee2e2; color: #991b1b; }
+.contrast-col.v2 .cc-hdr { background: #d1fae5; color: #065f46; }
+.contrast-col ul { padding-left: 14px; }
+.contrast-col ul li { font-size: 11px; line-height: 1.7; color: var(--gray-600); }
+
+/* ── Table ── */
+.prd-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; background: white; border-radius: 10px; overflow: hidden; border: 1px solid var(--gray-200); }
+.prd-table th {
+  background: var(--gray-50); padding: 10px 14px; text-align: left;
+  font-size: 11px; font-weight: 700; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+.prd-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-600); vertical-align: top;
+}
+.prd-table tr:last-child td { border-bottom: none; }
+.prd-table td strong { color: var(--gray-900); }
+.chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+.chip.green  { background: #d1fae5; color: #065f46; }
+.chip.amber  { background: #fef3c7; color: #78350f; }
+.chip.red    { background: #fee2e2; color: #991b1b; }
+.chip.purple { background: var(--purple-light); color: var(--purple); }
+.chip.gray   { background: var(--gray-100); color: var(--gray-600); }
+.chip.indigo { background: #eef2ff; color: #3730a3; }
+
+/* ── Note box ── */
+.note {
+  border-radius: 10px; padding: 12px 16px; font-size: 12px;
+  line-height: 1.6; margin-bottom: 14px; display: flex; gap: 10px;
+}
+.note.info    { background: var(--purple-light); color: #4c1d95; }
+.note.warning { background: #fff7ed; color: #9a3412; }
+.note.success { background: #f0fdf4; color: #065f46; }
+.note .note-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+/* ── State machine ── */
+.state-flow {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: white; border: 1.5px solid var(--gray-200); border-radius: 12px;
+  padding: 18px 20px; margin-bottom: 14px; font-size: 12px;
+}
+.state-node { border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 700; }
+.state-node.invited  { background: var(--gray-100); color: var(--gray-600); }
+.state-node.clicked  { background: #eef2ff; color: #4338ca; }
+.state-node.reviewed { background: #ecfdf5; color: #047857; }
+.state-node.expired  { background: #fff7ed; color: #c2410c; }
+.state-arrow { color: var(--gray-400); font-size: 11px; }
+
+/* ── Version log ── */
+.version-row { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: 12px; }
+.version-row:last-child { border-bottom: none; }
+.version-row .v-ver { color: var(--purple); font-weight: 700; width: 52px; flex-shrink: 0; }
+.version-row .v-date { color: var(--gray-400); width: 90px; flex-shrink: 0; }
+.version-row .v-desc { color: var(--gray-600); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="s-logo">S</div>
+    <div>
+      <div class="s-name">Seel Review Agent</div>
+      <div class="s-sub">v2 迭代 PRD</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-link active" href="#overview"><span class="nav-num">1</span>需求概述</a>
+    <a class="nav-link" href="#demo"><span class="nav-num">2</span>Live Demo</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">MD Dashboard · 核心交付</div>
+    <a class="nav-link" href="#dashboard"><span class="nav-num">3</span>MD 页面改造</a>
+    <a class="nav-link" href="#api"><span class="nav-num">4</span>API 契约变更</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Reference</div>
+    <a class="nav-link" href="#outcome"><span class="nav-num">5</span>口径参考（后端已上线）</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Changelog</div>
+    <a class="nav-link" href="#changelog"><span class="nav-num">6</span>版本记录</a>
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="cover-eyebrow">Product Requirements Document</div>
+    <div class="cover-title">Seel Review Agent · v2</div>
+    <div class="cover-sub">v2 需求 = merchant-dashboard 页面改造：Performance 漏斗化（对齐 Sales agent Analytics）+ Settings 单卡化 + 评价回显与低星跟进。归因引擎已按最新匹配规则（12h 窗口 · 多信号）上线运行，本文档仅引用其口径。</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="key">状态</div>
+        <div class="val"><span class="status-chip"><span class="status-dot"></span>待研发评审</span></div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">版本</div>
+        <div class="val">v2.4</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">更新日期</div>
+        <div class="val">2026-07-15</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">负责人</div>
+        <div class="val">Tammy</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="key">上游文档</div>
+        <div class="val">PRD-review-agent.md v1.6</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 1. 需求概述 ── -->
+  <section id="overview">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">需求概述</div>
+    </div>
+
+    <p><strong>v2 需求 = MD（merchant-dashboard）页面改造</strong>，交付物为 §3 页面方案 + §4 API 契约。</p>
+    <p><strong>后端现状</strong>：归因引擎已按最新匹配规则上线运行（conversation_id 关联 + 时间/客户名/内容多信号，12h 窗口，置信度 High/Medium，详见 §5 口径参考）；触发资格与发送控制口径同见 §5。<strong>后端逻辑不属于本版交付物</strong>，本文档仅引用其口径供前端对齐。</p>
+    <p><strong>v1 页面问题</strong>：单 Performance 页混杂配置与数据、KPI 全量累计无时间范围、Outcome 列错误渲染星级、评价内容不可见、`dailyInviteLimit=0` 显示成 "Capped at 0/day"。</p>
+
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">📊</div>
+        <div class="ic-title">Performance 漏斗化</div>
+        <div class="ic-desc">结构对齐 Sales agent Analytics：全局时间控件 + 六卡 big number 含环比 + 四层漏斗 + Invited Sessions 明细</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⚙️</div>
+        <div class="ic-title">Settings 单卡化</div>
+        <div class="ic-desc">一张 Setup 卡承载全部配置：TP URL（可达性校验）、Daily Limit（含 Unlimited）、邀请文案（默认可改）、总开关内联</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⭐</div>
+        <div class="ic-title">评价回显 + 低星跟进</div>
+        <div class="ic-desc">评价全文/星级/置信度侧滑展示；1–4 星标记 Needs follow-up，可回复 TP、标记已处理，Notifications 推送提醒</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">💡</div>
+        <div class="ic-title">口径与 hint</div>
+        <div class="ic-desc">Cohort 统计、小样本保护、未成熟标注；所有指标与状态均有悬浮 hint（invited/expired 区别讲清）</div>
+      </div>
+    </div>
+
+    <h3>不在本版范围</h3>
+    <p>后端归因/触发/发送逻辑（已上线，见 §5）· 灰度控制（已有）· 今日用量指示（明确不做）· roadmap 项（漏斗诊断建议、邀请时机 A/B、referenceId 精确归因、归因申诉等）后续版本再议。</p>
+  </section>
+
+  <!-- ── 2. Live Demo ── -->
+  <section id="demo">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Live Demo</div>
+    </div>
+
+    <p>Demo 1:1 还原 MD 后台 v2 改造后的 Review agent 页面，覆盖本文档 §3 的全部前端交付点。</p>
+
+    <div class="demo-block">
+      <span class="url">/review-agent-v2-demo.html</span>
+      <a class="open-btn" href="/review-agent-v2-demo.html" target="_blank">打开 Demo ↗</a>
+    </div>
+
+    <div class="note info">
+      <span class="note-icon">💡</span>
+      <span>模拟数据，可交互点：<strong>Performance</strong> — 全局时间控件（Yesterday / 7 / 30 / 90 天 / Custom range）、六卡 big number 含环比、四层漏斗、Outcome 筛选、搜索、点击 Reviewed 行打开评价侧滑（全文 + 置信度 + 会话摘要 + 计费 + 低星跟进）；<strong>Settings</strong> — 单张 Setup 卡（TP URL 校验状态 / Daily Limit 含 ∞ / 邀请文案默认可改 / 行内总开关）。指标与状态 badge 均带悬浮 hint。</span>
+    </div>
+  </section>
+
+  <!-- ── 3. MD 页面改造（核心交付） ── -->
+  <section id="dashboard">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">MD 页面改造（核心交付）</div>
+    </div>
+
+    <p>改造集中在 merchant-dashboard <code class="inline">src/pages/review-agent/index.jsx</code>，分五组：</p>
+
+    <h3>3.1 页面结构：Performance / Settings 双 tab</h3>
+    <table class="prd-table">
+      <thead><tr><th style="width:130px">Tab</th><th>内容</th><th style="width:190px">权限点</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Performance</strong></td><td>时间范围 → Big number KPI 行 → 转化漏斗 → Invited Sessions 表（<strong>元素结构对齐 Sales agent Analytics</strong>：时间筛选复用 <strong>MD 全局时间控件</strong>——Yesterday / Last 7 / 30 / 90 days / Custom range From-To + Apply；指标大数卡横排含环比，下方图表与明细）</td><td><code class="inline">review_agent:performance</code></td></tr>
+        <tr><td><strong>Settings</strong></td><td><strong>单张 Setup 卡承载全部配置</strong>：三步各自内联配置项（TP URL / Daily Limit / 总开关），步骤行展开即填写，不设独立配置卡片</td><td><code class="inline">review_agent</code></td></tr>
+      </tbody>
+    </table>
+    <p>配置与数据分离，权限点与 tab 一一对齐（解决 v1 "有 review_agent 无 performance 时整页 No permission" 的问题）。Support agent 的 widget 渠道设置中加 <strong>"Review Agent →" 入口链接</strong>做发现性；开关本体只存在于 Settings 一处，不做双开关。<strong>关闭 agent 不隐藏历史数据</strong>：Performance 顶部显示"已暂停发送"提示条，漏斗与列表照常可见。</p>
+
+    <h3>3.2 数据口径（Performance）</h3>
+    <p><strong>Big number KPI 行</strong>（对齐 Sales agent 的 Impressions/Clicks/CTR/Orders/CVR/Revenue 六卡结构）：Invites Shown · Invite Clicks · CTR · Reviews · Review Rate · 5-Star Reviews，每卡含"±X% vs previous"环比（绿涨红跌）与定义 tooltip。</p>
+    <table class="prd-table">
+      <thead><tr><th style="width:150px">v1 指标</th><th style="width:170px">v2 改为</th><th>定义（tooltip 展示给商家）</th></tr></thead>
+      <tbody>
+        <tr><td>Invites Sent</td><td><strong>Invites Shown</strong></td><td>邀请卡在 widget 实际展示的会话数——无"发送"动作，Sent 会被误解为邮件</td></tr>
+        <tr><td>（无）</td><td><strong>Invite Clicks</strong></td><td>点击跳转 TP 的数量 + CTR（÷ Shown）</td></tr>
+        <tr><td>Reviews</td><td><strong>Attributed Reviews</strong></td><td>归因成功的评价数 + review rate（÷ Clicks）</td></tr>
+        <tr><td>5-Star Reviews</td><td>不变</td><td>+ 占比（÷ Attributed Reviews）</td></tr>
+      </tbody>
+    </table>
+    <div class="note info">
+      <span class="note-icon">📐</span>
+      <span><strong>Cohort 口径（关键）</strong>：漏斗按<strong>邀请展示时间（invitedAt）分组</strong>，下游点击/归因事件计入其邀请所在 cohort，而非事件发生时间——否则跨窗口归因会导致转化率虚低或超 100%。归因窗口 12h（§5 口径参考），<strong>最近 12 小时内点击的邀请天然未成熟</strong>：漏斗下方常驻注记"最近 12h 点击仍在归因窗口内（N 条 pending）"。</span>
+    </div>
+    <p><strong>小样本保护</strong>：分母 &lt; 20 时不显示百分比，降级为原始数（如 "4/4"）并注明样本不足——杜绝 100% 5-star rate 假象。<strong>会话/邀请分离</strong>：表标题改为 <strong>Invited Sessions</strong>，计数与漏斗第一层严格相等，与 support-agent 的"会话"概念脱钩。</p>
+    <p><strong>悬浮 hint</strong>：KPI 指标、漏斗各层、Outcome badge / 筛选 chips、置信度 chip 均带 hover tooltip（即时悬浮气泡，非原生 title 延迟提示），提示语按各表定义——尤其 invited（展示未点击，停留态不过期）与 expired（点击后 12h 未归因）的区别必须在 hint 中讲清。</p>
+
+    <h3>3.3 Invited Sessions 明细</h3>
+    <table class="prd-table">
+      <thead><tr><th style="width:36px">#</th><th style="width:150px">改造项</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td><td><strong>Outcome 列修复</strong></td>
+          <td>状态 badge（invited 灰 / clicked 蓝 / reviewed 绿 / expired 橙），替换 v1 错误渲染的星级；<code class="inline">outcome</code> 字段 API 已返回，v1 前端丢弃了</td>
+        </tr>
+        <tr>
+          <td>2</td><td><strong>评价回显侧滑</strong></td>
+          <td>reviewed 行内星级 + 评价单行截断；点击打开侧滑：状态时间线、<strong>会话摘要（含"Open in Support agent" 次级链接，替代 v1 直接跳走）</strong>、评价全文、置信度 badge（High/Medium，匹配信号悬浮展示）、计费状态、View on Trustpilot</td>
+        </tr>
+        <tr>
+          <td>3</td><td><strong>搜索 + 筛选</strong></td>
+          <td>搜索框（customerName / orderId / conversationId 模糊匹配）+ outcome 筛选 chips + 星级筛选，走 API 参数，服务端分页不变</td>
+        </tr>
+        <tr>
+          <td>4</td><td><strong>低星评价跟进</strong></td>
+          <td>1–4 星归因评价：表内评价旁显示 <span class="chip amber">⚑ Needs follow-up</span> 标记；侧滑内 Follow-up 区块提供 <strong>Reply on Trustpilot</strong> 外链 + <strong>Mark as handled</strong>（处理后标记消失）；同时通过 Notifications 模块推送低星评价提醒（24h 内公开回复保护 TP 形象）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.4 Settings</h3>
+    <table class="prd-table">
+      <thead><tr><th style="width:36px">#</th><th style="width:170px">改造项</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td><td><strong>Setup 单卡</strong></td>
+          <td>Settings 仅一张 Setup 卡：三步（连接 TP 页 → 设上限 → 开启）既是引导 checklist 也是配置本体——步骤行展开即内联填写（步骤 1 = URL + 校验状态，步骤 2 = 预设档位 + 保存反馈，步骤 3 = 行内总开关），不设独立配置卡片</td>
+        </tr>
+        <tr>
+          <td>2</td><td><strong>TP URL 可达性校验</strong></td>
+          <td>保存时后端实际抓取一次确认页面存在，失败返回明确错误——消灭"配错域名归因永远为 0"的静默失败。状态点语义收紧：<strong>已配置且最近爬取成功才亮绿</strong>（Verified · Last crawled X ago），未配置 / 抓取失败分别为灰 / 红</td>
+        </tr>
+        <tr>
+          <td>3</td><td><strong>未配置禁止开启</strong></td>
+          <td>TP URL 为空或校验失败时总开关置灰，避免链路空转</td>
+        </tr>
+        <tr>
+          <td>4</td><td><strong>Daily Limit</strong></td>
+          <td><code class="inline">dailyInviteLimit = 0</code> 显示 "∞ Unlimited"（绿色态），预设增加 Unlimited 档，消除 "Capped at 0/day"；非预设值展示实际数值；保存成功给明确反馈（Saved 提示）</td>
+        </tr>
+        <tr>
+          <td>5</td><td><strong>邀请卡文案</strong></td>
+          <td>Setup 卡内新增 "Invite card message" 步骤：<strong>系统提供默认文案</strong>，商家可自定义（textarea 编辑 + 自动保存 + Reset to default 恢复默认）；步骤状态显示 Default / Customized；未自定义即用默认，不阻塞开启</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.5 工程项</h3>
+    <p>config 提交改<strong>字段级 PATCH 语义</strong>（只传变更字段），消除 v1 全量 POST 的并发互相覆盖；前后端契约以本文档 §4 为准，移除 v1 前端对 5 种 response 形状的防御性解析。</p>
+  </section>
+
+  <!-- ── 7. API 契约变更 ── -->
+  <section id="api">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">API 契约变更</div>
+    </div>
+
+    <h3>4.1 GET /md/open/aisupport/review-agent/summary</h3>
+    <p>新增查询参数 <code class="inline">dateFrom</code> / <code class="inline">dateTo</code>（缺省 = 近 30 天）。<strong>统计按 cohort 口径</strong>：时间范围筛选的是 invitedAt，四层指标均为该批邀请的下游事件计数。</p>
+    <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="c-key">"enabled"</span>: <span class="c-val">true</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"dailyInviteLimit"</span>: <span class="c-val">50</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"tpPageUrl"</span>: <span class="c-str">"https://www.trustpilot.com/review/example.com"</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"tpPageStatus"</span>: <span class="c-str">"verified"</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：verified | unreachable | not_configured</span><br>
+&nbsp;&nbsp;<span class="c-key">"lastCrawledAt"</span>: <span class="c-str">"2026-07-14T06:00:00Z"</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：状态点副文案</span><br>
+&nbsp;&nbsp;<span class="c-key">"invitesShown"</span>: <span class="c-val">630</span>,&nbsp;&nbsp;<span class="c-comment">// 改名：原 invitesSent</span><br>
+&nbsp;&nbsp;<span class="c-key">"invitesClicked"</span>: <span class="c-val">187</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：漏斗第二层</span><br>
+&nbsp;&nbsp;<span class="c-key">"reviews"</span>: <span class="c-val">23</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"fiveStarReviews"</span>: <span class="c-val">18</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"pendingAttribution"</span>: <span class="c-val">12</span>&nbsp;&nbsp;<span class="c-comment">// 新增：仍在归因窗口内的邀请数（未成熟标注）</span><br>
+}
+    </div>
+
+    <h3>4.2 GET /md/open/aisupport/review-agent/sessions</h3>
+    <p>新增查询参数：</p>
+    <table class="prd-table">
+      <thead><tr><th style="width:150px">参数</th><th style="width:80px">类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">search</code></td><td>string</td><td>模糊匹配 customerName / orderId / conversationId</td></tr>
+        <tr><td><code class="inline">outcome</code></td><td>enum</td><td>invited / clicked / reviewed / expired，逗号分隔可多选</td></tr>
+        <tr><td><code class="inline">rating</code></td><td>number</td><td>按星级筛选（仅对 reviewed 生效）</td></tr>
+        <tr><td><code class="inline">dateFrom / dateTo</code></td><td>date</td><td>按 invitedAt 过滤</td></tr>
+      </tbody>
+    </table>
+
+    <p>list 元素新增字段：</p>
+    <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="c-comment">// —— v1 已有字段不变 ——</span><br>
+&nbsp;&nbsp;<span class="c-key">"outcome"</span>: <span class="c-str">"reviewed"</span>,&nbsp;&nbsp;<span class="c-comment">// invited | clicked | reviewed | expired</span><br>
+&nbsp;&nbsp;<span class="c-key">"clickedAt"</span>: <span class="c-str">"2026-07-07T01:24:00Z"</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"reviewedAt"</span>: <span class="c-str">"2026-07-10T09:12:00Z"</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"rating"</span>: <span class="c-val">5</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"reviewText"</span>: <span class="c-str">"Amazing support, solved my issue in minutes..."</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"reviewUrl"</span>: <span class="c-str">"https://www.trustpilot.com/reviews/xxxx"</span>,<br>
+&nbsp;&nbsp;<span class="c-key">"confidenceTier"</span>: <span class="c-str">"medium"</span>,&nbsp;&nbsp;<span class="c-comment">// high | medium（§5 口径参考）</span><br>
+&nbsp;&nbsp;<span class="c-key">"matchSignals"</span>: <span class="c-str">"Timing (79 min) + content"</span><br>
+}
+    </div>
+
+    <h3>4.3 PATCH /md/open/aisupport/review-agent/config</h3>
+    <p>由全量 POST 改为<strong>字段级 PATCH</strong>：只传变更字段（<code class="inline">enabled</code> / <code class="inline">dailyInviteLimit</code> / <code class="inline">tpPageUrl</code> / <code class="inline">inviteMessage</code> 任意子集），未传字段不动，消除并发编辑互相覆盖。<code class="inline">dailyInviteLimit = 0</code> 含义统一为 Unlimited；<code class="inline">inviteMessage = null</code> 表示使用系统默认文案。</p>
+    <p>提交 <code class="inline">tpPageUrl</code> 时后端同步做<strong>可达性校验</strong>（实际抓取一次目标页）：失败返回 <code class="inline">422 + { reason: "tp_page_unreachable" }</code>，不落库；成功则更新 <code class="inline">tpPageStatus = verified</code>。<code class="inline">tpPageStatus ≠ verified</code> 时提交 <code class="inline">enabled = true</code> 返回 <code class="inline">422 + { reason: "tp_page_not_verified" }</code>（对应前端"未配置禁止开启"）。</p>
+
+    <h3>4.4 低星跟进</h3>
+    <p>sessions list 元素增加 <code class="inline">followUpStatus</code>：<code class="inline">needed</code>（reviewed 且 rating ≤ 4，未处理）/ <code class="inline">handled</code> / <code class="inline">null</code>（5 星或非 reviewed）。标记处理：</p>
+    <div class="code-block">
+<span class="c-comment">// Mark as handled</span><br>
+PATCH /md/open/aisupport/review-agent/sessions/{sessionId}<br>
+{ <span class="c-key">"followUpStatus"</span>: <span class="c-str">"handled"</span> }
+    </div>
+    <p>低星归因评价落库时同步向 Notifications 模块投递提醒事件（<code class="inline">review_agent.low_star_review</code>），带评价内容与会话链接。</p>
+  </section>
+
+  <!-- ── 5. 口径参考（后端已上线） ── -->
+  <section id="outcome">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-title">口径参考（后端已上线，非本版交付）</div>
+    </div>
+
+    <div class="note info">
+      <span class="note-icon">ℹ️</span>
+      <span>本章为<strong>后端已上线逻辑的口径快照</strong>，供前端展示对齐用，<strong>不在本版开发范围</strong>。触发资格、发送控制、归因匹配均已按此规则运行。</span>
+    </div>
+
+    <h3>5.1 触发资格与发送控制</h3>
+    <p>会话终态 = <code class="inline">agent_solved</code> <strong>且</strong> AI 意图判定 = <code class="inline">satisfied</code>（复用 support-agent 意图体系，无 CSAT 弹窗）→ 依次过 <strong>90 天去重</strong>（email 归一）→ <strong>灰度</strong>（rolloutPct）→ <strong>每日上限</strong>（超限直接丢弃，无次日队列；<code class="inline">dailyInviteLimit=0</code> = Unlimited）→ 展示邀请卡（进入 invited）。被丢弃的会话不写入 Sessions 表。</p>
+
+    <h3>5.2 Outcome 状态机</h3>
+    <div class="state-flow">
+      <span class="state-node invited">invited</span>
+      <span class="state-arrow">—用户点击→</span>
+      <span class="state-node clicked">clicked</span>
+      <span class="state-arrow">—归因命中→</span>
+      <span class="state-node reviewed">reviewed ✓</span>
+      <span class="state-arrow" style="margin-left:8px">clicked —超 12h→</span>
+      <span class="state-node expired">expired</span>
+    </div>
+    <table class="prd-table">
+      <thead><tr><th style="width:110px">状态</th><th>定义</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip gray">invited</span></td><td>邀请卡已展示、用户未点击。<strong>停留态，不超时</strong>——未点击的邀请永远停在此</td></tr>
+        <tr><td><span class="chip indigo">clicked</span></td><td>用户点击邀请、跳转 TP，12h 归因窗口开启</td></tr>
+        <tr><td><span class="chip green">reviewed</span></td><td>归因命中（终态）。评价正文 / 星级 / 置信度 / 匹配信号落库。仅 5 星计费 $5</td></tr>
+        <tr><td><span class="chip amber">expired</span></td><td>clicked 后 <strong>12h</strong> 未归因（终态）。<strong>与 invited 的区别 = 有没有点击</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.3 归因匹配规则（GravaStar 实测校准）</h3>
+    <table class="prd-table">
+      <thead><tr><th style="width:120px">项</th><th>规则</th></tr></thead>
+      <tbody>
+        <tr><td><strong>归因窗口</strong></td><td>点击后 <strong>12 小时</strong>——10 条归因评价中 9 条在 3.5h 内提交（最快 6 分钟，最长 10.8h）</td></tr>
+        <tr><td><strong>匹配基础</strong></td><td><code class="inline">conversation_id</code>（邀评记录）与工单直接关联，在此基础上叠加信号</td></tr>
+        <tr><td><strong>匹配信号</strong></td><td>① 时间接近度 ② 客户名吻合 ③ <strong>评价内容与会话摘要语义匹配</strong></td></tr>
+        <tr><td><strong>置信度</strong></td><td><span class="chip green">High</span> 客户名吻合或间隔 ≤ 20min 且内容对应；<span class="chip amber">Medium</span> 窗口内 + 内容对应；低于 Medium 不归因</td></tr>
+        <tr><td><strong>排除项</strong></td><td>纯产品评价、邮件客服评价（非 live chat）不归因</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 6. 版本记录 ── -->
+  <section id="changelog">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-title">版本记录</div>
+    </div>
+
+    <div class="version-row">
+      <span class="v-ver">v2.4</span>
+      <span class="v-date">2026-07-15</span>
+      <span class="v-desc">文档重排：明确 v2 交付物 = MD 页面改造（§3 页面 + §4 API），后端归因/触发/发送逻辑已按最新规则上线，收进 §5「口径参考（非本版交付）」仅供前端对齐。删除原独立的触发资格 / 发送控制 / 状态机章节（并入 §5），消除"后端逻辑像待开发需求"的歧义</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v2.3</span>
+      <span class="v-date">2026-07-15</span>
+      <span class="v-desc">归因规则按 GravaStar 实测校准：窗口 T+3 天 → 12h（9/10 条评价在 3.5h 内提交，与分析口径一致）；锚点 = 邀请点击，点击埋点存在性列为研发确认项（缺失则回退邀评发出时间并移除 Clicks 层）；匹配 = conversation_id 关联 + 时间接近度 + 客户名 + 内容语义，置信度 High/Medium（API 字段 matchTier/confidence → confidenceTier/matchSignals）；expired 定义同步 12h，未成熟标注改"最近 12h"；时间筛选复用 MD 全局控件（Yesterday/7/30/90/Custom range）；KPI、漏斗、Outcome badge、置信度 chip 全部增加悬浮 hint（明确 invited 与 expired 的区别）</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v2.2</span>
+      <span class="v-date">2026-07-14</span>
+      <span class="v-desc">新增两项：① 邀请卡文案可自定义（系统默认文案 + Setup 卡内编辑 + 恢复默认，config 增加 inviteMessage 字段）；② 低星评价跟进（Needs follow-up 标记、侧滑 Reply on Trustpilot + Mark as handled、Notifications 低星提醒、sessions 增加 followUpStatus 字段 + PATCH 标记接口）。漏斗诊断、A/B、referenceId 精确归因、归因申诉等列入 roadmap 不做</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v2.1</span>
+      <span class="v-date">2026-07-14</span>
+      <span class="v-desc">后台设计评审后修订：Performance / Settings 双 tab（权限点对齐）；指标改名（Invites Shown / Invite Clicks / Attributed Reviews）+ cohort 口径 + 未成熟标注（pendingAttribution）+ 小样本保护；表改名 Invited Sessions；侧滑加会话摘要（替代跳转 support-agent）；Setup checklist；TP URL 可达性校验 + 状态点语义 + 未配置禁止开启；关闭 agent 不隐藏历史数据；config 改字段级 PATCH。计费明细保持在 org-billing 查看，不在本页重复</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v2.0</span>
+      <span class="v-date">2026-07-14</span>
+      <span class="v-desc">触发资格 = AI 意图判定（satisfied）+ agent_solved；90 天去重；超限直接丢弃（删除次日队列）；Outcome 四态状态机；评价内容 / 星级 / 置信度回显；后台漏斗 KPI + 时间范围 + 搜索筛选 + Unlimited 修复；summary / sessions API 扩展。规格明细见 PRD-review-agent.md</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v1.x</span>
+      <span class="v-date">2026-06</span>
+      <span class="v-desc">MVP 上线 merchant-dashboard：开关、累计 KPI、TP URL、每日上限、Sessions 列表；归因引擎后端上线</span>
+    </div>
+    <div class="version-row">
+      <span class="v-ver">v1.0</span>
+      <span class="v-date">2026-05-08</span>
+      <span class="v-desc">原 PRD（seel-prd-v2.html）：单路径 + 灰度、仅 5 星计费 $5、模糊归因方案。其合规章节（移除满意度筛选）已于 2026-07-14 标注废弃</span>
+    </div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>
