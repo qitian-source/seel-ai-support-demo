@@ -168,6 +168,7 @@
     <a href="#dep-risk" class="hot">12. 依赖与风险</a>
     <a href="#release">13. 发布计划</a>
     <a href="#architecture" class="hot">14. 生产技术设计</a>
+    <a href="#ownership">15. 团队分工与交界面</a>
     <h4>附录</h4>
     <a href="#glossary">A. 术语表</a>
     <a href="#related">B. 关联文档</a>
@@ -1078,6 +1079,38 @@
 
       <div class="note danger">
         <b>这套架构端到端保证:</b>商家看到的每条引用都能追溯到 counsel 批准的 tag;模型无法原创法律文字;scope 决定统一且在 authoring 时定（无运行时压制）;"规则是什么"有且只有一个真源。
+      </div>
+    </section>
+
+    <!-- 15. 团队分工 -->
+    <section id="ownership">
+      <h2>15. 团队分工与交界面（谁做什么）</h2>
+      <p>产品分五个评估模块(§2 / §6),下面这层跨模块的分工是为了让<b>研发和法务都清楚各自要做什么</b>。配套一页图(可直接甩给团队):<a href="https://seel-ai-support-v2-main.vercel.app/seel-compass-team-cn.html">中文</a> · <a href="https://seel-ai-support-v2-main.vercel.app/seel-compass-team.html">English</a>。</p>
+      <div class="note info">
+        <b>心智模型:法务审"规则和引用",不碰软件。</b>产品与研发建"只渲染签署过内容、绝不自己编法律文字"的系统。<b>Registry 就是两者的交界面。</b>
+      </div>
+      <table>
+        <thead><tr><th>角色</th><th>负责</th><th>具体</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>🧑‍⚖️ <b>法务</b></td>
+            <td>审阅 &amp; 签署</td>
+            <td>Registry(每条规则查什么 / 引用哪条 / 解释依据)· Scope 决定(哪些查、哪些整体不查)· 语言 &amp; 免责措辞 · 复审模型(重签周期 / 抽检 / N=5 gate)。<b>不碰</b>软件 / UI / 管线 / 对接。</td>
+          </tr>
+          <tr>
+            <td>🛠️ <b>研发</b></td>
+            <td>建真系统(把 demo mock 变成 §14 那条管线)</td>
+            <td>① Registry 做成版本化文件(签署 = approve PR,tag = corpus 版本)· ② 引用渲染 = 按 rule_id 查表,模型绝不生成 · ③ 扫描引擎只输出 rule_id + 判定 + 证据 · ④ Grounding / 防幻觉 CI 门(无证据或未知 rule_id 拒渲染;幻觉引用 build 失败;honeypot 回归)· ⑤ <b>覆盖对齐</b>(UI 计数的每个 check 都要是 registry 一条且可点开 —— 对应 Michael #1)· ⑥ Evidence store(页面快照 + 时间戳)· ⑦ 对接 USPTO / Middesk + corpus 摄入 + 月度链接检查。</td>
+          </tr>
+          <tr>
+            <td>🧭 <b>产品</b></td>
+            <td>负责体验</td>
+            <td>Onboarding(授权 + 域名验证 + 品类确认)· 报告体验(双投影 / Source·Proof / 状态追踪 / 评分展示)· 品类检测 UX · demo(已完成,即研发的规格)。</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note warn">
+        <b>关键路径:</b>Demo 已完成(mock) → Registry 法务审阅中(当前) → 研发建真系统(非法务部分现在就能并行) → corpus 签署后 launch。<b>corpus 没签,任何东西都不上商家。</b>registry 一签,build 和 launch 同时解锁。
       </div>
     </section>
 

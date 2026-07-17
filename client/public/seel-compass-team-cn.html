@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — 我们在做什么 & 谁负责什么</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0; --bg:#F8FAFC; --card:#fff;
+    --eng:#4338CA; --eng-bg:#EEF2FF; --eng-br:#C7D2FE;
+    --legal:#B45309; --legal-bg:#FFFBEB; --legal-br:#FDE68A;
+    --prod:#0E7490; --prod-bg:#ECFEFF; --prod-br:#A5F3FC;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12.5px;color:#334155}
+  .topbar{background:#0A0A1A;color:#fff;padding:14px 28px;display:flex;align-items:center;gap:12px}
+  .topbar .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:17px}
+  .topbar .title{font-weight:800;letter-spacing:.02em}
+  .topbar small{display:block;font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 28px 70px}
+  .lede{font-size:15px;color:var(--mid);margin:6px 0 22px}
+  .lede b{color:var(--ink)}
+  h2{font-size:16px;font-weight:800;margin:30px 0 12px;padding-top:16px;border-top:2px solid var(--border)}
+  h2:first-of-type{border-top:none;padding-top:0;margin-top:6px}
+  .mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .mod{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .mod .h{font-weight:700;font-size:13px;margin-bottom:4px}
+  .mod .d{font-size:11.5px;color:var(--sub);line-height:1.5}
+  .mod .m{font-size:10px;font-weight:700;color:var(--seel-d);background:var(--seel-l);border-radius:99px;padding:1px 7px;display:inline-block;margin-top:6px}
+  .pipe{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin:4px 0;overflow-x:auto}
+  .pipe svg{display:block;max-width:100%;height:auto;min-width:660px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--sub)}
+  .legend .k{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+  .lanes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:840px){.lanes{grid-template-columns:1fr}}
+  .lane{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+  .lane .lh{padding:11px 15px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .lane.eng .lh{background:var(--eng-bg);color:var(--eng);border-bottom:1px solid var(--eng-br)}
+  .lane.legal .lh{background:var(--legal-bg);color:var(--legal);border-bottom:1px solid var(--legal-br)}
+  .lane.prod .lh{background:var(--prod-bg);color:var(--prod);border-bottom:1px solid var(--prod-br)}
+  .lane .lh .role{font-size:10.5px;font-weight:600;opacity:.8;margin-left:auto}
+  .lane ul{list-style:none;padding:12px 15px;display:flex;flex-direction:column;gap:10px}
+  .lane li{font-size:12.5px;color:var(--ink);padding-left:16px;position:relative;line-height:1.5}
+  .lane li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:2px}
+  .lane.eng li::before{background:var(--eng)}
+  .lane.legal li::before{background:var(--legal)}
+  .lane.prod li::before{background:var(--prod)}
+  .lane li b{display:block;font-size:12.5px;margin-bottom:1px}
+  .lane li span{color:var(--sub);font-size:11.5px}
+  .status{background:var(--seel-l);border:1px solid #DDD6FE;border-radius:12px;padding:16px 20px;margin-top:22px}
+  .status h3{font-size:13.5px;color:var(--seel-d);margin-bottom:10px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .step{background:#fff;border:1px solid var(--border);border-radius:9px;padding:10px 13px;font-size:12px}
+  .step .t{font-weight:700;font-size:12px;margin-bottom:3px}
+  .step.done .t{color:var(--ok)}
+  .step.now .t{color:var(--legal)}
+  .step.next .t{color:var(--eng)}
+  .step .s{color:var(--sub);font-size:11px;line-height:1.5}
+  .note{font-size:11.5px;color:var(--mid);margin-top:14px;padding:10px 14px;background:#fff;border-left:3px solid var(--seel);border-radius:0 8px 8px 0}
+  footer{color:var(--sub);font-size:11px;margin-top:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="mark">🧭</div>
+  <div>
+    <div class="title">Seel Compass — 我们在做什么 & 谁负责什么</div>
+    <small>团队一页图 · 产品 / 研发 / 法务 · 对应 PRD v1.3</small>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="lede">Compass 扫描商家的<b>公开网店</b>,给出一份<b>客观、结构化的"出海就绪度"基线</b>——指向相关规则、建议找律师确认,但<b>自己从不下法律结论</b>。类比 SOC-2 readiness,不是法律意见。</p>
+
+  <h2>1 · 评估什么 —— 5 个模块</h2>
+  <div class="mods">
+    <div class="mod"><div class="h">🔒 Data & Privacy</div><div class="d">隐私政策措辞 + cookie 行为</div><div class="m">爬网站 · US+EU</div></div>
+    <div class="mod"><div class="h">📄 Terms & Conditions</div><div class="d">服务条款 / 退款 / 担保措辞</div><div class="m">爬网站 · US+EU</div></div>
+    <div class="mod"><div class="h">🛍️ Product</div><div class="d">受管制品类(仅检测)· 广告声明 · 安全标签 · IP/营销 · 消费者保护</div><div class="m">爬网站 · US+EU</div></div>
+    <div class="mod"><div class="h">™️ Intellectual Property</div><div class="d">品牌名 vs 已注册商标查重</div><div class="m">USPTO API · US</div></div>
+    <div class="mod"><div class="h">🏛️ Corporate Entity</div><div class="d">实体 good-standing + 年报状态</div><div class="m">问卷 + 州 SoS · US</div></div>
+  </div>
+
+  <h2>2 · 怎么跑的 —— 以及引用从哪来</h2>
+  <div class="pipe">
+    <svg viewBox="0 0 900 210" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#7C3AED"/></marker></defs>
+      <g font-family="-apple-system,'PingFang SC','Segoe UI'" font-size="11.5">
+        <rect x="300" y="12" width="300" height="52" rx="10" fill="#FFFBEB" stroke="#B45309" stroke-width="1.5"/>
+        <text x="450" y="34" text-anchor="middle" fill="#B45309" font-weight="800">① 规则 & 引用 Registry</text>
+        <text x="450" y="51" text-anchor="middle" fill="#92610a" font-size="10.5">"法律" —— 法务审阅并签署 · 版本化</text>
+        <path d="M340,64 C300,90 250,96 210,110" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+        <path d="M560,64 C620,92 660,96 690,110" fill="none" stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+        <text x="450" y="86" text-anchor="middle" fill="#64748B" font-size="10">↙ 提供规则集    引用文字 ↘</text>
+        <rect x="20" y="112" width="150" height="62" rx="10" fill="#F1F5F9" stroke="#64748B" stroke-width="1.4"/>
+        <text x="95" y="136" text-anchor="middle" fill="#334155" font-weight="700">爬取 + 证据</text>
+        <text x="95" y="152" text-anchor="middle" fill="#64748B" font-size="10.5">页面、快照、</text>
+        <text x="95" y="165" text-anchor="middle" fill="#64748B" font-size="10.5">时间戳</text>
+        <line x1="170" y1="143" x2="204" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="206" y="112" width="196" height="62" rx="10" fill="#EEF2FF" stroke="#4338CA" stroke-width="1.5"/>
+        <text x="304" y="134" text-anchor="middle" fill="#4338CA" font-weight="800">② 扫描引擎 (LLM)</text>
+        <text x="304" y="150" text-anchor="middle" fill="#4338CA" font-size="10.5">输出 rule_id + 判定</text>
+        <text x="304" y="163" text-anchor="middle" fill="#4338CA" font-size="10.5">+ 证据 —— 不产生引用</text>
+        <line x1="402" y1="143" x2="436" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="438" y="112" width="196" height="62" rx="10" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+        <text x="536" y="134" text-anchor="middle" fill="#5B21B6" font-weight="800">③ 渲染(查表)</text>
+        <text x="536" y="150" text-anchor="middle" fill="#5B21B6" font-size="10.5">rule_id → 引用文字</text>
+        <text x="536" y="163" text-anchor="middle" fill="#5B21B6" font-size="10.5">确定性查表,非生成</text>
+        <line x1="634" y1="143" x2="668" y2="143" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a)"/>
+        <rect x="670" y="112" width="210" height="62" rx="10" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5"/>
+        <text x="775" y="136" text-anchor="middle" fill="#166534" font-weight="800">商家报告</text>
+        <text x="775" y="152" text-anchor="middle" fill="#166534" font-size="10.5">finding + 引用 + 证据</text>
+        <text x="775" y="165" text-anchor="middle" fill="#166534" font-size="10.5">+ 建议咨询律师</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i class="k" style="background:#FFFBEB;border:1px solid #B45309"></i>法务负责</span>
+      <span><i class="k" style="background:#EEF2FF;border:1px solid #4338CA"></i>研发</span>
+      <span><i class="k" style="background:#F5F3FF;border:1px solid #7C3AED"></i>产品 / 研发</span>
+      <span>核心规则:<b>模型永不写引用</b> —— 它只指向某条规则,引用文字来自签署过的 registry。</span>
+    </div>
+  </div>
+
+  <h2>3 · 谁做什么</h2>
+  <div class="lanes">
+    <div class="lane legal">
+      <div class="lh">🧑‍⚖️ 法务 <span class="role">审阅 & 签署</span></div>
+      <ul>
+        <li><b>Registry</b><span>每条规则:查什么、引用哪条、解释依据。这是签署对象。</span></li>
+        <li><b>Scope 决定</b><span>哪些查、哪些不查(如 checkout 整块删、Seel 自家产品规则移出)。</span></li>
+        <li><b>语言 & 免责</b><span>禁用词、counsel 结尾语、intro 免责声明措辞。</span></li>
+        <li><b>复审模型</b><span>重签周期、抽检比例、新品类 gate。</span></li>
+        <li style="color:var(--sub)"><b style="color:var(--legal)">不归他们管</b><span>软件、UI、管线、对接。</span></li>
+      </ul>
+    </div>
+    <div class="lane eng">
+      <div class="lh">🛠️ 研发 <span class="role">建真系统</span></div>
+      <ul>
+        <li><b>Registry 做成版本化文件</b><span>YAML/JSON 放仓库。法务签署 = 一个 approve 的 PR;release tag = 扫描拉取的 corpus 版本。</span></li>
+        <li><b>引用渲染 = 查表</b><span>finding 按 rule_id 从签署 registry 取引用文字。模型绝不产生引用。</span></li>
+        <li><b>扫描引擎</b><span>LLM 把页面证据 → rule_id + 判定(verified/review/not-assessable)+ 证据摘录。仅此。</span></li>
+        <li><b>Grounding / 防幻觉 CI</b><span>无证据、或引用了不存在的 rule_id → 拒渲染;幻觉引用直接 build 失败。每次 corpus 改动跑 honeypot 回归。</span></li>
+        <li><b>覆盖对齐</b><span>UI 计数的每个 check 都必须是 registry 一条、且报告里可点开 —— 不能有"查了 58 项"却没登记(Michael #1)。</span></li>
+        <li><b>Evidence store</b><span>每次扫描的页面快照 + 时间戳 + network trace —— 支撑 Proof 层与 provenance。</span></li>
+        <li><b>对接 & 摄入</b><span>USPTO(商标)、Middesk(SoS DE/CA/NY/TX)、corpus 从 EUR-Lex / eCFR / uscode / leginfo / FTC / OEHHA 摄入 + 月度链接健康检查。</span></li>
+      </ul>
+    </div>
+    <div class="lane prod">
+      <div class="lh">🧭 产品 <span class="role">负责体验</span></div>
+      <ul>
+        <li><b>Onboarding</b><span>授权勾选 + DNS 域名验证 + 品类确认。</span></li>
+        <li><b>报告体验</b><span>同一 finding 的 Overview / Review-Items 双投影、Source/Proof pane、状态追踪、评分展示。</span></li>
+        <li><b>品类检测 UX</b><span>detected / possible / not-detected 确认流。</span></li>
+        <li><b>demo(已完成)</b><span>完整体验的可交互 mock —— 研发照它建。</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>4 · 现在在哪 → 什么解锁 launch</h2>
+  <div class="status">
+    <h3>关键路径</h3>
+    <div class="steps">
+      <div class="step done"><div class="t">✅ Demo —— 已完成</div><div class="s">完整体验以 mock 形式上线,产品侧已定义。</div></div>
+      <div class="step now"><div class="t">◐ Registry —— 法务审阅中</div><div class="s">Michael 审内容:覆盖、引用、措辞。法务的当前任务。</div></div>
+      <div class="step next"><div class="t">→ 研发 —— 建真系统</div><div class="s">把 mock 变成上面那条管线(registry 文件、引擎、grounding 门、对接)。非法务的部分现在就能并行开工。</div></div>
+      <div class="step next"><div class="t">→ Launch</div><div class="s">corpus 签署 + 研发建成后。corpus 没签,任何东西都不上商家。</div></div>
+    </div>
+    <div class="note">
+      <b>唯一卡住全局的交界面:</b>registry 就是法务与研发的边界。法务定<i>规则和引用是什么</i>;研发建一个<b>只渲染签署过内容、绝不自己编法律文字</b>的系统。registry 一签,build 和 launch 同时解锁。
+    </div>
+  </div>
+
+  <footer>Seel Compass · 团队一页图 · 对应 PRD v1.3 · 仅供信息参考,非法律意见</footer>
+</div>
+</body>
+</html>
