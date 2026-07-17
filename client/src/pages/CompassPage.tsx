@@ -2,7 +2,7 @@
  * CompassPage — Seel Compass (Go-Global Readiness)
  * Interactive rebuild against merchant dashboard design system.
  * Content aligned with Michael's 6/25 review: 5 categories, 24 Product items in 5 sub-groups,
- * hybrid category detection. Self-harm handling (per Michael 7/8): rules that would only
+ * hybrid category detection. Self-harm handling (per Michael 7/17): rules that would only
  * fire on Seel's own product model are scoped OUT of the corpus entirely — no runtime
  * suppression, no fingerprint/whitelist. Only two states exist: in-scope or out-of-scope.
  *
@@ -31,7 +31,7 @@ type CategoryKey = "cosmetics" | "kids" | "alcohol" | "cbd" | "tobacco" | "firea
    Proof is the per-scan evidence: pages checked, timestamps, excerpts, observations. */
 const CORPUS_VERSION = "v2026.06";
 
-/* Interpretive basis (Michael 7/8): where the operative rule actually lives.
+/* Interpretive basis (Michael 7/17): where the operative rule actually lives.
    A risk isn't always in the black-letter statute — it can develop in agency
    guidance or case law interpreting it. Kept in a central map (the demo's
    stand-in for the counsel-signed registry field), looked up by citation label. */
@@ -742,7 +742,7 @@ function OnboardingFlow({
                 </div>
               </div>
             </div>
-            {/* Counsel-provided intro disclaimer (Michael 7/8) — shown before the scan begins */}
+            {/* Counsel-provided intro disclaimer (Michael 7/17) — shown before the scan begins */}
             <div className="rounded-lg border border-border bg-[#fafbfc] px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
               This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan.
             </div>

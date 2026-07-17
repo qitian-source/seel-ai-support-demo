@@ -146,7 +146,7 @@
   <div class="inner">
     <div class="icon">📄</div>
     <div class="text">
-      <b>本文档目的：</b>定义 Seel Compass Phase 1 的产品需求 —— 我们要做什么产品、给谁用、解决什么问题、如何验收、如何衡量成功。<b>面向：</b>产品 / 设计 / 研发 / 法务 · <b>作者：</b>Tammy · <b>Reviewers：</b>Alex · Zack · Michael / Jenny · <b>关联文档：</b><a href="/seel-compass-prd.html">法务版 PRD (English)</a><br><b>v1.3（7/8）更新（Michael 反馈）：</b>self-harm 从"运行时压制"改为"authoring 时整体 scope-out"（§6.12/8.4）· registry 加解释依据字段应对判例问题 · onboarding 前置 counsel 版免责声明。
+      <b>本文档目的：</b>定义 Seel Compass Phase 1 的产品需求 —— 我们要做什么产品、给谁用、解决什么问题、如何验收、如何衡量成功。<b>面向：</b>产品 / 设计 / 研发 / 法务 · <b>作者：</b>Tammy · <b>Reviewers：</b>Alex · Zack · Michael / Jenny · <b>关联文档：</b><a href="/seel-compass-prd.html">法务版 PRD (English)</a><br><b>v1.3（7/17）更新（Michael 反馈）：</b>self-harm 从"运行时压制"改为"authoring 时整体 scope-out"（§6.12/8.4）· registry 加解释依据字段应对判例问题 · onboarding 前置 counsel 版免责声明。
     </div>
   </div>
 </div>
@@ -315,7 +315,7 @@
 
       <div class="story">
         <div class="role">US-8 · 法务 · Seel 自伤保护</div>
-        <div class="text">作为 Seel 法务，我需要<b>产品不会把 Seel 自己的售后保障 / opt-out 机制标为风险</b>—— 且实现方式上，那些只会命中 Seel 产品模式的规则应<b>从方法论里整体移除</b>（对所有商家都不查），而不是"查了再针对 Seel 隐藏"。后者的选择性隐藏本身就是可被 argue 成误导的积极行为（Michael 7/8）。</div>
+        <div class="text">作为 Seel 法务，我需要<b>产品不会把 Seel 自己的售后保障 / opt-out 机制标为风险</b>—— 且实现方式上，那些只会命中 Seel 产品模式的规则应<b>从方法论里整体移除</b>（对所有商家都不查），而不是"查了再针对 Seel 隐藏"。后者的选择性隐藏本身就是可被 argue 成误导的积极行为（Michael 7/17）。</div>
       </div>
     </section>
 
@@ -507,7 +507,7 @@
         <li><b>版本化链接：</b>官方源支持时点 URL 的（EUR-Lex consolidated、eCFR 日期视图）存 corpus 摄入版本；不支持的存当前官方链接、由 corpus 日期声明兜底。链接健康检查搭 corpus 月度 refresh。</li>
         <li><b>对内签署、对外零背书：</b>商家只看到 corpus 版本号；UI 任何地方不出现 "counsel-reviewed" 类标签（暴露法务具名 = 增加 reliance 和 UPL 风险）。签署记录只在内部 audit log。</li>
         <li><b>对签署范围的影响：</b>corpus 签署对象从"内部规则文本"扩大为"含商家可见引用 registry"—— 已同步进英文版 §12（item 3 扩围 + 新增 item 9 引用粒度、item 10 时效锚点）。</li>
-        <li><b>解释依据字段（v1.3，Michael 7/8）：</b>很多风险在成文法条文里并不清晰，而是在解释该法的<b>判例 / 机构指南</b>里发展出来的，裸条文未必直接适用。因此 registry 每条带一个 <code>解释依据</code> 字段（条文 / 法规 / 机构指南 / 判例执法）；规则实际活在解释层的，引用指向控制性指南或执法综述、而非裸条款，叙述层承载解释。逐条可在 registry 审、也是 counsel 签署内容的一部分。商家端 Source pane 上,该依据以引用 chip 旁的小标签呈现（<code>STATUTE</code> / <code>GUIDANCE</code> / <code>CASE&nbsp;LAW</code>），让解释层差异在实际分析里可见,而不只在 registry 里。</li>
+        <li><b>解释依据字段（v1.3，Michael 7/17）：</b>很多风险在成文法条文里并不清晰，而是在解释该法的<b>判例 / 机构指南</b>里发展出来的，裸条文未必直接适用。因此 registry 每条带一个 <code>解释依据</code> 字段（条文 / 法规 / 机构指南 / 判例执法）；规则实际活在解释层的，引用指向控制性指南或执法综述、而非裸条款，叙述层承载解释。逐条可在 registry 审、也是 counsel 签署内容的一部分。商家端 Source pane 上,该依据以引用 chip 旁的小标签呈现（<code>STATUTE</code> / <code>GUIDANCE</code> / <code>CASE&nbsp;LAW</code>），让解释层差异在实际分析里可见,而不只在 registry 里。</li>
         <li><b>可审 registry（draft）：</b><a href="https://app.notion.com/p/3983b4ed17a281ff9c60cf33a9ab451a">🗂️ Seel Compass — Rule Citation Registry</a>——商家可见的 rule→引用映射，从当前 findings seed，含逐条解释依据列供 counsel 标注。</li>
       </ul>
     </section>
@@ -682,7 +682,7 @@
         </ul>
       </div>
       <div class="note info">
-        <b>Self-harm 处理方式（v1.3，Michael 7/8）：</b>只会命中 Seel 产品模式的规则（默认加购披露 / opt-out 可见性 / 运费险费用披露）在 corpus 层就<b>整体移除</b>，对所有商家都不查——没有运行时压制、没有指纹识别、没有白名单。只有 in-scope / out-of-scope 两态。详见法务 PRD §5.2。
+        <b>Self-harm 处理方式（v1.3，Michael 7/17）：</b>只会命中 Seel 产品模式的规则（默认加购披露 / opt-out 可见性 / 运费险费用披露）在 corpus 层就<b>整体移除</b>，对所有商家都不查——没有运行时压制、没有指纹识别、没有白名单。只有 in-scope / out-of-scope 两态。详见法务 PRD §5.2。
       </div>
 
       <h3>8.5 品牌与视角</h3>
@@ -820,7 +820,7 @@
         <b>AC-Legal（必须 100% 通过）</b>
         <ul>
           <li>UI 里搜不到 "violates" / "illegal" / "non-compliant" / "deceptive" 等禁词</li>
-          <li>onboarding 第一屏（scan 之前）逐字展示 counsel 版免责声明（Michael 7/8）</li>
+          <li>onboarding 第一屏（scan 之前）逐字展示 counsel 版免责声明（Michael 7/17）</li>
           <li>每个 tab 都有 footer disclaimer</li>
           <li>IP tab 有 "name-only, not FTO" in-context disclaimer</li>
           <li>Entity tab 有 "informational only, confirm with counsel" 提示</li>
@@ -1072,7 +1072,7 @@
       <ul>
         <li><b>触发:</b>成文法/判例演进 · 加新市场或品类 · 官方链接失效/迁移</li>
         <li><b>每次更新</b> → PR → counsel review → approve → 新 tag。除签署 tag 外任何东西都到不了商家（re-sign 目标 ≤5 工作日）</li>
-        <li><b>判例漂移（Michael 7/8）:</b><code>解释依据 = case law</code> 的规则标记为定时复审——这类漂移最快、规则不固定在条文里</li>
+        <li><b>判例漂移（Michael 7/17）:</b><code>解释依据 = case law</code> 的规则标记为定时复审——这类漂移最快、规则不固定在条文里</li>
         <li><b>链接健康:</b>月度自动检查;实质变化触发重签</li>
         <li><b>History provenance:</b>每次 scan 标注所用 corpus 版本（商家 History tab 可见）→ 解析到签署 tag → 批准记录</li>
       </ul>
