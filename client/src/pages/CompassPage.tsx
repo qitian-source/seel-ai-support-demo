@@ -60,14 +60,15 @@ const CITATION_BASIS: Record<string, Basis> = {
   "🇺🇸 CA Civ. Code §1723 — refund-policy disclosure": "statute",
   "🇺🇸 CPSIA — 15 U.S.C. §2056a": "statute",
   "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50": "statute",
-  "🇺🇸 Prop 65 — Cal. H&S Code §25249.6 (OEHHA)": "statute",
+  "🇺🇸 Prop 65 — Cal. H&S Code §25249.6": "statute",
   // Administrative rules / mandatory standards
-  "🇺🇸 ASTM F963 toy-safety standard": "regulation",
+  "🇺🇸 OEHHA warning regs — 27 CCR §25600 et seq.": "regulation",
+  "🇺🇸 ASTM F963 (mandatory by incorporation under CPSIA)": "regulation",
   // Agency interpretive guidance
   "🇺🇸 FTC Green Guides — 16 CFR Part 260": "guidance",
   "🇺🇸 FTC Endorsement Guides — 16 CFR Part 255": "guidance",
   "🇺🇸 FTC staff report — Bringing Dark Patterns to Light (2022)": "guidance",
-  "Consumer-contract disclosure norms — FTC staff guidance": "guidance",
+  // tc1 is a descriptive check with no legal authority — intentionally NOT in this map (no basis tag).
   // Rule lives in enforcement / case law, not the bare statutory text (Michael's example)
   "🇺🇸 FTC Act §5 — 15 U.S.C. §45": "case law",
   // Note: pure data-source lookups (USPTO db, State SoS) carry no interpretive basis — intentionally absent.
@@ -200,8 +201,8 @@ const TC_ITEMS: Ctrl[] = [
     id: "tc1", title: "Governing law & dispute-resolution clause present",
     sub: "Found in Terms of Service, §12.", state: "ok",
     ev: {
-      rules: "Standard consumer-contract practice expects merchants to state which law governs and how disputes are resolved.",
-      sources: [{ label: "Consumer-contract disclosure norms — FTC staff guidance" }],
+      rules: "Descriptive check: whether a governing-law and dispute-resolution clause is present. There is no legal requirement to include one — this is surfaced as an observation, not a gap.",
+      sources: [{ label: "Descriptive check — no specific legal requirement cited" }],
       proof: {
         pages: "yourstore.com/terms · §12 “Governing Law”", checkedAt: "Jun 17, 2026",
         excerpt: "These Terms are governed by the laws of the State of Delaware. Any dispute will first be raised with our support team before formal proceedings.",
@@ -296,12 +297,12 @@ const PRODUCT_GROUPS: SubGroup[] = [
         id: "p-kids-safety", title: "Children's products / toys — safety standards & choking-hazard rules",
         sub: "Kids' outdoor gear detected. Age labels and small-parts warnings present.", state: "ok", catKey: "kids", defaultOnState: "ok",
         ev: {
-          rules: "US children's-product frameworks commonly expect age grading and small-parts warnings on toys and kids' gear.",
+          rules: "For toys and items with small parts, US frameworks expect age grading and small-parts warnings. Note: this authority is toy-specific — broader kids' goods (apparel, furniture) would need different authority.",
           sources: [
             { label: "🇺🇸 CPSIA — 15 U.S.C. §2056a", url: "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title15-section2056a&num=0&edition=prelim" },
-            { label: "🇺🇸 ASTM F963 toy-safety standard" },
+            { label: "🇺🇸 ASTM F963 (mandatory by incorporation under CPSIA)" },
           ],
-          proof: { pages: "4 kids' outdoor gear PDPs", checkedAt: "Jun 17, 2026", observation: "Age labels and small-parts warnings present on every sampled page." },
+          proof: { pages: "4 kids' outdoor gear PDPs (toys / small-parts items)", checkedAt: "Jun 17, 2026", observation: "Age labels and small-parts warnings present on every sampled page." },
         },
       },
       { id: "p-ce-ukca",     title: "CE / UKCA conformity markings displayed where required", sub: "Markings shown on regulated goods sold into EU / UK.", state: "ok" },
@@ -312,7 +313,10 @@ const PRODUCT_GROUPS: SubGroup[] = [
         sub: "Prop 65 warnings surfaced on relevant CA-shipping listings.", state: "ok",
         ev: {
           rules: "California Prop 65 commonly expects a clear warning before exposing consumers to listed substances.",
-          sources: [{ label: "🇺🇸 Prop 65 — Cal. H&S Code §25249.6 (OEHHA)", url: "https://oehha.ca.gov/proposition-65" }],
+          sources: [
+            { label: "🇺🇸 Prop 65 — Cal. H&S Code §25249.6", url: "https://oehha.ca.gov/proposition-65" },
+            { label: "🇺🇸 OEHHA warning regs — 27 CCR §25600 et seq.", url: "https://oehha.ca.gov/proposition-65/law/proposition-65-regulations" },
+          ],
           proof: { pages: "CA-shipping listings", checkedAt: "Jun 17, 2026", observation: "Prop 65 warnings surfaced on the relevant CA-shipping listings." },
         },
       },
