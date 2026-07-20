@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.3</title>
+<title>Return SaaS — Issues & Rules 体验优化 PRD · v2.4</title>
 <style>
   :root {
     --brand: #645AFF; --brand-d:#4d43e0; --dark:#1E293B; --mid:#475569;
@@ -69,7 +69,7 @@
 
 <div class="topbar">
   <div class="topbar-brand"><span class="dot"></span>Seel · Return SaaS</div>
-  <span class="topbar-tag">PRD v2.3</span>
+  <span class="topbar-tag">PRD v2.4</span>
   <span class="topbar-date">2026-07-10 · qi.tian@seel.com</span>
 </div>
 
@@ -86,7 +86,8 @@
   </div>
 </div>
 
-<div class="changelog"><b>v2.3（2026-07-10）R6 改向</b>：R6 由「换货页留言让商家配货」改为 <strong>换货选品页加模糊搜索框</strong>——消费者在 Choose new item 页搜商品名 / SKU 快速定位要换的商品。移除留言区、<code>exchangeNote</code> 字段、商家端换货留言 callout；Continue 校验维持「必须选到商品」。</div>
+<div class="changelog"><b>v2.4（2026-07-10）R6 搜索维度扩展</b>：换货搜索由「仅商品名」扩展为对齐 <strong>Shopify 通用商品搜索能力</strong>——覆盖 <strong>title / vendor / product_type / tag / sku / barcode</strong> 六个字段（不再限于商品 ID/名称）。</div>
+<div class="changelog" style="background:#F8FAFC;border-color:var(--border);color:var(--soft)"><b>v2.3（2026-07-10）R6 改向</b>：R6 由「换货页留言让商家配货」改为 <strong>换货选品页加模糊搜索框</strong>——消费者在 Choose new item 页搜商品快速定位要换的商品。移除留言区、<code>exchangeNote</code> 字段、商家端换货留言 callout；Continue 校验维持「必须选到商品」。</div>
 <div class="changelog"><b>v2.1（2026-07-10）评审调整</b>：① <strong>不做承运商轨迹跳转</strong>——列表与详情中的运单号仅展示 + 复制，不做外链；② 详情页操作按钮<strong>与线上保持一致</strong>（右上 More actions / Reject / Process，不新增改动）；③ 导出流程定为「下载 → 选择字段 → <strong>走邮箱发送</strong>」——一律异步生成、链接发商户邮箱，不做浏览器即时下载；④ <strong>不做灰度</strong>，直接全量发布；⑤ R3 明确展示的是<strong>商品 SKU ID</strong>（店铺后台变体 SKU 编码）；⑥ 导出<strong>不做「勾选组合按人记住」</strong>，本期移除该需求。</div>
 <div class="changelog" style="background:#F8FAFC;border-color:var(--border);color:var(--soft)"><b>v2.0（2026-07-07）相对 v1.0 的变化</b>：① 导出从「两种格式单选」简化为单一字段勾选列表（行粒度自动推导，去掉预览）；② 多包裹 RMA 明确为 hover 浮层方案；③ Rules 画布标签明确为限字符截断 + hover 全文（不做整段全文平铺）；④ 界面语言全英文；⑤ 删除技术实现细节，另见技术评审文档。</div>
 
@@ -117,7 +118,7 @@
   <tr><td><strong>R3</strong></td><td>退货商品展示 SKU ID</td><td>商家用自己的编码体系识别商品</td><td><span class="pill p0">P0</span></td></tr>
   <tr><td><strong>R4</strong></td><td>完结 RMA 保留面单与运单入口</td><td>完结后仍可回查、下载，支持对账与申诉</td><td><span class="pill p1">P1</span></td></tr>
   <tr><td><strong>R5</strong></td><td>Rules 画布选项文案可读</td><td>一屏看全规则，hover 看全文</td><td><span class="pill p1">P1</span></td></tr>
-  <tr><td><strong>R6</strong></td><td>换货选品页加搜索框（模糊搜索）</td><td>消费者搜商品名 / SKU 快速找到想换的商品，不用滚动翻找</td><td><span class="pill p0">P0</span></td></tr>
+  <tr><td><strong>R6</strong></td><td>换货选品页加搜索框（模糊搜索）</td><td>消费者按 Shopify 标准字段（名称/供应商/类型/标签/SKU/条码）搜到想换的商品，不用滚动翻找</td><td><span class="pill p0">P0</span></td></tr>
 </table>
 <p>界面语言：全英文（面向海外商家，与商家后台现有语言一致）。</p>
 
@@ -244,13 +245,14 @@
 </ol>
 
 <h3>R6 · 换货选品页加搜索框（模糊搜索）</h3>
-<div class="story">作为消费者，我选换货时目录商品一屏屏翻很慢、也难找到想要的款/色/码——我直接在选品页搜商品名或 SKU，快速定位到要换的商品。</div>
+<div class="story">作为消费者，我选换货时目录商品一屏屏翻很慢、也难找到想要的款/色/码——我直接在选品页搜商品名、颜色、类型甚至 SKU/条码，快速定位到要换的商品。</div>
 <h4>现状问题</h4>
 <p>换货商品选择（saas_return 的 <code>exchangeSelection</code> 步骤，即消费者端「Choose new item」页）只有一个商品网格，没有搜索。目录商品多时消费者只能滚动翻找，找不到就「Skip Exchange」放弃或将就选一个——换货转化和体验都受损。</p>
 <h4>需求描述（消费者端 · Choose new item 页）</h4>
 <ul>
   <li>在页面标题「Choose new item」下方、商品网格上方，新增一个<strong>搜索框</strong>，placeholder：<em>Search products</em>。</li>
-  <li><strong>模糊搜索（仅 product 名，不搜 SKU）</strong>：输入即时过滤商品网格，仅匹配<strong>商品名</strong>；<strong>按词命中、顺序无关</strong>——查询拆成多个词，每个词都出现即算命中（如 <code>hoodie camo</code>、<code>camo hoodie</code> 都能命中「Boxy CAMO Hoodie」）；大小写 / 空格 / 连字符不敏感，支持部分词，无需完整。</li>
+  <li><strong>模糊搜索（对齐 Shopify 商品搜索能力）</strong>：不限于商品 ID/名称，匹配范围覆盖 Shopify 标准商品字段——<strong>title（商品名）· vendor（供应商）· product_type（商品类型）· tag（标签）· sku · barcode（条码）</strong>；这是 Shopify 通用的商品检索维度。</li>
+  <li><strong>匹配规则</strong>：输入即时过滤商品网格；<strong>按词命中、顺序无关</strong>——查询拆成多个词，每个词只要出现在上述任一字段即算命中（如 <code>camo hoodie</code>/<code>hoodie camo</code> 命中「Boxy CAMO Hoodie」；<code>khaki</code> 经 tag 命中卡其色裤；<code>hoodies</code> 经 product_type 命中带 Hood 但名称未含 "hoodie" 的款）；大小写 / 空格 / 连字符不敏感，支持部分词，无需完整。</li>
   <li>搜索框右侧有<strong>清除按钮</strong>（有输入时出现），一键清空恢复全部商品。</li>
   <li>无匹配结果时，网格区展示空状态文案 <em>No products match "…". Try another keyword or SKU.</em></li>
   <li>搜索<strong>不改变选择逻辑</strong>：过滤后照常点选商品加入换货；已选商品在过滤/清空后选中态保持。</li>
@@ -262,9 +264,9 @@
 </ul>
 <h4>验收标准</h4>
 <ol>
-  <li>选品页出现搜索框；输入商品名关键词即时过滤出对应商品。</li>
-  <li><strong>按词命中、顺序无关</strong>：<code>camo hoodie</code> 与 <code>hoodie camo</code> 均命中同一商品；跨词（如 <code>purple hood</code>）亦可。</li>
-  <li><strong>不匹配 SKU</strong>：输入 SKU 片段（如 <code>ae-hd-camo</code>）不命中商品（仅按商品名搜索）。</li>
+  <li>选品页出现搜索框；输入关键词即时过滤出对应商品。</li>
+  <li><strong>六字段全覆盖</strong>：分别用 title / vendor / product_type / tag / sku / barcode 的关键词都能命中对应商品（如 <code>aelfric</code> 命中该 vendor 全部、<code>hoodies</code> 命中该 product_type、<code>khaki</code> 命中该 tag、<code>ae-hd-camo</code> 命中该 SKU、<code>0193458002059</code> 命中该 barcode）。</li>
+  <li><strong>按词命中、顺序无关</strong>：<code>camo hoodie</code> 与 <code>hoodie camo</code> 均命中同一商品；跨词/跨字段（如 <code>purple hood</code>）亦可。</li>
   <li>无匹配时展示空状态文案；点清除按钮恢复全部商品。</li>
   <li>过滤状态下选中商品，清空搜索后该商品仍为选中态。</li>
   <li>未选任何商品时 Continue 置灰并提示 <em>Select an item to exchange for.</em>；选到商品后可继续。</li>

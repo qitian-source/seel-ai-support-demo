@@ -1121,28 +1121,32 @@ function switchTab(t){
 }
 
 /* ════════ Consumer 端 · Choose new item + 模糊搜索 ════════ */
+/* 商品字段对齐 Shopify：title(=name) / vendor / product_type / tags / sku / barcode */
 const CS_PRODUCTS = [
-  { name:'AERC Soft Oversized Running Tee', sku:'AERC-TEE-WHT-M', price:'$49.95', emoji:'👕' },
-  { name:'Button Panel Long Sleeve Tee', sku:'AE-LST-BLK-M', price:'$49.95', emoji:'🥼' },
-  { name:'Washed Denim Wide Shorts', sku:'AE-SHR-DNM-32', price:'$59.95', emoji:'🩳' },
-  { name:'Heart Embroidered Sweatpants', sku:'AE-SWP-BLK-L', price:'$64.95', emoji:'👖' },
-  { name:'Boxy CAMO Hood Zip Up', sku:'AE-HD-CAMO-ZIP-M', price:'$69.95', emoji:'🧥' },
-  { name:'Boxy CAMO Hoodie - Purple', sku:'AE-HD-CAMO-PPL-L', price:'$69.95', emoji:'🧥' },
-  { name:'Vintage Wash Cargo Pants', sku:'AE-PNT-CRG-30', price:'$74.95', emoji:'👖' },
-  { name:'Knit Beanie - Black', sku:'AE-ACC-BNE-BLK', price:'$24.95', emoji:'🧢' },
-  { name:'Oversized Graphic Tee - White', sku:'AE-TEE-GRA-WHT-L', price:'$44.95', emoji:'👕' },
-  { name:'Fleece Zip Jacket - Grey', sku:'AE-JKT-FLC-GRY-M', price:'$89.95', emoji:'🧥' },
+  { name:'AERC Soft Oversized Running Tee', vendor:'Aelfric Eden', type:'T-Shirts', tags:['white','running','oversized'], sku:'AERC-TEE-WHT-M', barcode:'0193458002011', price:'$49.95', emoji:'👕' },
+  { name:'Button Panel Long Sleeve Tee', vendor:'Aelfric Eden', type:'T-Shirts', tags:['black','long sleeve'], sku:'AE-LST-BLK-M', barcode:'0193458002028', price:'$49.95', emoji:'🥼' },
+  { name:'Washed Denim Wide Shorts', vendor:'Aelfric Eden', type:'Shorts', tags:['denim','washed','wide leg'], sku:'AE-SHR-DNM-32', barcode:'0193458002035', price:'$59.95', emoji:'🩳' },
+  { name:'Heart Embroidered Sweatpants', vendor:'Aelfric Eden', type:'Pants', tags:['black','embroidered','lounge'], sku:'AE-SWP-BLK-L', barcode:'0193458002042', price:'$64.95', emoji:'👖' },
+  { name:'Boxy CAMO Hood Zip Up', vendor:'Aelfric Eden', type:'Hoodies', tags:['camo','zip','boxy'], sku:'AE-HD-CAMO-ZIP-M', barcode:'0193458002059', price:'$69.95', emoji:'🧥' },
+  { name:'Boxy CAMO Hoodie - Purple', vendor:'Aelfric Eden', type:'Hoodies', tags:['camo','purple','boxy'], sku:'AE-HD-CAMO-PPL-L', barcode:'0193458002066', price:'$69.95', emoji:'🧥' },
+  { name:'Vintage Wash Cargo Pants', vendor:'Aelfric Eden', type:'Pants', tags:['cargo','khaki','vintage'], sku:'AE-PNT-CRG-30', barcode:'0193458002073', price:'$74.95', emoji:'👖' },
+  { name:'Knit Beanie - Black', vendor:'AERC Basics', type:'Accessories', tags:['black','knit','winter'], sku:'AE-ACC-BNE-BLK', barcode:'0193458002080', price:'$24.95', emoji:'🧢' },
+  { name:'Oversized Graphic Tee', vendor:'Aelfric Eden', type:'T-Shirts', tags:['white','graphic','oversized'], sku:'AE-TEE-GRA-WHT-L', barcode:'0193458002097', price:'$44.95', emoji:'👕' },
+  { name:'Fleece Zip Jacket', vendor:'AERC Basics', type:'Jackets', tags:['grey','fleece','zip'], sku:'AE-JKT-FLC-GRY-M', barcode:'0193458002103', price:'$89.95', emoji:'🧥' },
 ];
 let csSelected = new Set();
 let csQuery = '';
 
-// 模糊匹配：只搜 product 名（不搜 SKU）；按词命中、顺序无关，大小写不敏感
-// 例 "hoodie camo" / "camo hoodie" / "purple hood" 都能命中「Boxy CAMO Hoodie」
+// 模糊匹配（对齐 Shopify 商品搜索）：覆盖 title / vendor / product_type / tags / sku / barcode
+// 按词命中、顺序无关，大小写/空格/连字符不敏感
+function csHaystack(p){
+  return [p.name, p.vendor, p.type, (p.tags||[]).join(' '), p.sku, p.barcode].join(' ');
+}
 function csMatch(p, q){
   const query = (q || '').trim();
   if (!query) return true;
-  const norm = s => s.toLowerCase().replace(/[\s\-_]/g,'');
-  const hay = norm(p.name);
+  const norm = s => String(s).toLowerCase().replace(/[\s\-_]/g,'');
+  const hay = norm(csHaystack(p));
   return query.split(/\s+/).every(tok => hay.includes(norm(tok)));
 }
 function csVisibleIdx(){
