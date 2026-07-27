@@ -313,7 +313,7 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       </div>
       <div class="cover-meta-item">
         <div class="key">版本</div>
-        <div class="val">v2.4</div>
+        <div class="val">v2.5</div>
       </div>
       <div class="cover-meta-item">
         <div class="key">更新日期</div>
@@ -325,7 +325,7 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       </div>
       <div class="cover-meta-item">
         <div class="key">上游文档</div>
-        <div class="val">PRD-review-agent.md v1.6</div>
+        <div class="val">PRD-review-agent.md v1.7</div>
       </div>
     </div>
   </div>
@@ -472,6 +472,10 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
           <td>5</td><td><strong>邀请卡文案</strong></td>
           <td>Setup 卡内新增 "Invite card message" 步骤：<strong>系统提供默认文案</strong>，商家可自定义（textarea 编辑 + 自动保存 + Reset to default 恢复默认）；步骤状态显示 Default / Customized；未自定义即用默认，不阻塞开启</td>
         </tr>
+        <tr>
+          <td>6</td><td><strong>语言切换（i18n）</strong></td>
+          <td>Setup 卡下方独立"语言 / Language"卡：<strong>English | 中文</strong> 分段切换，界面文案即时全量切换（KPI / 漏斗 / 表格 / 侧滑 / 悬浮 hint 全覆盖）。<strong>产品名 "Review agent" 及品牌词不翻译</strong>；评价正文、客户名、订单号等用户数据保持原文。默认跟随 MD 账号语言（demo 默认中文）</td>
+        </tr>
       </tbody>
     </table>
 
@@ -599,6 +603,11 @@ PATCH /md/open/aisupport/review-agent/sessions/{sessionId}<br>
       <div class="section-title">版本记录</div>
     </div>
 
+    <div class="version-row">
+      <span class="v-ver">v2.5</span>
+      <span class="v-date">2026-07-15</span>
+      <span class="v-desc">Settings 新增语言切换（English | 中文,界面文案即时全量切换,demo 默认中文）；产品名 "Review agent" 与品牌词不翻译,评价正文/客户名/订单号等用户数据保持原文</span>
+    </div>
     <div class="version-row">
       <span class="v-ver">v2.4</span>
       <span class="v-date">2026-07-15</span>
