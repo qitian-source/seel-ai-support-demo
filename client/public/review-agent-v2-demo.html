@@ -414,7 +414,6 @@ body {
         </div>
         <div class="card-body">
           <div id="funnel-rows"></div>
-          <div class="fn-note" id="fn-note"></div>
         </div>
       </div>
 
@@ -423,7 +422,6 @@ body {
         <div class="card-head">
           <div>
             <h2 data-k="ss.title"></h2>
-            <div class="sub" id="sess-count"></div>
           </div>
         </div>
 
@@ -782,7 +780,6 @@ const App = (() => {
         <div class="fn-conv">${r.conv}</div>
       </div>`;
     }).join("");
-    $("fn-note").innerHTML = t("fn.note", { n: d.pending });
   }
 
   // ── Time range ──
@@ -915,7 +912,6 @@ const App = (() => {
   }
   function renderTable() {
     const rows = filtered();
-    $("sess-count").textContent = t("ss.count", { n: FUNNEL[state.range].shown.toLocaleString() });
     $("foot-info").textContent = t("ss.foot", { shown: rows.length, total: SESSIONS.length });
     if (!rows.length) { $("tbl-body").innerHTML = `<div class="empty-state">${t("ss.empty")}</div>`; return; }
     $("tbl-body").innerHTML = rows.map(s => {
