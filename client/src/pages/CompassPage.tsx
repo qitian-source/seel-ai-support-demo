@@ -52,6 +52,7 @@ const CITATION_BASIS: Record<string, Basis> = {
   "🇪🇺 GDPR — Art. 15–20": "statute",
   "🇪🇺 GDPR — Art. 5(1)(e) storage limitation": "statute",
   "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)": "statute",
+  "🇪🇺 EDPB Guidelines 2/2023 — Art. 5(3) technical scope": "guidance",
   "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19": "statute",
   "🇺🇸 CPRA — Cal. Civ. Code §1798.100–.121": "statute",
   "🇺🇸 CPRA — §1798.100(a)(3)": "statute",
@@ -60,6 +61,7 @@ const CITATION_BASIS: Record<string, Basis> = {
   "🇺🇸 CA Civ. Code §1723 — refund-policy disclosure": "statute",
   "🇺🇸 CPSIA — 15 U.S.C. §2056a": "statute",
   "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50": "statute",
+  "🇺🇸 FTC Guides for Warranties & Guarantees — 16 CFR Part 239": "guidance",
   "🇺🇸 Prop 65 — Cal. H&S Code §25249.6": "statute",
   // Administrative rules / mandatory standards
   "🇺🇸 OEHHA warning regs — 27 CCR §25600 et seq.": "regulation",
@@ -183,7 +185,8 @@ const DP_ITEMS: Ctrl[] = [
     ev: {
       rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.",
       sources: [
-        { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058" },
+        { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32002L0058:EN:HTML" },
+        { label: "🇪🇺 EDPB Guidelines 2/2023 — Art. 5(3) technical scope", url: "https://www.edpb.europa.eu/system/files/documents/2024-10/edpb_guidelines_202302_technical_scope_art_53_eprivacydirective_v2_en_0.pdf" },
         { label: "🇪🇺 GDPR — Art. 7 consent conditions", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
       ],
       proof: {
@@ -217,6 +220,7 @@ const TC_ITEMS: Ctrl[] = [
       sources: [
         { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
         { label: "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50", url: "https://uscode.house.gov/view.xhtml?path=/prelim@title15/chapter50&edition=prelim" },
+        { label: "🇺🇸 FTC Guides for Warranties & Guarantees — 16 CFR Part 239", url: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-239" },
       ],
       proof: {
         pages: "yourstore.com product listing pages", checkedAt: "Jun 17, 2026",
@@ -1626,6 +1630,7 @@ const ALL_ISSUES: Issue[] = [
     sources: [
       { label: "🇺🇸 FTC Act §5 — 15 U.S.C. §45", url: "https://www.ftc.gov/legal-library/browse/statutes/federal-trade-commission-act" },
       { label: "🇺🇸 Magnuson-Moss Warranty Act — 15 U.S.C. ch. 50", url: "https://uscode.house.gov/view.xhtml?path=/prelim@title15/chapter50&edition=prelim" },
+      { label: "🇺🇸 FTC Guides for Warranties & Guarantees — 16 CFR Part 239", url: "https://www.ecfr.gov/current/title-16/chapter-I/subchapter-B/part-239" },
     ],
     proof: { pages: "yourstore.com product listing pages", checkedAt: "Jun 17, 2026", excerpt: "Authenticity Ensured — every item guaranteed genuine." },
     rec: "Recommend confirming with qualified counsel whether to qualify the guarantee (scope / sellers covered).",
@@ -1668,7 +1673,8 @@ const ALL_ISSUES: Issue[] = [
     id: "i-cookies", title: "Non-essential cookies set before consent", category: "Data & Privacy", market: "eu", marketLabel: "European Union",
     rules: "Under the EU ePrivacy framework, non-essential cookies are commonly expected to require prior consent.",
     sources: [
-      { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058" },
+      { label: "🇪🇺 ePrivacy Directive 2002/58/EC — Art. 5(3)", url: "https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX:32002L0058:EN:HTML" },
+      { label: "🇪🇺 EDPB Guidelines 2/2023 — Art. 5(3) technical scope", url: "https://www.edpb.europa.eu/system/files/documents/2024-10/edpb_guidelines_202302_technical_scope_art_53_eprivacydirective_v2_en_0.pdf" },
       { label: "🇪🇺 GDPR — Art. 7 consent conditions", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679" },
     ],
     proof: { pages: "yourstore.com homepage — network trace", checkedAt: "Jun 17, 2026", observation: "3 cookies set before any consent interaction: _ga, _fbp, _hjid (t+0.8 s after page load)." },
