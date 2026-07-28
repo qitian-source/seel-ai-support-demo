@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -90,7 +90,7 @@ body {
 .card-head .sub { font-size: 12px; color: var(--gray-600); margin-top: 2px; font-weight: 400; }
 .card-body { padding: 18px 20px; }
 
-/* ── Time range (sales-agent style) ── */
+/* ── Time range ── */
 .ctrl-row { display: flex; align-items: center; gap: 10px; }
 .ctrl-row .lbl { font-size: 13px; color: var(--gray-600); }
 .range-wrap { position: relative; }
@@ -141,7 +141,7 @@ body {
 }
 .tip:hover::after, .tip:hover::before { opacity: 1; }
 
-/* ── KPI big numbers (sales-agent style) ── */
+/* ── KPI big numbers ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
 .kpi {
@@ -173,7 +173,7 @@ body {
 .switch .knob { position: absolute; top: 2px; left: 22px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .2s; }
 .switch.off .knob { left: 2px; }
 
-/* ── Setup (single card hosts all settings) ── */
+/* ── Setup ── */
 .cl-item { border-top: 1px solid var(--gray-100); }
 .cl-item:first-child { border-top: none; }
 .cl-head { display: flex; align-items: center; gap: 12px; padding: 15px 0; cursor: pointer; }
@@ -190,7 +190,6 @@ body {
 .cl-chevron { font-size: 11px; color: var(--gray-400); width: 14px; text-align: center; }
 .cl-detail { padding: 2px 0 18px 34px; }
 
-/* Trustpilot inside setup */
 .tp-row { display: flex; align-items: center; gap: 12px; }
 .tp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 .tp-url { flex: 1; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -199,7 +198,6 @@ body {
 .edit-btn { border: none; background: none; font-size: 12px; color: var(--gray-600); cursor: pointer; flex-shrink: 0; }
 .edit-btn:hover { color: var(--gray-900); }
 
-/* Limit inside setup */
 .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
 .preset {
   border: 1px solid var(--gray-200); border-radius: 10px; background: #fff;
@@ -216,12 +214,16 @@ body {
 .save-hint { font-size: 11px; color: var(--gray-400); margin-top: 9px; }
 .save-hint.saved { color: #047857; font-weight: 600; }
 
-/* Invite message inside setup */
 .msg-ta { width: 100%; border: 1px solid var(--gray-200); border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit; color: var(--gray-900); resize: vertical; min-height: 64px; outline: none; }
 .msg-ta:focus { border-color: var(--purple); }
 .msg-actions { display: flex; align-items: center; gap: 14px; margin-top: 9px; }
 .reset-link { font-size: 12px; color: var(--gray-500); cursor: pointer; text-decoration: underline; background: none; border: none; }
 .reset-link:hover { color: var(--gray-800); }
+
+/* Language segmented control */
+.lang-seg { display: inline-flex; background: var(--gray-100); border-radius: 9px; padding: 3px; gap: 3px; }
+.lang-seg button { border: none; background: transparent; font-size: 13px; font-weight: 600; color: var(--gray-600); padding: 6px 16px; border-radius: 7px; cursor: pointer; }
+.lang-seg button.active { background: #fff; color: var(--gray-900); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
 
 /* Low-star follow-up */
 .fu-tag { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 1px 7px; font-size: 10.5px; font-weight: 700; background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber-tx); margin-left: 6px; vertical-align: 1px; }
@@ -346,30 +348,30 @@ body {
 <div class="shell">
 
 <nav class="sidenav">
-  <div class="sn-item"><span class="ico">🏠</span>Home</div>
-  <div class="sn-item"><span class="ico">📈</span>Analytics</div>
-  <div class="sn-item"><span class="ico">🛍</span>Orders</div>
-  <div class="sn-item"><span class="ico">🛡</span>Protection</div>
-  <div class="sn-item"><span class="ico">🔗</span>Integrations</div>
-  <div class="sn-item"><span class="ico">💬</span>Conversation</div>
-  <div class="sn-label">Workforce</div>
-  <div class="sn-item"><span class="ico">🎧</span>Support agent</div>
-  <div class="sn-item"><span class="ico">📊</span>Sales agent</div>
-  <div class="sn-item"><span class="ico">🗣</span>VOC agent</div>
-  <div class="sn-item active"><span class="ico">⭐</span>Review agent</div>
-  <div class="sn-label">Customize</div>
-  <div class="sn-item"><span class="ico">🧩</span>Widgets</div>
-  <div class="sn-item"><span class="ico">💵</span>Cash back</div>
-  <div class="sn-item"><span class="ico">🖥</span>Customer portal</div>
-  <div class="sn-item"><span class="ico">✉️</span>Notifications</div>
+  <div class="sn-item"><span class="ico">🏠</span><span data-k="nav.home"></span></div>
+  <div class="sn-item"><span class="ico">📈</span><span data-k="nav.analytics"></span></div>
+  <div class="sn-item"><span class="ico">🛍</span><span data-k="nav.orders"></span></div>
+  <div class="sn-item"><span class="ico">🛡</span><span data-k="nav.protection"></span></div>
+  <div class="sn-item"><span class="ico">🔗</span><span data-k="nav.integrations"></span></div>
+  <div class="sn-item"><span class="ico">💬</span><span data-k="nav.conversation"></span></div>
+  <div class="sn-label" data-k="nav.workforce"></div>
+  <div class="sn-item"><span class="ico">🎧</span><span data-k="nav.support"></span></div>
+  <div class="sn-item"><span class="ico">📊</span><span data-k="nav.sales"></span></div>
+  <div class="sn-item"><span class="ico">🗣</span><span data-k="nav.voc"></span></div>
+  <div class="sn-item active"><span class="ico">⭐</span><span data-k="nav.review"></span></div>
+  <div class="sn-label" data-k="nav.customize"></div>
+  <div class="sn-item"><span class="ico">🧩</span><span data-k="nav.widgets"></span></div>
+  <div class="sn-item"><span class="ico">💵</span><span data-k="nav.cashback"></span></div>
+  <div class="sn-item"><span class="ico">🖥</span><span data-k="nav.portal"></span></div>
+  <div class="sn-item"><span class="ico">✉️</span><span data-k="nav.notifications"></span></div>
 </nav>
 
 <main class="main">
   <div class="page-head">
     <div class="page-title-row">
-      <h1 class="page-title">Review agent</h1>
-      <span class="page-tab active" id="tab-btn-performance" onclick="App.setTab('performance')">Performance</span>
-      <span class="page-tab" id="tab-btn-settings" onclick="App.setTab('settings')">Settings</span>
+      <h1 class="page-title" data-k="page.title"></h1>
+      <span class="page-tab active" id="tab-btn-performance" data-k="tab.performance" onclick="App.setTab('performance')"></span>
+      <span class="page-tab" id="tab-btn-settings" data-k="tab.settings" onclick="App.setTab('settings')"></span>
     </div>
   </div>
 
@@ -378,26 +380,23 @@ body {
     <!-- ══ PERFORMANCE TAB ══ -->
     <div id="tab-performance" class="stack">
 
-      <div class="off-banner" id="off-banner">
-        ⏸ Review Agent is off — no new invites are being sent. Historical data remains available.
-        <a href="javascript:void(0)" onclick="App.setTab('settings')">Go to Settings →</a>
-      </div>
+      <div class="off-banner" id="off-banner"></div>
 
-      <!-- Time range (matches the MD global control) -->
+      <!-- Time range -->
       <div class="ctrl-row">
-        <span class="lbl">Time range</span>
+        <span class="lbl" data-k="tr.label"></span>
         <div class="range-wrap">
-          <button class="range-btn" onclick="App.toggleRangePanel(event)">📅 <span id="range-label">Last 30 days</span> <span style="font-size:9px;color:var(--gray-500)">▼</span></button>
+          <button class="range-btn" onclick="App.toggleRangePanel(event)">📅 <span id="range-label"></span> <span style="font-size:9px;color:var(--gray-500)">▼</span></button>
           <div class="range-panel" id="range-panel">
-            <div class="rp-opt" data-key="yesterday" onclick="App.pickRange('yesterday')">Yesterday</div>
-            <div class="rp-opt" data-key="7d" onclick="App.pickRange('7d')">Last 7 days</div>
-            <div class="rp-opt" data-key="30d" onclick="App.pickRange('30d')">Last 30 days</div>
-            <div class="rp-opt" data-key="90d" onclick="App.pickRange('90d')">Last 90 days</div>
+            <div class="rp-opt" data-key="yesterday" data-k="tr.yesterday" onclick="App.pickRange('yesterday')"></div>
+            <div class="rp-opt" data-key="7d" data-k="tr.7d" onclick="App.pickRange('7d')"></div>
+            <div class="rp-opt" data-key="30d" data-k="tr.30d" onclick="App.pickRange('30d')"></div>
+            <div class="rp-opt" data-key="90d" data-k="tr.90d" onclick="App.pickRange('90d')"></div>
             <div class="rp-sep"></div>
-            <div class="rp-label">Custom range</div>
-            <div class="rp-field"><span>From</span><input type="date" id="rp-from" oninput="App.checkCustom()"></div>
-            <div class="rp-field"><span>To</span><input type="date" id="rp-to" oninput="App.checkCustom()"></div>
-            <button class="rp-apply" id="rp-apply" onclick="App.applyCustom()">Apply</button>
+            <div class="rp-label" data-k="tr.custom"></div>
+            <div class="rp-field"><span data-k="tr.from"></span><input type="date" id="rp-from" oninput="App.checkCustom()"></div>
+            <div class="rp-field"><span data-k="tr.to"></span><input type="date" id="rp-to" oninput="App.checkCustom()"></div>
+            <button class="rp-apply" id="rp-apply" data-k="tr.apply" onclick="App.applyCustom()"></button>
           </div>
         </div>
       </div>
@@ -409,13 +408,12 @@ body {
       <div class="card">
         <div class="card-head">
           <div>
-            <h2>Conversion Funnel</h2>
-            <div class="sub">Cohort by invite date · Shown → Click → Review → 5-Star</div>
+            <h2 data-k="fn.title"></h2>
+            <div class="sub" data-k="fn.sub"></div>
           </div>
         </div>
         <div class="card-body">
           <div id="funnel-rows"></div>
-          <div class="fn-note" id="fn-note"></div>
         </div>
       </div>
 
@@ -423,21 +421,20 @@ body {
       <div class="card">
         <div class="card-head">
           <div>
-            <h2>Invited Sessions</h2>
-            <div class="sub" id="sess-count"></div>
+            <h2 data-k="ss.title"></h2>
           </div>
         </div>
 
         <div class="toolbar">
           <div class="search-box">
             <span class="mag">🔍</span>
-            <input id="search-input" placeholder="Search customer, order ID or conversation ID…" oninput="App.setSearch(this.value)">
+            <input id="search-input" data-k-ph="ss.search" oninput="App.setSearch(this.value)">
           </div>
           <div class="filter-chips" id="filter-chips"></div>
         </div>
 
         <div class="tbl-head">
-          <span>Customer</span><span>Conversation</span><span>Invited</span><span>Outcome</span><span>Review</span>
+          <span data-k="th.customer"></span><span data-k="th.conversation"></span><span data-k="th.invited"></span><span data-k="th.outcome"></span><span data-k="th.review"></span>
         </div>
         <div id="tbl-body"></div>
 
@@ -453,15 +450,26 @@ body {
     <div id="tab-settings" style="display:none">
       <div class="settings-stack">
 
-        <!-- Setup hosts ALL settings: each step contains its own config -->
+        <!-- Setup hosts ALL settings -->
         <div class="card">
           <div class="card-head">
             <div>
-              <h2>Setup</h2>
-              <div class="sub">Everything configurable in one place — invite message ships with a default</div>
+              <h2 data-k="setup.title"></h2>
+              <div class="sub" data-k="setup.sub"></div>
             </div>
           </div>
           <div class="card-body" id="setup-body" style="padding-top:4px;padding-bottom:4px"></div>
+        </div>
+
+        <!-- Language -->
+        <div class="card">
+          <div class="card-head">
+            <div><h2 data-k="lang.title"></h2></div>
+            <div class="lang-seg" id="lang-seg">
+              <button data-lang="en" onclick="App.setLang('en')">EN</button>
+              <button data-lang="zh" onclick="App.setLang('zh')">中文</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -487,9 +495,149 @@ body {
 <script>
 const App = (() => {
 
-  // ── Mock data ──────────────────────────────────────────────
-  // Funnel is cohorted by invite date: downstream events count toward
-  // the invite's cohort regardless of when they happen.
+  // ── i18n dictionary (UI chrome only; review/customer data stays as-is) ──
+  const I18N = {
+    en: {
+      "nav.home":"Home","nav.analytics":"Analytics","nav.orders":"Orders","nav.protection":"Protection",
+      "nav.integrations":"Integrations","nav.conversation":"Conversation","nav.workforce":"Workforce",
+      "nav.support":"Support agent","nav.sales":"Sales agent","nav.voc":"VOC agent","nav.review":"Review agent",
+      "nav.customize":"Customize","nav.widgets":"Widgets","nav.cashback":"Cash back","nav.portal":"Customer portal","nav.notifications":"Notifications",
+      "page.title":"Review agent","tab.performance":"Performance","tab.settings":"Settings",
+      "off.text":"⏸ Review Agent is off — no new invites are being sent. Historical data remains available.","off.link":"Go to Settings →",
+      "tr.label":"Time range","tr.yesterday":"Yesterday","tr.7d":"Last 7 days","tr.30d":"Last 30 days","tr.90d":"Last 90 days",
+      "tr.custom":"Custom range","tr.from":"From","tr.to":"To","tr.apply":"Apply",
+      "kpi.shown":"Invites Shown","kpi.shown.tip":"Sessions where the review invite card was displayed in the widget",
+      "kpi.clicks":"Invite Clicks","kpi.clicks.tip":"Users who clicked through to Trustpilot",
+      "kpi.ctr":"CTR","kpi.ctr.tip":"Invite clicks ÷ invites shown",
+      "kpi.reviews":"Reviews","kpi.reviews.tip":"Trustpilot reviews attributed back to an invited session",
+      "kpi.rate":"Review Rate","kpi.rate.tip":"Attributed reviews ÷ invite clicks",
+      "kpi.five":"5-Star Reviews","kpi.five.tip":"Attributed reviews rated 5 stars",
+      "kpi.vs":"vs previous","kpi.low":"low sample",
+      "fn.title":"Conversion Funnel","fn.sub":"Cohort by invite date · Shown → Click → Review → 5-Star",
+      "fn.shown":"Invites Shown","fn.clicks":"Invite Clicks","fn.reviews":"Attributed Reviews","fn.five":"5-Star Reviews",
+      "fn.shown.tip":"Sessions where the review invite card was displayed in the widget",
+      "fn.clicks.tip":"Users who clicked through to Trustpilot. CTR = clicks ÷ shown",
+      "fn.reviews.tip":"Trustpilot reviews matched back to an invited session. Rate = reviews ÷ clicks",
+      "fn.five.tip":"Share of attributed reviews rated 5 stars",
+      "fn.allCohort":"All eligible sessions in this cohort","fn.ctrOfShown":"CTR of shown","fn.ofClicks":"of clicks","fn.ofReviews":"of reviews",
+      "fn.note":"📐 <b>Cohort by invite date</b> — clicks and reviews count toward the day the invite was shown. Most reviews arrive within hours of the click; invites clicked in the last 12h are still inside the attribution window: <b>{n} pending</b>.",
+      "ss.title":"Invited Sessions","ss.count":"{n} invited sessions in this cohort · matches “Invites Shown”",
+      "ss.search":"Search customer, order ID or conversation ID…",
+      "th.customer":"Customer","th.conversation":"Conversation","th.invited":"Invited","th.outcome":"Outcome","th.review":"Review",
+      "ss.empty":"No invited sessions match your search or filter","ss.foot":"{shown} of {total} on this page",
+      "oc.all":"All","oc.invited":"Invited","oc.clicked":"Clicked","oc.reviewed":"Reviewed","oc.expired":"Expired",
+      "oc.all.tip":"Every session where the invite card was shown",
+      "oc.invited.tip":"Invite card shown in the widget — customer hasn't clicked yet. Stays here; never expires",
+      "oc.clicked.tip":"Customer clicked through to Trustpilot — 12h attribution window is open",
+      "oc.reviewed.tip":"A Trustpilot review was matched back to this session (name / timing / content signals)",
+      "oc.expired.tip":"Clicked, but no review matched within 12h — attribution closed",
+      "fu.tag":"⚑ Needs follow-up",
+      "setup.title":"Setup","setup.sub":"Everything configurable in one place — invite message ships with a default",
+      "step.tp":"Connect your Trustpilot page","tp.verifiedShort":"Verified","tp.edit":"Edit","tp.visit":"Visit",
+      "tp.verifiedLine":"✓ Verified · Page reachable · Last crawled 2 hours ago",
+      "step.limit":"Set a daily invite limit","limit.unlimited":"∞ Unlimited","limit.perDay":"{n}/day",
+      "limit.unlimitedNote":"✓&nbsp; Unlimited · Every eligible session triggers an invite",
+      "limit.cappedNote":"⚠️&nbsp; Capped at {n}/day · Over-limit sessions are dropped (no queue) · Resets at midnight UTC",
+      "preset.starter":"Starter","preset.growth":"Growth","preset.standard":"Standard","preset.max":"Max","preset.unlimited":"∞","preset.perDay":"{n} / day","preset.unlimitedVal":"Unlimited",
+      "save.auto":"Changes save automatically","save.saved":"✓ Saved",
+      "step.message":"Invite card message","msg.reset":"Reset to default","status.default":"Default","status.custom":"Customized",
+      "msg.default":"How was your conversation today? Share your experience to help others find GravaStar.",
+      "step.switch":"Turn on Review Agent","switch.on":"On · sending invites","switch.off":"Off · invites paused",
+      "lang.title":"Language",
+      "dw.sub":"{conv} · Order #{order}","dw.timeline":"Status Timeline",
+      "tl.shown":"Invite shown","tl.clicked":"Invite clicked → Trustpilot","tl.attributed":"Review attributed",
+      "dw.summary":"Conversation Summary","dw.openConv":"Open full conversation in Support agent ↗",
+      "dw.review":"Trustpilot Review","dw.confidence":"{tier} confidence",
+      "dw.attrTip":"Match signals: {basis}. Attribution window is 12h after the click — most reviews arrive within hours.",
+      "dw.followup":"Follow-up","fu.handled":"✓ Marked as handled",
+      "fu.text":"⚑ Low-star review — a public reply within 24h protects your Trustpilot profile. The product feedback may be worth flagging to your team.",
+      "fu.reply":"Reply on Trustpilot ↗","fu.mark":"Mark as handled",
+      "dw.billing":"Billing","bill.yes":"✓ 5-star review · Billed $5","bill.no":"1–4 star review · Not billed",
+      "dw.details":"Details","kv.confidence":"Confidence","kv.signals":"Match signals","kv.attributedAt":"Attributed at",
+      "dw.tpBtn":"View on Trustpilot",
+      "tier.High":"High","tier.Medium":"Medium",
+    },
+    zh: {
+      "nav.home":"首页","nav.analytics":"分析","nav.orders":"订单","nav.protection":"保障",
+      "nav.integrations":"集成","nav.conversation":"会话","nav.workforce":"数字员工",
+      "nav.support":"客服 Agent","nav.sales":"销售 Agent","nav.voc":"VOC Agent","nav.review":"Review agent",
+      "nav.customize":"自定义","nav.widgets":"组件","nav.cashback":"返现","nav.portal":"客户门户","nav.notifications":"通知",
+      "page.title":"Review agent","tab.performance":"数据表现","tab.settings":"设置",
+      "off.text":"⏸ Review agent 已关闭 —— 暂停发送新邀请,历史数据仍可查看。","off.link":"前往设置 →",
+      "tr.label":"时间范围","tr.yesterday":"昨天","tr.7d":"近 7 天","tr.30d":"近 30 天","tr.90d":"近 90 天",
+      "tr.custom":"自定义范围","tr.from":"从","tr.to":"至","tr.apply":"应用",
+      "kpi.shown":"邀请展示","kpi.shown.tip":"邀请卡在 widget 中展示的会话数",
+      "kpi.clicks":"邀请点击","kpi.clicks.tip":"点击跳转 Trustpilot 的用户数",
+      "kpi.ctr":"点击率","kpi.ctr.tip":"邀请点击 ÷ 邀请展示",
+      "kpi.reviews":"评价数","kpi.reviews.tip":"归因回某次已邀请会话的 Trustpilot 评价",
+      "kpi.rate":"评价率","kpi.rate.tip":"归因评价 ÷ 邀请点击",
+      "kpi.five":"五星评价","kpi.five.tip":"评级为 5 星的归因评价",
+      "kpi.vs":"较上期","kpi.low":"样本不足",
+      "fn.title":"转化漏斗","fn.sub":"按邀请日期归组 · 展示 → 点击 → 评价 → 五星",
+      "fn.shown":"邀请展示","fn.clicks":"邀请点击","fn.reviews":"归因评价","fn.five":"五星评价",
+      "fn.shown.tip":"邀请卡在 widget 中展示的会话数",
+      "fn.clicks.tip":"点击跳转 Trustpilot 的用户数。点击率 = 点击 ÷ 展示",
+      "fn.reviews.tip":"归因回某次已邀请会话的 Trustpilot 评价。评价率 = 评价 ÷ 点击",
+      "fn.five.tip":"5 星评价占归因评价的比例",
+      "fn.allCohort":"本批次全部符合条件的会话","fn.ctrOfShown":"点击率(占展示)","fn.ofClicks":"占点击","fn.ofReviews":"占评价",
+      "fn.note":"📐 <b>按邀请日期归组</b> —— 点击与评价都计入邀请展示当天。多数评价在点击后数小时内到达;最近 12 小时内点击的邀请仍在归因窗口内: <b>{n} 条待定</b>。",
+      "ss.title":"已邀请会话","ss.count":"本批次 {n} 个已邀请会话 · 与“邀请展示”一致",
+      "ss.search":"搜索客户、订单号或会话 ID…",
+      "th.customer":"客户","th.conversation":"会话","th.invited":"邀请时间","th.outcome":"状态","th.review":"评价",
+      "ss.empty":"没有符合搜索或筛选条件的会话","ss.foot":"本页 {shown} / {total} 条",
+      "oc.all":"全部","oc.invited":"已邀请","oc.clicked":"已点击","oc.reviewed":"已评价","oc.expired":"已过期",
+      "oc.all.tip":"所有展示过邀请卡的会话",
+      "oc.invited.tip":"邀请卡已在 widget 展示 —— 用户尚未点击。停留于此,不会过期",
+      "oc.clicked.tip":"用户已点击跳转 Trustpilot —— 12 小时归因窗口开启中",
+      "oc.reviewed.tip":"已有一条 Trustpilot 评价归因回本次会话(姓名 / 时间 / 内容信号)",
+      "oc.expired.tip":"已点击,但 12 小时内未匹配到评价 —— 归因关闭",
+      "fu.tag":"⚑ 待跟进",
+      "setup.title":"设置向导","setup.sub":"全部配置集中在这里 —— 邀请文案自带默认值",
+      "step.tp":"连接 Trustpilot 主页","tp.verifiedShort":"已验证","tp.edit":"编辑","tp.visit":"访问",
+      "tp.verifiedLine":"✓ 已验证 · 页面可访问 · 2 小时前抓取",
+      "step.limit":"设置每日邀请上限","limit.unlimited":"∞ 无限制","limit.perDay":"{n}/天",
+      "limit.unlimitedNote":"✓&nbsp; 无限制 · 每个符合条件的会话都会触发邀请",
+      "limit.cappedNote":"⚠️&nbsp; 上限 {n}/天 · 超限会话直接丢弃(不排队)· 每日 UTC 零点重置",
+      "preset.starter":"入门","preset.growth":"成长","preset.standard":"标准","preset.max":"上限","preset.unlimited":"∞","preset.perDay":"{n} / 天","preset.unlimitedVal":"无限制",
+      "save.auto":"更改自动保存","save.saved":"✓ 已保存",
+      "step.message":"邀请卡文案","msg.reset":"恢复默认","status.default":"默认","status.custom":"已自定义",
+      "msg.default":"今天的服务体验如何?分享你的经历,帮助更多人了解 GravaStar。",
+      "step.switch":"开启 Review agent","switch.on":"开启 · 正在发送邀请","switch.off":"关闭 · 邀请已暂停",
+      "lang.title":"语言",
+      "dw.sub":"{conv} · 订单 #{order}","dw.timeline":"状态时间线",
+      "tl.shown":"邀请已展示","tl.clicked":"点击邀请 → Trustpilot","tl.attributed":"评价已归因",
+      "dw.summary":"会话摘要","dw.openConv":"在 Support agent 中打开完整会话 ↗",
+      "dw.review":"Trustpilot 评价","dw.confidence":"{tier}置信度",
+      "dw.attrTip":"匹配信号:{basis}。归因窗口为点击后 12 小时 —— 多数评价数小时内到达。",
+      "dw.followup":"跟进","fu.handled":"✓ 已标记处理",
+      "fu.text":"⚑ 低星评价 —— 24 小时内公开回复有助于保护你的 Trustpilot 形象;其中的产品反馈值得同步给团队。",
+      "fu.reply":"在 Trustpilot 回复 ↗","fu.mark":"标记为已处理",
+      "dw.billing":"计费","bill.yes":"✓ 五星评价 · 计费 $5","bill.no":"1–4 星评价 · 不计费",
+      "dw.details":"详情","kv.confidence":"置信度","kv.signals":"匹配信号","kv.attributedAt":"归因时间",
+      "dw.tpBtn":"在 Trustpilot 查看",
+      "tier.High":"高","tier.Medium":"中",
+    },
+  };
+
+  function t(key, vars) {
+    let s = (I18N[state.lang] && I18N[state.lang][key]) ?? key;
+    if (vars) for (const k in vars) s = s.replaceAll(`{${k}}`, vars[k]);
+    return s;
+  }
+  // Translate the free-text "match signals" phrase for zh display
+  function tBasis(basis) {
+    if (state.lang === "en") return basis;
+    return basis
+      .replace("Order ID in review", "评价含订单号")
+      .replace("Name", "姓名")
+      .replace(/timing/i, "时间接近")
+      .replace("content", "内容")
+      .replace(" min", " 分钟")
+      .replace(/ h\b/, " 小时");
+  }
+  function tTier(tier) { return t("tier." + tier); }
+
+  // ── Mock data (cohorted by invite date) ──
   const FUNNEL = {
     "yesterday": { shown: 18, clicks: 6, reviews: 1, five: 1, pending: 2,
              delta: { shown:-5.3, clicks:+20.0, ctr:+26.6, reviews:0.0, rate:-16.7, five:0.0 } },
@@ -501,17 +649,8 @@ const App = (() => {
              delta: { shown:+64.1, clicks:+58.7, ctr:-3.3, reviews:+75.9, rate:+10.8, five:+81.8 } },
   };
   FUNNEL.custom = FUNNEL["30d"];
-  const RANGE_LABELS = { yesterday: "Yesterday", "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days" };
+  const RANGE_KEYS = { yesterday:"tr.yesterday", "7d":"tr.7d", "30d":"tr.30d", "90d":"tr.90d" };
   const LOW_SAMPLE = 20;
-
-  // Outcome definitions — surfaced as hover hints on badges and filter chips
-  const OUTCOME_TIPS = {
-    all:      "Every session where the invite card was shown",
-    invited:  "Invite card shown in the widget — customer hasn't clicked yet. Stays here; never expires",
-    clicked:  "Customer clicked through to Trustpilot — 12h attribution window is open",
-    reviewed: "A Trustpilot review was matched back to this session (name / timing / content signals)",
-    expired:  "Clicked, but no review matched within 12h — attribution closed",
-  };
 
   const SESSIONS = [
     { customer:"zuledres",          conv:"conv-10420", order:"10420", date:"Jul 13, 2026 · 9:41 AM",  outcome:"invited" },
@@ -553,27 +692,35 @@ const App = (() => {
   ];
 
   const PRESETS = [
-    { key:"starter",   name:"Starter",   val:10,  label:"10 / day" },
-    { key:"growth",    name:"Growth",    val:30,  label:"30 / day" },
-    { key:"standard",  name:"Standard",  val:50,  label:"50 / day" },
-    { key:"max",       name:"Max",       val:100, label:"100 / day" },
-    { key:"unlimited", name:"∞",         val:0,   label:"Unlimited" },
+    { key:"starter",   nameK:"preset.starter",   val:10 },
+    { key:"growth",    nameK:"preset.growth",    val:30 },
+    { key:"standard",  nameK:"preset.standard",  val:50 },
+    { key:"max",       nameK:"preset.max",       val:100 },
+    { key:"unlimited", nameK:"preset.unlimited", val:0 },
   ];
+  const OUTCOME_KEYS = ["all","invited","clicked","reviewed","expired"];
 
-  const OUTCOMES = [
-    { key:"all",      label:"All" },
-    { key:"invited",  label:"Invited" },
-    { key:"clicked",  label:"Clicked" },
-    { key:"reviewed", label:"Reviewed" },
-    { key:"expired",  label:"Expired" },
-  ];
-
-  // ── State ──────────────────────────────────────────────────
-  const DEFAULT_MSG = "How was your conversation today? Share your experience to help others find GravaStar.";
-  let state = { on:true, tab:"performance", range:"30d", limit:10, filter:"all", search:"", expanded:null, inviteMsg: DEFAULT_MSG };
+  // ── State ──
+  let state = { lang:"zh", on:true, tab:"performance", range:"30d", limit:10, filter:"all", search:"", expanded:null, inviteMsg:null };
   const $ = id => document.getElementById(id);
 
-  // ── Tabs ───────────────────────────────────────────────────
+  // ── Static chrome (data-k / data-k-ph) ──
+  function renderStatic() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-k]").forEach(el => { el.textContent = t(el.dataset.k); });
+    document.querySelectorAll("[data-k-ph]").forEach(el => { el.placeholder = t(el.dataset.kPh); });
+    $("off-banner").innerHTML = `${t("off.text")} <a href="javascript:void(0)" onclick="App.setTab('settings')">${t("off.link")}</a>`;
+    if (state.range !== "custom") $("range-label").textContent = t(RANGE_KEYS[state.range]);
+    document.querySelectorAll("#lang-seg button").forEach(b => b.classList.toggle("active", b.dataset.lang === state.lang));
+  }
+
+  function setLang(lang) {
+    state.lang = lang;
+    renderStatic();
+    renderAll();
+  }
+
+  // ── Tabs ──
   function setTab(tab) {
     state.tab = tab;
     $("tab-performance").style.display = tab === "performance" ? "flex" : "none";
@@ -582,57 +729,45 @@ const App = (() => {
     $("tab-btn-settings").classList.toggle("active", tab === "settings");
   }
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── Helpers ──
   function pct(num, den) { return den ? Math.round(num / den * 100) : 0; }
   function conv(num, den, unit) {
     if (!den) return `—`;
-    if (den < LOW_SAMPLE) return `<b>${num}/${den}</b> ${unit} · <span class="low" title="Denominator below ${LOW_SAMPLE} — percentage not statistically meaningful">low sample</span>`;
+    if (den < LOW_SAMPLE) return `<b>${num}/${den}</b> ${unit} · <span class="low">${t("kpi.low")}</span>`;
     return `<b>${pct(num, den)}%</b> ${unit}`;
   }
   function deltaHtml(v) {
     if (v == null) return `<span class="vs">—</span>`;
     const sign = v > 0 ? "+" : "";
-    return `<b>${sign}${v.toFixed(1)}%</b> <span class="vs">vs previous</span>`;
+    return `<b>${sign}${v.toFixed(1)}%</b> <span class="vs">${t("kpi.vs")}</span>`;
   }
 
-  // ── KPI big numbers (structure mirrors Sales agent Analytics) ──
   function renderKpis() {
     const d = FUNNEL[state.range];
-    const lowCtr  = d.shown  < LOW_SAMPLE, lowRate = d.clicks < LOW_SAMPLE;
+    const lowCtr = d.shown < LOW_SAMPLE, lowRate = d.clicks < LOW_SAMPLE;
     const cards = [
-      { label:"Invites Shown",  tip:"Sessions where the review invite card was displayed in the widget",
-        val:d.shown.toLocaleString(),  delta:d.delta.shown },
-      { label:"Invite Clicks",  tip:"Users who clicked through to Trustpilot",
-        val:d.clicks.toLocaleString(), delta:d.delta.clicks },
-      { label:"CTR",            tip:"Invite clicks ÷ invites shown",
-        val: lowCtr ? `${d.clicks}/${d.shown}` : `${pct(d.clicks, d.shown)}%`, delta:d.delta.ctr, low:lowCtr },
-      { label:"Reviews",        tip:"Trustpilot reviews attributed back to an invited session",
-        val:d.reviews.toLocaleString(), delta:d.delta.reviews },
-      { label:"Review Rate",    tip:"Attributed reviews ÷ invite clicks",
-        val: lowRate ? `${d.reviews}/${d.clicks}` : `${pct(d.reviews, d.clicks)}%`, delta:d.delta.rate, low:lowRate },
-      { label:"5-Star Reviews", tip:"Attributed reviews rated 5 stars",
-        val:d.five.toLocaleString(), delta:d.delta.five },
+      { label:t("kpi.shown"),  tip:t("kpi.shown.tip"),  val:d.shown.toLocaleString(),  delta:d.delta.shown },
+      { label:t("kpi.clicks"), tip:t("kpi.clicks.tip"), val:d.clicks.toLocaleString(), delta:d.delta.clicks },
+      { label:t("kpi.ctr"),    tip:t("kpi.ctr.tip"),    val: lowCtr ? `${d.clicks}/${d.shown}` : `${pct(d.clicks, d.shown)}%`, delta:d.delta.ctr, low:lowCtr },
+      { label:t("kpi.reviews"),tip:t("kpi.reviews.tip"),val:d.reviews.toLocaleString(), delta:d.delta.reviews },
+      { label:t("kpi.rate"),   tip:t("kpi.rate.tip"),   val: lowRate ? `${d.reviews}/${d.clicks}` : `${pct(d.reviews, d.clicks)}%`, delta:d.delta.rate, low:lowRate },
+      { label:t("kpi.five"),   tip:t("kpi.five.tip"),   val:d.five.toLocaleString(), delta:d.delta.five },
     ];
     $("kpi-grid").innerHTML = cards.map(c => `
       <div class="kpi">
         <div class="k-label">${c.label} <span class="info tip" data-tip="${c.tip}">ⓘ</span></div>
         <div class="k-val">${c.val}</div>
-        <div class="k-delta ${c.delta > 0 ? "up" : "down"}">${c.low ? `<span class="low">low sample</span>` : deltaHtml(c.delta)}</div>
+        <div class="k-delta ${c.delta > 0 ? "up" : "down"}">${c.low ? `<span class="low">${t("kpi.low")}</span>` : deltaHtml(c.delta)}</div>
       </div>`).join("");
   }
 
-  // ── Funnel ─────────────────────────────────────────────────
   function renderFunnel() {
     const d = FUNNEL[state.range];
     const rows = [
-      { name:"Invites Shown", tip:"Sessions where the review invite card was displayed in the widget",
-        val:d.shown, color:"#6C47FF", conv:`All eligible sessions in this cohort` },
-      { name:"Invite Clicks", tip:"Users who clicked through to Trustpilot. CTR = clicks ÷ shown",
-        val:d.clicks, color:"#4f46e5", conv:conv(d.clicks, d.shown, "CTR of shown") },
-      { name:"Attributed Reviews", tip:"Trustpilot reviews matched back to an invited session. Rate = reviews ÷ clicks",
-        val:d.reviews, color:"#00B67A", conv:conv(d.reviews, d.clicks, "of clicks") },
-      { name:"5-Star Reviews", tip:"Share of attributed reviews rated 5 stars",
-        val:d.five, color:"#F59E0B", conv:conv(d.five, d.reviews, "of reviews") },
+      { name:t("fn.shown"),   tip:t("fn.shown.tip"),   val:d.shown,   color:"#6C47FF", conv:t("fn.allCohort") },
+      { name:t("fn.clicks"),  tip:t("fn.clicks.tip"),  val:d.clicks,  color:"#4f46e5", conv:conv(d.clicks, d.shown, t("fn.ctrOfShown")) },
+      { name:t("fn.reviews"), tip:t("fn.reviews.tip"), val:d.reviews, color:"#00B67A", conv:conv(d.reviews, d.clicks, t("fn.ofClicks")) },
+      { name:t("fn.five"),    tip:t("fn.five.tip"),    val:d.five,    color:"#F59E0B", conv:conv(d.five, d.reviews, t("fn.ofReviews")) },
     ];
     $("funnel-rows").innerHTML = rows.map(r => {
       const w = Math.max(3, Math.round(r.val / d.shown * 100));
@@ -645,20 +780,18 @@ const App = (() => {
         <div class="fn-conv">${r.conv}</div>
       </div>`;
     }).join("");
-    $("fn-note").innerHTML = `📐 <b>Cohort by invite date</b> — clicks and reviews count toward the day the invite was shown. Most reviews arrive within hours of the click; invites clicked in the last 12h are still inside the attribution window: <b>${d.pending} pending</b>.`;
   }
 
-  // ── Time range control (matches the MD global picker) ──────
+  // ── Time range ──
   function refresh() { renderKpis(); renderFunnel(); renderTable(); }
   function toggleRangePanel(e) {
     if (e) e.stopPropagation();
-    const p = $("range-panel");
-    p.classList.toggle("open");
+    $("range-panel").classList.toggle("open");
     document.querySelectorAll(".rp-opt").forEach(o => o.classList.toggle("active", o.dataset.key === state.range));
   }
   function pickRange(k) {
     state.range = k;
-    $("range-label").textContent = RANGE_LABELS[k];
+    $("range-label").textContent = t(RANGE_KEYS[k]);
     $("range-panel").classList.remove("open");
     refresh();
   }
@@ -666,10 +799,10 @@ const App = (() => {
     $("rp-apply").classList.toggle("ready", !!($("rp-from").value && $("rp-to").value));
   }
   function applyCustom() {
-    const f = $("rp-from").value, t = $("rp-to").value;
-    if (!f || !t) return;
+    const f = $("rp-from").value, tv = $("rp-to").value;
+    if (!f || !tv) return;
     state.range = "custom";
-    $("range-label").textContent = `${f} – ${t}`;
+    $("range-label").textContent = `${f} – ${tv}`;
     $("range-panel").classList.remove("open");
     refresh();
   }
@@ -677,54 +810,54 @@ const App = (() => {
     const w = document.querySelector(".range-wrap");
     if (w && !w.contains(ev.target)) $("range-panel").classList.remove("open");
   });
-  const setRange = pickRange; // back-compat alias
+  const setRange = pickRange;
 
-  // ── Settings: single Setup card hosts all config ───────────
+  // ── Setup ──
   let saveTimer = null;
+  function currentMsg() { return state.inviteMsg == null ? t("msg.default") : state.inviteMsg; }
+  function isDefaultMsg() { return state.inviteMsg == null; }
+
   function renderSetup() {
     const unlimited = state.limit === 0;
     const steps = [
       {
-        key:"tp", done:true, name:"Connect your Trustpilot page",
-        status:"Verified · gravastar.com", expandable:true,
+        key:"tp", done:true, name:t("step.tp"),
+        status:`${t("tp.verifiedShort")} · gravastar.com`, expandable:true,
         detail:`
           <div class="tp-row">
             <span class="tp-dot"></span>
             <span class="tp-url">https://www.trustpilot.com/review/gravastar.com</span>
-            <button class="edit-btn" onclick="event.stopPropagation()">✏️ Edit</button>
-            <a class="tp-visit" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer" onclick="event.stopPropagation()">↗ Visit</a>
+            <button class="edit-btn" onclick="event.stopPropagation()">✏️ ${t("tp.edit")}</button>
+            <a class="tp-visit" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer" onclick="event.stopPropagation()">↗ ${t("tp.visit")}</a>
           </div>
-          <div class="tp-status">✓ Verified · Page reachable · Last crawled 2 hours ago</div>`,
+          <div class="tp-status">${t("tp.verifiedLine")}</div>`,
       },
       {
-        key:"limit", done:true, name:"Set a daily invite limit",
-        status: unlimited ? "∞ Unlimited" : `${state.limit}/day`, expandable:true,
+        key:"limit", done:true, name:t("step.limit"),
+        status: unlimited ? t("limit.unlimited") : t("limit.perDay", {n:state.limit}), expandable:true,
         detail:`
           <div class="preset-grid">${PRESETS.map(p => `
             <button class="preset ${p.val === state.limit ? "active" : ""}" onclick="event.stopPropagation();App.setLimit(${p.val})">
-              <p class="p-name">${p.name}</p>
-              <p class="p-val">${p.label}</p>
+              <p class="p-name">${t(p.nameK)}</p>
+              <p class="p-val">${p.val === 0 ? t("preset.unlimitedVal") : t("preset.perDay", {n:p.val})}</p>
             </button>`).join("")}
           </div>
-          <div class="limit-note ${unlimited ? "unlimited" : "capped"}">${unlimited
-            ? "✓&nbsp; Unlimited · Every eligible session triggers an invite"
-            : `⚠️&nbsp; Capped at ${state.limit}/day · Over-limit sessions are dropped (no queue) · Resets at midnight UTC`}
-          </div>
-          <div class="save-hint" id="save-hint">Changes save automatically</div>`,
+          <div class="limit-note ${unlimited ? "unlimited" : "capped"}">${unlimited ? t("limit.unlimitedNote") : t("limit.cappedNote", {n:state.limit})}</div>
+          <div class="save-hint" id="save-hint">${t("save.auto")}</div>`,
       },
       {
-        key:"message", done:true, name:"Invite card message",
-        status: state.inviteMsg === DEFAULT_MSG ? "Default" : "Customized", expandable:true,
+        key:"message", done:true, name:t("step.message"),
+        status: isDefaultMsg() ? t("status.default") : t("status.custom"), expandable:true,
         detail:`
-          <textarea class="msg-ta" oninput="App.setMsg(this.value)" onclick="event.stopPropagation()">${state.inviteMsg}</textarea>
+          <textarea class="msg-ta" oninput="App.setMsg(this.value)" onclick="event.stopPropagation()">${currentMsg()}</textarea>
           <div class="msg-actions">
-            <button class="reset-link" onclick="event.stopPropagation();App.resetMsg()">Reset to default</button>
-            <div class="save-hint" id="msg-hint" style="margin-top:0">Changes save automatically</div>
+            <button class="reset-link" onclick="event.stopPropagation();App.resetMsg()">${t("msg.reset")}</button>
+            <div class="save-hint" id="msg-hint" style="margin-top:0">${t("save.auto")}</div>
           </div>`,
       },
       {
-        key:"switch", done:state.on, name:"Turn on Review Agent",
-        status: state.on ? "On · sending invites" : "Off · invites paused", expandable:false,
+        key:"switch", done:state.on, name:t("step.switch"),
+        status: state.on ? t("switch.on") : t("switch.off"), expandable:false,
         right:`<div class="switch ${state.on ? "" : "off"}" onclick="event.stopPropagation();App.toggleAgent()"><div class="knob"></div></div>`,
       },
     ];
@@ -741,42 +874,23 @@ const App = (() => {
       </div>`).join("");
   }
 
-  function toggleStep(key) {
-    state.expanded = state.expanded === key ? null : key;
-    renderSetup();
-  }
-
-  function setLimit(v) {
-    state.limit = v;
-    renderSetup();
-    flashSaved("save-hint");
-  }
-
+  function toggleStep(key) { state.expanded = state.expanded === key ? null : key; renderSetup(); }
+  function setLimit(v) { state.limit = v; renderSetup(); flashSaved("save-hint"); }
   function flashSaved(id) {
-    const hint = $(id);
-    if (!hint) return;
-    hint.textContent = "✓ Saved";
-    hint.classList.add("saved");
+    const hint = $(id); if (!hint) return;
+    hint.textContent = t("save.saved"); hint.classList.add("saved");
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      const h = $(id);
-      if (h) { h.textContent = "Changes save automatically"; h.classList.remove("saved"); }
-    }, 1800);
+    saveTimer = setTimeout(() => { const h = $(id); if (h) { h.textContent = t("save.auto"); h.classList.remove("saved"); } }, 1800);
   }
-
-  // Invite message: targeted DOM updates so the textarea keeps focus while typing
   function setMsg(v) {
-    state.inviteMsg = v;
+    state.inviteMsg = (v === t("msg.default")) ? null : v;
     const status = $("status-message");
-    if (status) status.textContent = v === DEFAULT_MSG ? "Default" : "Customized";
+    if (status) status.textContent = isDefaultMsg() ? t("status.default") : t("status.custom");
     flashSaved("msg-hint");
   }
-  function resetMsg() {
-    state.inviteMsg = DEFAULT_MSG;
-    renderSetup();
-  }
+  function resetMsg() { state.inviteMsg = null; renderSetup(); }
 
-  // ── Sessions ───────────────────────────────────────────────
+  // ── Sessions ──
   function filtered() {
     const q = state.search.trim().toLowerCase();
     return SESSIONS.filter(s => {
@@ -785,33 +899,25 @@ const App = (() => {
       return s.customer.toLowerCase().includes(q) || s.conv.toLowerCase().includes(q) || s.order.includes(q);
     });
   }
-
   function starsHtml(n) {
-    return `<span class="stars">${[1,2,3,4,5].map(i =>
-      `<span class="${i <= n ? "on" : "off"}">★</span>`).join("")}</span>`;
+    return `<span class="stars">${[1,2,3,4,5].map(i => `<span class="${i <= n ? "on" : "off"}">★</span>`).join("")}</span>`;
   }
-
   function renderChips() {
     const counts = { all: SESSIONS.length };
     SESSIONS.forEach(s => counts[s.outcome] = (counts[s.outcome] || 0) + 1);
-    $("filter-chips").innerHTML = OUTCOMES.map(o => `
-      <button class="f-chip tip ${state.filter === o.key ? "active" : ""}" data-tip="${OUTCOME_TIPS[o.key]}" onclick="App.setFilter('${o.key}')">
-        ${o.label} ${counts[o.key] ? `· ${counts[o.key]}` : "· 0"}
+    $("filter-chips").innerHTML = OUTCOME_KEYS.map(k => `
+      <button class="f-chip tip ${state.filter === k ? "active" : ""}" data-tip="${t("oc." + k + ".tip")}" onclick="App.setFilter('${k}')">
+        ${t("oc." + k)} · ${counts[k] || 0}
       </button>`).join("");
   }
-
   function renderTable() {
     const rows = filtered();
-    $("sess-count").textContent = `${FUNNEL[state.range].shown.toLocaleString()} invited sessions in this cohort · matches "Invites Shown"`;
-    $("foot-info").textContent = `${rows.length} of ${SESSIONS.length} on this page`;
-    if (!rows.length) {
-      $("tbl-body").innerHTML = `<div class="empty-state">No invited sessions match your search or filter</div>`;
-      return;
-    }
+    $("foot-info").textContent = t("ss.foot", { shown: rows.length, total: SESSIONS.length });
+    if (!rows.length) { $("tbl-body").innerHTML = `<div class="empty-state">${t("ss.empty")}</div>`; return; }
     $("tbl-body").innerHTML = rows.map(s => {
       const idx = SESSIONS.indexOf(s);
-      const badge = `<span class="badge tip ${s.outcome}" data-tip="${OUTCOME_TIPS[s.outcome]}"><span class="bd"></span>${s.outcome.charAt(0).toUpperCase() + s.outcome.slice(1)}</span>`;
-      const fuTag = s.outcome === "reviewed" && s.rating < 5 && !s.handled ? `<span class="fu-tag">⚑ Needs follow-up</span>` : "";
+      const badge = `<span class="badge tip ${s.outcome}" data-tip="${t("oc." + s.outcome + ".tip")}"><span class="bd"></span>${t("oc." + s.outcome)}</span>`;
+      const fuTag = s.outcome === "reviewed" && s.rating < 5 && !s.handled ? `<span class="fu-tag">${t("fu.tag")}</span>` : "";
       const review = s.outcome === "reviewed"
         ? `<div class="t-review"><span>${starsHtml(s.rating)}${fuTag}</span><span class="txt">${s.review}</span></div>`
         : `<span class="t-empty">—</span>`;
@@ -824,95 +930,87 @@ const App = (() => {
       </div>`;
     }).join("");
   }
-
   function setFilter(f) { state.filter = f; renderChips(); renderTable(); }
   function setSearch(q) { state.search = q; renderTable(); }
 
-  // ── Drawer ─────────────────────────────────────────────────
+  // ── Drawer ──
   function openDrawer(idx) {
     const s = SESSIONS[idx];
     $("dw-name").textContent = s.customer;
-    $("dw-sub").textContent = `${s.conv} · Order #${s.order}`;
+    $("dw-sub").textContent = t("dw.sub", { conv: s.conv, order: s.order });
     const billed = s.rating === 5;
     $("dw-body").innerHTML = `
       <div>
-        <div class="dw-sec-label">Status Timeline</div>
+        <div class="dw-sec-label">${t("dw.timeline")}</div>
         <div class="timeline">
-          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Invite shown</div><div class="tl-ts">${s.date}</div></div>
-          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Invite clicked → Trustpilot</div><div class="tl-ts">${s.clickedAt}</div></div>
-          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">Review attributed</div><div class="tl-ts">${s.reviewedAt}</div></div>
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">${t("tl.shown")}</div><div class="tl-ts">${s.date}</div></div>
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">${t("tl.clicked")}</div><div class="tl-ts">${s.clickedAt}</div></div>
+          <div class="tl-item done"><span class="tl-dot"></span><div class="tl-name">${t("tl.attributed")}</div><div class="tl-ts">${s.reviewedAt}</div></div>
         </div>
       </div>
       <div>
-        <div class="dw-sec-label">Conversation Summary</div>
+        <div class="dw-sec-label">${t("dw.summary")}</div>
         <div class="summary-box">
           <div class="sm-text">${s.summary}</div>
-          <a class="sm-link" href="javascript:void(0)">Open full conversation in Support agent ↗</a>
+          <a class="sm-link" href="javascript:void(0)">${t("dw.openConv")}</a>
         </div>
       </div>
       <div>
-        <div class="dw-sec-label">Trustpilot Review</div>
+        <div class="dw-sec-label">${t("dw.review")}</div>
         <div class="review-box">
           <div class="rv-top">
             ${starsHtml(s.rating)}
-            <span class="attr-chip tip" data-tip="Match signals: ${s.basis}. Attribution window is 12h after the click — most reviews arrive within hours.">🎯 ${s.tier} confidence</span>
+            <span class="attr-chip tip" data-tip="${t("dw.attrTip", { basis: tBasis(s.basis) })}">🎯 ${t("dw.confidence", { tier: tTier(s.tier) })}</span>
           </div>
           <div class="rv-text">${s.review}</div>
         </div>
       </div>
       ${s.rating < 5 ? `
       <div>
-        <div class="dw-sec-label">Follow-up</div>
+        <div class="dw-sec-label">${t("dw.followup")}</div>
         ${s.handled
-          ? `<div class="fu-box handled"><div class="fu-text">✓ Marked as handled</div></div>`
+          ? `<div class="fu-box handled"><div class="fu-text">${t("fu.handled")}</div></div>`
           : `<div class="fu-box">
-              <div class="fu-text">⚑ Low-star review — a public reply within 24h protects your Trustpilot profile. The product feedback may be worth flagging to your team.</div>
+              <div class="fu-text">${t("fu.text")}</div>
               <div style="display:flex;gap:8px">
-                <a class="fu-btn primary" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">Reply on Trustpilot ↗</a>
-                <button class="fu-btn ghost" onclick="App.markHandled(${idx})">Mark as handled</button>
+                <a class="fu-btn primary" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">${t("fu.reply")}</a>
+                <button class="fu-btn ghost" onclick="App.markHandled(${idx})">${t("fu.mark")}</button>
               </div>
             </div>`}
       </div>` : ""}
       <div>
-        <div class="dw-sec-label">Billing</div>
-        <span class="bill-chip ${billed ? "yes" : "no"}">${billed ? "✓ 5-star review · Billed $5" : "1–4 star review · Not billed"}</span>
+        <div class="dw-sec-label">${t("dw.billing")}</div>
+        <span class="bill-chip ${billed ? "yes" : "no"}">${billed ? t("bill.yes") : t("bill.no")}</span>
       </div>
       <div>
-        <div class="dw-sec-label">Details</div>
+        <div class="dw-sec-label">${t("dw.details")}</div>
         <div class="kv">
-          <span class="k">Confidence</span><span class="v">${s.tier}</span>
-          <span class="k">Match signals</span><span class="v">${s.basis}</span>
-          <span class="k">Attributed at</span><span class="v">${s.reviewedAt}</span>
+          <span class="k">${t("kv.confidence")}</span><span class="v">${tTier(s.tier)}</span>
+          <span class="k">${t("kv.signals")}</span><span class="v">${tBasis(s.basis)}</span>
+          <span class="k">${t("kv.attributedAt")}</span><span class="v">${s.reviewedAt}</span>
         </div>
       </div>
       <a class="tp-btn" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">
-        <span class="tp-mini">T</span> View on Trustpilot
+        <span class="tp-mini">T</span> ${t("dw.tpBtn")}
       </a>`;
     $("overlay").classList.add("show");
     $("drawer").classList.add("show");
   }
-  function closeDrawer() {
-    $("overlay").classList.remove("show");
-    $("drawer").classList.remove("show");
-  }
+  function closeDrawer() { $("overlay").classList.remove("show"); $("drawer").classList.remove("show"); }
+  function markHandled(idx) { SESSIONS[idx].handled = true; renderTable(); openDrawer(idx); }
 
-  function markHandled(idx) {
-    SESSIONS[idx].handled = true;
-    renderTable();
-    openDrawer(idx);
-  }
-
-  // ── Agent toggle: pausing invites never hides historical data ──
   function toggleAgent() {
     state.on = !state.on;
     $("off-banner").classList.toggle("show", !state.on);
     renderSetup();
   }
 
-  // ── Init ───────────────────────────────────────────────────
-  renderKpis(); renderFunnel(); renderSetup(); renderChips(); renderTable();
+  // ── Init ──
+  function renderAll() { renderKpis(); renderFunnel(); renderSetup(); renderChips(); renderTable(); }
+  renderStatic();
+  renderAll();
 
-  return { setTab, setRange, pickRange, toggleRangePanel, checkCustom, applyCustom, setLimit, setFilter, setSearch, openDrawer, closeDrawer, toggleAgent, toggleStep, setMsg, resetMsg, markHandled };
+  return { setLang, setTab, setRange, pickRange, toggleRangePanel, checkCustom, applyCustom, setLimit, setFilter, setSearch, openDrawer, closeDrawer, toggleAgent, toggleStep, setMsg, resetMsg, markHandled };
 })();
 </script>
 </body>

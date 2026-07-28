@@ -284,17 +284,6 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
   <div class="nav-section">
     <div class="nav-section-label">MD Dashboard · 核心交付</div>
     <a class="nav-link" href="#dashboard"><span class="nav-num">3</span>MD 页面改造</a>
-    <a class="nav-link" href="#api"><span class="nav-num">4</span>API 契约变更</a>
-  </div>
-
-  <div class="nav-section">
-    <div class="nav-section-label">Reference</div>
-    <a class="nav-link" href="#outcome"><span class="nav-num">5</span>口径参考（后端已上线）</a>
-  </div>
-
-  <div class="nav-section">
-    <div class="nav-section-label">Changelog</div>
-    <a class="nav-link" href="#changelog"><span class="nav-num">6</span>版本记录</a>
   </div>
 </nav>
 
@@ -313,7 +302,7 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       </div>
       <div class="cover-meta-item">
         <div class="key">版本</div>
-        <div class="val">v2.4</div>
+        <div class="val">v2.5</div>
       </div>
       <div class="cover-meta-item">
         <div class="key">更新日期</div>
@@ -325,7 +314,7 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       </div>
       <div class="cover-meta-item">
         <div class="key">上游文档</div>
-        <div class="val">PRD-review-agent.md v1.6</div>
+        <div class="val">PRD-review-agent.md v1.7</div>
       </div>
     </div>
   </div>
@@ -337,8 +326,8 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       <div class="section-title">需求概述</div>
     </div>
 
-    <p><strong>v2 需求 = MD（merchant-dashboard）页面改造</strong>，交付物为 §3 页面方案 + §4 API 契约。</p>
-    <p><strong>后端现状</strong>：归因引擎已按最新匹配规则上线运行（conversation_id 关联 + 时间/客户名/内容多信号，12h 窗口，置信度 High/Medium，详见 §5 口径参考）；触发资格与发送控制口径同见 §5。<strong>后端逻辑不属于本版交付物</strong>，本文档仅引用其口径供前端对齐。</p>
+    <p><strong>v2 需求 = MD（merchant-dashboard）页面改造</strong>，交付物见 §3 页面方案。</p>
+    <p><strong>后端现状</strong>：归因引擎已按最新匹配规则上线运行（conversation_id 关联 + 时间/客户名/内容多信号，12h 窗口，置信度 High/Medium）；触发资格、发送控制口径同样已上线。<strong>后端逻辑不属于本版交付物</strong>，其口径与 API 契约详见上游文档 <code class="inline">PRD-review-agent.md</code>，本文档聚焦页面。</p>
     <p><strong>v1 页面问题</strong>：单 Performance 页混杂配置与数据、KPI 全量累计无时间范围、Outcome 列错误渲染星级、评价内容不可见、`dailyInviteLimit=0` 显示成 "Capped at 0/day"。</p>
 
     <div class="card-grid">
@@ -359,13 +348,13 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
       </div>
       <div class="info-card">
         <div class="ic-icon">💡</div>
-        <div class="ic-title">口径与 hint</div>
-        <div class="ic-desc">Cohort 统计、小样本保护、未成熟标注；所有指标与状态均有悬浮 hint（invited/expired 区别讲清）</div>
+        <div class="ic-title">指标与 hint</div>
+        <div class="ic-desc">指标口径清晰化；所有指标与状态均带悬浮 hint（尤其讲清 invited / expired 区别）</div>
       </div>
     </div>
 
     <h3>不在本版范围</h3>
-    <p>后端归因/触发/发送逻辑（已上线，见 §5）· 灰度控制（已有）· 今日用量指示（明确不做）· roadmap 项（漏斗诊断建议、邀请时机 A/B、referenceId 精确归因、归因申诉等）后续版本再议。</p>
+    <p>后端归因/触发/发送逻辑（已上线，口径见上游文档）· 灰度控制（已有）· 今日用量指示（明确不做）· roadmap 项（漏斗诊断建议、邀请时机 A/B、referenceId 精确归因、归因申诉等）后续版本再议。</p>
   </section>
 
   <!-- ── 2. Live Demo ── -->
@@ -418,11 +407,6 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
         <tr><td>5-Star Reviews</td><td>不变</td><td>+ 占比（÷ Attributed Reviews）</td></tr>
       </tbody>
     </table>
-    <div class="note info">
-      <span class="note-icon">📐</span>
-      <span><strong>Cohort 口径（关键）</strong>：漏斗按<strong>邀请展示时间（invitedAt）分组</strong>，下游点击/归因事件计入其邀请所在 cohort，而非事件发生时间——否则跨窗口归因会导致转化率虚低或超 100%。归因窗口 12h（§5 口径参考），<strong>最近 12 小时内点击的邀请天然未成熟</strong>：漏斗下方常驻注记"最近 12h 点击仍在归因窗口内（N 条 pending）"。</span>
-    </div>
-    <p><strong>小样本保护</strong>：分母 &lt; 20 时不显示百分比，降级为原始数（如 "4/4"）并注明样本不足——杜绝 100% 5-star rate 假象。<strong>会话/邀请分离</strong>：表标题改为 <strong>Invited Sessions</strong>，计数与漏斗第一层严格相等，与 support-agent 的"会话"概念脱钩。</p>
     <p><strong>悬浮 hint</strong>：KPI 指标、漏斗各层、Outcome badge / 筛选 chips、置信度 chip 均带 hover tooltip（即时悬浮气泡，非原生 title 延迟提示），提示语按各表定义——尤其 invited（展示未点击，停留态不过期）与 expired（点击后 12h 未归因）的区别必须在 hint 中讲清。</p>
 
     <h3>3.3 Invited Sessions 明细</h3>
@@ -472,168 +456,13 @@ code.inline { background: var(--gray-100); padding: 1px 6px; border-radius: 4px;
           <td>5</td><td><strong>邀请卡文案</strong></td>
           <td>Setup 卡内新增 "Invite card message" 步骤：<strong>系统提供默认文案</strong>，商家可自定义（textarea 编辑 + 自动保存 + Reset to default 恢复默认）；步骤状态显示 Default / Customized；未自定义即用默认，不阻塞开启</td>
         </tr>
+        <tr>
+          <td>6</td><td><strong>语言切换（i18n）</strong></td>
+          <td>Setup 卡下方独立"语言 / Language"卡：<strong>English | 中文</strong> 分段切换，界面文案即时全量切换（KPI / 漏斗 / 表格 / 侧滑 / 悬浮 hint 全覆盖）。<strong>产品名 "Review agent" 及品牌词不翻译</strong>；评价正文、客户名、订单号等用户数据保持原文。默认跟随 MD 账号语言（demo 默认中文）</td>
+        </tr>
       </tbody>
     </table>
 
-    <h3>3.5 工程项</h3>
-    <p>config 提交改<strong>字段级 PATCH 语义</strong>（只传变更字段），消除 v1 全量 POST 的并发互相覆盖；前后端契约以本文档 §4 为准，移除 v1 前端对 5 种 response 形状的防御性解析。</p>
-  </section>
-
-  <!-- ── 7. API 契约变更 ── -->
-  <section id="api">
-    <div class="section-header">
-      <div class="section-num">4</div>
-      <div class="section-title">API 契约变更</div>
-    </div>
-
-    <h3>4.1 GET /md/open/aisupport/review-agent/summary</h3>
-    <p>新增查询参数 <code class="inline">dateFrom</code> / <code class="inline">dateTo</code>（缺省 = 近 30 天）。<strong>统计按 cohort 口径</strong>：时间范围筛选的是 invitedAt，四层指标均为该批邀请的下游事件计数。</p>
-    <div class="code-block">
-{<br>
-&nbsp;&nbsp;<span class="c-key">"enabled"</span>: <span class="c-val">true</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"dailyInviteLimit"</span>: <span class="c-val">50</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"tpPageUrl"</span>: <span class="c-str">"https://www.trustpilot.com/review/example.com"</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"tpPageStatus"</span>: <span class="c-str">"verified"</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：verified | unreachable | not_configured</span><br>
-&nbsp;&nbsp;<span class="c-key">"lastCrawledAt"</span>: <span class="c-str">"2026-07-14T06:00:00Z"</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：状态点副文案</span><br>
-&nbsp;&nbsp;<span class="c-key">"invitesShown"</span>: <span class="c-val">630</span>,&nbsp;&nbsp;<span class="c-comment">// 改名：原 invitesSent</span><br>
-&nbsp;&nbsp;<span class="c-key">"invitesClicked"</span>: <span class="c-val">187</span>,&nbsp;&nbsp;<span class="c-comment">// 新增：漏斗第二层</span><br>
-&nbsp;&nbsp;<span class="c-key">"reviews"</span>: <span class="c-val">23</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"fiveStarReviews"</span>: <span class="c-val">18</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"pendingAttribution"</span>: <span class="c-val">12</span>&nbsp;&nbsp;<span class="c-comment">// 新增：仍在归因窗口内的邀请数（未成熟标注）</span><br>
-}
-    </div>
-
-    <h3>4.2 GET /md/open/aisupport/review-agent/sessions</h3>
-    <p>新增查询参数：</p>
-    <table class="prd-table">
-      <thead><tr><th style="width:150px">参数</th><th style="width:80px">类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code class="inline">search</code></td><td>string</td><td>模糊匹配 customerName / orderId / conversationId</td></tr>
-        <tr><td><code class="inline">outcome</code></td><td>enum</td><td>invited / clicked / reviewed / expired，逗号分隔可多选</td></tr>
-        <tr><td><code class="inline">rating</code></td><td>number</td><td>按星级筛选（仅对 reviewed 生效）</td></tr>
-        <tr><td><code class="inline">dateFrom / dateTo</code></td><td>date</td><td>按 invitedAt 过滤</td></tr>
-      </tbody>
-    </table>
-
-    <p>list 元素新增字段：</p>
-    <div class="code-block">
-{<br>
-&nbsp;&nbsp;<span class="c-comment">// —— v1 已有字段不变 ——</span><br>
-&nbsp;&nbsp;<span class="c-key">"outcome"</span>: <span class="c-str">"reviewed"</span>,&nbsp;&nbsp;<span class="c-comment">// invited | clicked | reviewed | expired</span><br>
-&nbsp;&nbsp;<span class="c-key">"clickedAt"</span>: <span class="c-str">"2026-07-07T01:24:00Z"</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"reviewedAt"</span>: <span class="c-str">"2026-07-10T09:12:00Z"</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"rating"</span>: <span class="c-val">5</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"reviewText"</span>: <span class="c-str">"Amazing support, solved my issue in minutes..."</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"reviewUrl"</span>: <span class="c-str">"https://www.trustpilot.com/reviews/xxxx"</span>,<br>
-&nbsp;&nbsp;<span class="c-key">"confidenceTier"</span>: <span class="c-str">"medium"</span>,&nbsp;&nbsp;<span class="c-comment">// high | medium（§5 口径参考）</span><br>
-&nbsp;&nbsp;<span class="c-key">"matchSignals"</span>: <span class="c-str">"Timing (79 min) + content"</span><br>
-}
-    </div>
-
-    <h3>4.3 PATCH /md/open/aisupport/review-agent/config</h3>
-    <p>由全量 POST 改为<strong>字段级 PATCH</strong>：只传变更字段（<code class="inline">enabled</code> / <code class="inline">dailyInviteLimit</code> / <code class="inline">tpPageUrl</code> / <code class="inline">inviteMessage</code> 任意子集），未传字段不动，消除并发编辑互相覆盖。<code class="inline">dailyInviteLimit = 0</code> 含义统一为 Unlimited；<code class="inline">inviteMessage = null</code> 表示使用系统默认文案。</p>
-    <p>提交 <code class="inline">tpPageUrl</code> 时后端同步做<strong>可达性校验</strong>（实际抓取一次目标页）：失败返回 <code class="inline">422 + { reason: "tp_page_unreachable" }</code>，不落库；成功则更新 <code class="inline">tpPageStatus = verified</code>。<code class="inline">tpPageStatus ≠ verified</code> 时提交 <code class="inline">enabled = true</code> 返回 <code class="inline">422 + { reason: "tp_page_not_verified" }</code>（对应前端"未配置禁止开启"）。</p>
-
-    <h3>4.4 低星跟进</h3>
-    <p>sessions list 元素增加 <code class="inline">followUpStatus</code>：<code class="inline">needed</code>（reviewed 且 rating ≤ 4，未处理）/ <code class="inline">handled</code> / <code class="inline">null</code>（5 星或非 reviewed）。标记处理：</p>
-    <div class="code-block">
-<span class="c-comment">// Mark as handled</span><br>
-PATCH /md/open/aisupport/review-agent/sessions/{sessionId}<br>
-{ <span class="c-key">"followUpStatus"</span>: <span class="c-str">"handled"</span> }
-    </div>
-    <p>低星归因评价落库时同步向 Notifications 模块投递提醒事件（<code class="inline">review_agent.low_star_review</code>），带评价内容与会话链接。</p>
-  </section>
-
-  <!-- ── 5. 口径参考（后端已上线） ── -->
-  <section id="outcome">
-    <div class="section-header">
-      <div class="section-num">5</div>
-      <div class="section-title">口径参考（后端已上线，非本版交付）</div>
-    </div>
-
-    <div class="note info">
-      <span class="note-icon">ℹ️</span>
-      <span>本章为<strong>后端已上线逻辑的口径快照</strong>，供前端展示对齐用，<strong>不在本版开发范围</strong>。触发资格、发送控制、归因匹配均已按此规则运行。</span>
-    </div>
-
-    <h3>5.1 触发资格与发送控制</h3>
-    <p>会话终态 = <code class="inline">agent_solved</code> <strong>且</strong> AI 意图判定 = <code class="inline">satisfied</code>（复用 support-agent 意图体系，无 CSAT 弹窗）→ 依次过 <strong>90 天去重</strong>（email 归一）→ <strong>灰度</strong>（rolloutPct）→ <strong>每日上限</strong>（超限直接丢弃，无次日队列；<code class="inline">dailyInviteLimit=0</code> = Unlimited）→ 展示邀请卡（进入 invited）。被丢弃的会话不写入 Sessions 表。</p>
-
-    <h3>5.2 Outcome 状态机</h3>
-    <div class="state-flow">
-      <span class="state-node invited">invited</span>
-      <span class="state-arrow">—用户点击→</span>
-      <span class="state-node clicked">clicked</span>
-      <span class="state-arrow">—归因命中→</span>
-      <span class="state-node reviewed">reviewed ✓</span>
-      <span class="state-arrow" style="margin-left:8px">clicked —超 12h→</span>
-      <span class="state-node expired">expired</span>
-    </div>
-    <table class="prd-table">
-      <thead><tr><th style="width:110px">状态</th><th>定义</th></tr></thead>
-      <tbody>
-        <tr><td><span class="chip gray">invited</span></td><td>邀请卡已展示、用户未点击。<strong>停留态，不超时</strong>——未点击的邀请永远停在此</td></tr>
-        <tr><td><span class="chip indigo">clicked</span></td><td>用户点击邀请、跳转 TP，12h 归因窗口开启</td></tr>
-        <tr><td><span class="chip green">reviewed</span></td><td>归因命中（终态）。评价正文 / 星级 / 置信度 / 匹配信号落库。仅 5 星计费 $5</td></tr>
-        <tr><td><span class="chip amber">expired</span></td><td>clicked 后 <strong>12h</strong> 未归因（终态）。<strong>与 invited 的区别 = 有没有点击</strong></td></tr>
-      </tbody>
-    </table>
-
-    <h3>5.3 归因匹配规则（GravaStar 实测校准）</h3>
-    <table class="prd-table">
-      <thead><tr><th style="width:120px">项</th><th>规则</th></tr></thead>
-      <tbody>
-        <tr><td><strong>归因窗口</strong></td><td>点击后 <strong>12 小时</strong>——10 条归因评价中 9 条在 3.5h 内提交（最快 6 分钟，最长 10.8h）</td></tr>
-        <tr><td><strong>匹配基础</strong></td><td><code class="inline">conversation_id</code>（邀评记录）与工单直接关联，在此基础上叠加信号</td></tr>
-        <tr><td><strong>匹配信号</strong></td><td>① 时间接近度 ② 客户名吻合 ③ <strong>评价内容与会话摘要语义匹配</strong></td></tr>
-        <tr><td><strong>置信度</strong></td><td><span class="chip green">High</span> 客户名吻合或间隔 ≤ 20min 且内容对应；<span class="chip amber">Medium</span> 窗口内 + 内容对应；低于 Medium 不归因</td></tr>
-        <tr><td><strong>排除项</strong></td><td>纯产品评价、邮件客服评价（非 live chat）不归因</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <!-- ── 6. 版本记录 ── -->
-  <section id="changelog">
-    <div class="section-header">
-      <div class="section-num">6</div>
-      <div class="section-title">版本记录</div>
-    </div>
-
-    <div class="version-row">
-      <span class="v-ver">v2.4</span>
-      <span class="v-date">2026-07-15</span>
-      <span class="v-desc">文档重排：明确 v2 交付物 = MD 页面改造（§3 页面 + §4 API），后端归因/触发/发送逻辑已按最新规则上线，收进 §5「口径参考（非本版交付）」仅供前端对齐。删除原独立的触发资格 / 发送控制 / 状态机章节（并入 §5），消除"后端逻辑像待开发需求"的歧义</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v2.3</span>
-      <span class="v-date">2026-07-15</span>
-      <span class="v-desc">归因规则按 GravaStar 实测校准：窗口 T+3 天 → 12h（9/10 条评价在 3.5h 内提交，与分析口径一致）；锚点 = 邀请点击，点击埋点存在性列为研发确认项（缺失则回退邀评发出时间并移除 Clicks 层）；匹配 = conversation_id 关联 + 时间接近度 + 客户名 + 内容语义，置信度 High/Medium（API 字段 matchTier/confidence → confidenceTier/matchSignals）；expired 定义同步 12h，未成熟标注改"最近 12h"；时间筛选复用 MD 全局控件（Yesterday/7/30/90/Custom range）；KPI、漏斗、Outcome badge、置信度 chip 全部增加悬浮 hint（明确 invited 与 expired 的区别）</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v2.2</span>
-      <span class="v-date">2026-07-14</span>
-      <span class="v-desc">新增两项：① 邀请卡文案可自定义（系统默认文案 + Setup 卡内编辑 + 恢复默认，config 增加 inviteMessage 字段）；② 低星评价跟进（Needs follow-up 标记、侧滑 Reply on Trustpilot + Mark as handled、Notifications 低星提醒、sessions 增加 followUpStatus 字段 + PATCH 标记接口）。漏斗诊断、A/B、referenceId 精确归因、归因申诉等列入 roadmap 不做</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v2.1</span>
-      <span class="v-date">2026-07-14</span>
-      <span class="v-desc">后台设计评审后修订：Performance / Settings 双 tab（权限点对齐）；指标改名（Invites Shown / Invite Clicks / Attributed Reviews）+ cohort 口径 + 未成熟标注（pendingAttribution）+ 小样本保护；表改名 Invited Sessions；侧滑加会话摘要（替代跳转 support-agent）；Setup checklist；TP URL 可达性校验 + 状态点语义 + 未配置禁止开启；关闭 agent 不隐藏历史数据；config 改字段级 PATCH。计费明细保持在 org-billing 查看，不在本页重复</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v2.0</span>
-      <span class="v-date">2026-07-14</span>
-      <span class="v-desc">触发资格 = AI 意图判定（satisfied）+ agent_solved；90 天去重；超限直接丢弃（删除次日队列）；Outcome 四态状态机；评价内容 / 星级 / 置信度回显；后台漏斗 KPI + 时间范围 + 搜索筛选 + Unlimited 修复；summary / sessions API 扩展。规格明细见 PRD-review-agent.md</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v1.x</span>
-      <span class="v-date">2026-06</span>
-      <span class="v-desc">MVP 上线 merchant-dashboard：开关、累计 KPI、TP URL、每日上限、Sessions 列表；归因引擎后端上线</span>
-    </div>
-    <div class="version-row">
-      <span class="v-ver">v1.0</span>
-      <span class="v-date">2026-05-08</span>
-      <span class="v-desc">原 PRD（seel-prd-v2.html）：单路径 + 灰度、仅 5 星计费 $5、模糊归因方案。其合规章节（移除满意度筛选）已于 2026-07-14 标注废弃</span>
-    </div>
   </section>
 
 </main>

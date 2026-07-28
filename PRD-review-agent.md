@@ -1,6 +1,6 @@
 # PRD — Review Agent 归因系统
 
-**版本：** v1.6
+**版本：** v1.7
 **日期：** 2026-07-15
 **状态：** 待研发评审
 
@@ -250,6 +250,7 @@ list 元素新增字段：
 | 3 | **未配置禁止开启** | TP URL 为空或校验失败时总开关置灰 |
 | 4 | **Daily Limit** | `0 = Unlimited`（绿色态 + 预设 Unlimited 档），消除 "Capped at 0/day"；非预设值展示实际数值；保存成功给 Saved 反馈 |
 | 5 | **邀请卡文案** | Setup 卡内 "Invite card message" 步骤：系统默认文案 + 商家可自定义（textarea 自动保存 + Reset to default）；状态显示 Default / Customized；未自定义即用默认，不阻塞开启 |
+| 6 | **语言切换（i18n）** | Setup 卡下方独立"语言 / Language"卡：English \| 中文 分段切换，界面文案即时全量切换（KPI / 漏斗 / 表格 / 侧滑 / 悬浮 hint 全覆盖）；**产品名 "Review agent" 与品牌词不翻译**，评价正文 / 客户名 / 订单号等用户数据保持原文；默认跟随 MD 账号语言 |
 
 ### 6.5 工程项
 
@@ -282,3 +283,4 @@ config 提交改**字段级 PATCH 语义**（只传变更字段），消除 v1 �
 | v1.4 | 2026-07-14 | Performance 结构对齐 Sales agent Analytics（Time range 下拉 + 六卡大数横排含环比）；Settings 收敛为单张 Setup 卡（步骤内联配置）；新增邀请卡文案自定义（默认文案 + `inviteMessage` 字段）；新增低星评价跟进（`followUpStatus` 字段 + PATCH 标记接口 + Notifications 低星提醒）；漏斗诊断、A/B、referenceId 精确归因、归因申诉列入 roadmap |
 | v1.5 | 2026-07-15 | 归因规则按 GravaStar 实测校准（§2.4）：窗口 T+3 天 → **12h**（锚点 = 邀请点击；点击埋点存在性为研发确认项，缺失则回退邀评发出时间并砍掉 Clicks 层），匹配 = conversation_id 关联 + 时间接近度 + 客户名 + 内容语义，置信度 High/Medium（替代 matchTier/confidence，API 字段改 `confidenceTier` + `matchSignals`）；expired 定义同步 12h；未成熟标注改"最近 12h"；时间筛选复用 MD 全局控件（Yesterday/7/30/90/Custom range）；KPI/漏斗/Outcome badge/置信度全部增加悬浮 hint |
 | v1.6 | 2026-07-15 | 明确交付范围：后端归因/触发/发送逻辑已上线运行，本文档 §二~§四 为口径参考、非本版待开发项；v2 开发主体 = MD 页面改造（§六 + §五）。顶部加交付范围说明，指向页面重点版 `review-agent-v2-prd.html` |
+| v1.7 | 2026-07-15 | Settings 新增语言切换（English \| 中文，界面文案即时全量切换）；产品名 "Review agent" 与品牌词不翻译，评价正文/客户名/订单号等用户数据保持原文 |

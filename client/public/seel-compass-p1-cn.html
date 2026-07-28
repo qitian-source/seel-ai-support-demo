@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Seel Compass — Phase 1（店铺政策扫描）PRD</title>
+<style>
+  :root{
+    --seel:#7C3AED; --seel-d:#5B21B6; --seel-l:#F5F3FF;
+    --ink:#0F172A; --mid:#475569; --sub:#64748B; --border:#E2E8F0; --bg:#F8FAFC; --card:#fff;
+    --ok:#16A34A; --ok-bg:#F0FDF4; --ok-br:#BBF7D0;
+    --warn:#B45309; --warn-bg:#FFFBEB; --warn-br:#FDE68A;
+    --mute:#64748B; --mute-bg:#F1F5F9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.65}
+  code{background:#F1F5F9;padding:1px 6px;border-radius:4px;font-size:12.5px;color:#334155}
+  a{color:var(--seel-d)}
+  .topbar{background:#0A0A1A;color:#fff;padding:14px 28px;display:flex;align-items:center;gap:12px}
+  .topbar .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:17px}
+  .topbar .title{font-weight:800}
+  .topbar small{display:block;font-weight:500;color:#A5B4FC;font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 28px 70px}
+  .callout{background:var(--seel-l);border:1px solid #DDD6FE;border-radius:10px;padding:14px 18px;margin:18px 0;font-size:13px;color:var(--seel-d)}
+  .callout b{color:var(--seel-d)}
+  h2{font-size:16.5px;font-weight:800;margin:30px 0 10px;padding-top:16px;border-top:2px solid var(--border)}
+  h2:first-of-type{border-top:none;padding-top:4px}
+  h3{font-size:14px;font-weight:700;margin:16px 0 6px}
+  p{margin-bottom:9px}
+  ul,ol{margin:8px 0 12px 22px}
+  li{margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+  th{background:#F8FAFC;text-align:left;padding:9px 12px;font-weight:700;color:var(--sub);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .in{color:var(--ok);font-weight:700}
+  .out{color:var(--mute)}
+  .note{border-left:3px solid var(--seel);background:#fff;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--mid);margin:12px 0}
+  .note.warn{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+  .note.ok{border-left-color:var(--ok);background:var(--ok-bg);color:#166534}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:1px 8px}
+  .pill.in{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+  .pill.out{background:var(--mute-bg);color:var(--mute);border:1px solid var(--border)}
+  footer{color:var(--sub);font-size:11px;margin-top:26px;text-align:center;border-top:1px solid var(--border);padding-top:16px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="mark">🧭</div>
+  <div>
+    <div class="title">Seel Compass — Phase 1（店铺政策扫描）PRD</div>
+    <small>本期落地范围 · 爬取线 only · 对应主 PRD v1.3 / registry</small>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="callout">
+    <b>本文档目的：</b>把 Phase 1 收敛到<b>只做店铺政策相关扫描（爬取线）</b>、<b>不接任何外部数据库</b>。这是为了赶 7 月上线、去掉外部集成的关键路径。完整 5 类目愿景、状态机、生产架构见主文档：<a href="https://seel-ai-support-v2-main.vercel.app/seel-compass-prd-cn.html">中文 PRD</a> · <a href="https://seel-ai-support-v2-main.vercel.app/seel-compass-prd.html">法务英文 PRD</a> · <a href="https://app.notion.com/p/3983b4ed17a281ff9c60cf33a9ab451a">Rule Citation Registry</a>。
+  </div>
+
+  <h2>1. 本期范围</h2>
+  <table>
+    <thead><tr><th>模块</th><th>数据源</th><th>本期</th></tr></thead>
+    <tbody>
+      <tr><td>🔒 Data &amp; Privacy</td><td>爬店面（隐私政策页 + cookie 行为）</td><td><span class="pill in">Phase 1</span></td></tr>
+      <tr><td>📄 Terms &amp; Conditions</td><td>爬店面（ToS / 退款 / 担保）</td><td><span class="pill in">Phase 1</span></td></tr>
+      <tr><td>🛍️ Product</td><td>爬店面（产品页 / catalog）</td><td><span class="pill in">Phase 1</span></td></tr>
+      <tr><td>™️ Intellectual Property</td><td><b>USPTO 外部 API</b></td><td><span class="pill out">推迟 · fast-follow</span></td></tr>
+      <tr><td>🏛️ Corporate Entity</td><td><b>Middesk / 州 SoS 外部 API</b></td><td><span class="pill out">推迟 · fast-follow</span></td></tr>
+    </tbody>
+  </table>
+  <p><b>一句话：</b>本期只做"爬公开店面 + 内部规则 corpus"就能完成的检查，<b>零外部数据库接入</b>。IP 与 Corporate Entity 因为要接外部库（成本 / ToS / 集成周期），推迟到紧接的 fast-follow —— <b>是分期，不是砍</b>，5 类目愿景不变。</p>
+
+  <h2>2. 为什么这么切</h2>
+  <ul>
+    <li><b>砍掉唯一的两个外部集成</b> —— USPTO（2–3 周）+ Middesk（1 周 + ~$10/lookup + 自动查询州门户的 ToS 法律问题），全部移出关键路径</li>
+    <li><b>运行时外部调用归零</b> —— 系统简化为纯"爬取 → corpus 查表 → 渲染"，这条 pipeline 已 built</li>
+    <li><b>一点不丢 Michael 7/17 扩充</b> —— 他新增的 12 条检查<b>全在 D&P / T&C / Product</b>，没有一条是 IP/Entity；砍这两个模块，政策扫描深度反而是加厚的</li>
+    <li><b>赶 7 月</b> —— 关键路径上不再有外部集成，剩下都是自有 pipeline + corpus 的活</li>
+  </ul>
+
+  <h2>3. 三个模块做什么</h2>
+  <p>检查集<b>以 registry 为唯一真源</b>（含 Michael 7/17 扩充的 12 条；⊕ = 新增、研发未建）。概览：</p>
+  <table>
+    <thead><tr><th>模块</th><th>覆盖示例</th></tr></thead>
+    <tbody>
+      <tr><td>🔒 <b>Data &amp; Privacy</b></td><td>隐私政策存在性阈值检查 ⊕ · 访问/删除/可携权 · lawful basis · cookie 先于同意 · DSAR 窗口 · 撤回同意 · Do-Not-Sell 链接 ⊕ · GPC 通用 opt-out ⊕ · COPPA 儿童数据 ⊕ · 跨境传输披露 ⊕</td></tr>
+      <tr><td>📄 <b>Terms &amp; Conditions</b></td><td>条款存在性阈值检查 ⊕ · governing law 条款（描述性）· 无限定担保 · 退款窗口 · EU 电子撤回功能 ⊕ · 14 天撤回权 ⊕ · 商家身份披露 ⊕ · 与 EU 不可放弃权利冲突 ⊕ · 仲裁/弃权条款存在（描述性）⊕</td></tr>
+      <tr><td>🛍️ <b>Product</b></td><td>受管制品类<b>检测</b>（酒精/CBD/烟草/枪械/补剂/药品，仅检测不下结论）· 健康/功效声明 · 原产地 · 绿色声明 · 参考价 · 儿童玩具安全 · Responsible Person · INCI · Prop 65 · 危险品 · 背书披露 · 紧迫性声明 · <b>网站可访问性（三态）⊕</b></td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. 系统（本期）</h2>
+  <ul>
+    <li><b>单一管线</b>：爬取店面 + 证据存储 → 引擎（LLM 只输出 rule_id + 判定 + 证据，不写引用）→ 渲染（rule_id 查 registry 拼引用）→ 报告。<b>零运行时外部调用。</b></li>
+    <li><b>引用只渲染、不生成</b>（硬约束）：商家看到的每条引用都来自 counsel 签署的 registry；模型运行时永不产生法条引用。</li>
+    <li>架构细节（registry = 版本化文件、签署 = PR、grounding CI 门、证据存储）见主 PRD §14，本期不变。</li>
+  </ul>
+
+  <h2>5. 商家界面（本期）</h2>
+  <table>
+    <thead><tr><th>项</th><th>Phase 1</th><th>变化</th></tr></thead>
+    <tbody>
+      <tr><td>Tab</td><td>Overview · Review Items · History · Setup</td><td><b>去掉 Intellectual Property、Corporate Entity 两个 tab（6 → 4）</b></td></tr>
+      <tr><td>Overview 分数卡</td><td>Overall + Data &amp; Privacy + Terms &amp; Conditions + Product</td><td><b>6 张 → 4 张</b></td></tr>
+      <tr><td>Setup</td><td>市场 · 品类确认 · 授权 &amp; 域名验证状态</td><td>去掉实体问卷</td></tr>
+      <tr><td>Onboarding</td><td>五步（授权 → DNS 验证 → 市场 → 发现扫描 → 品类确认）+ 异步报告生成</td><td>不变</td></tr>
+    </tbody>
+  </table>
+  <div class="note warn"><b>Demo 说明：</b>当前 demo 仍是 5 类目 / 6 tab（未改）。demo 按本期收敛到 4 tab 的改动等范围定稿后再做（本次不动 demo）。</div>
+
+  <h2>6. 法务保障（沿用，不变）</h2>
+  <p>Phase 1 完整沿用主 PRD §5 的全部保障，本期无新增例外：</p>
+  <ul>
+    <li>语言红线（never <code>violates / illegal / non-compliant / deceptive</code>）· 每条 review item 以"建议咨询律师"结尾</li>
+    <li>四态：Verified / Review Item / Not Assessable / N/A（含描述性、三态检查的呈现约定）</li>
+    <li>Source &amp; Proof 层（引用 chips + 解释依据标签 + corpus 版本 + 页面证据/缺席证明）</li>
+    <li>Onboarding 前置 counsel 版免责声明 · 授权勾选 + DNS 域名验证</li>
+    <li>Self-harm scope-out（Seel 自家产品相关规则整体不在方法论内）</li>
+  </ul>
+
+  <h2>7. 数据源（本期）</h2>
+  <table>
+    <thead><tr><th>阶段</th><th>数据源</th><th>外部调用 / 成本</th></tr></thead>
+    <tbody>
+      <tr><td><b>Phase 1（本期）</b></td><td>爬店面 + 内部规则 corpus + tracker lists（EasyPrivacy / DDG Tracker Radar）</td><td class="in">零运行时外部调用 · $0</td></tr>
+      <tr><td>Phase 2 fast-follow</td><td>USPTO Open Data Portal（IP）· Middesk（Entity）</td><td class="out">运行时外部调用 · Middesk ~$10/lookup</td></tr>
+    </tbody>
+  </table>
+  <p>corpus 原文（EUR-Lex / eCFR / uscode / 州立法门户 / FTC / OEHHA 等）在<b>构建时摄入</b>进 registry，非运行时调用，全部免费公开。</p>
+
+  <h2>8. 本期验收（关键项）</h2>
+  <ul>
+    <li>D&P / T&C / Product 三类目能对测试商家产出 Verified / Review / Not Assessable 三态 finding</li>
+    <li>每条引用来自 registry 查表；运行时模型生成引用次数 = 0（CI 硬检查）</li>
+    <li>商家 UI = 4 tab / 4 分数卡；无 IP、无 Entity tab</li>
+    <li>Onboarding 五步 + 异步报告；禁词 0；每条 review item 带 counsel 语</li>
+    <li>registry 列出的本期检查集与 UI 计数一致、且每项可点开（覆盖对齐 —— Michael #1）</li>
+  </ul>
+
+  <h2>9. 明确推迟到 fast-follow</h2>
+  <ul>
+    <li><b>Intellectual Property</b>（USPTO 商标查重）—— 独立 track，接外部 API</li>
+    <li><b>Corporate Entity</b>（Middesk / 州 SoS good-standing）—— 接外部 API + 实体问卷</li>
+  </ul>
+  <div class="note"><b>对 Michael / Jenny 的沟通口径：</b>6/18 定的 5 大类不变；<b>Phase 1 先上政策扫描三类（不碰外部库），IP + Entity 作为紧接的 fast-follow</b>。这是分期，不是缩范围。</div>
+
+  <h2>10. 待办 / launch gate</h2>
+  <ul>
+    <li><b>研发排期</b>：registry 里 ⊕ 标记的 12 条新检查的检测/UI 建设顺序（法务范围已定，这是工作量问题）</li>
+    <li><b>§12 五项签署仍是 launch gate</b>：counsel involvement 模型 · 初始 corpus · 5 工作日 re-sign · N=5 · scope-out 清单确认 —— registry 改得再好，没签不能上商家</li>
+    <li><b>覆盖对齐</b>：registry = 真实系统里每个 check（demo 的计数是 mock）</li>
+    <li>demo 按本期收敛到 4 tab（范围定稿后执行）</li>
+  </ul>
+
+  <footer>Seel Compass · Phase 1（店铺政策扫描）PRD · 对应主 PRD v1.3 / registry · 仅供信息参考,非法律意见</footer>
+</div>
+</body>
+</html>
