@@ -519,7 +519,7 @@ const App = (() => {
       "oc.reviewed.tip":"A Trustpilot review was matched back to this session (name / timing / content signals)",
       "oc.expired.tip":"Clicked, but no review matched within 12h — attribution closed",
       "fu.tag":"⚑ Needs follow-up",
-      "setup.title":"Setup","setup.sub":"Everything configurable in one place — invite message ships with a default",
+      "setup.title":"Setup","setup.sub":"Three steps to go live — configure everything here",
       "step.tp":"Connect your Trustpilot page","tp.verifiedShort":"Verified","tp.edit":"Edit","tp.visit":"Visit",
       "tp.verifiedLine":"✓ Verified · Page reachable · Last crawled 2 hours ago",
       "step.limit":"Set a daily invite limit","limit.unlimited":"∞ Unlimited","limit.perDay":"{n}/day",
@@ -579,7 +579,7 @@ const App = (() => {
       "oc.reviewed.tip":"已有一条 Trustpilot 评价归因回本次会话(姓名 / 时间 / 内容信号)",
       "oc.expired.tip":"已点击,但 12 小时内未匹配到评价 —— 归因关闭",
       "fu.tag":"⚑ 待跟进",
-      "setup.title":"设置向导","setup.sub":"全部配置集中在这里 —— 邀请文案自带默认值",
+      "setup.title":"设置向导","setup.sub":"三步上线 —— 全部配置集中在这里",
       "step.tp":"连接 Trustpilot 主页","tp.verifiedShort":"已验证","tp.edit":"编辑","tp.visit":"访问",
       "tp.verifiedLine":"✓ 已验证 · 页面可访问 · 2 小时前抓取",
       "step.limit":"设置每日邀请上限","limit.unlimited":"∞ 无限制","limit.perDay":"{n}/天",
@@ -831,16 +831,6 @@ const App = (() => {
           </div>
           <div class="limit-note ${unlimited ? "unlimited" : "capped"}">${unlimited ? t("limit.unlimitedNote") : t("limit.cappedNote", {n:state.limit})}</div>
           <div class="save-hint" id="save-hint">${t("save.auto")}</div>`,
-      },
-      {
-        key:"message", done:true, name:t("step.message"),
-        status: isDefaultMsg() ? t("status.default") : t("status.custom"), expandable:true,
-        detail:`
-          <textarea class="msg-ta" oninput="App.setMsg(this.value)" onclick="event.stopPropagation()">${currentMsg()}</textarea>
-          <div class="msg-actions">
-            <button class="reset-link" onclick="event.stopPropagation();App.resetMsg()">${t("msg.reset")}</button>
-            <div class="save-hint" id="msg-hint" style="margin-top:0">${t("save.auto")}</div>
-          </div>`,
       },
       {
         key:"switch", done:state.on, name:t("step.switch"),
