@@ -404,19 +404,6 @@ body {
       <!-- Big numbers -->
       <div class="kpi-grid" id="kpi-grid"></div>
 
-      <!-- Funnel -->
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 data-k="fn.title"></h2>
-            <div class="sub" data-k="fn.sub"></div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div id="funnel-rows"></div>
-        </div>
-      </div>
-
       <!-- Invited Sessions -->
       <div class="card">
         <div class="card-head">
@@ -545,7 +532,7 @@ const App = (() => {
       "step.switch":"Turn on Review Agent","switch.on":"On · sending invites","switch.off":"Off · invites paused",
       "lang.title":"Language",
       "dw.sub":"{conv} · Order #{order}","dw.timeline":"Status Timeline",
-      "tl.shown":"Invite shown","tl.clicked":"Invite clicked → Trustpilot","tl.attributed":"Review attributed",
+      "tl.shown":"Invite shown","tl.clicked":"Invite clicked → Trustpilot","tl.attributed":"Review time",
       "dw.summary":"Conversation Summary","dw.openConv":"Open full conversation in Support agent ↗",
       "dw.review":"Trustpilot Review","dw.confidence":"{tier} confidence",
       "dw.attrTip":"Match signals: {basis}. Attribution window is 12h after the click — most reviews arrive within hours.",
@@ -605,7 +592,7 @@ const App = (() => {
       "step.switch":"开启 Review agent","switch.on":"开启 · 正在发送邀请","switch.off":"关闭 · 邀请已暂停",
       "lang.title":"语言",
       "dw.sub":"{conv} · 订单 #{order}","dw.timeline":"状态时间线",
-      "tl.shown":"邀请已展示","tl.clicked":"点击邀请 → Trustpilot","tl.attributed":"评价已归因",
+      "tl.shown":"邀请已展示","tl.clicked":"点击邀请 → Trustpilot","tl.attributed":"评价时间",
       "dw.summary":"会话摘要","dw.openConv":"在 Support agent 中打开完整会话 ↗",
       "dw.review":"Trustpilot 评价","dw.confidence":"{tier}置信度",
       "dw.attrTip":"匹配信号:{basis}。归因窗口为点击后 12 小时 —— 多数评价数小时内到达。",
@@ -676,9 +663,9 @@ const App = (() => {
       summary:"Warranty claim for a damaged speaker grille. Agent verified coverage and arranged a same-day replacement shipment.",
       review:"Support resolved my warranty claim without me having to send a single email. The chat agent pulled up my order, confirmed coverage, and shipped a replacement grille the same day. This is how customer service should work." },
     { customer:"Sophie Nguyen",     conv:"conv-10384", order:"10384", date:"Jul 7, 2026 · 5:50 PM",   outcome:"reviewed",
-      clickedAt:"Jul 7, 2026 · 5:58 PM", reviewedAt:"Jul 7, 2026 · 8:12 PM", rating:3, tier:"Medium", basis:"Timing (2.2 h) + content",
+      clickedAt:"Jul 7, 2026 · 5:58 PM", reviewedAt:"Jul 7, 2026 · 8:12 PM", rating:4, tier:"Medium", basis:"Timing (2.2 h) + content",
       summary:"Return request due to a hardware rattle. Agent issued the return label instantly; product QC issue flagged to VOC agent.",
-      review:"The support chat was quick and my return label arrived fast, which I appreciated. Three stars because the speaker itself had a rattle out of the box — service was great, product QC less so." },
+      review:"The support chat was quick and my return label arrived within minutes — really smooth. Knocking off one star only for the rattle on the first unit, but the team handled the swap perfectly and kept me updated the whole way." },
     { customer:"Robert Kim",        conv:"conv-10315", order:"10315", date:"Jul 6, 2026 · 3:30 AM",   outcome:"reviewed",
       clickedAt:"Jul 6, 2026 · 3:33 AM", reviewedAt:"Jul 6, 2026 · 6:40 AM", rating:5, tier:"High", basis:"Order ID in review + content",
       summary:"Speaker unresponsive after a failed firmware update at 2 AM. Agent walked through recovery mode; device fully restored.",
@@ -783,7 +770,7 @@ const App = (() => {
   }
 
   // ── Time range ──
-  function refresh() { renderKpis(); renderFunnel(); renderTable(); }
+  function refresh() { renderKpis(); renderTable(); }
   function toggleRangePanel(e) {
     if (e) e.stopPropagation();
     $("range-panel").classList.toggle("open");
@@ -917,9 +904,8 @@ const App = (() => {
     $("tbl-body").innerHTML = rows.map(s => {
       const idx = SESSIONS.indexOf(s);
       const badge = `<span class="badge tip ${s.outcome}" data-tip="${t("oc." + s.outcome + ".tip")}"><span class="bd"></span>${t("oc." + s.outcome)}</span>`;
-      const fuTag = s.outcome === "reviewed" && s.rating < 5 && !s.handled ? `<span class="fu-tag">${t("fu.tag")}</span>` : "";
       const review = s.outcome === "reviewed"
-        ? `<div class="t-review"><span>${starsHtml(s.rating)}${fuTag}</span><span class="txt">${s.review}</span></div>`
+        ? `<div class="t-review"><span>${starsHtml(s.rating)}</span><span class="txt">${s.review}</span></div>`
         : `<span class="t-empty">—</span>`;
       return `<div class="tbl-row ${s.outcome === "reviewed" ? "clickable" : ""}" ${s.outcome === "reviewed" ? `onclick="App.openDrawer(${idx})"` : ""}>
         <span class="t-cust">${s.customer}</span>
@@ -938,7 +924,6 @@ const App = (() => {
     const s = SESSIONS[idx];
     $("dw-name").textContent = s.customer;
     $("dw-sub").textContent = t("dw.sub", { conv: s.conv, order: s.order });
-    const billed = s.rating === 5;
     $("dw-body").innerHTML = `
       <div>
         <div class="dw-sec-label">${t("dw.timeline")}</div>
@@ -960,34 +945,8 @@ const App = (() => {
         <div class="review-box">
           <div class="rv-top">
             ${starsHtml(s.rating)}
-            <span class="attr-chip tip" data-tip="${t("dw.attrTip", { basis: tBasis(s.basis) })}">🎯 ${t("dw.confidence", { tier: tTier(s.tier) })}</span>
           </div>
           <div class="rv-text">${s.review}</div>
-        </div>
-      </div>
-      ${s.rating < 5 ? `
-      <div>
-        <div class="dw-sec-label">${t("dw.followup")}</div>
-        ${s.handled
-          ? `<div class="fu-box handled"><div class="fu-text">${t("fu.handled")}</div></div>`
-          : `<div class="fu-box">
-              <div class="fu-text">${t("fu.text")}</div>
-              <div style="display:flex;gap:8px">
-                <a class="fu-btn primary" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">${t("fu.reply")}</a>
-                <button class="fu-btn ghost" onclick="App.markHandled(${idx})">${t("fu.mark")}</button>
-              </div>
-            </div>`}
-      </div>` : ""}
-      <div>
-        <div class="dw-sec-label">${t("dw.billing")}</div>
-        <span class="bill-chip ${billed ? "yes" : "no"}">${billed ? t("bill.yes") : t("bill.no")}</span>
-      </div>
-      <div>
-        <div class="dw-sec-label">${t("dw.details")}</div>
-        <div class="kv">
-          <span class="k">${t("kv.confidence")}</span><span class="v">${tTier(s.tier)}</span>
-          <span class="k">${t("kv.signals")}</span><span class="v">${tBasis(s.basis)}</span>
-          <span class="k">${t("kv.attributedAt")}</span><span class="v">${s.reviewedAt}</span>
         </div>
       </div>
       <a class="tp-btn" href="https://www.trustpilot.com/review/gravastar.com" target="_blank" rel="noreferrer">
@@ -1006,7 +965,7 @@ const App = (() => {
   }
 
   // ── Init ──
-  function renderAll() { renderKpis(); renderFunnel(); renderSetup(); renderChips(); renderTable(); }
+  function renderAll() { renderKpis(); renderSetup(); renderChips(); renderTable(); }
   renderStatic();
   renderAll();
 
