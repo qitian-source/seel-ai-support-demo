@@ -10,16 +10,28 @@
  * Setup category toggle → UI immediately re-scores + re-counts + re-classifies items,
  * with a "pending rescan" banner indicating changes will apply at next weekly scan.
  */
-import { useState, useMemo, useEffect, type ReactNode } from "react";
+import { useState, useMemo, useEffect, createContext, useContext, type ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   Check, AlertTriangle, MinusCircle, ChevronDown, Download, RefreshCw, X,
-  Copy, Loader2, ArrowRight, ShieldCheck, Globe,
+  Loader2, ArrowRight, ShieldCheck, Globe, Languages,
 } from "lucide-react";
 
+/* ── i18n (demo) — full-page EN / 中文 toggle, set from Setup.
+   Legal citations (SourceRef labels + URLs) intentionally stay in their source
+   language — a law's name is a proper noun, not something to translate. ── */
+type Lang = "en" | "zh";
+const LangCtx = createContext<Lang>("en");
+function useLang() { return useContext(LangCtx); }
+/** inline chrome translator: const t = useT(); t("English", "中文") */
+function useT() {
+  const lang = useLang();
+  return (en: string, zh: string) => (lang === "zh" ? zh : en);
+}
+
 /* ── Types ── */
-type SubTab = "overview" | "issues" | "ip" | "entity" | "history" | "setup";
+type SubTab = "overview" | "issues" | "history" | "setup";
 type Market = "us" | "eu";
 type State = "ok" | "warn" | "na" | "skip";
 type IssueStatus = "open" | "acknowledged" | "in_remediation" | "resolved";
@@ -105,8 +117,6 @@ const CATEGORIES = [
   { key: "dp", emoji: "🔒", label: "Data & Privacy",       us: 92, eu: 81, status: null },
   { key: "tc", emoji: "📄", label: "Terms & Conditions",   us: 86, eu: 88, status: null },
   { key: "pr", emoji: "🛍️", label: "Product",              us: null, eu: null, status: null }, // computed dynamically
-  { key: "ip", emoji: "™️", label: "Intellectual Property", us: null, eu: null, status: "review", usOnly: true },
-  { key: "en", emoji: "🏛️", label: "Corporate Entity",     us: null, eu: null, status: "ok",     usOnly: true },
 ];
 
 const DEFAULT_ACTIVE_CATEGORIES: CategoryKey[] = ["cosmetics", "kids"];
@@ -269,7 +279,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
           sources: [{ label: "🇪🇺 Cosmetics Regulation (EC) 1223/2009 — Art. 4 & 19", url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009R1223" }],
           proof: {
             pages: "3 sunscreen PDPs (SKU prefix SUN-)", checkedAt: "Jun 17, 2026",
-            observation: "No Responsible Person disclosure found on any sampled page. UK listings would require an equivalent under the UK Cosmetics Regulation.",
+            observation: "No Responsible Person disclosure found on any sampled page.",
           },
           rec: "Review item: Responsible Person disclosure appears to be missing on cosmetics SKUs shipped into the EU. Recommend confirming with qualified counsel.",
         },
@@ -309,7 +319,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
           proof: { pages: "4 kids' outdoor gear PDPs (toys / small-parts items)", checkedAt: "Jun 17, 2026", observation: "Age labels and small-parts warnings present on every sampled page." },
         },
       },
-      { id: "p-ce-ukca",     title: "CE / UKCA conformity markings displayed where required", sub: "Markings shown on regulated goods sold into EU / UK.", state: "ok" },
+      { id: "p-ce-ukca",     title: "CE conformity markings displayed where required", sub: "Markings shown on regulated goods sold into the EU.", state: "ok" },
       { id: "p-gpsr",        title: "EU Responsible Person named for goods sold into the EU (GPSR)", sub: "Named for general merchandise. Cosmetics-specific gap tracked above.", state: "ok" },
       { id: "p-inci",        title: "Allergen / ingredient / INCI labeling on ingestibles & cosmetics", sub: "INCI ingredient lists present on all sampled cosmetic PDPs.", state: "ok", catKey: "cosmetics", defaultOnState: "ok" },
       {
@@ -330,7 +340,7 @@ const PRODUCT_GROUPS: SubGroup[] = [
   {
     key: "ip-mkt", title: "IP & marketing integrity", count: 2,
     items: [
-      { id: "p-counterfeit", title: "Counterfeit / unauthorized-reseller risk", sub: "All listings appear sourced from the brand directly or trusted independent sellers. (Separate from own-brand trademark screening — see the Intellectual Property tab.)", state: "ok" },
+      { id: "p-counterfeit", title: "Counterfeit / unauthorized-reseller risk", sub: "All listings appear sourced from the brand directly or trusted independent sellers.", state: "ok" },
       {
         id: "p-endorsement", title: "Endorsement / influencer / review disclosures (#ad, review authenticity)",
         sub: "Sponsored posts carry the required FTC disclosures; no fake-review signals detected.", state: "ok",
@@ -417,8 +427,252 @@ function computeOverall(market: Market, productScore: number): number {
 /* Static (non-Product) review-item base counts for summary line */
 function baseReviewItemCounts(market: Market) {
   return market === "us"
-    ? { review: 4, notAssessable: 41 }  // T&C 1 + D&P 1 + IP 1 + Entity 1 = 4
+    ? { review: 2, notAssessable: 41 }  // T&C 1 + D&P 1 = 2 (IP / Corporate Entity out of scope)
     : { review: 3, notAssessable: 33 }; // D&P EU 3
+}
+
+/* ── Chinese content map (demo). Keyed by item/issue id.
+   Only merchant-facing fields are translated; legal citations stay in source language.
+   Every `rec` ends with counsel-confirming language, matching the English red line. ── */
+type ZhFields = Partial<Record<"title" | "sub" | "rules" | "pages" | "checkedAt" | "excerpt" | "observation" | "rec", string>>;
+const ZH_ITEMS: Record<string, ZhFields> = {
+  /* Data & Privacy */
+  dp1: {
+    title: "已声明访问 / 更正 / 删除 / 可携带权",
+    sub: "在隐私政策第 4 节《你的权利》中找到。",
+    rules: "CCPA/CPRA 与 GDPR 框架通常期望告知消费者如何访问、更正、删除其数据，以及获取可携带格式的副本。",
+    pages: "yourstore.com/privacy · 第 4 节《你的权利》", checkedAt: "2026 年 6 月 17 日",
+    excerpt: "你可以请求访问、更正或删除我们持有的关于你的个人信息，或索取可携带格式的副本。",
+  },
+  dp2: {
+    title: "提供限制敏感数据（位置 / 生物识别）使用的选项",
+    sub: "在已审阅页面上未找到该要素。",
+    rules: "多个美国州级隐私框架都描述了消费者限制敏感个人数据被使用的能力。",
+    pages: "yourstore.com/privacy · /cookie-policy · /terms —— 已检索 3 个页面", checkedAt: "2026 年 6 月 17 日",
+    observation: "在所有检索页面上均未找到限制敏感数据使用的声明或控件。",
+    rec: "审查项：疑似缺少「限制敏感数据使用」的声明。建议与有资质的律师确认你的目标市场是否要求，如需要则补充该声明。",
+  },
+  dp3: {
+    title: "数据保留期限已实际执行",
+    sub: "自动扫描无法评估 —— 属运营层面记录。",
+    rules: "对公开页面的时点扫描可以读到声明的保留期限，但无法核实其在运营中是否被执行。因此不作任何方向的假设，予以省略。",
+    pages: "yourstore.com/privacy · 第 7 节《数据保留》", checkedAt: "2026 年 6 月 17 日",
+    observation: "读到了声明的保留期限；运营层面的执行情况超出公开页面扫描所能核实的范围。",
+  },
+  dp4: {
+    title: "已声明处理的合法性基础（GDPR 第 6 条）",
+    sub: "在隐私政策第 2 节《我们如何使用你的数据》中找到。",
+    rules: "GDPR 通常期望针对每一处理目的声明其合法性基础（同意、合同、正当利益）。",
+    pages: "yourstore.com/privacy · 第 2 节《我们如何使用你的数据》", checkedAt: "2026 年 6 月 17 日",
+    excerpt: "我们处理你的订单信息以履行与你的合同；营销邮件仅在获得你同意后发送。",
+  },
+  dp5: {
+    title: "非必要 Cookie 在获得同意前被设置",
+    sub: "在做出同意选择之前观测到分析类 Cookie。",
+    rules: "在欧盟 ePrivacy 框架下，非必要 Cookie 通常期望需要事先获得同意。",
+    pages: "yourstore.com 首页 —— 网络请求追踪", checkedAt: "2026 年 6 月 17 日",
+    observation: "在任何同意交互之前已设置 3 个 Cookie：_ga、_fbp、_hjid（页面加载后 t+0.8 秒）。",
+    rec: "审查项：Cookie 在同意前被设置。建议与有资质的律师确认，并按需调整同意横幅。",
+  },
+  /* Terms & Conditions */
+  tc1: {
+    title: "已包含适用法律与争议解决条款",
+    sub: "在服务条款第 12 节中找到。",
+    rules: "描述性检查：是否包含适用法律与争议解决条款。法律上并不要求必须包含 —— 这里作为观察项呈现，而非缺口。",
+    pages: "yourstore.com/terms · 第 12 节《适用法律》", checkedAt: "2026 年 6 月 17 日",
+    excerpt: "本条款受美国特拉华州法律管辖。任何争议在进入正式程序前，将先向我们的支持团队提出。",
+  },
+  tc2: {
+    title: "对第三方商品作出无限定的正品保证",
+    sub: "商品页措辞可能延伸为一项绝对保证。",
+    rules: "将无限定的正品保证延伸至第三方卖家，是 FTC 法案第 5 条框架下反复出现的执法与审查议题。",
+    pages: "yourstore.com 商品列表页", checkedAt: "2026 年 6 月 17 日",
+    excerpt: "正品保障 —— 每件商品保证为正品。",
+    rec: "审查项：无限定保证。建议与有资质的律师确认是否应对该保证加以限定（如范围、所覆盖的卖家）。",
+  },
+  tc3: {
+    title: "退款在声明的时限内被履行",
+    sub: "自动扫描无法评估 —— 属时效 / 运营层面。",
+    rules: "扫描可以读到声明的退款时限，但无法核实退款是否在该时限内被履行。予以省略，不作猜测。",
+    pages: "yourstore.com/refund-policy", checkedAt: "2026 年 6 月 17 日",
+    observation: "声明了 30 天退款窗口；退款是否在窗口内被履行属运营层面，超出时点扫描范围。",
+  },
+  /* Product — regulated / restricted */
+  "p-alcohol": { title: "含酒精商品 —— 许可、年龄门槛、跨境进口限额" },
+  "p-cbd": { title: "CBD / 大麻二酚 / 大麻素 —— 各国 / 各州合法性差异极大" },
+  "p-tobacco": { title: "烟草 / 电子烟 / 尼古丁 —— 严格的进口与口味限制" },
+  "p-firearms": { title: "枪支 / 武器 / 受管制刀具 —— 广泛的跨境禁令" },
+  "p-supplements": { title: "膳食补充剂 / 营养品 / 可食用品 —— 欧盟剂量与新型食品限制" },
+  "p-cosmetics": {
+    title: "化妆品 / 外用品 —— 欧盟产品通报与责任人（RP）",
+    sub: "检测到防晒类 SKU。3 个列表缺少欧盟责任人（RP）披露。",
+    rules: "欧盟化妆品法规通常期望为投放欧盟的化妆品指明一位欧盟境内的责任人（RP）。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "在所有抽样页面上均未找到责任人披露。",
+    rec: "审查项：投放欧盟的化妆品 SKU 疑似缺少责任人披露。建议与有资质的律师确认。",
+  },
+  "p-pharma": { title: "药品 / 医疗器械 —— 审批、标识、处方规则" },
+  /* Product — claims & advertising */
+  "p-health": { title: "健康 / 疾病 / 功效声称有充分依据", sub: "在抽样商品页上未发现无依据的健康声称。" },
+  "p-origin": { title: "原产地声称准确（如「美国制造」）", sub: "未发现缺乏依据的原产地声称。" },
+  "p-green": {
+    title: "环保 / 「绿色」声称 ——「生态」「天然」「可持续」",
+    sub: "措辞与 FTC 绿色指南的指引一致。",
+    rules: "FTC 绿色指南描述了环保声称通常期望如何被限定与佐证。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "「再生外壳面料（78%）」有量化且针对具体商品；未发现无限定的「环保」笼统声称。",
+  },
+  "p-pricing": { title: "参考价 / 折扣定价显示了原价依据", sub: "「原价 $X」引用了此前 90 天内实际成交过的价格。" },
+  /* Product — safety, conformity & disclosures */
+  "p-kids-safety": {
+    title: "儿童用品 / 玩具 —— 安全标准与窒息风险规则",
+    sub: "检测到儿童户外装备。年龄标签与小零件警示齐备。",
+    rules: "对玩具及含小零件的商品，美国框架期望标注年龄分级与小零件警示。注意：此依据仅针对玩具 —— 更广义的儿童商品（服装、家具）需另行依据。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "每个抽样页面均标注了年龄标签与小零件警示。",
+  },
+  "p-ce-ukca": { title: "在需要处显示 CE 合规标识", sub: "投放欧盟的受管制商品已显示标识。" },
+  "p-gpsr": { title: "为投放欧盟的商品指明欧盟责任人（GPSR）", sub: "已为一般商品指明。化妆品的专项缺口在上文追踪。" },
+  "p-inci": { title: "可食用品与化妆品的过敏原 / 成分 / INCI 标注", sub: "所有抽样化妆品页均有 INCI 成分表。" },
+  "p-prop65": {
+    title: "Prop 65 / 欧盟 REACH 物质限制信号",
+    sub: "在相关的加州配送列表上显示了 Prop 65 警示。",
+    rules: "加州 Prop 65 通常期望在使消费者接触所列物质前给出清晰警示。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "在相关的加州配送列表上均已显示 Prop 65 警示。",
+  },
+  "p-hazmat": { title: "受限配送 / 危险品 —— 电池、气雾剂、易燃物", sub: "含电池的 SKU 均附有所需的运输披露。" },
+  /* Product — IP & marketing integrity */
+  "p-counterfeit": { title: "假冒 / 未授权分销风险", sub: "所有列表看起来都直接来自品牌方或可信的独立卖家。" },
+  "p-endorsement": {
+    title: "背书 / 达人 / 评价披露（#ad、评价真实性）",
+    sub: "合作贴文附有所需的 FTC 披露；未检测到虚假评价信号。",
+    rules: "FTC 背书指南通常期望品牌与背书人之间的重大关联被清晰披露。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "合作贴文附有 #ad 披露；未检测到虚假评价信号。",
+  },
+  /* Product — consumer protection, promotions & cross-border */
+  "p-geo": { title: "已标记销售国 / 地域与配送限制", sub: "已对相关 SKU 在受限市场设置配送门槛。" },
+  "p-sweeps": { title: "抽奖 / 竞赛 / 赠品遵循各司法辖区规则", sub: "站内未检测到进行中的抽奖活动。" },
+  "p-compare": { title: "比较 / 竞品广告遵循披露规则", sub: "商品页未发现指名竞品的声称。" },
+  "p-coo": { title: "已呈现原产地 / 采购来源披露", sub: "在需要处的商品页已标注生产国。" },
+  "p-urgency": {
+    title: "紧迫 / 稀缺声称（倒计时、「仅剩 X 件」）",
+    sub: "4 个商品页有倒计时与「仅剩 3 件」—— 依据未经确认。",
+    rules: "真实、可核验的稀缺通常可接受；而模拟出的紧迫感是 FTC 第 5 条及其暗黑模式指引下反复出现的审查议题。",
+    checkedAt: "2026 年 6 月 17 日",
+    observation: "存在倒计时与「仅剩 3 件」的措辞；本次扫描未交叉核对后台库存数据。",
+    rec: "审查项：请核实站内的紧迫信号是否反映真实库存或时效。建议与有资质的律师确认。",
+  },
+  /* Review Items (work queue) */
+  "i-unqual": {
+    title: "对第三方商品作出无限定的正品保证",
+    rules: "商品页措辞将一项绝对的正品保证延伸至独立卖家。无限定的正品保证是 FTC 法案第 5 条框架下反复出现的执法与审查议题。",
+    pages: "yourstore.com 商品列表页", checkedAt: "2026 年 6 月 17 日",
+    excerpt: "正品保障 —— 每件商品保证为正品。",
+    rec: "建议与有资质的律师确认是否应对该保证加以限定（范围 / 所覆盖的卖家）。",
+  },
+  "i-sens": {
+    title: "未呈现限制敏感数据使用的选项",
+    rules: "多个美国州级隐私框架都描述了消费者限制敏感个人数据（如精确位置、生物识别）被使用的能力。",
+    pages: "yourstore.com/privacy · /cookie-policy · /terms —— 已检索 3 个页面", checkedAt: "2026 年 6 月 17 日",
+    observation: "在所有检索页面上均未找到限制敏感数据使用的声明或控件。",
+    rec: "建议与有资质的律师确认你的目标市场是否要求，如需要则补充该声明。",
+  },
+  "i-tm": {
+    title: "商标名称相似 ——「Acme Outdoor」与已注册商标",
+    rules: "对品牌名称在 USPTO 商标数据库中的检索，返回了一个由无关方持有的相似已注册商标。",
+    pages: "USPTO 检索「acme outdoor」及相近变体，按相关 Nice 类别过滤", checkedAt: "2026 年 6 月 17 日",
+    observation: "发现相似已注册商标：ACME OUTDOORS · 第 25 类（服装）· 注册号 5,xxx,xxx · 无关持有人。",
+    rec: "建议在扩大美国市场营销前，与有资质的律师确认该相似性是否构成侵权风险。可提供年度监测。",
+  },
+  "i-annual": {
+    title: "年度报告申报到期 —— 特拉华州主体",
+    rules: "特拉华州主体需申报年度报告并缴纳特许经营税以维持良好存续状态；逾期申报有丧失良好存续状态的风险。",
+    pages: "特拉华州州务卿主体记录", checkedAt: "2026 年 6 月 17 日",
+    observation: "状态：良好存续。下一次年度报告 / 特许经营税到期日为 2027 年 3 月 1 日。",
+    rec: "建议将该申报排入日程，并与有资质的律师确认是否还有其他州级申报适用。Seel Compass 可持续监测良好存续状态。",
+  },
+  "i-urgency": {
+    title: "紧迫 / 稀缺声称 —— 倒计时与「仅剩 X 件」",
+    rules: "真实、可核验的稀缺通常可接受；而模拟出的紧迫感是 FTC 第 5 条及其暗黑模式指引下反复出现的审查议题。",
+    pages: "你店铺上的 4 个商品页", checkedAt: "2026 年 6 月 17 日",
+    observation: "存在倒计时与「仅剩 3 件」的措辞；本次扫描未交叉核对后台库存数据。",
+    rec: "建议与有资质的律师确认，并核实站内的紧迫信号是否反映真实库存或时效。",
+  },
+  "i-cookies": {
+    title: "非必要 Cookie 在获得同意前被设置",
+    rules: "在欧盟 ePrivacy 框架下，非必要 Cookie 通常期望需要事先获得同意。",
+    pages: "yourstore.com 首页 —— 网络请求追踪", checkedAt: "2026 年 6 月 17 日",
+    observation: "在任何同意交互之前已设置 3 个 Cookie：_ga、_fbp、_hjid（页面加载后 t+0.8 秒）。",
+    rec: "建议与有资质的律师确认，并按需调整同意横幅。",
+  },
+  "i-dsar": {
+    title: "未声明 DSAR 响应时限",
+    rules: "GDPR 通常提及对数据主体访问请求的一个月响应期。",
+    pages: "yourstore.com/privacy · 第 4 节", checkedAt: "2026 年 6 月 17 日",
+    observation: "描述了数据主体权利，但未就访问请求声明任何响应时限。",
+    rec: "建议与有资质的律师确认，并在你的政策中声明响应时限。",
+  },
+  "i-withdraw": {
+    title: "缺少清晰的撤回同意机制",
+    rules: "GDPR 通常期望撤回同意应与给予同意一样便捷。",
+    pages: "yourstore.com 账户页 · /privacy —— 检索撤回控件", checkedAt: "2026 年 6 月 17 日",
+    observation: "同意在注册时收集；在已审阅页面上未找到自助撤回控件。",
+    rec: "建议与有资质的律师确认，并增加一个自助撤回控件。",
+  },
+  "i-cosmetics": {
+    title: "化妆品 —— 缺少欧盟责任人披露",
+    rules: "欧盟化妆品法规通常期望为投放欧盟的化妆品指明一位欧盟境内的责任人（RP）。",
+    pages: "3 个防晒商品页（SKU 前缀 SUN-）", checkedAt: "2026 年 6 月 17 日",
+    observation: "在所有抽样页面上均未找到责任人披露。",
+    rec: "建议与有资质的律师确认，并在投放欧盟的化妆品 SKU 上呈现责任人披露。",
+  },
+};
+
+/* Category labels + detection meta (Chinese) */
+const ZH_CAT_LABELS: Record<CategoryKey, { label: string; meta: string; catalogHint: string }> = {
+  cosmetics:  { label: "化妆品 / 外用品",        meta: "已检测 · 12 个 SKU", catalogHint: "在商品目录中检测到防晒类 SKU。" },
+  kids:       { label: "儿童用品 / 玩具",        meta: "已检测 · 4 个 SKU",  catalogHint: "在目录中检测到儿童户外装备。" },
+  alcohol:    { label: "含酒精商品",             meta: "未检测到",           catalogHint: "" },
+  cbd:        { label: "CBD / 大麻二酚 / 大麻素", meta: "未检测到",           catalogHint: "" },
+  tobacco:    { label: "烟草 / 电子烟 / 尼古丁",  meta: "未检测到",           catalogHint: "" },
+  firearms:   { label: "枪支 / 武器",            meta: "未检测到",           catalogHint: "" },
+  supplements:{ label: "膳食补充剂 / 营养品",     meta: "可能 · 2 个 SKU",    catalogHint: "有 2 个 SKU 提到胶原蛋白肽 —— 如你销售可食用补充剂请确认。" },
+  pharma:     { label: "药品 / 医疗器械",        meta: "未检测到",           catalogHint: "" },
+};
+
+/* Score-card category names + basis tags (Chinese) */
+const ZH_CATEGORIES: Record<string, string> = {
+  dp: "数据与隐私", tc: "条款与条件", pr: "产品", ip: "知识产权", en: "公司主体",
+};
+const ZH_BASIS: Record<Basis, string> = {
+  statute: "法条", regulation: "法规", guidance: "指南", "case law": "判例与执法",
+};
+/* Product sub-group titles → Chinese (keyed by SubGroup.key) */
+const ZH_GROUP: Record<string, string> = {
+  regulated: "受管制 / 受限品类",
+  claims: "声称与广告",
+  safety: "产品安全、合规与披露",
+  "ip-mkt": "知识产权与营销诚信",
+  consumer: "消费者保护、促销与跨境",
+};
+
+/* Resolvers — return Chinese when lang==='zh' and a translation exists, else English. */
+function Z(lang: Lang, id: string, field: keyof ZhFields, en?: string): string {
+  if (lang === "zh") { const z = ZH_ITEMS[id]?.[field]; if (z) return z; }
+  return en ?? "";
+}
+function locProof(lang: Lang, id: string, proof: Proof): Proof {
+  if (lang !== "zh") return proof;
+  const z = ZH_ITEMS[id];
+  if (!z) return proof;
+  return {
+    pages: z.pages ?? proof.pages,
+    checkedAt: z.checkedAt ?? proof.checkedAt,
+    excerpt: z.excerpt ?? proof.excerpt,
+    observation: z.observation ?? proof.observation,
+  };
 }
 
 /* ── Small primitives ── */
@@ -443,38 +697,42 @@ function StateIcon({ state }: { state: State }) {
   );
 }
 
+const ZH_STATE: Record<State, string> = { ok: "已验证", warn: "审查项", na: "无法评估", skip: "不适用" };
 function StateBadge({ state }: { state: State }) {
+  const lang = useLang();
   return (
-    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0", stateStyle[state].badge)}>
-      {stateStyle[state].badgeText}
+    <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0", stateStyle[state].badge)}>
+      {lang === "zh" ? ZH_STATE[state] : stateStyle[state].badgeText}
     </span>
   );
 }
 
 /* ── Source & proof blocks (shared by checklist rows and review items) ── */
 function BasisTag({ basis }: { basis: Basis }) {
-  const cls = basis === "case law" ? "bg-indigo-50 text-indigo-600"
+  const cls = basis === "case law" ? "bg-[#F1EEFF] text-[#5254DA]"
     : basis === "guidance" ? "bg-amber-50 text-amber-700"
     : "bg-slate-100 text-slate-500";
+  const lang = useLang();
   return (
-    <span className={cn("ml-1 text-[9px] font-semibold uppercase tracking-wide rounded px-1 py-px whitespace-nowrap", cls)}>
-      {basis}
+    <span className={cn("ml-1 text-[11px] font-semibold uppercase tracking-wide rounded px-1 py-px whitespace-nowrap", cls)}>
+      {lang === "zh" ? ZH_BASIS[basis] : basis}
     </span>
   );
 }
 
 function SourcesBlock({ sources }: { sources: SourceRef[] }) {
+  const t = useT();
   const anyBasis = sources.some(s => (s.basis ?? CITATION_BASIS[s.label]));
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Sources</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("Sources", "来源")}</div>
       <div className="flex flex-wrap gap-1.5">
         {sources.map((s, i) => {
           const basis = s.basis ?? CITATION_BASIS[s.label];
           return s.url ? (
             <a
               key={i} href={s.url} target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-foreground hover:border-[#6c47ff] hover:text-[#6c47ff] transition-colors"
+              className="inline-flex items-center gap-1 text-[11px] font-medium border border-border rounded-full px-2.5 py-1 bg-white text-foreground hover:border-[#5254DA] hover:text-[#5254DA] transition-colors"
             >
               {s.label}{basis && <BasisTag basis={basis} />} <span className="opacity-60">↗</span>
             </a>
@@ -485,28 +743,35 @@ function SourcesBlock({ sources }: { sources: SourceRef[] }) {
           );
         })}
       </div>
-      <p className="text-[10.5px] text-muted-foreground mt-1.5">
-        Rule corpus {CORPUS_VERSION} · reference only — how these rules apply to you depends on facts a scan can't assess.
-        {anyBasis && <> The tag on each citation marks where the rule lives — statute, regulation, agency guidance, or case&nbsp;law &amp; enforcement.</>}
+      <p className="text-[11px] text-muted-foreground mt-1.5">
+        {t(
+          `Rule corpus ${CORPUS_VERSION} · reference only — how these rules apply to you depends on facts a scan can't assess.`,
+          `规则库 ${CORPUS_VERSION} · 仅供参考 —— 这些规则如何适用于你，取决于扫描无法评估的事实。`,
+        )}
+        {anyBasis && t(
+          " The tag on each citation marks where the rule lives — statute, regulation, agency guidance, or case law & enforcement.",
+          " 每条引用上的标签标明规则所处的层级 —— 法条、法规、机构指南，或判例与执法。",
+        )}
       </p>
     </div>
   );
 }
 
 function ProofBlock({ proof }: { proof: Proof }) {
+  const t = useT();
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">What We Reviewed — Proof</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("What We Reviewed — Proof", "我们审阅了什么 —— 证据")}</div>
       {proof.pages && (
         <div className="text-[12px] text-foreground">
-          <span className="text-muted-foreground">Checked:</span> {proof.pages}
+          <span className="text-muted-foreground">{t("Checked:", "已检查：")}</span> {proof.pages}
           {proof.checkedAt && <span className="text-muted-foreground"> · {proof.checkedAt}</span>}
         </div>
       )}
       {proof.excerpt && (
         <blockquote className="border-l-2 border-slate-300 pl-3 mt-1.5 text-[12px] italic text-foreground">
           “{proof.excerpt}”
-          <span className="block not-italic text-[10.5px] text-muted-foreground mt-0.5">— captured from your page</span>
+          <span className="block not-italic text-[11px] text-muted-foreground mt-0.5">{t("— captured from your page", "—— 摘自你的页面")}</span>
         </blockquote>
       )}
       {proof.observation && <p className="text-[12px] text-foreground mt-1">{proof.observation}</p>}
@@ -521,10 +786,14 @@ function ControlRow({ ctrl, activeCats, issueStatuses, onManageIssue }: {
   onManageIssue?: (issueId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const lang = useLang();
+  const t = useT();
   const state = effState(ctrl, activeCats);
   const hasEv = !!ctrl.ev && state !== "skip";
   const isSkipped = state === "skip";
-  const sub = isSkipped ? "Not applicable — category not in your catalog. Rules skipped." : ctrl.sub;
+  const sub = isSkipped
+    ? t("Not applicable — category not in your catalog. Rules skipped.", "不适用 —— 该品类不在你的目录中，规则已跳过。")
+    : Z(lang, ctrl.id, "sub", ctrl.sub);
   // Status echo: same finding entity as the Review Items work queue
   const issueStatus = state === "warn" && ctrl.issueId ? (issueStatuses?.[ctrl.issueId] ?? "open") : undefined;
   return (
@@ -533,18 +802,18 @@ function ControlRow({ ctrl, activeCats, issueStatuses, onManageIssue }: {
         onClick={() => hasEv && setOpen(v => !v)}
         className={cn(
           "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors",
-          hasEv && "hover:bg-[#fafbfc] cursor-pointer",
+          hasEv && "hover:bg-[#F7F7FC] cursor-pointer",
           !hasEv && "cursor-default"
         )}
       >
         <StateIcon state={state} />
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-medium text-foreground">{ctrl.title}</div>
+          <div className="text-[13px] font-medium text-foreground">{Z(lang, ctrl.id, "title", ctrl.title)}</div>
           {sub && <div className="text-[12px] text-muted-foreground mt-0.5">{sub}</div>}
         </div>
         {issueStatus && issueStatus !== "open" && (
-          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0 bg-[#f0edff] text-[#6c47ff] border-[#dcd0ff]">
-            {STATUS_LABELS[issueStatus]}
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border uppercase tracking-wide shrink-0 bg-[#F1EEFF] text-[#5254DA] border-[#E0DBF9]">
+            {lang === "zh" ? ZH_STATUS_LABELS[issueStatus] : STATUS_LABELS[issueStatus]}
           </span>
         )}
         <StateBadge state={state} />
@@ -556,27 +825,27 @@ function ControlRow({ ctrl, activeCats, issueStatuses, onManageIssue }: {
         )}
       </button>
       {open && ctrl.ev && (
-        <div className="border-t border-border bg-[#fafbfc] px-4 py-3 text-[12.5px] text-foreground space-y-3">
+        <div className="border-t border-border bg-[#F7F7FC] px-4 py-3 text-[12px] text-foreground space-y-3">
           {ctrl.ev.rules && (
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Relevant Rules and Context</div>
-              <p className="text-foreground">{ctrl.ev.rules}</p>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("Relevant Rules and Context", "相关规则与背景")}</div>
+              <p className="text-foreground">{Z(lang, ctrl.id, "rules", ctrl.ev.rules)}</p>
             </div>
           )}
           {ctrl.ev.sources && ctrl.ev.sources.length > 0 && <SourcesBlock sources={ctrl.ev.sources} />}
-          {ctrl.ev.proof && <ProofBlock proof={ctrl.ev.proof} />}
+          {ctrl.ev.proof && <ProofBlock proof={locProof(lang, ctrl.id, ctrl.ev.proof)} />}
           {ctrl.ev.rec && (
-            <div className="border-l-2 border-[#6c47ff] pl-3 mt-2">
-              <p className="text-[#6c47ff]">{ctrl.ev.rec}</p>
+            <div className="border-l-2 border-[#5254DA] pl-3 mt-2">
+              <p className="text-[#5254DA]">{Z(lang, ctrl.id, "rec", ctrl.ev.rec)}</p>
             </div>
           )}
           {state === "warn" && ctrl.issueId && onManageIssue && (
             <div className="flex justify-end pt-1">
               <button
                 onClick={() => onManageIssue(ctrl.issueId!)}
-                className="text-[11.5px] font-semibold text-[#6c47ff] hover:underline"
+                className="text-[11px] font-semibold text-[#5254DA] hover:underline"
               >
-                Manage in Review Items →
+                {t("Manage in Review Items →", "在审查项中管理 →")}
               </button>
             </div>
           )}
@@ -587,25 +856,24 @@ function ControlRow({ ctrl, activeCats, issueStatuses, onManageIssue }: {
 }
 
 /* ── Sub-tab bar ── */
-const SUB_TABS: { key: SubTab; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "issues",   label: "Review Items" },
-  { key: "ip",       label: "Intellectual Property" },
-  { key: "entity",   label: "Corporate Entity" },
-  { key: "history",  label: "History" },
-  { key: "setup",    label: "Setup" },
+const SUB_TABS: { key: SubTab; label: string; zh: string }[] = [
+  { key: "overview", label: "Overview",              zh: "总览" },
+  { key: "issues",   label: "Review Items",          zh: "审查项" },
+  { key: "history",  label: "History",               zh: "历史" },
+  { key: "setup",    label: "Setup",                 zh: "设置" },
 ];
 
 /* ── Onboarding wizard ── */
-const OB_STEPS = ["Your store", "Verify", "Markets", "First scan", "Categories"];
+const OB_STEPS = ["Your store", "Markets", "First scan", "Categories"];
+const OB_STEPS_ZH = ["你的店铺", "市场", "首次扫描", "品类"];
 
 /* Initial discovery scan — quick. Rule application & report composition happen
    after category confirmation, as an async "report generating" phase. */
 const SCAN_STAGES = [
-  { label: "Crawling your storefront",     detail: "11 pages — home, product pages, policy pages" },
-  { label: "Reading policy documents",     detail: "Privacy Policy · Terms of Service · Refund Policy" },
-  { label: "Cataloging products",          detail: "128 SKUs across 6 collections" },
-  { label: "Detecting product categories", detail: "Cosmetics / topicals (12 SKUs) · Children's products (4 SKUs) · 1 possible match" },
+  { label: "Crawling your storefront",     detail: "11 pages — home, product pages, policy pages", labelZh: "正在抓取你的店铺", detailZh: "11 个页面 —— 首页、商品页、政策页" },
+  { label: "Reading policy documents",     detail: "Privacy Policy · Terms of Service · Refund Policy", labelZh: "正在读取政策文档", detailZh: "隐私政策 · 服务条款 · 退款政策" },
+  { label: "Cataloging products",          detail: "128 SKUs across 6 collections", labelZh: "正在整理商品目录", detailZh: "6 个系列共 128 个 SKU" },
+  { label: "Detecting product categories", detail: "Cosmetics / topicals (12 SKUs) · Children's products (4 SKUs) · 1 possible match", labelZh: "正在识别商品品类", detailZh: "化妆品 / 外用品（12 SKU）· 儿童用品（4 SKU）· 1 项可能匹配" },
 ];
 
 function OnboardingFlow({
@@ -614,11 +882,10 @@ function OnboardingFlow({
   onComplete: (cats: Set<CategoryKey>) => void;
   onSkip: () => void;
 }) {
+  // Store is already bound in the merchant-dashboard backend — no manual entry or
+  // ownership verification. The scan runs automatically on the connected store.
   const [step, setStep] = useState(0);
-  const [domain, setDomain] = useState("acme-outdoor.com");
-  const [authChecked, setAuthChecked] = useState(false);
-  const [verify, setVerify] = useState<"idle" | "checking" | "done">("idle");
-  const [copied, setCopied] = useState(false);
+  const domain = "acme-outdoor.com"; // resolved from the connected MD account
   const [markets, setMarkets] = useState<Set<Market>>(new Set<Market>(["us", "eu"]));
   const [scanIdx, setScanIdx] = useState(-1); // -1 = not started; STAGES.length = complete
   const [cats, setCats] = useState<Set<CategoryKey>>(new Set(DEFAULT_ACTIVE_CATEGORIES));
@@ -628,9 +895,9 @@ function OnboardingFlow({
   const stages = SCAN_STAGES;
   const scanComplete = scanIdx >= stages.length;
 
-  /* simulated scan progression */
+  /* simulated scan progression (First scan is step 2 after removing the verify step) */
   useEffect(() => {
-    if (step !== 3 || scanComplete) return;
+    if (step !== 2 || scanComplete) return;
     if (scanIdx === -1) { setScanIdx(0); return; }
     const t = setTimeout(() => setScanIdx(i => i + 1), 950);
     return () => clearTimeout(t);
@@ -642,17 +909,6 @@ function OnboardingFlow({
     const t = setTimeout(() => setReport("ready"), 7000);
     return () => clearTimeout(t);
   }, [report]);
-
-  const startVerify = () => {
-    setVerify("checking");
-    setTimeout(() => setVerify("done"), 1400);
-  };
-
-  const copyRecord = () => {
-    navigator.clipboard?.writeText("seel-compass-verify=sc-7f3a9b2e").catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
 
   const toggleMarket = (m: Market) => {
     setMarkets(prev => {
@@ -678,42 +934,49 @@ function OnboardingFlow({
   const detectedKeys: CategoryKey[] = ["cosmetics", "kids"];   // ≥90% confidence — pre-checked
   const possibleKeys: CategoryKey[] = ["supplements"];         // 70–89% confidence — suggested, unchecked
 
+  const t = useT();
+  const zh = useLang() === "zh";
+  const stepLabels = zh ? OB_STEPS_ZH : OB_STEPS;
+
   return (
     <div className="max-w-2xl mx-auto px-6 py-10 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-foreground">🧭 Seel Compass</h1>
+          <h1 className="text-[20px] font-bold text-foreground">🧭 {t("Storefront policy scanner", "店铺政策扫描器")}</h1>
           <p className="text-[13px] text-muted-foreground mt-1">
-            A structured readiness review of your storefront — set up once, reviewed automatically every week.
+            {t(
+              "A structured readiness review of your storefront — set up once, reviewed automatically every week.",
+              "对你店铺的一次结构化就绪度审阅 —— 设置一次，之后每周自动审阅。",
+            )}
           </p>
         </div>
-        <button onClick={onSkip} className="text-[11.5px] text-muted-foreground hover:text-[#6c47ff] hover:underline shrink-0 mt-1">
-          Skip (demo) →
+        <button onClick={onSkip} className="text-[11px] text-muted-foreground hover:text-[#5254DA] hover:underline shrink-0 mt-1">
+          {t("Skip (demo) →", "跳过（demo）→")}
         </button>
       </div>
 
       {/* Step indicator */}
       {report === "idle" && (
         <div className="flex items-center">
-          {OB_STEPS.map((label, i) => {
+          {stepLabels.map((label, i) => {
             const isDone = i < step;
             const isCurrent = i === step;
             return (
               <div key={label} className={cn("flex items-center", i > 0 && "flex-1")}>
-                {i > 0 && <div className={cn("h-px flex-1 mx-2", isDone || isCurrent ? "bg-[#6c47ff]" : "bg-border")} />}
+                {i > 0 && <div className={cn("h-px flex-1 mx-2", isDone || isCurrent ? "bg-[#5254DA]" : "bg-border")} />}
                 <div className="flex items-center gap-1.5">
                   <span className={cn(
-                    "w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold shrink-0",
-                    isDone && "bg-[#6c47ff] text-white",
-                    isCurrent && "bg-[#f0edff] text-[#6c47ff] border border-[#6c47ff]",
+                    "w-5 h-5 rounded-full inline-flex items-center justify-center text-[11px] font-bold shrink-0",
+                    isDone && "bg-[#5254DA] text-white",
+                    isCurrent && "bg-[#F1EEFF] text-[#5254DA] border border-[#5254DA]",
                     !isDone && !isCurrent && "bg-slate-100 text-slate-400",
                   )}>
                     {isDone ? <Check size={11} strokeWidth={3} /> : i + 1}
                   </span>
                   <span className={cn(
-                    "text-[11.5px] font-medium whitespace-nowrap",
-                    isCurrent ? "text-[#6c47ff]" : isDone ? "text-foreground" : "text-muted-foreground",
+                    "text-[11px] font-medium whitespace-nowrap",
+                    isCurrent ? "text-[#5254DA]" : isDone ? "text-foreground" : "text-muted-foreground",
                   )}>{label}</span>
                 </div>
               </div>
@@ -727,138 +990,84 @@ function OnboardingFlow({
         <Card className="shadow-none border border-border">
           <CardContent className="p-6 space-y-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-foreground">Connect your store</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
-                Seel Compass reads your public storefront pages — product listings, policies, and disclosures. Nothing is installed on your store.
+              <h2 className="text-[16px] font-semibold text-foreground">{t("Connect your store", "连接你的店铺")}</h2>
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {t(
+                  "Storefront policy scanner reads your public storefront pages — product listings, policies, and disclosures. Nothing is installed on your store.",
+                  "店铺政策扫描器读取你的公开店铺页面 —— 商品列表、政策与披露。不会在你的店铺上安装任何东西。",
+                )}
               </p>
             </div>
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Store domain</label>
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex-1 flex items-center gap-2 border border-border rounded-lg px-3 py-2 bg-white focus-within:border-[#6c47ff]">
-                  <Globe size={14} className="text-muted-foreground shrink-0" />
-                  <input
-                    value={domain}
-                    onChange={e => setDomain(e.target.value)}
-                    className="flex-1 text-[13px] outline-none bg-transparent"
-                    placeholder="yourstore.com"
-                  />
-                </div>
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("Connected store", "已连接店铺")}</label>
+              <div className="flex items-center gap-2 mt-1.5 border border-border rounded-lg px-3 py-2 bg-[#F7F7FC]">
+                <Globe size={14} className="text-muted-foreground shrink-0" />
+                <span className="flex-1 text-[13px] text-foreground font-medium">{domain}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700"><ShieldCheck size={13} /> {t("Connected via your Seel account", "已通过你的 Seel 账户连接")}</span>
               </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{t("Pulled from your merchant dashboard — no setup needed.", "取自你的商家后台 —— 无需额外设置。")}</p>
             </div>
             {/* Counsel-provided intro disclaimer (Michael 7/17) — shown before the scan begins */}
-            <div className="rounded-lg border border-border bg-[#fafbfc] px-4 py-3 text-[11.5px] leading-relaxed text-muted-foreground">
-              This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan.
+            <div className="rounded-lg border border-border bg-[#F7F7FC] px-4 py-3 text-[11px] leading-relaxed text-muted-foreground">
+              {t(
+                "This scan is an automated, informational tool that detects whether certain signals appear on the page you've identified as your own. It is not legal advice or a determination of compliance, and creates no attorney-client relationship. Results are not exhaustive and may contain errors. Consult your own attorney on any compliance question. Seel disclaims all warranties and liability arising from use of the scan.",
+                "本次扫描是一款自动化的信息性工具，用于检测某些信号是否出现在你指认为自有的页面上。它不是法律意见，也不是对合规状况的认定，且不构成任何委托代理关系。结果并不详尽，且可能包含错误。任何合规问题请咨询你自己的律师。Seel 对因使用本扫描而产生的一切担保与责任予以免除。",
+              )}
             </div>
-            <label className="flex items-start gap-2.5 cursor-pointer group">
-              <span
-                onClick={() => setAuthChecked(v => !v)}
-                className={cn(
-                  "w-4 h-4 rounded border shrink-0 inline-flex items-center justify-center mt-0.5 transition-colors",
-                  authChecked ? "bg-[#6c47ff] border-[#6c47ff]" : "border-border bg-white group-hover:border-[#6c47ff]",
-                )}
-              >
-                {authChecked && <Check size={11} className="text-white" strokeWidth={3} />}
-              </span>
-              <span onClick={() => setAuthChecked(v => !v)} className="text-[12.5px] text-foreground">
-                I confirm I am authorized to have this domain reviewed.
-              </span>
-            </label>
             <div className="flex justify-end pt-1">
-              <PrimaryBtn disabled={!domain.trim() || !authChecked} onClick={() => setStep(1)}>
-                Continue <ArrowRight size={13} />
+              <PrimaryBtn onClick={() => setStep(1)}>
+                {t("Continue", "继续")} <ArrowRight size={13} />
               </PrimaryBtn>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 1 — domain verification */}
+      {/* Step 1 — target markets */}
       {report === "idle" && step === 1 && (
         <Card className="shadow-none border border-border">
           <CardContent className="p-6 space-y-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-foreground">Verify you own {domain}</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
-                Add this TXT record to your domain's DNS settings, then verify. This keeps reviews limited to domains you control.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-[#fafbfc] px-4 py-3 flex items-center gap-3">
-              <code className="flex-1 text-[12px] font-mono text-foreground break-all">seel-compass-verify=sc-7f3a9b2e</code>
-              <button
-                onClick={copyRecord}
-                className="text-[11.5px] font-medium text-[#6c47ff] hover:underline inline-flex items-center gap-1 shrink-0"
-              >
-                <Copy size={12} /> {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-            {verify === "done" ? (
-              <div className="flex items-center gap-2 text-[12.5px] text-emerald-700 font-medium">
-                <ShieldCheck size={15} /> Domain ownership verified (DNS TXT record)
-              </div>
-            ) : (
-              <div className="text-[11.5px] text-muted-foreground">
-                DNS changes usually propagate within minutes. You can also verify later from Setup.
-              </div>
-            )}
-            <div className="flex items-center justify-between pt-1">
-              <button onClick={() => setStep(0)} className="text-[12px] text-muted-foreground hover:text-foreground">← Back</button>
-              {verify === "done" ? (
-                <PrimaryBtn onClick={() => setStep(2)}>Continue <ArrowRight size={13} /></PrimaryBtn>
-              ) : (
-                <PrimaryBtn disabled={verify === "checking"} onClick={startVerify}>
-                  {verify === "checking" ? (<><Loader2 size={13} className="animate-spin" /> Checking DNS…</>) : "I've added the record — Verify"}
-                </PrimaryBtn>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2 — target markets */}
-      {report === "idle" && step === 2 && (
-        <Card className="shadow-none border border-border">
-          <CardContent className="p-6 space-y-4">
-            <div>
-              <h2 className="text-[15px] font-semibold text-foreground">Where do you sell?</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
-                Rule sets are applied per market. Pick the markets you sell into today — you can add more later in Setup.
+              <h2 className="text-[16px] font-semibold text-foreground">{t("Where do you sell?", "你在哪里销售？")}</h2>
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {t(
+                  "Rule sets are applied per market. Pick the markets you sell into today — you can add more later in Setup.",
+                  "规则集按市场分别应用。选择你目前销售的市场 —— 之后可在「设置」中添加更多。",
+                )}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <ObMarketCard on={markets.has("us")} onClick={() => toggleMarket("us")} flag="🇺🇸" name="United States" sub="Federal + state-level frameworks" />
-              <ObMarketCard on={markets.has("eu")} onClick={() => toggleMarket("eu")} flag="🇪🇺" name="European Union" sub="GDPR, ePrivacy, product regulations" />
-              <ObMarketCard disabled flag="🇬🇧" name="United Kingdom" sub="Coming soon" />
-              <ObMarketCard disabled flag="🇨🇦" name="Canada" sub="Coming soon" />
+              <ObMarketCard on={markets.has("us")} onClick={() => toggleMarket("us")} flag="🇺🇸" name={t("United States", "美国")} sub={t("Federal + state-level frameworks", "联邦 + 州级框架")} />
+              <ObMarketCard on={markets.has("eu")} onClick={() => toggleMarket("eu")} flag="🇪🇺" name={t("European Union", "欧盟")} sub={t("GDPR, ePrivacy, product regulations", "GDPR、ePrivacy、产品法规")} />
             </div>
             <div className="flex items-center justify-between pt-1">
-              <button onClick={() => setStep(1)} className="text-[12px] text-muted-foreground hover:text-foreground">← Back</button>
-              <PrimaryBtn onClick={() => { setScanIdx(-1); setStep(3); }}>
-                Start first scan <ArrowRight size={13} />
+              <button onClick={() => setStep(0)} className="text-[12px] text-muted-foreground hover:text-foreground">{t("← Back", "← 返回")}</button>
+              <PrimaryBtn onClick={() => { setScanIdx(-1); setStep(2); }}>
+                {t("Start first scan", "开始首次扫描")} <ArrowRight size={13} />
               </PrimaryBtn>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 3 — scan progress */}
-      {report === "idle" && step === 3 && (
+      {/* Step 2 — scan progress */}
+      {report === "idle" && step === 2 && (
         <Card className="shadow-none border border-border">
           <CardContent className="p-6 space-y-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-foreground">
-                {scanComplete ? "Scan complete" : `Scanning ${domain}…`}
+              <h2 className="text-[16px] font-semibold text-foreground">
+                {scanComplete ? t("Scan complete", "扫描完成") : (zh ? `正在扫描 ${domain}…` : `Scanning ${domain}…`)}
               </h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
+              <p className="text-[12px] text-muted-foreground mt-1">
                 {scanComplete
-                  ? "Your storefront has been reviewed. One quick confirmation before we open the report."
-                  : "This usually takes a couple of minutes. You can leave this page — we'll email you when it's ready."}
+                  ? t("Your storefront has been reviewed. One quick confirmation before we open the report.", "你的店铺已审阅完毕。在打开报告前，请做一个快速确认。")
+                  : t("This usually takes a couple of minutes. You can leave this page — we'll email you when it's ready.", "这通常需要几分钟。你可以离开此页面 —— 准备就绪后我们会邮件通知你。")}
               </p>
             </div>
             {/* progress bar */}
             <div className="h-1.5 bg-slate-100 rounded overflow-hidden">
               <div
-                className="h-full rounded bg-[#6c47ff] transition-all duration-700"
+                className="h-full rounded bg-[#5254DA] transition-all duration-700"
                 style={{ width: `${Math.min(100, Math.round((Math.max(scanIdx, 0) / stages.length) * 100))}%` }}
               />
             </div>
@@ -867,15 +1076,15 @@ function OnboardingFlow({
                 const stDone = i < scanIdx;
                 const stCurrent = i === scanIdx && !scanComplete;
                 return (
-                  <div key={s.label} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg", stCurrent && "bg-[#f6f2ff]")}>
+                  <div key={s.label} className={cn("flex items-start gap-2.5 px-3 py-2 rounded-lg", stCurrent && "bg-[#F1EEFF]")}>
                     <span className="w-4 h-4 shrink-0 inline-flex items-center justify-center mt-0.5">
                       {stDone && <Check size={14} className="text-emerald-600" strokeWidth={2.5} />}
-                      {stCurrent && <Loader2 size={14} className="text-[#6c47ff] animate-spin" />}
+                      {stCurrent && <Loader2 size={14} className="text-[#5254DA] animate-spin" />}
                       {!stDone && !stCurrent && <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className={cn("text-[12.5px] font-medium", stDone || stCurrent ? "text-foreground" : "text-muted-foreground")}>{s.label}</div>
-                      {(stDone || stCurrent) && <div className="text-[11.5px] text-muted-foreground mt-0.5">{s.detail}</div>}
+                      <div className={cn("text-[12px] font-medium", stDone || stCurrent ? "text-foreground" : "text-muted-foreground")}>{zh ? s.labelZh : s.label}</div>
+                      {(stDone || stCurrent) && <div className="text-[11px] text-muted-foreground mt-0.5">{zh ? s.detailZh : s.detail}</div>}
                     </div>
                   </div>
                 );
@@ -883,24 +1092,29 @@ function OnboardingFlow({
             </div>
             {scanComplete && (
               <div className="flex justify-end pt-1">
-                <PrimaryBtn onClick={() => setStep(4)}>Review detected categories <ArrowRight size={13} /></PrimaryBtn>
+                <PrimaryBtn onClick={() => setStep(3)}>{t("Review detected categories", "查看检测到的品类")} <ArrowRight size={13} /></PrimaryBtn>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Step 4 — confirm categories */}
-      {report === "idle" && step === 4 && (
+      {/* Step 3 — confirm categories */}
+      {report === "idle" && step === 3 && (
         <Card className="shadow-none border border-border">
           <CardContent className="p-6 space-y-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-foreground">Confirm your product categories</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
-                Regulated-category rules are only applied to categories you actually sell. Uncheck anything that doesn't apply, or add categories you plan to launch.
+              <h2 className="text-[16px] font-semibold text-foreground">{t("Confirm your product categories", "确认你的商品品类")}</h2>
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {t(
+                  "Regulated-category rules are only applied to categories you actually sell. Uncheck anything that doesn't apply, or add categories you plan to launch.",
+                  "受管制品类的规则只应用于你实际销售的品类。取消勾选不适用的项，或添加你计划上线的品类。",
+                )}
               </p>
-              <p className="text-[11.5px] text-muted-foreground mt-1.5">
-                <span className="font-semibold text-[#6c47ff]">Detected</span> = high-confidence match from your catalog, pre-checked · <span className="font-semibold text-amber-700">Possible</span> = partial signals found, please confirm.
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                {zh
+                  ? <><span className="font-semibold text-[#5254DA]">已检测</span> = 来自你目录的高置信匹配，已预先勾选 · <span className="font-semibold text-amber-700">可能</span> = 发现部分信号，请确认。</>
+                  : <><span className="font-semibold text-[#5254DA]">Detected</span> = high-confidence match from your catalog, pre-checked · <span className="font-semibold text-amber-700">Possible</span> = partial signals found, please confirm.</>}
               </p>
             </div>
             <div className="space-y-1">
@@ -914,41 +1128,44 @@ function OnboardingFlow({
                     onClick={() => toggleCat(key)}
                     className={cn(
                       "w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg border transition-colors",
-                      cats.has(key) ? "border-[#dcd0ff] bg-[#faf8ff]" : "border-border bg-white hover:bg-[#fafbfc]",
+                      cats.has(key) ? "border-[#E0DBF9] bg-[#F1EEFF]" : "border-border bg-white hover:bg-[#F7F7FC]",
                     )}
                   >
                     <span className={cn(
                       "w-4 h-4 rounded border shrink-0 inline-flex items-center justify-center transition-colors",
-                      cats.has(key) ? "bg-[#6c47ff] border-[#6c47ff]" : "border-border bg-white",
+                      cats.has(key) ? "bg-[#5254DA] border-[#5254DA]" : "border-border bg-white",
                     )}>
                       {cats.has(key) && <Check size={11} className="text-white" strokeWidth={3} />}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className={cn("text-[12.5px]", cats.has(key) ? "text-foreground font-medium" : "text-muted-foreground")}>
-                        {CATEGORY_LABELS[key].label}
+                      <span className={cn("text-[12px]", cats.has(key) ? "text-foreground font-medium" : "text-muted-foreground")}>
+                        {zh ? ZH_CAT_LABELS[key].label : CATEGORY_LABELS[key].label}
                       </span>
                       {(detected || possible) && CATEGORY_LABELS[key].catalogHint && (
-                        <span className="block text-[11px] text-muted-foreground">{CATEGORY_LABELS[key].catalogHint}</span>
+                        <span className="block text-[11px] text-muted-foreground">{zh ? ZH_CAT_LABELS[key].catalogHint : CATEGORY_LABELS[key].catalogHint}</span>
                       )}
                     </div>
                     <span className={cn(
-                      "text-[10.5px] font-medium rounded px-1.5 py-0.5 shrink-0",
-                      detected && "bg-[#f0edff] text-[#6c47ff]",
+                      "text-[11px] font-medium rounded px-1.5 py-0.5 shrink-0",
+                      detected && "bg-[#F1EEFF] text-[#5254DA]",
                       possible && "bg-amber-50 text-amber-700",
                       !detected && !possible && "bg-slate-50 text-slate-400",
                     )}>
-                      {detected || possible ? CATEGORY_LABELS[key].meta : "not detected"}
+                      {detected || possible ? (zh ? ZH_CAT_LABELS[key].meta : CATEGORY_LABELS[key].meta) : t("not detected", "未检测到")}
                     </span>
                   </button>
                 );
               })}
             </div>
-            <div className="text-[11.5px] text-muted-foreground border-t border-border pt-3">
-              Detection re-runs on every weekly review — newly detected categories will be suggested here, and you can adjust this list any time in Setup.
+            <div className="text-[11px] text-muted-foreground border-t border-border pt-3">
+              {t(
+                "Detection re-runs on every weekly review — newly detected categories will be suggested here, and you can adjust this list any time in Setup.",
+                "检测在每次每周审阅时重新运行 —— 新检测到的品类会在此处建议，你可随时在「设置」中调整此列表。",
+              )}
             </div>
             <div className="flex items-center justify-between pt-1">
-              <button onClick={() => setStep(3)} className="text-[12px] text-muted-foreground hover:text-foreground">← Back</button>
-              <PrimaryBtn onClick={() => setReport("generating")}>Finish setup <ArrowRight size={13} /></PrimaryBtn>
+              <button onClick={() => setStep(2)} className="text-[12px] text-muted-foreground hover:text-foreground">{t("← Back", "← 返回")}</button>
+              <PrimaryBtn onClick={() => setReport("generating")}>{t("Finish setup", "完成设置")} <ArrowRight size={13} /></PrimaryBtn>
             </div>
           </CardContent>
         </Card>
@@ -958,17 +1175,21 @@ function OnboardingFlow({
       {report === "generating" && (
         <Card className="shadow-none border border-border">
           <CardContent className="p-8 text-center space-y-4">
-            <Loader2 size={28} className="animate-spin text-[#6c47ff] mx-auto" />
+            <Loader2 size={28} className="animate-spin text-[#5254DA] mx-auto" />
             <div>
-              <h2 className="text-[17px] font-bold text-foreground">Generating your first report…</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">
-                Applying {markets.has("eu") ? "United States and European Union" : "United States"} rule sets to your confirmed categories and composing findings with evidence.
+              <h2 className="text-[18px] font-bold text-foreground">{t("Generating your first report…", "正在生成你的首份报告…")}</h2>
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {zh
+                  ? <>正在将{markets.has("eu") ? "美国与欧盟" : "美国"}规则集应用于你确认的品类，并连同证据编写发现。</>
+                  : <>Applying {markets.has("eu") ? "United States and European Union" : "United States"} rule sets to your confirmed categories and composing findings with evidence.</>}
               </p>
             </div>
-            <div className="rounded-lg border border-[#e6dfff] bg-[#f6f2ff] px-4 py-3 text-[12.5px] text-[#4a3a8a] max-w-md mx-auto text-left">
-              ⏱ <b>This usually takes about 10 minutes.</b> You can safely leave this page — we'll email you when your report is ready, and it will be waiting here under Compass.
+            <div className="rounded-lg border border-[#E0DBF9] bg-[#F1EEFF] px-4 py-3 text-[12px] text-[#5254DA] max-w-md mx-auto text-left">
+              {zh
+                ? <>⏱ <b>这通常需要约 10 分钟。</b>你可以安心离开此页面 —— 报告就绪后我们会邮件通知你，它会在店铺政策扫描器下等着你。</>
+                : <>⏱ <b>This usually takes about 10 minutes.</b> You can safely leave this page — we'll email you when your report is ready, and it will be waiting here under Storefront policy scanner.</>}
             </div>
-            <p className="text-[11px] text-muted-foreground">Demo note: fast-forwards in a few seconds.</p>
+            <p className="text-[11px] text-muted-foreground">{t("Demo note: fast-forwards in a few seconds.", "Demo 说明：几秒后快进。")}</p>
           </CardContent>
         </Card>
       )}
@@ -979,28 +1200,31 @@ function OnboardingFlow({
           <CardContent className="p-8 text-center space-y-4">
             <div className="text-[40px] leading-none">🧭</div>
             <div>
-              <h2 className="text-[17px] font-bold text-foreground">Your first report is ready</h2>
-              <p className="text-[12.5px] text-muted-foreground mt-1">{domain} · reviewed just now · next automatic review in 7 days</p>
+              <h2 className="text-[18px] font-bold text-foreground">{t("Your first report is ready", "你的首份报告已就绪")}</h2>
+              <p className="text-[12px] text-muted-foreground mt-1">{domain} · {t("reviewed just now · next automatic review in 7 days", "刚刚审阅 · 下次自动审阅在 7 天后")}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-              <div className="rounded-lg bg-[#f6f2ff] border border-[#e6dfff] px-3 py-3">
-                <div className="text-2xl font-bold text-[#6c47ff]">{previewOverall}%</div>
-                <div className="text-[10.5px] font-medium text-[#4a3a8a] mt-0.5">Overall readiness</div>
+              <div className="rounded-lg bg-[#F1EEFF] border border-[#E0DBF9] px-3 py-3">
+                <div className="text-[26px] font-bold text-[#5254DA]">{previewOverall}%</div>
+                <div className="text-[11px] font-medium text-[#5254DA] mt-0.5">{t("Overall readiness", "总体就绪度")}</div>
               </div>
               <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-3">
-                <div className="text-2xl font-bold text-amber-700">{previewReview}</div>
-                <div className="text-[10.5px] font-medium text-amber-700 mt-0.5">Review items</div>
+                <div className="text-[26px] font-bold text-amber-700">{previewReview}</div>
+                <div className="text-[11px] font-medium text-amber-700 mt-0.5">{t("Review items", "审查项")}</div>
               </div>
               <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-3">
-                <div className="text-2xl font-bold text-emerald-700">{previewStats.verified}</div>
-                <div className="text-[10.5px] font-medium text-emerald-700 mt-0.5">Product checks verified</div>
+                <div className="text-[26px] font-bold text-emerald-700">{previewStats.verified}</div>
+                <div className="text-[11px] font-medium text-emerald-700 mt-0.5">{t("Product checks verified", "已验证的产品检查")}</div>
               </div>
             </div>
             <div className="pt-2">
-              <PrimaryBtn onClick={() => onComplete(cats)}>Open your report <ArrowRight size={13} /></PrimaryBtn>
+              <PrimaryBtn onClick={() => onComplete(cats)}>{t("Open your report", "打开你的报告")} <ArrowRight size={13} /></PrimaryBtn>
             </div>
             <p className="text-[11px] text-muted-foreground pt-2">
-              ⓘ Informational only — not legal advice, and not a law firm. Review items recommend confirming with qualified counsel.
+              {t(
+                "ⓘ Informational only — not legal advice, and not a law firm. Review items recommend confirming with qualified counsel.",
+                "ⓘ 仅供参考 —— 非法律意见，也并非律师事务所。审查项建议与有资质的律师确认。",
+              )}
             </p>
           </CardContent>
         </Card>
@@ -1015,8 +1239,8 @@ function PrimaryBtn({ disabled, onClick, children }: { disabled?: boolean; onCli
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-md transition-colors",
-        disabled ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-[#6c47ff] text-white hover:bg-[#5b3ed6]",
+        "inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-md transition-colors",
+        disabled ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-[#5254DA] text-white hover:bg-[#4547BA]",
       )}
     >
       {children}
@@ -1033,8 +1257,8 @@ function ObMarketCard({
       onClick={onClick}
       className={cn(
         "flex items-start gap-2.5 text-left px-3.5 py-3 rounded-lg border transition-colors",
-        on && "border-[#6c47ff] bg-[#faf8ff]",
-        !on && !disabled && "border-border bg-white hover:bg-[#fafbfc]",
+        on && "border-[#5254DA] bg-[#F1EEFF]",
+        !on && !disabled && "border-border bg-white hover:bg-[#F7F7FC]",
         disabled && "border-slate-200 bg-slate-50 cursor-not-allowed opacity-70",
       )}
     >
@@ -1043,7 +1267,7 @@ function ObMarketCard({
         <div className={cn("text-[13px] font-medium", disabled ? "text-slate-400" : "text-foreground")}>{name}</div>
         <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>
       </div>
-      {on && <Check size={14} className="text-[#6c47ff] shrink-0 mt-0.5" strokeWidth={2.5} />}
+      {on && <Check size={14} className="text-[#5254DA] shrink-0 mt-0.5" strokeWidth={2.5} />}
     </button>
   );
 }
@@ -1051,6 +1275,9 @@ function ObMarketCard({
 /* ── Main component ── */
 export default function CompassPage() {
   const [onboarded, setOnboarded] = useState(false);
+  const [lang, setLang] = useState<Lang>("en");
+  // Local translator (CompassPage sits outside its own LangCtx.Provider).
+  const t = (en: string, zh: string) => (lang === "zh" ? zh : en);
   const [tab, setTab] = useState<SubTab>("overview");
   const [market, setMarket] = useState<Market>("us");
   const [activeCats, setActiveCats] = useState<Set<CategoryKey>>(new Set(DEFAULT_ACTIVE_CATEGORIES));
@@ -1099,17 +1326,20 @@ export default function CompassPage() {
 
   if (!onboarded) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#fafafa]">
-        <OnboardingFlow
-          onComplete={cats => { setActiveCats(new Set(cats)); setOnboarded(true); }}
-          onSkip={() => setOnboarded(true)}
-        />
-      </div>
+      <LangCtx.Provider value={lang}>
+        <div className="flex-1 overflow-y-auto bg-[#F9F9F9]">
+          <OnboardingFlow
+            onComplete={cats => { setActiveCats(new Set(cats)); setOnboarded(true); }}
+            onSkip={() => setOnboarded(true)}
+          />
+        </div>
+      </LangCtx.Provider>
     );
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#fafafa]">
+    <LangCtx.Provider value={lang}>
+    <div className="flex-1 overflow-y-auto bg-[#F9F9F9]">
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
 
         {/* Sub-tab bar */}
@@ -1122,42 +1352,44 @@ export default function CompassPage() {
                 className={cn(
                   "px-3 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-[1px]",
                   tab === st.key
-                    ? "border-[#6c47ff] text-[#6c47ff]"
+                    ? "border-[#5254DA] text-[#5254DA]"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
-                {st.label}
+                {lang === "zh" ? st.zh : st.label}
                 {st.key === "issues" && (
-                  <span className="ml-1 text-[10px] font-bold text-amber-600">
+                  <span className="ml-1 text-[11px] font-bold text-amber-600">
                     ·{baseReviewItemCounts(market).review + productStats.review}
                   </span>
                 )}
                 {st.key === "setup" && pendingRescan && (
-                  <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[#6c47ff] align-middle" />
+                  <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[#5254DA] align-middle" />
                 )}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-3 pb-1 text-xs text-muted-foreground">
-            <span>Your latest review · Jun 17, 2026</span>
-            <button className="flex items-center gap-1.5 text-xs text-[#6c47ff] hover:underline">
-              <Download size={12} /> Download report (PDF)
+            <span>{t("Your latest review · Jun 17, 2026", "你的最新审阅 · 2026 年 6 月 17 日")}</span>
+            <button className="flex items-center gap-1.5 text-xs text-[#5254DA] hover:underline">
+              <Download size={12} /> {t("Download report (PDF)", "下载报告（PDF）")}
             </button>
           </div>
         </div>
 
         {/* Pending rescan banner — sticky across tabs */}
         {pendingRescan && (
-          <div className="rounded-lg border border-[#dcd0ff] bg-[#f6f2ff] px-4 py-3 flex items-center gap-3 text-[12.5px]">
-            <RefreshCw size={14} className="text-[#6c47ff]" />
-            <div className="flex-1 text-[#4a3a8a]">
-              <b>Category set updated.</b> Scores and findings below preview the new rule scope. Changes will apply automatically at your next weekly scan — or run a fresh scan now.
+          <div className="rounded-lg border border-[#E0DBF9] bg-[#F1EEFF] px-4 py-3 flex items-center gap-3 text-[12px]">
+            <RefreshCw size={14} className="text-[#5254DA]" />
+            <div className="flex-1 text-[#5254DA]">
+              {lang === "zh"
+                ? <><b>品类集合已更新。</b>下方的分数与发现预览了新的规则范围。变更将在你下一次每周扫描时自动生效 —— 或立即运行一次新扫描。</>
+                : <><b>Category set updated.</b> Scores and findings below preview the new rule scope. Changes will apply automatically at your next weekly scan — or run a fresh scan now.</>}
             </div>
             <button
               onClick={rescanNow}
-              className="text-xs font-semibold px-3 py-1.5 rounded-md bg-[#6c47ff] text-white hover:bg-[#5b3ed6]"
+              className="text-xs font-semibold px-3 py-1.5 rounded-md bg-[#5254DA] text-white hover:bg-[#4547BA]"
             >
-              Rescan now
+              {t("Rescan now", "立即重新扫描")}
             </button>
             <button
               onClick={() => setPendingRescan(false)}
@@ -1191,8 +1423,6 @@ export default function CompassPage() {
             focusIssueId={focusIssueId}
           />
         )}
-        {tab === "ip" && <IpTab />}
-        {tab === "entity" && <EntityTab />}
         {tab === "history" && <HistoryTab />}
         {tab === "setup" && (
           <SetupTab
@@ -1200,16 +1430,22 @@ export default function CompassPage() {
             toggleCategory={toggleCategory}
             pendingRescan={pendingRescan}
             rescanNow={rescanNow}
+            lang={lang}
+            setLang={setLang}
             onReplayOnboarding={() => { setOnboarded(false); setTab("overview"); }}
           />
         )}
 
         {/* Footer legal disclaimer */}
         <p className="text-[11px] text-muted-foreground pt-6 border-t border-border mt-8">
-          ⓘ Informational only — not legal advice, and not a law firm. Review items point to relevant rules and recommend confirming with qualified counsel.
+          {t(
+            "ⓘ Informational only — not legal advice, and not a law firm. Review items point to relevant rules and recommend confirming with qualified counsel.",
+            "ⓘ 仅供参考 —— 非法律意见，也并非律师事务所。审查项指向相关规则，并建议与有资质的律师确认。",
+          )}
         </p>
       </div>
     </div>
+    </LangCtx.Provider>
   );
 }
 
@@ -1232,6 +1468,8 @@ function OverviewTab({
   issueStatuses: Record<string, IssueStatus>;
   onManageIssue: (issueId: string) => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   const dpItems = forMarket(DP_ITEMS, market);
   const tcItems = forMarket(TC_ITEMS, market);
   const base = baseReviewItemCounts(market);
@@ -1261,30 +1499,28 @@ function OverviewTab({
   return (
     <>
       {/* Delta strip */}
-      <div className="rounded-lg border border-border bg-white px-4 py-3 flex items-center gap-4 text-[12.5px] flex-wrap">
-        <span className="text-muted-foreground">📈 Since last review <span className="text-foreground font-medium">(Jun 10)</span>:</span>
-        <span className="text-emerald-700 font-medium">▲ readiness +2</span>
-        <span className="text-amber-700 font-medium">+2 new review items</span>
-        <span className="text-[#6c47ff] font-medium">2 resolved</span>
-        <button onClick={() => goTo("history")} className="ml-auto text-[#6c47ff] font-medium hover:underline">View history →</button>
+      <div className="rounded-lg border border-border bg-white px-4 py-3 flex items-center gap-4 text-[12px] flex-wrap">
+        <span className="text-muted-foreground">📈 {t("Since last review", "自上次审阅")} <span className="text-foreground font-medium">({t("Jun 10", "6 月 10 日")})</span>:</span>
+        <span className="text-emerald-700 font-medium">▲ {t("readiness +2", "就绪度 +2")}</span>
+        <span className="text-amber-700 font-medium">{t("+2 new review items", "+2 项新审查项")}</span>
+        <span className="text-[#5254DA] font-medium">{t("2 resolved", "2 项已解决")}</span>
+        <button onClick={() => goTo("history")} className="ml-auto text-[#5254DA] font-medium hover:underline">{t("View history →", "查看历史 →")}</button>
       </div>
 
       {/* Market toggle */}
       <div className="flex items-center gap-2">
-        <MarketBtn on={market === "us"} onClick={() => setMarket("us")}>🇺🇸 United States</MarketBtn>
-        <MarketBtn on={market === "eu"} onClick={() => setMarket("eu")}>🇪🇺 European Union</MarketBtn>
-        <MarketBtn disabled>🇬🇧 UK</MarketBtn>
-        <MarketBtn disabled>🇨🇦 Canada</MarketBtn>
+        <MarketBtn on={market === "us"} onClick={() => setMarket("us")}>🇺🇸 {t("United States", "美国")}</MarketBtn>
+        <MarketBtn on={market === "eu"} onClick={() => setMarket("eu")}>🇪🇺 {t("European Union", "欧盟")}</MarketBtn>
       </div>
 
-      {/* Score hero — 6 cards side by side */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="shadow-none border border-border bg-[#f6f2ff]">
+      {/* Score hero — Overall + 3 scored categories */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+        <Card className="shadow-none border border-border bg-[#F1EEFF]">
           <CardContent className="p-4">
-            <div className="text-[12px] font-semibold text-[#6c47ff] mb-2">🧭 Overall</div>
-            <div className="text-3xl leading-none font-bold text-[#6c47ff]">{overallScore}%</div>
-            <div className="mt-2 h-1 bg-[#e6dfff] rounded overflow-hidden">
-              <div className="h-full rounded bg-[#6c47ff]" style={{ width: `${overallScore}%` }} />
+            <div className="text-[12px] font-semibold text-[#5254DA] mb-2">🧭 {t("Overall", "总体")}</div>
+            <div className="text-[26px] leading-none font-bold text-[#5254DA]">{overallScore}%</div>
+            <div className="mt-2 h-1 bg-[#E0DBF9] rounded overflow-hidden">
+              <div className="h-full rounded bg-[#5254DA]" style={{ width: `${overallScore}%` }} />
             </div>
           </CardContent>
         </Card>
@@ -1298,8 +1534,6 @@ function OverviewTab({
               if (cat.key === "dp") openAndScroll("dp", "section-dp");
               else if (cat.key === "tc") openAndScroll("tc", "section-tc");
               else if (cat.key === "pr") openAndScroll("pr", "section-pr");
-              else if (cat.key === "ip") goTo("ip");
-              else if (cat.key === "en") goTo("entity");
             }}
           />
         ))}
@@ -1307,14 +1541,14 @@ function OverviewTab({
 
       {/* Summary line */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-muted-foreground pt-1">
-        <span><span className="font-bold text-amber-700">{totalReview}</span> review items</span>
-        <span><span className="font-bold text-slate-500">{base.notAssessable}</span> not assessable by scan (omitted)</span>
-        <span><span className="font-bold text-slate-500">{productStats.notDetectedCats}</span> categories not detected in your catalog</span>
+        <span><span className="font-bold text-amber-700">{totalReview}</span> {t("review items", "项审查项")}</span>
+        <span><span className="font-bold text-slate-500">{base.notAssessable}</span> {t("not assessable by scan (omitted)", "项扫描无法评估（已省略）")}</span>
+        <span><span className="font-bold text-slate-500">{productStats.notDetectedCats}</span> {t("categories not detected in your catalog", "个品类未在你的目录中检测到")}</span>
         <button
           onClick={() => setShowMethodology(v => !v)}
-          className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-[#6c47ff] transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-[#5254DA] transition-colors"
         >
-          ⓘ How are these scores calculated?
+          {t("ⓘ How are these scores calculated?", "ⓘ 这些分数是如何计算的？")}
           <ChevronDown size={12} className={cn("transition-transform", showMethodology && "rotate-180")} />
         </button>
       </div>
@@ -1322,9 +1556,19 @@ function OverviewTab({
       {/* Score methodology explainer */}
       {showMethodology && (
         <div className="rounded-lg border border-border bg-white px-4 py-3 text-[12px] text-muted-foreground space-y-1.5">
-          <p><b className="text-foreground">Category score</b> = verified checks ÷ assessed checks (verified + review items) for the selected market. Checks marked "Not assessable" or "Not applicable" are excluded — they neither raise nor lower the score.</p>
-          <p><b className="text-foreground">Overall readiness</b> = the average of the three scored categories (Data & Privacy, Terms & Conditions, Product). Intellectual Property and Corporate Entity report a status rather than a score.</p>
-          <p>Every check behind these numbers is listed below with its evidence — expand any section for item-level detail.</p>
+          {lang === "zh" ? (
+            <>
+              <p><b className="text-foreground">品类分数</b> = 所选市场下「已验证的检查项 ÷ 已评估的检查项（已验证 + 审查项）」。标记为「无法评估」或「不适用」的检查项被排除 —— 它们既不抬高也不拉低分数。</p>
+              <p><b className="text-foreground">总体就绪度</b> = 三个计分品类（数据与隐私、条款与条件、产品）的平均值。</p>
+              <p>这些数字背后的每一项检查都在下方连同其证据列出 —— 展开任一区块可查看逐项细节。</p>
+            </>
+          ) : (
+            <>
+              <p><b className="text-foreground">Category score</b> = verified checks ÷ assessed checks (verified + review items) for the selected market. Checks marked "Not assessable" or "Not applicable" are excluded — they neither raise nor lower the score.</p>
+              <p><b className="text-foreground">Overall readiness</b> = the average of the three scored categories (Data & Privacy, Terms & Conditions, Product).</p>
+              <p>Every check behind these numbers is listed below with its evidence — expand any section for item-level detail.</p>
+            </>
+          )}
         </div>
       )}
 
@@ -1332,8 +1576,10 @@ function OverviewTab({
       <SectionHeader
         id="section-dp"
         emoji="🔒"
-        title="Data & Privacy"
-        verified={market === "us" ? "62 / 64 verified" : "42 / 46 verified · 3 review items"}
+        title={t("Data & Privacy", "数据与隐私")}
+        verified={market === "us"
+          ? t("62 / 64 verified", "62 / 64 项已验证")
+          : t("42 / 46 verified · 3 review items", "42 / 46 项已验证 · 3 项审查项")}
         collapsed={!openSections.has("dp")}
         onToggle={() => toggleSection("dp")}
       />
@@ -1345,8 +1591,10 @@ function OverviewTab({
       <SectionHeader
         id="section-tc"
         emoji="📄"
-        title="Terms & Conditions"
-        verified={market === "us" ? "48 / 50 verified · 1 review item" : "37 / 39 verified"}
+        title={t("Terms & Conditions", "条款与条件")}
+        verified={market === "us"
+          ? t("48 / 50 verified · 1 review item", "48 / 50 项已验证 · 1 项审查项")
+          : t("37 / 39 verified", "37 / 39 项已验证")}
         collapsed={!openSections.has("tc")}
         onToggle={() => toggleSection("tc")}
       />
@@ -1358,22 +1606,24 @@ function OverviewTab({
       <SectionHeader
         id="section-pr"
         emoji="🛍️"
-        title="Product"
-        verified={`${productStats.verified} / ${productStats.assessed} verified · ${productStats.review} review item${productStats.review === 1 ? "" : "s"} · ${productStats.notDetectedCats} categories not detected`}
+        title={t("Product", "产品")}
+        verified={lang === "zh"
+          ? `${productStats.verified} / ${productStats.assessed} 项已验证 · ${productStats.review} 项审查项 · ${productStats.notDetectedCats} 个品类未检测到`
+          : `${productStats.verified} / ${productStats.assessed} verified · ${productStats.review} review item${productStats.review === 1 ? "" : "s"} · ${productStats.notDetectedCats} categories not detected`}
         collapsed={!openSections.has("pr")}
         onToggle={() => toggleSection("pr")}
       />
       {openSections.has("pr") && (
         <>
-          <p className="text-[12.5px] text-muted-foreground mb-2">
-            Regulated-category rules apply only to the categories you sell — auto-detected during scan, confirm in{" "}
+          <p className="text-[12px] text-muted-foreground mb-2">
+            {t("Regulated-category rules apply only to the categories you sell — auto-detected during scan, confirm in", "受管制品类的规则只应用于你销售的品类 —— 扫描时自动检测，可在此确认：")}{" "}
             <button
               type="button"
               onClick={() => goTo("setup")}
-              className="text-[#6c47ff] font-medium hover:underline"
+              className="text-[#5254DA] font-medium hover:underline"
             >
-              Setup
-            </button>.
+              {t("Setup", "设置")}
+            </button>{t(".", "。")}
           </p>
 
           {/* Filter chips */}
@@ -1404,7 +1654,7 @@ function OverviewTab({
               <div key={g.key}>
                 <SubGroupHeader
                   n={gi + 1}
-                  title={g.title}
+                  title={lang === "zh" ? (ZH_GROUP[g.key] ?? g.title) : g.title}
                   count={items.length}
                   collapsed={collapsed}
                   onToggle={() => toggleGroupCollapse(g.key)}
@@ -1432,8 +1682,8 @@ function MarketBtn({
       disabled={disabled}
       className={cn(
         "px-3 py-1.5 text-[12px] font-medium border rounded-full transition-colors",
-        on && "bg-[#6c47ff] text-white border-[#6c47ff]",
-        !on && !disabled && "bg-white text-foreground border-border hover:bg-[#fafbfc]",
+        on && "bg-[#5254DA] text-white border-[#5254DA]",
+        !on && !disabled && "bg-white text-foreground border-border hover:bg-[#F7F7FC]",
         disabled && "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed",
       )}
     >
@@ -1450,13 +1700,13 @@ function SectionHeader({ id, emoji, title, verified, collapsed, onToggle }: {
     <button
       id={id}
       onClick={onToggle}
-      className="w-full flex items-center justify-between gap-2 mt-6 mb-2 scroll-mt-4 py-1 rounded hover:bg-[#f8fafc] transition-colors text-left"
+      className="w-full flex items-center justify-between gap-2 mt-6 mb-2 scroll-mt-4 py-1 rounded hover:bg-[#F7F7FC] transition-colors text-left"
     >
       <div className="flex items-baseline gap-2">
         <h2 className="text-[13px] font-bold text-foreground">
           <span className="mr-1">{emoji}</span>{title}
         </h2>
-        <span className="text-[11.5px] text-emerald-700 font-medium">· {verified}</span>
+        <span className="text-[11px] text-emerald-700 font-medium">· {verified}</span>
       </div>
       {onToggle && (
         <ChevronDown
@@ -1474,7 +1724,7 @@ function SubGroupHeader({ n, title, count, collapsed, onToggle }: {
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between gap-2 mt-5 mb-2 py-1 hover:bg-[#f8fafc] rounded transition-colors"
+      className="w-full flex items-center justify-between gap-2 mt-5 mb-2 py-1 hover:bg-[#F7F7FC] rounded transition-colors"
     >
       <div className="flex items-baseline gap-2">
         <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -1498,11 +1748,12 @@ function FilterChips({
   onChange: (f: ProductFilter) => void;
   counts: { all: number; review: number; verified: number; na: number };
 }) {
+  const t = useT();
   const chips: { key: ProductFilter; label: string; count: number; color: string }[] = [
-    { key: "all",      label: "All",           count: counts.all,      color: "" },
-    { key: "review",   label: "Review items",  count: counts.review,   color: "amber" },
-    { key: "verified", label: "Verified",      count: counts.verified, color: "emerald" },
-    { key: "na",       label: "Not applicable",count: counts.na,       color: "slate" },
+    { key: "all",      label: t("All", "全部"),            count: counts.all,      color: "" },
+    { key: "review",   label: t("Review items", "审查项"),  count: counts.review,   color: "amber" },
+    { key: "verified", label: t("Verified", "已验证"),      count: counts.verified, color: "emerald" },
+    { key: "na",       label: t("Not applicable", "不适用"), count: counts.na,       color: "slate" },
   ];
   return (
     <div className="flex items-center gap-2 flex-wrap pb-2">
@@ -1513,12 +1764,12 @@ function FilterChips({
             key={c.key}
             onClick={() => onChange(c.key)}
             className={cn(
-              "text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors",
+              "text-[11px] font-medium px-3 py-1 rounded-full border transition-colors",
               active && c.color === "amber"    && "bg-amber-50 text-amber-700 border-amber-200",
               active && c.color === "emerald"  && "bg-emerald-50 text-emerald-700 border-emerald-200",
               active && c.color === "slate"    && "bg-slate-100 text-slate-700 border-slate-300",
-              active && c.color === ""         && "bg-[#f0edff] text-[#6c47ff] border-[#dcd0ff]",
-              !active                          && "bg-white text-muted-foreground border-border hover:bg-[#fafbfc]",
+              active && c.color === ""         && "bg-[#F1EEFF] text-[#5254DA] border-[#E0DBF9]",
+              !active                          && "bg-white text-muted-foreground border-border hover:bg-[#F7F7FC]",
             )}
           >
             {c.label} <span className="opacity-70">· {c.count}</span>
@@ -1538,55 +1789,21 @@ function CategoryCard({
   productScore: number;
   onClick?: () => void;
 }) {
+  const lang = useLang();
+  const t = useT();
+  const label = lang === "zh" ? (ZH_CATEGORIES[cat.key] ?? cat.label) : cat.label;
   // Product uses dynamic productScore
   const numeric = cat.key === "pr" ? productScore : (market === "us" ? cat.us : cat.eu);
   const scoreWarn = numeric != null && numeric < 90;
 
-  if (cat.status === "review") {
-    return (
-      <Card onClick={onClick} className="shadow-none border border-border cursor-pointer hover:shadow-sm transition-shadow">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="text-[12px] font-semibold text-muted-foreground leading-tight">
-              <span className="mr-1">{cat.emoji}</span>{cat.label}
-            </div>
-            {cat.usOnly && <span className="text-[10px] font-medium text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">US</span>}
-          </div>
-          <div className="mt-3">
-            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-              <AlertTriangle size={12} /> Review
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  if (cat.status === "ok") {
-    return (
-      <Card onClick={onClick} className="shadow-none border border-border cursor-pointer hover:shadow-sm transition-shadow">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="text-[12px] font-semibold text-muted-foreground leading-tight">
-              <span className="mr-1">{cat.emoji}</span>{cat.label}
-            </div>
-            {cat.usOnly && <span className="text-[10px] font-medium text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">US</span>}
-          </div>
-          <div className="mt-3">
-            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
-              <Check size={12} /> Good standing
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // (IP / Corporate Entity status cards removed for Phase 1 — only numeric-scored categories remain)
   return (
     <Card onClick={onClick} className="shadow-none border border-border cursor-pointer hover:shadow-sm transition-shadow">
       <CardContent className="p-4">
         <div className="text-[12px] font-semibold text-muted-foreground mb-2">
-          <span className="mr-1">{cat.emoji}</span>{cat.label}
+          <span className="mr-1">{cat.emoji}</span>{label}
         </div>
-        <div className={cn("text-2xl font-semibold", scoreWarn ? "text-amber-600" : "text-foreground")}>
+        <div className={cn("text-[26px] font-semibold", scoreWarn ? "text-amber-600" : "text-foreground")}>
           {numeric != null ? `${numeric}%` : "—"}
         </div>
         <div className="mt-2 h-1 bg-slate-100 rounded overflow-hidden">
@@ -1601,7 +1818,7 @@ function CategoryCard({
 }
 
 /* ── Review Items tab ── */
-const CATEGORY_ORDER = ["Data & Privacy", "Terms & Conditions", "Product", "Intellectual Property", "Corporate Entity"];
+const CATEGORY_ORDER = ["Data & Privacy", "Terms & Conditions", "Product"];
 const CATEGORY_EMOJI: Record<string, string> = {
   "Data & Privacy": "🔒",
   "Terms & Conditions": "📄",
@@ -1644,20 +1861,6 @@ const ALL_ISSUES: Issue[] = [
     ],
     proof: { pages: "yourstore.com/privacy · /cookie-policy · /terms — 3 pages searched", checkedAt: "Jun 17, 2026", observation: "No limit-use-of-sensitive-data disclosure or control found on any searched page." },
     rec: "Recommend confirming with qualified counsel whether your markets require it and adding the disclosure if so.",
-  },
-  {
-    id: "i-tm", title: "Trademark name similarity — “Acme Outdoor” vs registered mark", category: "Intellectual Property", market: "us", marketLabel: "United States",
-    rules: "A search of the USPTO trademark database on the brand name returned a similar registered mark owned by an unrelated party.",
-    sources: [{ label: "🇺🇸 USPTO trademark database — text search", url: "https://tmsearch.uspto.gov/" }],
-    proof: { pages: "USPTO query “acme outdoor” + close variants, filtered by relevant Nice classes", checkedAt: "Jun 17, 2026", observation: "Similar registered mark found: ACME OUTDOORS · Class 25 (apparel) · Reg. No. 5,xxx,xxx · unrelated owner." },
-    rec: "Recommend confirming with qualified counsel whether the similarity poses an infringement risk before scaling US marketing. Annual monitoring available.",
-  },
-  {
-    id: "i-annual", title: "Annual report filing due — Delaware entity", category: "Corporate Entity", market: "us", marketLabel: "United States",
-    rules: "Delaware entities are expected to file an annual report and franchise tax to remain in good standing; filing late risks loss of good standing.",
-    sources: [{ label: "🇺🇸 Delaware Division of Corporations — entity records", url: "https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx" }],
-    proof: { pages: "Delaware SoS entity record", checkedAt: "Jun 17, 2026", observation: "Status: good standing. Next annual report / franchise tax due Mar 1, 2027." },
-    rec: "Recommend calendaring the filing and confirming with qualified counsel whether any additional state filings apply. Seel Compass can monitor good-standing status on an ongoing basis.",
   },
   {
     id: "i-urgency", title: "Urgency / scarcity claims — countdown timers & “only X left”", category: "Product", market: "us", marketLabel: "United States",
@@ -1715,6 +1918,7 @@ function IssuesTab({
   setIssueStatus: (id: string, status: IssueStatus) => void;
   focusIssueId?: string | null;
 }) {
+  const t = useT();
   const items = ALL_ISSUES
     .filter(i => i.market === market)
     .filter(i => !i.gatedByCat || activeCats.has(i.gatedByCat));
@@ -1722,10 +1926,10 @@ function IssuesTab({
   /* Scroll to the finding jumped from Overview ("Manage in Review Items →") */
   useEffect(() => {
     if (!focusIssueId) return;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       document.getElementById(`issue-${focusIssueId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 80);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [focusIssueId]);
 
   const groups = CATEGORY_ORDER
@@ -1734,13 +1938,15 @@ function IssuesTab({
 
   return (
     <>
-      <div className="rounded-lg border border-[#e6dfff] bg-[#f6f2ff] px-4 py-3 text-[12.5px] text-[#4a3a8a]">
-        Review items state the facts found and the relevant rules alongside them, then recommend counsel review.
-        They are not legal conclusions and do not assert any wrongdoing.
+      <div className="rounded-lg border border-[#E0DBF9] bg-[#F1EEFF] px-4 py-3 text-[12px] text-[#5254DA]">
+        {t(
+          "Review items state the facts found and the relevant rules alongside them, then recommend counsel review. They are not legal conclusions and do not assert any wrongdoing.",
+          "审查项陈述所发现的事实，并在旁列出相关规则，然后建议交由律师审阅。它们不是法律结论，也不主张任何过错。",
+        )}
       </div>
       <div className="flex items-center gap-2">
-        <MarketBtn on={market === "us"} onClick={() => setMarket("us")}>🇺🇸 United States</MarketBtn>
-        <MarketBtn on={market === "eu"} onClick={() => setMarket("eu")}>🇪🇺 European Union</MarketBtn>
+        <MarketBtn on={market === "us"} onClick={() => setMarket("us")}>🇺🇸 {t("United States", "美国")}</MarketBtn>
+        <MarketBtn on={market === "eu"} onClick={() => setMarket("eu")}>🇪🇺 {t("European Union", "欧盟")}</MarketBtn>
       </div>
       <div className="space-y-3">
         {groups.map(g => (
@@ -1768,16 +1974,17 @@ function IssueGroup({
   focusIssueId?: string | null;
 }) {
   const [open, setOpen] = useState(true);
+  const lang = useLang();
   return (
     <div className="border border-border rounded-lg bg-white overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#fafbfc] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#F7F7FC] transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="text-[15px]">{CATEGORY_EMOJI[cat] ?? "•"}</span>
-          <span className="text-[13.5px] font-semibold text-foreground">{cat}</span>
-          <span className="text-[11.5px] text-muted-foreground">· {items.length}</span>
+          <span className="text-[16px]">{CATEGORY_EMOJI[cat] ?? "•"}</span>
+          <span className="text-[13px] font-semibold text-foreground">{lang === "zh" ? (ZH_CAT_NAME[cat] ?? cat) : cat}</span>
+          <span className="text-[11px] text-muted-foreground">· {items.length}</span>
         </div>
         <ChevronDown size={16} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
@@ -1804,6 +2011,20 @@ const STATUS_LABELS: Record<IssueStatus, string> = {
   in_remediation: "In remediation",
   resolved: "Resolved",
 };
+const ZH_STATUS_LABELS: Record<IssueStatus, string> = {
+  open: "待处理",
+  acknowledged: "已知悉",
+  in_remediation: "整改中",
+  resolved: "已解决",
+};
+/* Full category display names (Review Items groups / order) → Chinese */
+const ZH_CAT_NAME: Record<string, string> = {
+  "Data & Privacy": "数据与隐私",
+  "Terms & Conditions": "条款与条件",
+  "Product": "产品",
+  "Intellectual Property": "知识产权",
+  "Corporate Entity": "公司主体",
+};
 
 function IssueRow({
   issue, status, onStatusChange, focused,
@@ -1813,19 +2034,21 @@ function IssueRow({
   onStatusChange: (s: IssueStatus) => void;
   focused?: boolean;
 }) {
+  const lang = useLang();
+  const t = useT();
   return (
     <div
       id={`issue-${issue.id}`}
-      className={cn("px-4 py-3 space-y-3 bg-[#fafbfc] scroll-mt-4", focused && "ring-2 ring-inset ring-[#6c47ff] bg-[#faf8ff]")}
+      className={cn("px-4 py-3 space-y-3 bg-[#F7F7FC] scroll-mt-4", focused && "ring-2 ring-inset ring-[#5254DA] bg-[#F1EEFF]")}
     >
-      <div className="text-[13px] font-semibold text-foreground">{issue.title}</div>
+      <div className="text-[13px] font-semibold text-foreground">{Z(lang, issue.id, "title", issue.title)}</div>
       <div>
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Relevant Rules and Context</div>
-        <p className="text-[12.5px] text-foreground mt-0.5">{issue.rules}</p>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{t("Relevant Rules and Context", "相关规则与背景")}</div>
+        <p className="text-[12px] text-foreground mt-0.5">{Z(lang, issue.id, "rules", issue.rules)}</p>
       </div>
       {issue.sources && issue.sources.length > 0 && <SourcesBlock sources={issue.sources} />}
-      {issue.proof && <ProofBlock proof={issue.proof} />}
-      <div className="border-l-2 border-[#6c47ff] pl-3 text-[12.5px] text-[#6c47ff]">{issue.rec}</div>
+      {issue.proof && <ProofBlock proof={locProof(lang, issue.id, issue.proof)} />}
+      <div className="border-l-2 border-[#5254DA] pl-3 text-[12px] text-[#5254DA]">{Z(lang, issue.id, "rec", issue.rec)}</div>
       <div className="flex items-center gap-1 pt-1">
         {(["open", "acknowledged", "in_remediation", "resolved"] as IssueStatus[]).map(s => {
           const active = status === s;
@@ -1836,15 +2059,15 @@ function IssueRow({
               key={s}
               disabled={!canClick}
               onClick={() => canClick && onStatusChange(s)}
-              title={isResolved ? "Resolved is only set by the next scan when the finding no longer triggers." : ""}
+              title={isResolved ? t("Resolved is only set by the next scan when the finding no longer triggers.", "「已解决」仅由下一次扫描在该发现不再触发时设置。") : ""}
               className={cn(
                 "text-[11px] px-2 py-1 rounded border transition-colors",
-                active && "bg-[#f0edff] text-[#6c47ff] border-[#dcd0ff] font-medium",
+                active && "bg-[#F1EEFF] text-[#5254DA] border-[#E0DBF9] font-medium",
                 !active && canClick && "border-border text-muted-foreground hover:bg-white",
                 !canClick && !active && "border-dashed border-slate-200 text-slate-400 cursor-not-allowed",
               )}
             >
-              {STATUS_LABELS[s]}
+              {lang === "zh" ? ZH_STATUS_LABELS[s] : STATUS_LABELS[s]}
               {isResolved && !active && (
                 <span className="ml-1 opacity-60">🔒</span>
               )}
@@ -1856,102 +2079,42 @@ function IssueRow({
   );
 }
 
-/* ── IP tab ── */
-function IpTab() {
-  return (
-    <>
-      <div className="rounded-lg border border-[#e6dfff] bg-[#f6f2ff] px-4 py-3 text-[12.5px] text-[#4a3a8a]">
-        <span className="font-semibold">Trademark name screening only.</span> This does not cover design-patent, utility-patent, or full freedom-to-operate analysis, and is not a legal opinion.
-        Counterfeit / unauthorized-reseller risk on the merchant's own inventory is tracked separately under Product.
-      </div>
-      <Card className="shadow-none border border-border">
-        <CardContent className="p-5 space-y-3">
-          <h3 className="text-[14px] font-semibold text-foreground">Trademark name screening — “Acme Outdoor”</h3>
-          <p className="text-[12.5px] text-muted-foreground">Searched the USPTO trademark database for the brand name and close variants, filtered by relevant goods/services class.</p>
-          <RowKV k="Database searched" v={<a href="https://tmsearch.uspto.gov/" target="_blank" rel="noreferrer" className="text-[#6c47ff] hover:underline">USPTO trademark database — text search ↗</a>} />
-          <RowKV k="Checked"           v="Jun 17, 2026" />
-          <RowKV k="Brand name"        v="Acme Outdoor" />
-          <RowKV k="Similar registered mark found" v={<span className="text-amber-700">ACME OUTDOORS · Class 25 · Reg. 5,xxx,xxx</span>} />
-          <RowKV k="Owner"                v="Unrelated third party" />
-          <RowKV k="Recommended next step" v="Counsel review before scaling US marketing" />
-        </CardContent>
-      </Card>
-      <Card className="shadow-none border border-border">
-        <CardContent className="p-5 space-y-2">
-          <h3 className="text-[14px] font-semibold text-foreground">Ongoing monitoring</h3>
-          <p className="text-[12.5px] text-muted-foreground">If no conflicts are found in a future scan, Seel Compass notes that and offers continued annual screening to catch new registrations.</p>
-          <div className="flex items-center gap-2 text-[12.5px] text-emerald-700 mt-2">
-            <Check size={14} /> Annual trademark-name monitoring — enabled
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
-}
-
-/* ── Corporate Entity tab ── */
-function EntityTab() {
-  return (
-    <>
-      <div className="rounded-lg border border-[#e6dfff] bg-[#f6f2ff] px-4 py-3 text-[12.5px] text-[#4a3a8a]">
-        Helps you think through US entity structure and surfaces good-standing signals from public Secretary of State records.
-        {" "}
-        <span className="font-semibold">Informational only</span> — confirm structure decisions with qualified counsel / a tax advisor.
-      </div>
-      <Card className="shadow-none border border-border">
-        <CardContent className="p-5 space-y-3">
-          <h3 className="text-[14px] font-semibold text-foreground">Entity questionnaire</h3>
-          <p className="text-[12.5px] text-muted-foreground">“Have you incorporated a US entity? If yes, share the details below.”</p>
-          <RowKV k="US entity incorporated?" v="Yes" />
-          <RowKV k="State of formation"      v="Delaware" />
-          <RowKV k="Entity type"             v="C-corp" />
-          <RowKV k="Registered agent"        v={<span className="text-emerald-700 inline-flex items-center gap-1"><Check size={12} /> On file</span>} />
-        </CardContent>
-      </Card>
-      <Card className="shadow-none border border-border">
-        <CardContent className="p-5 space-y-3">
-          <h3 className="text-[14px] font-semibold text-foreground">Good-standing check — Delaware SoS</h3>
-          <p className="text-[12.5px] text-muted-foreground">Queried the Delaware Secretary of State portal for status and filing currency.</p>
-          <RowKV k="Source" v={<a href="https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx" target="_blank" rel="noreferrer" className="text-[#6c47ff] hover:underline">Delaware Division of Corporations — entity search ↗</a>} />
-          <RowKV k="Status" v={<span className="text-emerald-700 font-medium">Good standing</span>} />
-          <RowKV k="Annual report / franchise tax" v={<span className="text-amber-700 font-medium">Due Mar 1, 2027</span>} />
-          <RowKV k="Last checked" v="Jun 17, 2026" />
-        </CardContent>
-      </Card>
-    </>
-  );
-}
-
 /* ── History tab ── */
 function HistoryTab() {
+  const t = useT();
+  const lang = useLang();
+  const zh = lang === "zh";
   const history = [
-    { date: "Jun 17, 2026", tag: "latest", score: 89, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new (cosmetics EU RP, urgency claims)", resolved: "2 resolved (age screen, affiliate disclosure)" },
-    { date: "Jun 10, 2026", tag: null,     score: 87, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new",  resolved: "1 resolved" },
-    { date: "Jun 3, 2026",  tag: null,     score: 85, pages: 10, corpus: "v2026.05", delta: null, new: "first baseline · 5 review items opened", resolved: null },
+    { date: "Jun 17, 2026", dateZh: "2026 年 6 月 17 日", tag: "latest", score: 89, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new (cosmetics EU RP, urgency claims)", newZh: "+2 项新增（化妆品欧盟 RP、紧迫声称）", resolved: "2 resolved (age screen, affiliate disclosure)", resolvedZh: "2 项已解决（年龄核验、联盟披露）" },
+    { date: "Jun 10, 2026", dateZh: "2026 年 6 月 10 日", tag: null,     score: 87, pages: 11, corpus: "v2026.06", delta: "+2", new: "+2 new", newZh: "+2 项新增", resolved: "1 resolved", resolvedZh: "1 项已解决" },
+    { date: "Jun 3, 2026",  dateZh: "2026 年 6 月 3 日",  tag: null,     score: 85, pages: 10, corpus: "v2026.05", delta: null, new: "first baseline · 5 review items opened", newZh: "首次基线 · 打开 5 项审查项", resolved: null, resolvedZh: null },
   ];
   return (
     <>
-      <div className="rounded-lg border border-[#e6dfff] bg-[#f6f2ff] px-4 py-3 text-[12.5px] text-[#4a3a8a]">
-        Reviews re-run automatically every 7 days. Each run is version-stamped so you can see what changed — new review items, resolutions, and score movement over time.
+      <div className="rounded-lg border border-[#E0DBF9] bg-[#F1EEFF] px-4 py-3 text-[12px] text-[#5254DA]">
+        {t(
+          "Reviews re-run automatically every 7 days. Each run is version-stamped so you can see what changed — new review items, resolutions, and score movement over time.",
+          "审阅每 7 天自动重新运行。每次运行都带版本标记，便于你看到变化 —— 新增的审查项、已解决项，以及分数随时间的变动。",
+        )}
       </div>
       <Card className="shadow-none border border-border">
         <CardContent className="p-5">
-          <h3 className="text-[14px] font-semibold text-foreground mb-3">Review history · acme-outdoor.com</h3>
+          <h3 className="text-[14px] font-semibold text-foreground mb-3">{t("Review history · acme-outdoor.com", "审阅历史 · acme-outdoor.com")}</h3>
           <div className="space-y-4">
             {history.map((h, i) => (
-              <div key={i} className={cn("relative pl-5 border-l-2 pb-1", i === 0 ? "border-[#6c47ff]" : "border-slate-200")}>
-                <span className={cn("absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full", i === 0 ? "bg-[#6c47ff]" : "bg-slate-300")} />
+              <div key={i} className={cn("relative pl-5 border-l-2 pb-1", i === 0 ? "border-[#5254DA]" : "border-slate-200")}>
+                <span className={cn("absolute -left-[6px] top-1 w-2.5 h-2.5 rounded-full", i === 0 ? "bg-[#5254DA]" : "bg-slate-300")} />
                 <div className="flex items-baseline gap-2">
-                  <span className="text-[12.5px] font-semibold text-foreground">{h.date}</span>
-                  {h.tag && <span className="text-[10px] uppercase font-bold bg-[#6c47ff] text-white rounded px-1.5 py-0.5">{h.tag}</span>}
+                  <span className="text-[12px] font-semibold text-foreground">{zh ? h.dateZh : h.date}</span>
+                  {h.tag && <span className="text-[11px] uppercase font-bold bg-[#5254DA] text-white rounded px-1.5 py-0.5">{zh ? "最新" : h.tag}</span>}
                 </div>
-                <div className="text-[12.5px] text-muted-foreground mt-1">
-                  <span className="font-bold text-[#6c47ff] mr-2">{h.score}%</span>
-                  {h.pages} pages checked
-                  <span className="text-slate-400 ml-2">· rule corpus {h.corpus}</span>
+                <div className="text-[12px] text-muted-foreground mt-1">
+                  <span className="font-bold text-[#5254DA] mr-2">{h.score}%</span>
+                  {zh ? `检查了 ${h.pages} 个页面` : `${h.pages} pages checked`}
+                  <span className="text-slate-400 ml-2">· {t("rule corpus", "规则库")} {h.corpus}</span>
                   {h.delta && <span className="text-emerald-700 font-medium mx-2">▲ {h.delta}</span>}
-                  {h.new && <span className="text-amber-700 font-medium mx-2">{h.new}</span>}
-                  {h.resolved && <span className="text-[#6c47ff] font-medium mx-2">{h.resolved}</span>}
+                  {h.new && <span className="text-amber-700 font-medium mx-2">{zh ? h.newZh : h.new}</span>}
+                  {h.resolved && <span className="text-[#5254DA] font-medium mx-2">{zh ? h.resolvedZh : h.resolved}</span>}
                 </div>
               </div>
             ))}
@@ -1964,26 +2127,70 @@ function HistoryTab() {
 
 /* ── Setup tab ── */
 function SetupTab({
-  activeCats, toggleCategory, pendingRescan, rescanNow, onReplayOnboarding,
+  activeCats, toggleCategory, pendingRescan, rescanNow, lang, setLang, onReplayOnboarding,
 }: {
   activeCats: Set<CategoryKey>;
   toggleCategory: (key: CategoryKey) => void;
   pendingRescan: boolean;
   rescanNow: () => void;
+  lang: Lang;
+  setLang: (l: Lang) => void;
   onReplayOnboarding?: () => void;
 }) {
+  const t = useT();
+  const zh = lang === "zh";
+  const catLabel = (key: CategoryKey) => (zh ? ZH_CAT_LABELS[key].label : CATEGORY_LABELS[key].label);
+  const metaFor = (key: CategoryKey) => {
+    const base = zh ? ZH_CAT_LABELS[key].meta : CATEGORY_LABELS[key].meta;
+    const isDetected = CATEGORY_LABELS[key].meta.startsWith("detected");
+    const isPossible = CATEGORY_LABELS[key].meta.startsWith("possible");
+    if (activeCats.has(key)) {
+      if (isDetected) return base;
+      if (isPossible) return t("possible · confirmed by you", "可能 · 你已确认");
+      return t("manually enabled", "手动启用");
+    }
+    if (["cosmetics", "kids"].includes(key)) return t("detected · unchecked by you", "已检测 · 你已取消勾选");
+    if (isPossible) return base;
+    return t("not detected", "未检测到");
+  };
+
   return (
     <>
+      {/* Language / 语言 — full-page EN/中文 toggle */}
+      <Card className="shadow-none border border-border">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Languages size={15} className="text-[#5254DA]" />
+              <h3 className="text-[14px] font-semibold text-foreground">{t("Language", "语言")}</h3>
+              <span className="text-[12px] text-muted-foreground">{t("Display language for this report", "本报告的显示语言")}</span>
+            </div>
+            <div className="flex rounded-sm border border-border overflow-hidden text-[12px] font-medium shrink-0">
+              <button
+                onClick={() => setLang("en")}
+                className={cn("px-3 py-1.5 transition-colors", lang === "en" ? "bg-[#5254DA] text-white" : "text-muted-foreground bg-white hover:bg-[#F7F7FC]")}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang("zh")}
+                className={cn("px-3 py-1.5 transition-colors border-l border-border", lang === "zh" ? "bg-[#5254DA] text-white" : "text-muted-foreground bg-white hover:bg-[#F7F7FC]")}
+              >
+                中文
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-none border border-border">
         <CardContent className="p-5 space-y-3">
-          <h3 className="text-[14px] font-semibold text-foreground">Target markets</h3>
-          <p className="text-[12.5px] text-muted-foreground">Rule sets are applied per enabled market. Add or remove a market to change what your weekly review covers.</p>
+          <h3 className="text-[14px] font-semibold text-foreground">{t("Target markets", "目标市场")}</h3>
+          <p className="text-[12px] text-muted-foreground">{t("Rule sets are applied per enabled market. Add or remove a market to change what your weekly review covers.", "规则集按已启用的市场分别应用。增删市场即可改变每周审阅的覆盖范围。")}</p>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1"><Check size={12} /> United States</span>
-            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1"><Check size={12} /> European Union</span>
-            <span className="inline-flex items-center gap-1 text-[12px] text-slate-500 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">United Kingdom</span>
-            <span className="inline-flex items-center gap-1 text-[12px] text-slate-500 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">Canada</span>
-            <a href="#" onClick={e => e.preventDefault()} className="text-[12px] text-[#6c47ff] font-semibold ml-1 hover:underline">+ Enable market</a>
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1"><Check size={12} /> {t("United States", "美国")}</span>
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1"><Check size={12} /> {t("European Union", "欧盟")}</span>
+            <a href="#" onClick={e => e.preventDefault()} className="text-[12px] text-[#5254DA] font-semibold ml-1 hover:underline">{t("+ Enable market", "+ 启用市场")}</a>
           </div>
         </CardContent>
       </Card>
@@ -1992,17 +2199,20 @@ function SetupTab({
         <CardContent className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-[14px] font-semibold text-foreground">Product categories</h3>
-              <p className="text-[12.5px] text-muted-foreground mt-0.5">
-                Regulated-category rules are only applied to categories you actually sell. Toggle any category to preview how the change updates your Overview — the new rule scope applies at your next weekly scan (or run now below).
+              <h3 className="text-[14px] font-semibold text-foreground">{t("Product categories", "商品品类")}</h3>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                {t(
+                  "Regulated-category rules are only applied to categories you actually sell. Toggle any category to preview how the change updates your Overview — the new rule scope applies at your next weekly scan (or run now below).",
+                  "受管制品类的规则只应用于你实际销售的品类。切换任一品类即可预览它如何更新你的总览 —— 新的规则范围将在下一次每周扫描时生效（或在下方立即运行）。",
+                )}
               </p>
             </div>
             {pendingRescan && (
               <button
                 onClick={rescanNow}
-                className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-md bg-[#6c47ff] text-white hover:bg-[#5b3ed6] flex items-center gap-1.5"
+                className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-md bg-[#5254DA] text-white hover:bg-[#4547BA] flex items-center gap-1.5"
               >
-                <RefreshCw size={12} /> Rescan now
+                <RefreshCw size={12} /> {t("Rescan now", "立即重新扫描")}
               </button>
             )}
           </div>
@@ -2011,41 +2221,37 @@ function SetupTab({
               <CatRow
                 key={key}
                 checked={activeCats.has(key)}
-                label={CATEGORY_LABELS[key].label}
-                meta={activeCats.has(key)
-                  ? (CATEGORY_LABELS[key].meta.startsWith("detected") ? CATEGORY_LABELS[key].meta
-                    : CATEGORY_LABELS[key].meta.startsWith("possible") ? "possible · confirmed by you"
-                    : "manually enabled")
-                  : (["cosmetics","kids"].includes(key) ? "detected · unchecked by you"
-                    : CATEGORY_LABELS[key].meta.startsWith("possible") ? CATEGORY_LABELS[key].meta
-                    : "not detected")
-                }
+                label={catLabel(key)}
+                meta={metaFor(key)}
                 onToggle={() => toggleCategory(key)}
               />
             ))}
           </div>
-          <div className="border-t border-border pt-3 text-[11.5px] text-muted-foreground">
-            Detection runs at onboarding and on each weekly review. Add or remove categories any time — Overview updates immediately, real re-scan runs on cadence or on demand.
+          <div className="border-t border-border pt-3 text-[11px] text-muted-foreground">
+            {t(
+              "Detection runs at onboarding and on each weekly review. Add or remove categories any time — Overview updates immediately, real re-scan runs on cadence or on demand.",
+              "检测在引导时及每次每周审阅时运行。可随时增删品类 —— 总览会立即更新，真实的重新扫描按周期或按需运行。",
+            )}
           </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-none border border-border">
         <CardContent className="p-5 space-y-3">
-          <h3 className="text-[14px] font-semibold text-foreground">Authorization & verification</h3>
-          <div className="flex items-center gap-2 text-[12.5px] text-emerald-700"><Check size={14} /> I confirm I am authorized to have this domain reviewed</div>
-          <div className="flex items-center gap-2 text-[12.5px] text-emerald-700"><Check size={14} /> Domain ownership verified (DNS TXT record)</div>
-          <RowKV k="Review cadence" v="Automatic, every 7 days" />
-          <RowKV k="Data retention" v="12 months · delete on request" />
+          <h3 className="text-[14px] font-semibold text-foreground">{t("Connection & scan", "连接与扫描")}</h3>
+          <div className="flex items-center gap-2 text-[12px] text-emerald-700"><Check size={14} /> {t("Store connected via your Seel merchant account", "已通过你的 Seel 商家账户连接店铺")}</div>
+          <RowKV k={t("Connected store", "已连接店铺")} v="acme-outdoor.com" />
+          <RowKV k={t("Review cadence", "审阅周期")} v={t("Automatic, every 7 days", "自动，每 7 天一次")} />
+          <RowKV k={t("Data retention", "数据保留")} v={t("12 months · delete on request", "12 个月 · 可按需删除")} />
         </CardContent>
       </Card>
 
       {onReplayOnboarding && (
         <button
           onClick={onReplayOnboarding}
-          className="text-[11.5px] text-muted-foreground hover:text-[#6c47ff] hover:underline"
+          className="text-[11px] text-muted-foreground hover:text-[#5254DA] hover:underline"
         >
-          ↺ Replay onboarding (demo)
+          {t("↺ Replay onboarding (demo)", "↺ 重放引导流程（demo）")}
         </button>
       )}
     </>
@@ -2062,16 +2268,16 @@ function CatRow({ checked, label, meta, onToggle }: {
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-2 text-[12.5px] text-left py-1 px-2 -mx-2 rounded hover:bg-[#fafbfc] transition-colors group"
+      className="flex items-center gap-2 text-[12px] text-left py-1 px-2 -mx-2 rounded hover:bg-[#F7F7FC] transition-colors group"
     >
       <span className={cn(
         "w-4 h-4 rounded border shrink-0 inline-flex items-center justify-center transition-colors",
-        checked ? "bg-[#6c47ff] border-[#6c47ff]" : "border-border bg-white group-hover:border-[#6c47ff]",
+        checked ? "bg-[#5254DA] border-[#5254DA]" : "border-border bg-white group-hover:border-[#5254DA]",
       )}>
         {checked && <Check size={11} className="text-white" strokeWidth={3} />}
       </span>
       <span className={cn(checked ? "text-foreground font-medium" : "text-muted-foreground")}>{label}</span>
-      <span className="text-[11.5px] text-muted-foreground ml-auto">{meta}</span>
+      <span className="text-[11px] text-muted-foreground ml-auto">{meta}</span>
     </button>
   );
 }
@@ -2079,7 +2285,7 @@ function CatRow({ checked, label, meta, onToggle }: {
 /* ── Small kv row ── */
 function RowKV({ k, v }: { k: string; v: ReactNode }) {
   return (
-    <div className="flex items-center justify-between text-[12.5px] py-1 border-b border-border last:border-0">
+    <div className="flex items-center justify-between text-[12px] py-1 border-b border-border last:border-0">
       <span className="text-muted-foreground">{k}</span>
       <span className="text-foreground font-medium text-right">{v}</span>
     </div>

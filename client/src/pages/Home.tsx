@@ -60,7 +60,7 @@ export default function Home() {
   const discoTabs = [{ id: "disco" as const, label: "Overview" }];
   const compassTabs = [{ id: "compass" as const, label: "Overview" }];
   const activeTabs = isSalesAgent ? salesAgentTabs : isVocAgent ? vocAgentTabs : isDisco ? discoTabs : isCompass ? compassTabs : aiSupportTabs;
-  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : isDisco ? "Disco" : isCompass ? "Compass" : "Support agent";
+  const pageTitle = isSalesAgent ? "Sales Agent" : isVocAgent ? "VOC Agent" : isDisco ? "Disco" : isCompass ? "Storefront policy scanner" : "Support agent";
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -85,7 +85,7 @@ export default function Home() {
         ) : isCompass ? (
           <div className="flex-1 overflow-hidden bg-[#fafafa] flex flex-col">
             <div className="border-b border-border bg-white px-6 py-3">
-              <h1 className="text-[18px] font-bold text-foreground">Compass</h1>
+              <h1 className="text-[18px] font-bold text-foreground">Storefront policy scanner</h1>
             </div>
             <CompassPage />
           </div>
