@@ -27,7 +27,7 @@ const workforceNav = [
   { icon: Headphones,     label: "Support agent", tab: "agents" as const,      disabled: false },
   { icon: TrendingUp,     label: "Sales agent",   tab: "sales-agent" as const, disabled: false },
   { icon: Megaphone,      label: "VOC agent",     tab: "voc-agent" as const,   disabled: false },
-  { icon: Compass,        label: "Compass",       tab: "compass" as const,     disabled: false },
+  { icon: Compass,        label: "Storefront policy scanner", tab: "compass" as const,     disabled: false },
   { icon: ClipboardCheck, label: "Review agent",  tab: null,                   disabled: true },
 ];
 
